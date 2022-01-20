@@ -1,0 +1,24 @@
+# Learn more about paths on https://github.com/github/gitignore/blob/master/Node.gitignore
+
+node_modules
+
+generators
+build
+dist
+out
+.next
+.nuxt
+.cache
+
+coverage
+*.lcov
+.nyc_output
+
+logs
+*.log
+experiment-*
+.DS_Store
+.env.local
+.env.*.local
+
+.vscode-test
