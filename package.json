@@ -3,7 +3,14 @@
     "displayName": "Typescript Vscode Plugin",
     "version": "1.0.0",
     "license": "MIT",
-    "contributes": {},
+    "contributes": {
+        "typescriptServerPlugins": [
+            {
+                "name": "my-typescript-plugin-id",
+                "enableForWorkspaceTypeScriptVersions": true
+            }
+        ]
+    },
     "categories": [
         "Other"
     ],
@@ -15,15 +22,15 @@
         "lint": "eslint src/**"
     },
     "devDependencies": {
-        "@types/node": "^16.11.6",
-        "@types/vscode": "^1.61.0",
-        "@zardoy/tsconfig": "^1.2.2",
+        "@types/node": "^16.11.21",
+        "@types/vscode": "^1.63.1",
+        "@zardoy/tsconfig": "^1.3.1",
         "my-typescript-plugin-id": "workspace:*",
-        "typescript": "^4.4.4"
+        "typescript": "^4.5.4"
     },
     "dependencies": {
         "eslint": "^8.7.0",
         "eslint-config-zardoy": "^0.2.8",
-        "vscode-framework": "^0.0.17"
+        "vscode-framework": "^0.0.18"
     }
 }
