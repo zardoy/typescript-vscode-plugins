@@ -29,8 +29,6 @@ export = function ({ typescript }: { typescript: typeof ts_module }) {
                 // }
                 // prior.isGlobalCompletion
                 // prior.entries[0]
-                // Feature: Force Suggestion Sorting
-                prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))
                 if (['bind', 'call', 'caller'].every(name => prior.entries.find(entry => entry.name === name))) {
                     // Feature: Remove useless function props
                     prior.entries = prior.entries.filter(e => !['Symbol', 'caller', 'prototype'].includes(e.name))
@@ -43,6 +41,8 @@ export = function ({ typescript }: { typescript: typeof ts_module }) {
                         return entry
                     })
                 }
+                // Feature: Force Suggestion Sorting
+                prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))
                 // console.timeEnd('slow-down')
                 return prior
             }
