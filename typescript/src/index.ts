@@ -1,8 +1,8 @@
 import fs from 'fs'
 import { join } from 'path/posix'
-import ts_module from 'typescript/lib/tsserverlibrary'
+import tslib, { SymbolDisplayPartKind, TypeFlags, TypeFormatFlags } from 'typescript/lib/tsserverlibrary'
 
-export = function ({ typescript }: { typescript: typeof ts_module }) {
+export = function ({ typescript }: { typescript: typeof tslib }) {
     return {
         create(info: ts.server.PluginCreateInfo) {
             // Set up decorator object
@@ -14,6 +14,7 @@ export = function ({ typescript }: { typescript: typeof ts_module }) {
                 proxy[k] = (...args: Array<Record<string, unknown>>) => x.apply(info.languageService, args)
             }
 
+            let prevCompletions
             proxy.getCompletionsAtPosition = (fileName, position, options) => {
                 const prior = info.languageService.getCompletionsAtPosition(fileName, position, options)
                 if (!prior) return
@@ -43,15 +44,63 @@ export = function ({ typescript }: { typescript: typeof ts_module }) {
                 }
                 // Feature: Force Suggestion Sorting
                 prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))
+                // console.log('signatureHelp', JSON.stringify(info.languageService.getSignatureHelpItems(fileName, position, {})))
                 // console.timeEnd('slow-down')
                 return prior
             }
 
-            proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
-                const prior = info.languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
+            proxy.getCompletionEntryDetails = (fileName, position, entryName, formatOptions, source, preferences, data) => {
+                console.log('source', source)
+                const prior = info.languageService.getCompletionEntryDetails(fileName, position, entryName, formatOptions, source, preferences, data)
+                if (!prior) return
+                prior.codeActions = [{ description: '', changes: [{ fileName, textChanges: [{ span: { start: position, length: 0 }, newText: '()' }] }] }]
+                // formatOptions
+                // info.languageService.getDefinitionAtPosition(fileName, position)
+                return prior
+            }
 
+            proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
+                if (typeof positionOrRange !== 'number') {
+                    positionOrRange = positionOrRange.pos
+                }
+                const { textSpan } = proxy.getSmartSelectionRange(fileName, positionOrRange)
+                console.log('textSpan.start', textSpan.start, textSpan.length)
+                const program = info.languageService.getProgram()
+                const sourceFile = program?.getSourceFile(fileName)
+
+                if (!program || !sourceFile) return []
+                const originalSourceText = sourceFile.text
+                // sourceFile.update('test', { span: textSpan, newLength: sourceFile.text.length + 2 })
+                // sourceFile.text = patchText(sourceFile.text, textSpan.start, textSpan.start + textSpan.length, 'test')
+                // console.log('sourceFile.text', sourceFile.text)
+                const node = findChildContainingPosition(sourceFile, positionOrRange)
+                if (!node) {
+                    console.log('no node')
+                    return []
+                }
+                // console.log(
+                //     'special 1',
+                //     typescript.isJsxExpression(node),
+                //     typescript.isJsxElement(node),
+                //     typescript.isJsxText(node),
+                //     typescript.isJsxExpression(node.parent),
+                //     typescript.isJsxElement(node.parent),
+                //     typescript.isJsxOpeningElement(node.parent),
+                // )
+                const typeChecker = program.getTypeChecker()
+                const type = typeChecker.getTypeAtLocation(node)
+                const parentType = typeChecker.getTypeAtLocation(node.parent)
+                // console.log(
+                //     'extracted.getCallSignatures()',
+                //     type.getCallSignatures().map(item => item.getParameters().map(item => item.name)),
+                // )
+                sourceFile.text = originalSourceText
+
+                const prior = info.languageService.getApplicableRefactors(fileName, positionOrRange, preferences)
+
+                return []
                 // Feature: Remove useless code actions
-                return prior.filter(({ fixName }) => !['fixMissingFunctionDeclaration'].includes(fixName))
+                // return prior.filter(({ fixName }) => !['fixMissingFunctionDeclaration'].includes(fixName))
             }
 
             return proxy
@@ -60,4 +109,18 @@ export = function ({ typescript }: { typescript: typeof ts_module }) {
             // Receive configuration changes sent from VS Code
         },
     }
+}
+
+const patchText = (input: string, start: number, end: number, newText: string) => {
+    return input.slice(0, start) + newText + input.slice(end)
+}
+
+function findChildContainingPosition(sourceFile: tslib.SourceFile, position: number): tslib.Node | undefined {
+    function find(node: ts.Node): ts.Node | undefined {
+        if (position >= node.getStart() && position < node.getEnd()) {
+            return tslib.forEachChild(node, find) || node
+        }
+        return
+    }
+    return find(sourceFile)
 }
