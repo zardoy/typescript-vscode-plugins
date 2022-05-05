@@ -1,8 +1,8 @@
-import vsc from 'vscode'
-import { registerActiveDevelopmentCommand } from 'vscode-framework'
+import * as vscode from 'vscode'
+import { getExtensionId, registerActiveDevelopmentCommand } from 'vscode-framework'
 
 export const activate = async () => {
-    const tsExtension = vsc.extensions.getExtension('vscode.typescript-language-features')
+    const tsExtension = vscode.extensions.getExtension('vscode.typescript-language-features')
     if (!tsExtension) return
 
     await tsExtension.activate()
@@ -13,7 +13,12 @@ export const activate = async () => {
     const api = tsExtension.exports.getAPI(0)
     if (!api) return
 
-    api.configurePlugin('my-typescript-plugin-id', {
-        someValue: 'hey',
+    const syncConfig = () => {
+        const config = vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!)
+        api.configurePlugin('my-typescript-plugin-id', config)
+    }
+    vscode.workspace.onDidChangeConfiguration(({ affectsConfiguration }) => {
+        if (affectsConfiguration(getExtensionId())) syncConfig()
     })
+    syncConfig()
 }
