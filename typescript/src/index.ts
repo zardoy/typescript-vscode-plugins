@@ -1,8 +1,15 @@
 import fs from 'fs'
 import { join } from 'path/posix'
 import tslib, { SymbolDisplayPartKind, TypeFlags, TypeFormatFlags } from 'typescript/lib/tsserverlibrary'
+import { get } from 'lodash'
+
+//@ts-ignore
+import type { Configuration } from '../../src/configurationType'
 
 export = function ({ typescript }: { typescript: typeof tslib }) {
+    let _configuration: Configuration
+    const c = <T extends keyof Configuration>(key: T): Configuration[T] => get(_configuration, key)
+
     return {
         create(info: ts.server.PluginCreateInfo) {
             // Set up decorator object
@@ -17,7 +24,11 @@ export = function ({ typescript }: { typescript: typeof tslib }) {
             let prevCompletions
             proxy.getCompletionsAtPosition = (fileName, position, options) => {
                 const prior = info.languageService.getCompletionsAtPosition(fileName, position, options)
-                if (!prior) return
+                console.log(
+                    'raw prior',
+                    prior?.entries.map(entry => entry.name),
+                )
+                if (!prior || !_configuration) return
                 // console.time('slow-down')
                 const scriptSnapshot = info.project.getScriptSnapshot(fileName)
                 const { line, character } = info.languageService.toLineColumnOffset!(fileName, position)
@@ -30,35 +41,45 @@ export = function ({ typescript }: { typescript: typeof tslib }) {
                 // }
                 // prior.isGlobalCompletion
                 // prior.entries[0]
-                if (['bind', 'call', 'caller'].every(name => prior.entries.find(entry => entry.name === name))) {
-                    // Feature: Remove useless function props
-                    prior.entries = prior.entries.filter(e => !['Symbol', 'caller', 'prototype'].includes(e.name))
-                    // Feature: Highlight and lift non-function methods
-                    const standardProps = ['Symbol', 'apply', 'arguments', 'bind', 'call', 'caller', 'length', 'name', 'prototype', 'toString']
-                    prior.entries = prior.entries.map(entry => {
-                        if (!standardProps.includes(entry.name)) {
-                            return { ...entry, insertText: entry.insertText ?? entry.name, name: `☆${entry.name}` }
-                        }
-                        return entry
-                    })
+                const entryNames = prior.entries.map(({ name }) => name)
+                if (['bind', 'call', 'caller'].every(name => entryNames.includes(name))) {
+                    if (c('removeUselessFunctionProps.enable')) prior.entries = prior.entries.filter(e => !['Symbol', 'caller', 'prototype'].includes(e.name))
+                    if (c('highlightNonFunctionMethods.enable')) {
+                        const standardProps = ['Symbol', 'apply', 'arguments', 'bind', 'call', 'caller', 'length', 'name', 'prototype', 'toString']
+                        // TODO lift up!
+                        prior.entries = prior.entries.map(entry => {
+                            if (!standardProps.includes(entry.name)) {
+                                return { ...entry, insertText: entry.insertText ?? entry.name, name: `☆${entry.name}` }
+                            }
+                            return entry
+                        })
+                    }
                 }
-                // Feature: Force Suggestion Sorting
-                prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))
+                if (c('patchToString.enable'))
+                    arrayMoveItemToFrom(
+                        prior.entries,
+                        ({ name }) => name === 'toExponential',
+                        ({ name }) => name === 'toString',
+                    )
+                if (c('correntSorting.enable')) {
+                    prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))
+                }
                 // console.log('signatureHelp', JSON.stringify(info.languageService.getSignatureHelpItems(fileName, position, {})))
                 // console.timeEnd('slow-down')
                 return prior
             }
 
             proxy.getCompletionEntryDetails = (fileName, position, entryName, formatOptions, source, preferences, data) => {
-                console.log('source', source)
+                // console.log('source', source)
                 const prior = info.languageService.getCompletionEntryDetails(fileName, position, entryName, formatOptions, source, preferences, data)
                 if (!prior) return
-                prior.codeActions = [{ description: '', changes: [{ fileName, textChanges: [{ span: { start: position, length: 0 }, newText: '()' }] }] }]
+                // prior.codeActions = [{ description: '', changes: [{ fileName, textChanges: [{ span: { start: position, length: 0 }, newText: '()' }] }] }]
                 // formatOptions
                 // info.languageService.getDefinitionAtPosition(fileName, position)
                 return prior
             }
 
+            // proxy.getCombinedCodeFix(scope, fixId, formatOptions, preferences)
             proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
                 if (typeof positionOrRange !== 'number') {
                     positionOrRange = positionOrRange.pos
@@ -106,9 +127,20 @@ export = function ({ typescript }: { typescript: typeof tslib }) {
             return proxy
         },
         onConfigurationChanged(config: any) {
-            // Receive configuration changes sent from VS Code
+            _configuration = config
         },
     }
+}
+
+type ArrayPredicate<T> = (value: T, index: number) => boolean
+const arrayMoveItemToFrom = <T>(array: T[], originalItem: ArrayPredicate<T>, itemToMove: ArrayPredicate<T>) => {
+    const originalItemIndex = array.findIndex(originalItem)
+    if (originalItemIndex === -1) return undefined
+    const itemToMoveIndex = array.findIndex(originalItem)
+    if (itemToMoveIndex === -1) return undefined
+    array.splice(originalItemIndex, 0, array[itemToMoveIndex]!)
+    array.splice(itemToMoveIndex + 1, 1)
+    return originalItemIndex
 }
 
 const patchText = (input: string, start: number, end: number, newText: string) => {

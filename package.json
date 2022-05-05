@@ -14,7 +14,7 @@
     "categories": [
         "Other"
     ],
-    "publisher": "d",
+    "publisher": "zardoy",
     "private": true,
     "scripts": {
         "start": "vscode-framework start",
@@ -29,8 +29,10 @@
         "typescript": "^4.5.4"
     },
     "dependencies": {
+        "@types/lodash": "^4.14.182",
         "eslint": "^8.7.0",
         "eslint-config-zardoy": "^0.2.8",
+        "lodash": "^4.17.21",
         "vscode-framework": "^0.0.18"
     }
 }
