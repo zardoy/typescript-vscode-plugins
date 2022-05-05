@@ -22,10 +22,15 @@
         "lint": "eslint src/**"
     },
     "devDependencies": {
+        "@types/fs-extra": "^9.0.13",
         "@types/node": "^16.11.21",
         "@types/vscode": "^1.63.1",
         "@zardoy/tsconfig": "^1.3.1",
-        "my-typescript-plugin-id": "workspace:*",
+        "esbuild": "^0.14.38",
+        "fs-extra": "^10.1.0",
+        "my-typescript-plugin-1": "workspace:*",
+        "my-typescript-plugin-2": "workspace:*",
+        "typed-jsonfile": "^0.2.1",
         "typescript": "^4.5.4"
     },
     "dependencies": {

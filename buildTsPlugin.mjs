@@ -19,6 +19,7 @@ export const buildTsPlugin = async (/** @type {string} */ outDir, /** @type {str
     )
     await build({
         bundle: true,
+        // TODO change to browser
         platform: 'node',
         treeShaking: true,
         format: 'cjs',

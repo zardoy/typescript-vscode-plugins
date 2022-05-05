@@ -1,0 +1,27 @@
+{
+    "name": "correct-suggestions-sorting",
+    "displayName": "Correct Suggestions Sorting",
+    "publisher": "zardoy",
+    "version": "0.0.1",
+    "license": "MIT",
+    "categories": [
+        "Programming Languages"
+    ],
+    "keywords": [
+        "ts",
+        "typescript",
+        "typescript plugin",
+        "fix sort"
+    ],
+    "contributes": {},
+    "activationEvents": [
+        "*"
+    ],
+    "scripts": {
+        "start": "vscode-framework start"
+    },
+    "devDependencies": {
+        "@types/vscode": "1.62.0",
+        "vscode-framework": "^0.0.18"
+    }
+}
