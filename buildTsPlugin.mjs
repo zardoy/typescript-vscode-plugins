@@ -28,5 +28,5 @@ export const buildTsPlugin = async (/** @type {string} */ outDir, /** @type {str
     })
 }
 
-const name = 'my-typescript-plugin-2'
-buildTsPlugin(`out/node_modules/${name}`, name, 'typescript-2/src/index.ts')
+const name = 'ts-essential-plugins'
+buildTsPlugin(`out/node_modules/${name}`, name, 'typescript/src/index.ts')

@@ -1,12 +1,10 @@
-import fs from 'fs'
-import { join } from 'path/posix'
-import tslib, { createProgram, server, SymbolDisplayPartKind, TypeFlags, TypeFormatFlags } from 'typescript/lib/tsserverlibrary'
-import { get } from 'lodash'
+import get from 'lodash.get'
+import type tslib from 'typescript/lib/tsserverlibrary'
 
 //@ts-ignore
 import type { Configuration } from '../../src/configurationType'
 
-export = function ({ typescript }: { typescript: typeof tslib }) {
+export = function ({ typescript }: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
     let _configuration: Configuration
     const c = <T extends keyof Configuration>(key: T): Configuration[T] => get(_configuration, key)
 
@@ -41,7 +39,7 @@ export = function ({ typescript }: { typescript: typeof tslib }) {
                 //     'raw prior',
                 //     prior?.entries.map(entry => entry.name),
                 // )
-                const node = findChildContainingPosition(sourceFile, position)
+                const node = findChildContainingPosition(typescript, sourceFile, position)
                 if (node) {
                     if (c('jsxPseudoEmmet.enable') && (typescript.isJsxElement(node) || (node.parent && typescript.isJsxElement(node.parent)))) {
                         if (typescript.isJsxOpeningElement(node)) {
@@ -216,7 +214,7 @@ export = function ({ typescript }: { typescript: typeof tslib }) {
                 // sourceFile.update('test', { span: textSpan, newLength: sourceFile.text.length + 2 })
                 // sourceFile.text = patchText(sourceFile.text, textSpan.start, textSpan.start + textSpan.length, 'test')
                 // console.log('sourceFile.text', sourceFile.text)
-                const node = findChildContainingPosition(sourceFile, positionOrRange)
+                const node = findChildContainingPosition(typescript, sourceFile, positionOrRange)
                 if (!node) {
                     console.log('no node')
                     return []
@@ -266,10 +264,14 @@ const patchText = (input: string, start: number, end: number, newText: string) =
     return input.slice(0, start) + newText + input.slice(end)
 }
 
-function findChildContainingPosition(sourceFile: tslib.SourceFile, position: number): tslib.Node | undefined {
+function findChildContainingPosition(
+    typescript: typeof import('typescript/lib/tsserverlibrary'),
+    sourceFile: tslib.SourceFile,
+    position: number,
+): tslib.Node | undefined {
     function find(node: ts.Node): ts.Node | undefined {
         if (position >= node.getStart() && position < node.getEnd()) {
-            return tslib.forEachChild(node, find) || node
+            return typescript.forEachChild(node, find) || node
         }
         return
     }

@@ -16,6 +16,7 @@ importers:
       eslint-config-zardoy: ^0.2.8
       fs-extra: ^10.1.0
       lodash: ^4.17.21
+      lodash.get: ^4.4.2
       modify-json-file: ^1.2.2
       ts-essential-plugins: workspace:*
       typed-jsonfile: ^0.2.1
@@ -29,6 +30,7 @@ importers:
       eslint: 8.7.0
       eslint-config-zardoy: 0.2.8_4tfpy7rlxgvxaee6aikeliznyq
       lodash: 4.17.21
+      lodash.get: 4.4.2
       modify-json-file: 1.2.2
       vscode-framework: 0.0.18_ljantzegzxse3gxwrmiyr66zfm
     devDependencies:
@@ -2974,6 +2976,10 @@ packages:
 
   /lodash.compact/3.0.1:
     resolution: {integrity: sha1-VAzjg3dFl1gHRx4WtKK6IeclbKU=}
+    dev: false
+
+  /lodash.get/4.4.2:
+    resolution: {integrity: sha1-LRd/ZS+jHpObRDjVNBSZ36OCXpk=}
     dev: false
 
   /lodash.merge/4.6.2:

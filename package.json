@@ -18,6 +18,7 @@
     "private": true,
     "scripts": {
         "start": "vscode-framework start",
+        "build": "vscode-framework build && node buildTsPlugin.mjs",
         "watch-plugin": "tsc -p typescript -w",
         "lint": "eslint src/**"
     },
@@ -40,6 +41,7 @@
         "eslint": "^8.7.0",
         "eslint-config-zardoy": "^0.2.8",
         "lodash": "^4.17.21",
+        "lodash.get": "^4.4.2",
         "modify-json-file": "^1.2.2",
         "vscode-framework": "^0.0.18"
     }
