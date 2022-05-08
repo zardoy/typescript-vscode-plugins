@@ -25,6 +25,7 @@ export const buildTsPlugin = async (/** @type {string} */ outDir, /** @type {str
         format: 'cjs',
         entryPoints: [entrypoint],
         outfile: join(outDir, 'index.js'),
+        mainFields: ['module', 'main']
     })
 }
 

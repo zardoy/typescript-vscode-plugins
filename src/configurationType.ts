@@ -107,6 +107,10 @@ export type Configuration = {
      * @default true
      */
     'jsxImproveElementsSuggestions.enabled': boolean
+    /**
+     * Requires restart TS server
+     * @default false
+     *  */
     // 'eventTypePatching.enable': boolean
     // 'globalTypedQuerySelector.enable': boolean,
     /**

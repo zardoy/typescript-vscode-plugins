@@ -12,6 +12,23 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
 
     return {
         create(info: ts.server.PluginCreateInfo) {
+            // const realGetSnapshot = info.languageServiceHost.getScriptSnapshot
+            // info.languageServiceHost.getScriptSnapshot = fileName => {
+            //     console.log('getSnapshot', fileName)
+            //     return realGetSnapshot(fileName)
+            // }
+            // const realReadFile = info.serverHost.readFile
+            // info.serverHost.readFile = fileName => {
+            //     let contents = realReadFile(fileName)
+            //     if (fileName.endsWith('/node_modules/typescript/lib/lib.dom.d.ts') && c('eventTypePatching.enable')) {
+            //         contents = contents
+            //             ?.replace('interface EventTarget {', 'interface EventTarget extends HTMLElement {')
+            //             .replace('"change": Event;', '"change": Event & {currentTarget: HTMLInputElement, target: HTMLInputElement};')
+            //             .replace('"change": Event;', '"change": Event & {currentTarget: HTMLInputElement, target: HTMLInputElement};')
+            //             .replace('"input": Event;', '"input": Event & {currentTarget: HTMLInputElement, target: HTMLInputElement};')
+            //     }
+            //     return contents
+            // }
             // const compilerOptions = typescript.convertCompilerOptionsFromJson(options.compilerOptions, options.sourcesRoot).options
             // console.log('getCompilationSettings', info.languageServiceHost.getCompilationSettings())
             // info.languageServiceHost.getScriptSnapshot
