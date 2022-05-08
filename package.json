@@ -12,10 +12,23 @@
         ]
     },
     "categories": [
-        "Other"
+        "Other",
+        "Programming Languages"
     ],
     "publisher": "zardoy",
     "private": true,
+    "keywords": [
+        "ts",
+        "typescript",
+        "ts plugin",
+        "webstorm"
+    ],
+    "activationEvents": [
+        "onLanguage:javascript",
+        "onLanguage:javascriptreact",
+        "onLanguage:typescript",
+        "onLanguage:typescriptreact"
+    ],
     "scripts": {
         "start": "vscode-framework start",
         "build": "vscode-framework build && node buildTsPlugin.mjs",
