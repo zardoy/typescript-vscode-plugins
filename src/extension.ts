@@ -1,5 +1,4 @@
 import * as vscode from 'vscode'
-import { getExtensionId, registerActiveDevelopmentCommand } from 'vscode-framework'
 
 export const activate = async () => {
     const tsExtension = vscode.extensions.getExtension('vscode.typescript-language-features')
@@ -15,10 +14,10 @@ export const activate = async () => {
 
     const syncConfig = () => {
         const config = vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!)
-        api.configurePlugin('my-typescript-plugin-id', config)
+        api.configurePlugin('ts-essential-plugins', config)
     }
     vscode.workspace.onDidChangeConfiguration(({ affectsConfiguration }) => {
-        if (affectsConfiguration(getExtensionId())) syncConfig()
+        if (affectsConfiguration(process.env.IDS_PREFIX!)) syncConfig()
     })
     syncConfig()
 }

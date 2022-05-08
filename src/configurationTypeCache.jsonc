@@ -1,0 +1,237 @@
+// GENERATED. DON'T EDIT MANUALLY
+// md5hash: 9aa6b84ad1d774daa0a3a7d9bb9f723b
+{
+    "type": "object",
+    "properties": {
+        "removeUselessFunctionProps.enable": {
+            "description": "Removes `Symbol`, `caller`, `prototype` everywhere",
+            "default": true,
+            "type": "boolean"
+        },
+        "patchToString.enable": {
+            "description": "Useful for Number types.\nPatch `toString()`: Removes arg tabstop",
+            "default": true,
+            "type": "boolean"
+        },
+        "suggestions.banAutoImportPackages": {
+            "default": [],
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "highlightNonFunctionMethods.enable": {
+            "description": "Highlight and lift non-function methods. Also applies for static class methods. Uses `bind`, `call`, `caller` detection.",
+            "default": true,
+            "type": "boolean"
+        },
+        "correctSorting.enable": {
+            "description": "Use originl sorting of suggestions (almost like in WebStorm). Works only with TypeScript <= 4.5.5",
+            "default": true,
+            "type": "boolean"
+        },
+        "markTsCodeActions.enable": {
+            "description": "Mark QuickFixes & refactorings with 🔵",
+            "default": true,
+            "type": "boolean"
+        },
+        "markTsCodeFixes.character": {
+            "description": "Leave empty to disable",
+            "default": "🔵",
+            "type": "string"
+        },
+        "removeCodeFixes.enable": {
+            "default": true,
+            "type": "boolean"
+        },
+        "removeCodeFixes.codefixes": {
+            "default": [
+                "fixMissingFunctionDeclaration"
+            ],
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+                "enum": [
+                    "fixMissingAttributes",
+                    "fixMissingFunctionDeclaration",
+                    "fixMissingMember",
+                    "fixMissingProperties"
+                ],
+                "type": "string"
+            }
+        },
+        "jsxPseudoEmmet.enable": {
+            "default": true,
+            "type": "boolean"
+        },
+        "jsxPseudoEmmet.tags": {
+            "description": "Sorting matters",
+            "type": "object",
+            "additionalProperties": {
+                "anyOf": [
+                    {
+                        "enum": [
+                            true
+                        ],
+                        "type": "boolean"
+                    },
+                    {
+                        "type": "string"
+                    }
+                ]
+            }
+        },
+        "jsxImproveElementsSuggestions.enabled": {
+            "description": "Exclude lowercase / incorrent e.g. suggestions",
+            "default": true,
+            "type": "boolean"
+        },
+        "replaceSuggestions": {
+            "description": "Diagnostics (if not handled by eslint) & completions",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "suggestion": {
+                        "description": "e.g. `readFile`, `^readFile` (global) or `fs.readFile`",
+                        "type": "string"
+                    },
+                    "filter": {
+                        "type": "object",
+                        "properties": {
+                            "kind": {
+                                "enum": [
+                                    "alias",
+                                    "callSignatureElement",
+                                    "classElement",
+                                    "constElement",
+                                    "constructSignatureElement",
+                                    "constructorImplementationElement",
+                                    "directory",
+                                    "enumElement",
+                                    "enumMemberElement",
+                                    "externalModuleName",
+                                    "functionElement",
+                                    "indexSignatureElement",
+                                    "interfaceElement",
+                                    "jsxAttribute",
+                                    "keyword",
+                                    "label",
+                                    "letElement",
+                                    "link",
+                                    "linkName",
+                                    "linkText",
+                                    "localClassElement",
+                                    "localFunctionElement",
+                                    "localVariableElement",
+                                    "memberFunctionElement",
+                                    "memberGetAccessorElement",
+                                    "memberSetAccessorElement",
+                                    "memberVariableElement",
+                                    "moduleElement",
+                                    "parameterElement",
+                                    "primitiveType",
+                                    "scriptElement",
+                                    "string",
+                                    "typeElement",
+                                    "typeParameterElement",
+                                    "unknown",
+                                    "variableElement",
+                                    "warning"
+                                ],
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "delete": {
+                        "type": "boolean"
+                    },
+                    "duplicateOriginal": {
+                        "enum": [
+                            "above",
+                            false,
+                            true
+                        ]
+                    },
+                    "patch": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "kind": {
+                                "enum": [
+                                    "alias",
+                                    "callSignatureElement",
+                                    "classElement",
+                                    "constElement",
+                                    "constructSignatureElement",
+                                    "constructorImplementationElement",
+                                    "directory",
+                                    "enumElement",
+                                    "enumMemberElement",
+                                    "externalModuleName",
+                                    "functionElement",
+                                    "indexSignatureElement",
+                                    "interfaceElement",
+                                    "jsxAttribute",
+                                    "keyword",
+                                    "label",
+                                    "letElement",
+                                    "link",
+                                    "linkName",
+                                    "linkText",
+                                    "localClassElement",
+                                    "localFunctionElement",
+                                    "localVariableElement",
+                                    "memberFunctionElement",
+                                    "memberGetAccessorElement",
+                                    "memberSetAccessorElement",
+                                    "memberVariableElement",
+                                    "moduleElement",
+                                    "parameterElement",
+                                    "primitiveType",
+                                    "scriptElement",
+                                    "string",
+                                    "typeElement",
+                                    "typeParameterElement",
+                                    "unknown",
+                                    "variableElement",
+                                    "warning"
+                                ],
+                                "type": "string"
+                            },
+                            "sortText": {
+                                "description": "Might be useless when `correntSorting.enable` is true",
+                                "type": "string"
+                            },
+                            "insertText": {
+                                "description": "Generally not recommended",
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "filter",
+                    "suggestion"
+                ]
+            }
+        }
+    },
+    "required": [
+        "correctSorting.enable",
+        "highlightNonFunctionMethods.enable",
+        "jsxImproveElementsSuggestions.enabled",
+        "jsxPseudoEmmet.enable",
+        "jsxPseudoEmmet.tags",
+        "markTsCodeActions.enable",
+        "markTsCodeFixes.character",
+        "patchToString.enable",
+        "removeCodeFixes.codefixes",
+        "removeCodeFixes.enable",
+        "removeUselessFunctionProps.enable",
+        "replaceSuggestions",
+        "suggestions.banAutoImportPackages"
+    ]
+}

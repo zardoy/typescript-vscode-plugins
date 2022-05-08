@@ -1,11 +1,16 @@
 //@ts-check
+const { defineConfig } = require('@zardoy/vscode-utils/build/defineConfig.cjs')
+const { patchPackageJson } = require('@zardoy/vscode-utils/build/patchPackageJson.cjs')
 
-/** @type{import('vscode-framework/build/config').UserConfig} */
-const config = {
-    // consoleStatements: false,
-    development: {
-        executable: 'code-insiders',
-    },
-}
+patchPackageJson({
+    patchSettings(configuration) {
+        configuration['jsxPseudoEmmet.tags'].default = {
+            div: true, span: true, input: "<input $1/>", p: true, form: true, footer: true, section: true, select: true, h1: true, h2: true, h3: true, h4: true, h5: true, h6: true,
+        }
+        return configuration
+    }
+})
 
-module.exports = config
+module.exports = defineConfig({
+    development: {},
+})

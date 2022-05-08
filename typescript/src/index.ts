@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { join } from 'path/posix'
-import tslib, { SymbolDisplayPartKind, TypeFlags, TypeFormatFlags } from 'typescript/lib/tsserverlibrary'
+import tslib, { createProgram, server, SymbolDisplayPartKind, TypeFlags, TypeFormatFlags } from 'typescript/lib/tsserverlibrary'
 import { get } from 'lodash'
 
 //@ts-ignore
@@ -12,6 +12,9 @@ export = function ({ typescript }: { typescript: typeof tslib }) {
 
     return {
         create(info: ts.server.PluginCreateInfo) {
+            // const compilerOptions = typescript.convertCompilerOptionsFromJson(options.compilerOptions, options.sourcesRoot).options
+            // console.log('getCompilationSettings', info.languageServiceHost.getCompilationSettings())
+            // info.languageServiceHost.getScriptSnapshot
             // Set up decorator object
             const proxy: ts.LanguageService = Object.create(null)
 
@@ -21,18 +24,73 @@ export = function ({ typescript }: { typescript: typeof tslib }) {
                 proxy[k] = (...args: Array<Record<string, unknown>>) => x.apply(info.languageService, args)
             }
 
-            let prevCompletions
+            let prevCompletions: any
             proxy.getCompletionsAtPosition = (fileName, position, options) => {
-                const prior = info.languageService.getCompletionsAtPosition(fileName, position, options)
-                console.log(
-                    'raw prior',
-                    prior?.entries.map(entry => entry.name),
-                )
-                if (!prior || !_configuration) return
+                if (!_configuration) {
+                    console.log('no received configuration!')
+                }
                 // console.time('slow-down')
+                const program = info.languageService.getProgram()
+                const sourceFile = program?.getSourceFile(fileName)
+                if (!program || !sourceFile) return
                 const scriptSnapshot = info.project.getScriptSnapshot(fileName)
                 const { line, character } = info.languageService.toLineColumnOffset!(fileName, position)
                 if (!scriptSnapshot) return
+                let prior = info.languageService.getCompletionsAtPosition(fileName, position, options)
+                // console.log(
+                //     'raw prior',
+                //     prior?.entries.map(entry => entry.name),
+                // )
+                const node = findChildContainingPosition(sourceFile, position)
+                if (node) {
+                    if (c('jsxPseudoEmmet.enable') && (typescript.isJsxElement(node) || (node.parent && typescript.isJsxElement(node.parent)))) {
+                        if (typescript.isJsxOpeningElement(node)) {
+                            const nodeText = node.getText().slice(0, position - node.pos)
+                            if (c('jsxImproveElementsSuggestions.enabled') && !nodeText.includes(' ') && prior) {
+                                let lastPart = nodeText.split('.').at(-1)!
+                                if (lastPart.startsWith('<')) lastPart = lastPart.slice(1)
+                                const isStartingWithUpperCase = (str: string) => str[0] === str[0]?.toUpperCase()
+                                // check if starts with lowercase
+                                if (isStartingWithUpperCase(lastPart)) {
+                                    // TODO! compare with suggestions from lib.dom
+                                    prior.entries = prior.entries.filter(
+                                        entry => isStartingWithUpperCase(entry.name) && ![typescript.ScriptElementKind.enumElement].includes(entry.kind),
+                                    )
+                                }
+                            }
+                        } else if (!typescript.isJsxClosingElement(node) /* TODO! scriptSnapshot.getText(position - 1, position).match(/(\s|\w|>)/) */) {
+                            // const { textSpan } = proxy.getSmartSelectionRange(fileName, position)
+                            // let existing = scriptSnapshot.getText(textSpan.start, textSpan.start + textSpan.length)
+                            // if (existing.includes('\n')) existing = ''
+                            if (!prior) prior = { entries: [], isGlobalCompletion: false, isMemberCompletion: false, isNewIdentifierLocation: false }
+                            // if (existing.startsWith('.')) {
+                            //     const className = existing.slice(1)
+                            //     prior.entries.push({
+                            //         kind: typescript.ScriptElementKind.label,
+                            //         name: className,
+                            //         sortText: '!5',
+                            //         insertText: `<div className="${className}">$1</div>`,
+                            //         isSnippet: true,
+                            //     })
+                            // } else if (!existing[0] || existing[0].match(/\w/)) {
+                            const tags = c('jsxPseudoEmmet.tags')
+                            for (let [tag, value] of Object.entries(tags)) {
+                                if (value === true) value = `<${tag}>$1</${tag}>`
+                                prior.entries.push({
+                                    kind: typescript.ScriptElementKind.label,
+                                    name: tag,
+                                    sortText: '!5',
+                                    insertText: value,
+                                    isSnippet: true,
+                                })
+                            }
+                            // }
+                        }
+                    }
+                }
+                if (!prior) {
+                    return
+                }
                 // const fullText = scriptSnapshot.getText(0, scriptSnapshot.getLength())
                 // const matchImport = /(import (.*)from )['"].*['"]/.exec(fullText.split('\n')[line]!)?.[1]
                 // if (matchImport && character <= `import${matchImport}`.length) {
@@ -42,8 +100,8 @@ export = function ({ typescript }: { typescript: typeof tslib }) {
                 // prior.isGlobalCompletion
                 // prior.entries[0]
                 const entryNames = prior.entries.map(({ name }) => name)
+                if (c('removeUselessFunctionProps.enable')) prior.entries = prior.entries.filter(e => !['Symbol', 'caller', 'prototype'].includes(e.name))
                 if (['bind', 'call', 'caller'].every(name => entryNames.includes(name))) {
-                    if (c('removeUselessFunctionProps.enable')) prior.entries = prior.entries.filter(e => !['Symbol', 'caller', 'prototype'].includes(e.name))
                     if (c('highlightNonFunctionMethods.enable')) {
                         const standardProps = ['Symbol', 'apply', 'arguments', 'bind', 'call', 'caller', 'length', 'name', 'prototype', 'toString']
                         // TODO lift up!
@@ -55,13 +113,50 @@ export = function ({ typescript }: { typescript: typeof tslib }) {
                         })
                     }
                 }
-                if (c('patchToString.enable'))
-                    arrayMoveItemToFrom(
-                        prior.entries,
-                        ({ name }) => name === 'toExponential',
-                        ({ name }) => name === 'toString',
-                    )
-                if (c('correntSorting.enable')) {
+                if (c('patchToString.enable')) {
+                    //     const indexToPatch = arrayMoveItemToFrom(
+                    //         prior.entries,
+                    //         ({ name }) => name === 'toExponential',
+                    //         ({ name }) => name === 'toString',
+                    //     )
+                    let indexToPatch = prior.entries.findIndex(({ name }) => name === 'toString')
+                    if (indexToPatch !== -1) {
+                        prior.entries[indexToPatch]!.insertText = `${prior.entries[indexToPatch]!.insertText ?? prior.entries[indexToPatch]!.name}()`
+                        prior.entries[indexToPatch]!.kind = typescript.ScriptElementKind.constElement
+                        // prior.entries[indexToPatch]!.isSnippet = true
+                    }
+                }
+                const banAutoImportPackages = c('suggestions.banAutoImportPackages')
+                if (banAutoImportPackages?.length)
+                    prior.entries = prior.entries.filter(entry => {
+                        if (!entry.sourceDisplay) return true
+                        const text = entry.sourceDisplay.map(item => item.text).join()
+                        if (text.startsWith('.')) return true
+                        // TODO change to startsWith?
+                        return !banAutoImportPackages.includes(text)
+                    })
+                for (const rule of c('replaceSuggestions')) {
+                    let foundIndex: number
+                    const suggestion = prior.entries.find(({ name, kind }, index) => {
+                        if (rule.suggestion !== name) return false
+                        if (rule.filter?.kind && kind !== rule.filter.kind) return false
+                        foundIndex = index
+                        return true
+                    })
+                    if (!suggestion) continue
+
+                    if (rule.delete) {
+                        prior.entries.splice(foundIndex!, 1)
+                    }
+
+                    if (rule.duplicateOriginal) {
+                        prior.entries.splice(rule.duplicateOriginal === 'above' ? foundIndex! : foundIndex! + 1, 0, { ...suggestion })
+                    }
+
+                    Object.assign(suggestion, rule.patch ?? {})
+                    if (rule.patch?.insertText) suggestion.isSnippet = true
+                }
+                if (c('correctSorting.enable')) {
                     prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))
                 }
                 // console.log('signatureHelp', JSON.stringify(info.languageService.getSignatureHelpItems(fileName, position, {})))
@@ -70,9 +165,15 @@ export = function ({ typescript }: { typescript: typeof tslib }) {
             }
 
             proxy.getCompletionEntryDetails = (fileName, position, entryName, formatOptions, source, preferences, data) => {
-                // console.log('source', source)
+                const program = info.languageService.getProgram()
+                const sourceFile = program?.getSourceFile(fileName)
+                if (!program || !sourceFile) return
                 const prior = info.languageService.getCompletionEntryDetails(fileName, position, entryName, formatOptions, source, preferences, data)
                 if (!prior) return
+                // if (prior.kind === typescript.ScriptElementKind.constElement && prior.displayParts.map(item => item.text).join('').match(/: \(.+\) => .+/)) prior.codeActions?.push({
+                //     description: '',
+                //     changes: []
+                // })
                 // prior.codeActions = [{ description: '', changes: [{ fileName, textChanges: [{ span: { start: position, length: 0 }, newText: '()' }] }] }]
                 // formatOptions
                 // info.languageService.getDefinitionAtPosition(fileName, position)
@@ -81,14 +182,35 @@ export = function ({ typescript }: { typescript: typeof tslib }) {
 
             // proxy.getCombinedCodeFix(scope, fixId, formatOptions, preferences)
             proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
-                if (typeof positionOrRange !== 'number') {
-                    positionOrRange = positionOrRange.pos
+                let prior = info.languageService.getApplicableRefactors(fileName, positionOrRange, preferences)
+
+                if (c('markTsCodeActions.enable')) prior = prior.map(item => ({ ...item, description: `🔵 ${item.description}` }))
+
+                return prior
+            }
+            proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
+                let prior = info.languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
+
+                if (c('removeCodeFixes.enable')) {
+                    const toRemove = c('removeCodeFixes.codefixes')
+                    prior = prior.filter(({ fixName }) => !toRemove.includes(fixName as any))
                 }
+
+                if (c('markTsCodeFixes.character'))
+                    prior = prior.map(item => ({ ...item, description: `${c('markTsCodeFixes.character')} ${item.description}` }))
+
+                return prior
+            }
+            // @ts-expect-error
+            proxy.ignored = (fileName: string, positionOrRange: number, preferences: any) => {
+                if (typeof positionOrRange !== 'number') {
+                    positionOrRange = positionOrRange
+                }
+                // ts.createSourceFile(fileName, sourceText, languageVersion)
                 const { textSpan } = proxy.getSmartSelectionRange(fileName, positionOrRange)
                 console.log('textSpan.start', textSpan.start, textSpan.length)
                 const program = info.languageService.getProgram()
                 const sourceFile = program?.getSourceFile(fileName)
-
                 if (!program || !sourceFile) return []
                 const originalSourceText = sourceFile.text
                 // sourceFile.update('test', { span: textSpan, newLength: sourceFile.text.length + 2 })
@@ -116,27 +238,24 @@ export = function ({ typescript }: { typescript: typeof tslib }) {
                 //     type.getCallSignatures().map(item => item.getParameters().map(item => item.name)),
                 // )
                 sourceFile.text = originalSourceText
-
-                const prior = info.languageService.getApplicableRefactors(fileName, positionOrRange, preferences)
-
-                return []
-                // Feature: Remove useless code actions
-                // return prior.filter(({ fixName }) => !['fixMissingFunctionDeclaration'].includes(fixName))
             }
 
             return proxy
         },
         onConfigurationChanged(config: any) {
+            console.log('inspect config', JSON.stringify(config))
             _configuration = config
         },
     }
 }
 
+const appendInsertText = () => {}
+
 type ArrayPredicate<T> = (value: T, index: number) => boolean
 const arrayMoveItemToFrom = <T>(array: T[], originalItem: ArrayPredicate<T>, itemToMove: ArrayPredicate<T>) => {
     const originalItemIndex = array.findIndex(originalItem)
     if (originalItemIndex === -1) return undefined
-    const itemToMoveIndex = array.findIndex(originalItem)
+    const itemToMoveIndex = array.findIndex(itemToMove)
     if (itemToMoveIndex === -1) return undefined
     array.splice(originalItemIndex, 0, array[itemToMoveIndex]!)
     array.splice(itemToMoveIndex + 1, 1)

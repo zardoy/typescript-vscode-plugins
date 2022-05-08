@@ -1,13 +1,19 @@
+import { ScriptElementKind } from 'typescript/lib/tsserverlibrary'
+
 type ReplaceRule = {
     /** e.g. `readFile`, `^readFile` (global) or `fs.readFile` */
     suggestion: string
-    /** @experimental Additional filter */
-    package?: string
+    filter: {
+        // package?: string
+        // TODO
+        kind?: keyof typeof ScriptElementKind
+    }
     // action
-    remove?: boolean
+    delete?: boolean
+    duplicateOriginal?: boolean | 'above'
     patch?: Partial<{
         name: string
-        kind: string
+        kind: keyof typeof ScriptElementKind
         /** Might be useless when `correntSorting.enable` is true */
         sortText: string
         /** Generally not recommended */
@@ -15,9 +21,12 @@ type ReplaceRule = {
         insertText: string
     }>
     /** Works only with `correntSorting.enable` set to true (default) */
-    movePos?: number
+    // movePos?: number
+    /** When specified, `movePos` is ignored */
+    // TODO!
+    // movePosAbsolute?: number
     // or
-    insertAfter?: string
+    // insertAfter?: string
     /** Not recommended to use as it would override possible `?` insertion */
     // replaceExisting?: string
 }
@@ -25,49 +34,65 @@ type ReplaceRule = {
 // TODO support scripting
 export type Configuration = {
     /**
-     * Removes `Symbol`, `caller`, `prototype`
+     * Removes `Symbol`, `caller`, `prototype` everywhere
      * @default true
      *  */
     'removeUselessFunctionProps.enable': boolean
     /**
      * Useful for Number types.
-     * Patch `toString()`:
-     * 1. Move it above others to...
-     * 2. Remove arg tabstop
+     * Patch `toString()`: Removes arg tabstop
      * @default true
      */
     'patchToString.enable': boolean
+    // TODO achieve perfomace by patching the host
+    /** @default [] */
+    'suggestions.banAutoImportPackages': string[]
+    // TODO! corrent watching!
     /**
      *
      * @default true
      */
-    'patchArrayMethods.enable': boolean
+    // 'patchArrayMethods.enable': boolean
     /**
      *  Highlight and lift non-function methods. Also applies for static class methods. Uses `bind`, `call`, `caller` detection.
      * @default true
      * */
     'highlightNonFunctionMethods.enable': boolean
     /**
-     * Use originl sorting of suggestions (almost like in WebStorm)
+     * Use originl sorting of suggestions (almost like in WebStorm). Works only with TypeScript <= 4.5.5
      * @default true
      * */
-    'correntSorting.enable': boolean
+    'correctSorting.enable': boolean
     // TODO
     /**
      * Mark QuickFixes & refactorings with 🔵
      * @default true
      *  */
     'markTsCodeActions.enable': boolean
+    /**
+     * Leave empty to disable
+     * @default 🔵
+     */
+    'markTsCodeFixes.character': string
     // TODO
     /**
      * Reveal import statement as definition instead of real definition
      * @default true
      *  */
-    'importUpDefinition.enable': boolean
+    // 'importUpDefinition.enable': boolean
     /**
      * @default true
      *  */
-    'postfixSupport.enable': boolean
+    // 'postfixSupport.enable': boolean
+    /**
+     * @default true
+     * */
+    'removeCodeFixes.enable': boolean
+    /**
+     * @default ["fixMissingFunctionDeclaration"]
+     * @uniqueItems true
+     *  */
+    'removeCodeFixes.codefixes': ('fixMissingMember' | 'fixMissingProperties' | 'fixMissingAttributes' | 'fixMissingFunctionDeclaration')[]
     /**
      * @experimental
      * Only tag support
@@ -76,9 +101,13 @@ export type Configuration = {
     'jsxPseudoEmmet.enable': boolean
     /**
      * Sorting matters
-     * @default { div: true, span: true, input: "<input $1/>", p:true, form: true, footer: true, section: true, select: true }
      */
     'jsxPseudoEmmet.tags': { [tag: string]: true | string }
+    /**
+     * Exclude lowercase / incorrent e.g. suggestions
+     * @default true
+     */
+    'jsxImproveElementsSuggestions.enabled': boolean
     // 'eventTypePatching.enable': boolean
     // 'globalTypedQuerySelector.enable': boolean,
     /**
