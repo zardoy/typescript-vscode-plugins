@@ -22,8 +22,9 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 proxy[k] = (...args: Array<Record<string, unknown>>) => x.apply(info.languageService, args)
             }
 
-            let prevCompletions: any
+            let prevCompletionsMap: any
             proxy.getCompletionsAtPosition = (fileName, position, options) => {
+                prevCompletionsMap = {}
                 if (!_configuration) {
                     console.log('no received configuration!')
                 }
@@ -105,7 +106,13 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                         // TODO lift up!
                         prior.entries = prior.entries.map(entry => {
                             if (!standardProps.includes(entry.name)) {
-                                return { ...entry, insertText: entry.insertText ?? entry.name, name: `☆${entry.name}` }
+                                const newName = `☆${entry.name}`
+                                prevCompletionsMap[newName] = entry.name
+                                return {
+                                    ...entry,
+                                    insertText: entry.insertText ?? entry.name,
+                                    name: newName,
+                                }
                             }
                             return entry
                         })
@@ -166,7 +173,15 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 const program = info.languageService.getProgram()
                 const sourceFile = program?.getSourceFile(fileName)
                 if (!program || !sourceFile) return
-                const prior = info.languageService.getCompletionEntryDetails(fileName, position, entryName, formatOptions, source, preferences, data)
+                const prior = info.languageService.getCompletionEntryDetails(
+                    fileName,
+                    position,
+                    prevCompletionsMap[entryName] || entryName,
+                    formatOptions,
+                    source,
+                    preferences,
+                    data,
+                )
                 if (!prior) return
                 // if (prior.kind === typescript.ScriptElementKind.constElement && prior.displayParts.map(item => item.text).join('').match(/: \(.+\) => .+/)) prior.codeActions?.push({
                 //     description: '',
