@@ -1,5 +1,5 @@
 // GENERATED. DON'T EDIT MANUALLY
-// md5hash: 9aa6b84ad1d774daa0a3a7d9bb9f723b
+// md5hash: ba4b89b4b50869a61ab291839b74492d
 {
     "type": "object",
     "properties": {
@@ -60,9 +60,15 @@
                 "type": "string"
             }
         },
-        "jsxPseudoEmmet.enable": {
-            "default": true,
-            "type": "boolean"
+        "jsxEmmet.type": {
+            "description": "Only tag support",
+            "default": "fakeEmmet",
+            "enum": [
+                "disabled",
+                "fakeEmmet",
+                "realEmmet"
+            ],
+            "type": "string"
         },
         "jsxPseudoEmmet.tags": {
             "description": "Sorting matters",
@@ -222,8 +228,8 @@
     "required": [
         "correctSorting.enable",
         "highlightNonFunctionMethods.enable",
+        "jsxEmmet.type",
         "jsxImproveElementsSuggestions.enabled",
-        "jsxPseudoEmmet.enable",
         "jsxPseudoEmmet.tags",
         "markTsCodeActions.enable",
         "markTsCodeFixes.character",

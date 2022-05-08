@@ -94,11 +94,10 @@ export type Configuration = {
      *  */
     'removeCodeFixes.codefixes': ('fixMissingMember' | 'fixMissingProperties' | 'fixMissingAttributes' | 'fixMissingFunctionDeclaration')[]
     /**
-     * @experimental
      * Only tag support
-     * @default true
+     * @default fakeEmmet
      *  */
-    'jsxPseudoEmmet.enable': boolean
+    'jsxEmmet.type': 'realEmmet' | 'fakeEmmet' | 'disabled'
     /**
      * Sorting matters
      */

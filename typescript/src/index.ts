@@ -1,10 +1,12 @@
 import get from 'lodash.get'
 import type tslib from 'typescript/lib/tsserverlibrary'
+import * as emmet from '@vscode/emmet-helper'
 
 //@ts-ignore
 import type { Configuration } from '../../src/configurationType'
 
 export = function ({ typescript }: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
+    const ts = typescript
     let _configuration: Configuration
     const c = <T extends keyof Configuration>(key: T): Configuration[T] => get(_configuration, key)
 
@@ -22,7 +24,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 proxy[k] = (...args: Array<Record<string, unknown>>) => x.apply(info.languageService, args)
             }
 
-            let prevCompletionsMap: any
+            let prevCompletionsMap: Record<string, { originalName: string }>
             proxy.getCompletionsAtPosition = (fileName, position, options) => {
                 prevCompletionsMap = {}
                 if (!_configuration) {
@@ -40,24 +42,38 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 //     'raw prior',
                 //     prior?.entries.map(entry => entry.name),
                 // )
-                const node = findChildContainingPosition(typescript, sourceFile, position)
-                if (node) {
-                    if (c('jsxPseudoEmmet.enable') && (typescript.isJsxElement(node) || (node.parent && typescript.isJsxElement(node.parent)))) {
-                        if (typescript.isJsxOpeningElement(node)) {
-                            const nodeText = node.getText().slice(0, position - node.pos)
-                            if (c('jsxImproveElementsSuggestions.enabled') && !nodeText.includes(' ') && prior) {
-                                let lastPart = nodeText.split('.').at(-1)!
-                                if (lastPart.startsWith('<')) lastPart = lastPart.slice(1)
-                                const isStartingWithUpperCase = (str: string) => str[0] === str[0]?.toUpperCase()
-                                // check if starts with lowercase
-                                if (isStartingWithUpperCase(lastPart)) {
-                                    // TODO! compare with suggestions from lib.dom
-                                    prior.entries = prior.entries.filter(
-                                        entry => isStartingWithUpperCase(entry.name) && ![typescript.ScriptElementKind.enumElement].includes(entry.kind),
-                                    )
-                                }
+                if (['.jsx', '.tsx'].some(ext => fileName.endsWith(ext))) {
+                    // JSX Features
+                    const node = findChildContainingPosition(typescript, sourceFile, position)
+                    if (node) {
+                        const { SyntaxKind } = ts
+                        const emmetSyntaxKinds = [SyntaxKind.JsxFragment, SyntaxKind.JsxElement, SyntaxKind.JsxText]
+                        const emmetClosingSyntaxKinds = [SyntaxKind.JsxClosingElement, SyntaxKind.JsxClosingFragment]
+                        // TODO maybe allow fragment?
+                        const correntComponentSuggestionsKinds = [SyntaxKind.JsxOpeningElement, SyntaxKind.JsxSelfClosingElement]
+                        const nodeText = node.getFullText().slice(0, position - node.pos)
+                        if (
+                            correntComponentSuggestionsKinds.includes(node.kind) &&
+                            c('jsxImproveElementsSuggestions.enabled') &&
+                            !nodeText.includes(' ') &&
+                            prior
+                        ) {
+                            let lastPart = nodeText.split('.').at(-1)!
+                            if (lastPart.startsWith('<')) lastPart = lastPart.slice(1)
+                            const isStartingWithUpperCase = (str: string) => str[0] === str[0]?.toUpperCase()
+                            // check if starts with lowercase
+                            if (isStartingWithUpperCase(lastPart)) {
+                                // TODO! compare with suggestions from lib.dom
+                                prior.entries = prior.entries.filter(
+                                    entry => isStartingWithUpperCase(entry.name) && ![typescript.ScriptElementKind.enumElement].includes(entry.kind),
+                                )
                             }
-                        } else if (!typescript.isJsxClosingElement(node) /* TODO! scriptSnapshot.getText(position - 1, position).match(/(\s|\w|>)/) */) {
+                        }
+                        if (
+                            c('jsxEmmet.type') !== 'disabled' &&
+                            (emmetSyntaxKinds.includes(node.kind) ||
+                                /* Just before closing tag */ (emmetClosingSyntaxKinds.includes(node.kind) && nodeText.length === 0))
+                        ) {
                             // const { textSpan } = proxy.getSmartSelectionRange(fileName, position)
                             // let existing = scriptSnapshot.getText(textSpan.start, textSpan.start + textSpan.length)
                             // if (existing.includes('\n')) existing = ''
@@ -72,18 +88,47 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                             //         isSnippet: true,
                             //     })
                             // } else if (!existing[0] || existing[0].match(/\w/)) {
-                            const tags = c('jsxPseudoEmmet.tags')
-                            for (let [tag, value] of Object.entries(tags)) {
-                                if (value === true) value = `<${tag}>$1</${tag}>`
-                                prior.entries.push({
-                                    kind: typescript.ScriptElementKind.label,
-                                    name: tag,
-                                    sortText: '!5',
-                                    insertText: value,
-                                    isSnippet: true,
-                                })
+                            if (c('jsxEmmet.type') === 'realEmmet') {
+                                const sendToEmmet = nodeText.split(' ').at(-1)!
+                                const emmetCompletions = emmet.doComplete(
+                                    {
+                                        getText: () => sendToEmmet,
+                                        languageId: 'html',
+                                        lineCount: 1,
+                                        offsetAt: position => position.character,
+                                        positionAt: offset => ({ line: 0, character: offset }),
+                                        uri: '/',
+                                        version: 1,
+                                    },
+                                    { line: 0, character: sendToEmmet.length },
+                                    'html',
+                                    {},
+                                ) ?? { items: [] }
+                                for (const completion of emmetCompletions.items) {
+                                    prior.entries.push({
+                                        kind: typescript.ScriptElementKind.label,
+                                        name: completion.label.slice(1),
+                                        sortText: '!5',
+                                        // insertText: `${completion.label.slice(1)} ${completion.textEdit?.newText}`,
+                                        insertText: completion.textEdit?.newText,
+                                        isSnippet: true,
+                                        sourceDisplay: completion.detail !== undefined ? [{ kind: 'text', text: completion.detail }] : undefined,
+                                        // replacementSpan: { start: position - 5, length: 5 },
+                                    })
+                                }
+                            } else {
+                                const tags = c('jsxPseudoEmmet.tags')
+                                for (let [tag, value] of Object.entries(tags)) {
+                                    if (value === true) value = `<${tag}>$1</${tag}>`
+                                    prior.entries.push({
+                                        kind: typescript.ScriptElementKind.label,
+                                        name: tag,
+                                        sortText: '!5',
+                                        insertText: value,
+                                        isSnippet: true,
+                                    })
+                                }
                             }
-                            // }
                         }
                     }
                 }
@@ -107,7 +152,9 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                         prior.entries = prior.entries.map(entry => {
                             if (!standardProps.includes(entry.name)) {
                                 const newName = `☆${entry.name}`
-                                prevCompletionsMap[newName] = entry.name
+                                prevCompletionsMap[newName] = {
+                                    originalName: entry.name,
+                                }
                                 return {
                                     ...entry,
                                     insertText: entry.insertText ?? entry.name,
@@ -176,7 +223,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 const prior = info.languageService.getCompletionEntryDetails(
                     fileName,
                     position,
-                    prevCompletionsMap[entryName] || entryName,
+                    prevCompletionsMap[entryName]?.originalName || entryName,
                     formatOptions,
                     source,
                     preferences,
