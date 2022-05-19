@@ -16,6 +16,7 @@ export const activate = async () => {
         const config = vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!)
         api.configurePlugin('ts-essential-plugins', config)
     }
+
     vscode.workspace.onDidChangeConfiguration(({ affectsConfiguration }) => {
         if (affectsConfiguration(process.env.IDS_PREFIX!)) syncConfig()
     })

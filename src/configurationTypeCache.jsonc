@@ -1,5 +1,5 @@
 // GENERATED. DON'T EDIT MANUALLY
-// md5hash: 9c3812628516e353f3aa75256e99e8fa
+// md5hash: 0b8b4697ce68ebfe40346fd51700a786
 {
     "type": "object",
     "properties": {
@@ -219,7 +219,6 @@
                     }
                 },
                 "required": [
-                    "filter",
                     "suggestion"
                 ]
             }

@@ -3,7 +3,7 @@ import { ScriptElementKind } from 'typescript/lib/tsserverlibrary'
 type ReplaceRule = {
     /** e.g. `readFile`, `^readFile` (global) or `fs.readFile` */
     suggestion: string
-    filter: {
+    filter?: {
         // package?: string
         // TODO
         kind?: keyof typeof ScriptElementKind
