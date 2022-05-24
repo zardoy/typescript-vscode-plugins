@@ -1,5 +1,5 @@
 // GENERATED. DON'T EDIT MANUALLY
-// md5hash: 0b8b4697ce68ebfe40346fd51700a786
+// md5hash: d3897fbc226e0979fe8f8b4348bf9b6d
 {
     "type": "object",
     "properties": {
@@ -19,6 +19,15 @@
             "items": {
                 "type": "string"
             }
+        },
+        "suggestions.keywordsInsertText": {
+            "description": "What insert text to use for keywords (e.g. `return`)",
+            "default": "space",
+            "enum": [
+                "none",
+                "space"
+            ],
+            "type": "string"
         },
         "highlightNonFunctionMethods.enable": {
             "description": "Highlight and lift non-function methods. Also applies for static class methods. Uses `bind`, `call`, `caller` detection.",
@@ -237,6 +246,7 @@
         "removeCodeFixes.enable",
         "removeUselessFunctionProps.enable",
         "replaceSuggestions",
-        "suggestions.banAutoImportPackages"
+        "suggestions.banAutoImportPackages",
+        "suggestions.keywordsInsertText"
     ]
 }

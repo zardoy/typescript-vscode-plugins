@@ -6,7 +6,7 @@ import * as emmet from '@vscode/emmet-helper'
 //@ts-ignore
 import type { Configuration } from '../../src/configurationType'
 
-export = function({ typescript }: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
+export = function ({ typescript }: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
     const ts = typescript
     let _configuration: Configuration
     const c = <T extends keyof Configuration>(key: T): Configuration[T] => get(_configuration, key)
@@ -163,24 +163,24 @@ export = function({ typescript }: { typescript: typeof import('typescript/lib/ts
                 const entryNames = new Set(prior.entries.map(({ name }) => name))
                 if (c('removeUselessFunctionProps.enable')) prior.entries = prior.entries.filter(e => !['Symbol', 'caller', 'prototype'].includes(e.name))
                 if (['bind', 'call', 'caller'].every(name => entryNames.has(name)) && c('highlightNonFunctionMethods.enable')) {
-                        const standardProps = new Set(['Symbol', 'apply', 'arguments', 'bind', 'call', 'caller', 'length', 'name', 'prototype', 'toString'])
-                        // TODO lift up!
-                        prior.entries = prior.entries.map(entry => {
-                            if (!standardProps.has(entry.name) && entry.kind !== ts.ScriptElementKind.warning) {
-                                const newName = `☆${entry.name}`
-                                prevCompletionsMap[newName] = {
-                                    originalName: entry.name,
-                                }
-                                return {
-                                    ...entry,
-                                    insertText: entry.insertText ?? entry.name,
-                                    name: newName,
-                                }
+                    const standardProps = new Set(['Symbol', 'apply', 'arguments', 'bind', 'call', 'caller', 'length', 'name', 'prototype', 'toString'])
+                    // TODO lift up!
+                    prior.entries = prior.entries.map(entry => {
+                        if (!standardProps.has(entry.name) && entry.kind !== ts.ScriptElementKind.warning) {
+                            const newName = `☆${entry.name}`
+                            prevCompletionsMap[newName] = {
+                                originalName: entry.name,
                             }
+                            return {
+                                ...entry,
+                                insertText: entry.insertText ?? entry.name,
+                                name: newName,
+                            }
+                        }
 
-                            return entry
-                        })
-                    }
+                        return entry
+                    })
+                }
 
                 if (c('patchToString.enable')) {
                     //     const indexToPatch = arrayMoveItemToFrom(
@@ -205,6 +205,16 @@ export = function({ typescript }: { typescript: typeof import('typescript/lib/ts
                         // TODO change to startsWith?
                         return !banAutoImportPackages.includes(text)
                     })
+
+                if (c('suggestions.keywordsInsertText') === 'space') {
+                    const charAhead = scriptSnapshot.getText(position, position + 1)
+                    prior.entries = prior.entries.map(entry => {
+                        if (entry.kind !== ts.ScriptElementKind.keyword) return entry
+                        entry.insertText = charAhead === ' ' ? entry.name : `${entry.name} `
+                        return entry
+                    })
+                }
+
                 for (const rule of c('replaceSuggestions')) {
                     let foundIndex: number
                     const suggestion = prior.entries.find(({ name, kind }, index) => {
@@ -215,19 +225,15 @@ export = function({ typescript }: { typescript: typeof import('typescript/lib/ts
                     })
                     if (!suggestion) continue
 
-                    if (rule.delete)
-                        prior.entries.splice(foundIndex!, 1)
+                    if (rule.delete) prior.entries.splice(foundIndex!, 1)
 
-
-                    if (rule.duplicateOriginal)
-                        prior.entries.splice(rule.duplicateOriginal === 'above' ? foundIndex! : foundIndex! + 1, 0, { ...suggestion })
+                    if (rule.duplicateOriginal) prior.entries.splice(rule.duplicateOriginal === 'above' ? foundIndex! : foundIndex! + 1, 0, { ...suggestion })
 
                     Object.assign(suggestion, rule.patch ?? {})
                     if (rule.patch?.insertText) suggestion.isSnippet = true
                 }
 
-                if (c('correctSorting.enable'))
-                    prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))
+                if (c('correctSorting.enable')) prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))
 
                 // console.log('signatureHelp', JSON.stringify(info.languageService.getSignatureHelpItems(fileName, position, {})))
                 // console.timeEnd('slow-down')
@@ -283,8 +289,7 @@ export = function({ typescript }: { typescript: typeof import('typescript/lib/ts
 
             // @ts-expect-error some experiments
             proxy.ignored = (fileName: string, positionOrRange: number, preferences: any) => {
-                if (typeof positionOrRange !== 'number')
-                    positionOrRange = positionOrRange
+                if (typeof positionOrRange !== 'number') positionOrRange = positionOrRange
 
                 // ts.createSourceFile(fileName, sourceText, languageVersion)
                 const { textSpan } = proxy.getSmartSelectionRange(fileName, positionOrRange)
@@ -351,8 +356,7 @@ function findChildContainingPosition(
     position: number,
 ): tslib.Node | undefined {
     function find(node: ts.Node): ts.Node | undefined {
-        if (position >= node.getStart() && position < node.getEnd())
-            return typescript.forEachChild(node, find) || node
+        if (position >= node.getStart() && position < node.getEnd()) return typescript.forEachChild(node, find) || node
 
         return
     }

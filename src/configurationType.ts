@@ -47,6 +47,11 @@ export type Configuration = {
     // TODO achieve perfomace by patching the host
     /** @default [] */
     'suggestions.banAutoImportPackages': string[]
+    /**
+     * What insert text to use for keywords (e.g. `return`)
+     * @default space
+     */
+    'suggestions.keywordsInsertText': 'none' | 'space'
     // TODO! corrent watching!
     /**
      *
