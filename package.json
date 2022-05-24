@@ -58,5 +58,14 @@
         "lodash.get": "^4.4.2",
         "modify-json-file": "^1.2.2",
         "vscode-framework": "^0.0.18"
+    },
+    "prettier": {
+        "semi": false,
+        "singleQuote": true,
+        "proseWrap": "never",
+        "tabWidth": 4,
+        "trailingComma": "all",
+        "arrowParens": "avoid",
+        "printWidth": 150
     }
 }
