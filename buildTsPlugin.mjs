@@ -1,7 +1,7 @@
 //@ts-check
+import { join, resolve } from 'path'
 import { ensureDir } from 'fs-extra'
 import { build } from 'esbuild'
-import { join, resolve } from 'path'
 import { writePackageJsonFile } from 'typed-jsonfile'
 
 export const buildTsPlugin = async (/** @type {string} */ outDir, /** @type {string} */ name, /** @type {string} */ entrypoint) => {
@@ -25,9 +25,9 @@ export const buildTsPlugin = async (/** @type {string} */ outDir, /** @type {str
         format: 'cjs',
         entryPoints: [entrypoint],
         outfile: join(outDir, 'index.js'),
-        mainFields: ['module', 'main']
+        mainFields: ['module', 'main'],
     })
 }
 
-const name = 'ts-essential-plugins'
+const name = 'typescript-essential-plugins'
 buildTsPlugin(`out/node_modules/${name}`, name, 'typescript/src/index.ts')
