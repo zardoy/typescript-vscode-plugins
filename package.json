@@ -1,6 +1,6 @@
 {
-    "name": "typescript-essential-plugins",
-    "displayName": "TS Essential Plugins",
+    "name": "ts-essential-plugins",
+    "displayName": "TypeScript Essential Plugins",
     "version": "0.0.1",
     "license": "MIT",
     "contributes": {
@@ -21,7 +21,8 @@
         "ts",
         "javascript",
         "plugin",
-        "webstorm"
+        "webstorm",
+        "TypeScript Hero"
     ],
     "activationEvents": [
         "onLanguage:javascript",
