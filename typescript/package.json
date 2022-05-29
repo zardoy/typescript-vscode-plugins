@@ -1,5 +1,5 @@
 {
-    "name": "ts-essential-plugins",
+    "name": "typescript-essential-plugins",
     "version": "0.0.1",
     "main": "build/index.js"
 }

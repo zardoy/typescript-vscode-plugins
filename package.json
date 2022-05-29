@@ -1,12 +1,12 @@
 {
     "name": "ts-essential-plugins",
-    "displayName": "TS Essential Plugins",
+    "displayName": "TypeScript Essential Plugins",
     "version": "0.0.1",
     "license": "MIT",
     "contributes": {
         "typescriptServerPlugins": [
             {
-                "name": "ts-essential-plugins",
+                "name": "typescript-essential-plugins",
                 "enableForWorkspaceTypeScriptVersions": true
             }
         ]
@@ -19,9 +19,10 @@
     "private": true,
     "keywords": [
         "ts",
-        "typescript",
-        "ts plugin",
-        "webstorm"
+        "javascript",
+        "plugin",
+        "webstorm",
+        "TypeScript Hero"
     ],
     "activationEvents": [
         "onLanguage:javascript",
@@ -42,7 +43,7 @@
         "@zardoy/tsconfig": "^1.3.1",
         "esbuild": "^0.14.38",
         "fs-extra": "^10.1.0",
-        "ts-essential-plugins": "workspace:*",
+        "typescript-essential-plugins": "workspace:*",
         "typed-jsonfile": "^0.2.1",
         "typescript": "^4.5.4",
         "vscode-manifest": "^0.0.4"
