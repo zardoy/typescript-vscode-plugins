@@ -275,6 +275,30 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
 
             proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
                 let prior = info.languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
+                // const scriptSnapshot = info.project.getScriptSnapshot(fileName)
+                const diagnostics = info.languageService.getSemanticDiagnostics(fileName)
+
+                // https://github.com/Microsoft/TypeScript/blob/v4.5.5/src/compiler/diagnosticMessages.json#L458
+                const appliableErrorCode = [1156, 1157].find(code => errorCodes.includes(code))
+                if (appliableErrorCode) {
+                    const diagnostic = diagnostics.find(({ code }) => code === appliableErrorCode)!
+                    prior = [
+                        ...prior,
+                        {
+                            fixName: 'wrapBlock',
+                            description: 'Wrap in block',
+                            changes: [
+                                {
+                                    fileName,
+                                    textChanges: [
+                                        { span: { start: diagnostic.start!, length: 0 }, newText: '{' },
+                                        { span: { start: diagnostic.start! + diagnostic.length!, length: 0 }, newText: '}' },
+                                    ],
+                                },
+                            ],
+                        },
+                    ]
+                }
 
                 if (c('removeCodeFixes.enable')) {
                     const toRemove = c('removeCodeFixes.codefixes')
