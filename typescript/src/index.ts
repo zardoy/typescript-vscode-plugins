@@ -208,10 +208,31 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
 
                 if (c('suggestions.keywordsInsertText') === 'space') {
                     const charAhead = scriptSnapshot.getText(position, position + 1)
+                    const bannedKeywords = [
+                        'true',
+                        'false',
+                        'undefined',
+                        'null',
+                        'never',
+                        'unknown',
+                        'any',
+                        'symbol',
+                        'string',
+                        'number',
+                        'boolean',
+                        'object',
+                        'this',
+                        'catch',
+                        'constructor',
+                        'continue',
+                        'break',
+                        'debugger',
+                        'default',
+                        'super',
+                    ]
                     prior.entries = prior.entries.map(entry => {
-                        if (entry.kind !== ts.ScriptElementKind.keyword) return entry
-                        entry.insertText = charAhead === ' ' ? entry.name : `${entry.name} `
-                        return entry
+                        if (entry.kind !== ts.ScriptElementKind.keyword || charAhead === ' ' || bannedKeywords.includes(entry.name)) return entry
+                        return { ...entry, insertText: `${entry.name} ` }
                     })
                 }
 
