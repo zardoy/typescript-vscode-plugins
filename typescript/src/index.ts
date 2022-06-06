@@ -2,14 +2,13 @@ import get from 'lodash.get'
 import type tslib from 'typescript/lib/tsserverlibrary'
 import * as emmet from '@vscode/emmet-helper'
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-ignore
-import type { Configuration } from '../../src/configurationType'
+import codeFixesAtPosition from './codeFixesAtPosition'
+import { Configuration, GetConfig } from './types'
 
 export = function ({ typescript }: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
     const ts = typescript
     let _configuration: Configuration
-    const c = <T extends keyof Configuration>(key: T): Configuration[T] => get(_configuration, key)
+    const c: GetConfig = key => get(_configuration, key)
 
     return {
         create(info: ts.server.PluginCreateInfo) {
@@ -294,43 +293,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 return prior
             }
 
-            proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
-                let prior = info.languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
-                // const scriptSnapshot = info.project.getScriptSnapshot(fileName)
-                const diagnostics = info.languageService.getSemanticDiagnostics(fileName)
-
-                // https://github.com/Microsoft/TypeScript/blob/v4.5.5/src/compiler/diagnosticMessages.json#L458
-                const appliableErrorCode = [1156, 1157].find(code => errorCodes.includes(code))
-                if (appliableErrorCode) {
-                    const diagnostic = diagnostics.find(({ code }) => code === appliableErrorCode)!
-                    prior = [
-                        ...prior,
-                        {
-                            fixName: 'wrapBlock',
-                            description: 'Wrap in block',
-                            changes: [
-                                {
-                                    fileName,
-                                    textChanges: [
-                                        { span: { start: diagnostic.start!, length: 0 }, newText: '{' },
-                                        { span: { start: diagnostic.start! + diagnostic.length!, length: 0 }, newText: '}' },
-                                    ],
-                                },
-                            ],
-                        },
-                    ]
-                }
-
-                if (c('removeCodeFixes.enable')) {
-                    const toRemove = c('removeCodeFixes.codefixes')
-                    prior = prior.filter(({ fixName }) => !toRemove.includes(fixName as any))
-                }
-
-                if (c('markTsCodeFixes.character'))
-                    prior = prior.map(item => ({ ...item, description: `${c('markTsCodeFixes.character')} ${item.description}` }))
-
-                return prior
-            }
+            codeFixesAtPosition(proxy, info, c)
 
             // @ts-expect-error some experiments
             proxy.ignored = (fileName: string, positionOrRange: number, preferences: any) => {

@@ -34,6 +34,10 @@ type ReplaceRule = {
 // TODO support scripting
 export type Configuration = {
     /**
+     * @default remove
+     */
+    tsTypesInJsQuickfix: 'disable' | 'toJsdoc' | 'remove'
+    /**
      * Removes `Symbol`, `caller`, `prototype` everywhere
      * @default true
      *  */
