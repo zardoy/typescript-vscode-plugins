@@ -10,16 +10,26 @@ export default (proxy: tslib.LanguageService, info: tslib.server.PluginCreateInf
         )
         // const scriptSnapshot = info.project.getScriptSnapshot(fileName)
         const semanticDiagnostics = info.languageService.getSemanticDiagnostics(fileName)
-        const diagnostics = info.languageService.getSyntacticDiagnostics(fileName)
-
+        const syntacicDiagnostics = info.languageService.getSyntacticDiagnostics(fileName)
         // https://github.com/Microsoft/TypeScript/blob/v4.5.5/src/compiler/diagnosticMessages.json#L458
-        // const findDiagnosticByCode = (codes: string[]) => {
-        //     errorCodes.includes(code)
-        // }
-        const wrapBlockCodes = [1156, 1157].find(code => errorCodes.includes(code)   )
-        const typeAnnotationCode = [8010, 8011].find(code => errorCodes.includes(code))
-        if (wrapBlockCodes) {
-            const diagnostic = diagnostics.find(({ code }) => code === wrapBlockCodes)!
+        const findDiagnosticByCode = (codes: number[]) => {
+            const errorCode = codes.find(code => {
+                return errorCodes.includes(code)
+            })
+            if (!errorCode) return
+            const syntactic = syntacicDiagnostics.find(({ code }) => code === errorCode)
+            if (syntactic) {
+                return syntactic
+            }
+            const semantic = semanticDiagnostics.find(({ code }) => code === errorCode)
+            if (semantic) {
+                return semantic
+            }
+            return
+        }
+        const wrapBlockDiagnostics = findDiagnosticByCode([1156, 1157])
+        const typeAnnotationDiagnostics = findDiagnosticByCode([8010, 8011])
+        if (wrapBlockDiagnostics) {
             prior = [
                 ...prior,
                 {
@@ -29,17 +39,15 @@ export default (proxy: tslib.LanguageService, info: tslib.server.PluginCreateInf
                         {
                             fileName,
                             textChanges: [
-                                { span: { start: diagnostic.start!, length: 0 }, newText: '{' },
-                                { span: { start: diagnostic.start! + diagnostic.length!, length: 0 }, newText: '}' },
+                                { span: { start: wrapBlockDiagnostics.start!, length: 0 }, newText: '{' },
+                                { span: { start: wrapBlockDiagnostics.start! + wrapBlockDiagnostics.length!, length: 0 }, newText: '}' },
                             ],
                         },
                     ],
                 },
             ]
         }
-        if (typeAnnotationCode) {
-            const diagnostic = diagnostics.find(({ code }) => code === typeAnnotationCode)!
-            console.log('diagnostic', diagnostic)
+        if (typeAnnotationDiagnostics) {
             prior = [
                 ...prior,
                 {
@@ -48,7 +56,9 @@ export default (proxy: tslib.LanguageService, info: tslib.server.PluginCreateInf
                     changes: [
                         {
                             fileName,
-                            textChanges: [{ span: { start: diagnostic.start! - 2, length: diagnostic.length! + 2 }, newText: '' }],
+                            textChanges: [
+                                { span: { start: typeAnnotationDiagnostics.start! - 2, length: typeAnnotationDiagnostics.length! + 2 }, newText: '' },
+                            ],
                         },
                     ],
                 },
