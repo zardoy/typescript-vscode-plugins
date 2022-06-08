@@ -9,19 +9,10 @@ export default (proxy: tslib.LanguageService, info: tslib.server.PluginCreateInf
         const syntacicDiagnostics = info.languageService.getSyntacticDiagnostics(fileName)
         // https://github.com/Microsoft/TypeScript/blob/v4.5.5/src/compiler/diagnosticMessages.json#L458
         const findDiagnosticByCode = (codes: number[]) => {
-            const errorCode = codes.find(code => {
-                return errorCodes.includes(code)
-            })
+            const errorCode = codes.find(code => errorCodes.includes(code))
             if (!errorCode) return
-            const syntactic = syntacicDiagnostics.find(({ code }) => code === errorCode)
-            if (syntactic) {
-                return syntactic
-            }
-            const semantic = semanticDiagnostics.find(({ code }) => code === errorCode)
-            if (semantic) {
-                return semantic
-            }
-            return
+            const diagnosticPredicate = ({ code, start: localStart }) => code === errorCode && localStart === start
+            return syntacicDiagnostics.find(diagnosticPredicate) || semanticDiagnostics.find(diagnosticPredicate)
         }
         const wrapBlockDiagnostics = findDiagnosticByCode([1156, 1157])
         const typeAnnotationDiagnostics = findDiagnosticByCode([8010, 8011])
