@@ -1,17 +1,8 @@
 // GENERATED. DON'T EDIT MANUALLY
-// md5hash: 25ca08bb307c6e514c0f5bdac62339a3
+// md5hash: 6f8c829e7a62f043530298ee9275369a
 {
     "type": "object",
     "properties": {
-        "tsTypesInJsQuickfix": {
-            "default": "remove",
-            "enum": [
-                "disable",
-                "remove",
-                "toJsdoc"
-            ],
-            "type": "string"
-        },
         "removeUselessFunctionProps.enable": {
             "description": "Removes `Symbol`, `caller`, `prototype` everywhere",
             "default": true,
@@ -256,7 +247,6 @@
         "removeUselessFunctionProps.enable",
         "replaceSuggestions",
         "suggestions.banAutoImportPackages",
-        "suggestions.keywordsInsertText",
-        "tsTypesInJsQuickfix"
+        "suggestions.keywordsInsertText"
     ]
 }

@@ -4,10 +4,6 @@ import { GetConfig } from './types'
 export default (proxy: tslib.LanguageService, info: tslib.server.PluginCreateInfo, c: GetConfig) => {
     proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
         let prior = info.languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
-        console.log(
-            'prior',
-            prior.map(({ fixName, fixAllDescription, fixId }) => JSON.stringify({ fixId, fixAllDescription, fixName })),
-        )
         // const scriptSnapshot = info.project.getScriptSnapshot(fileName)
         const semanticDiagnostics = info.languageService.getSemanticDiagnostics(fileName)
         const syntacicDiagnostics = info.languageService.getSyntacticDiagnostics(fileName)
