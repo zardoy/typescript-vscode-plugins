@@ -7,7 +7,7 @@ const replacement = '||'
 const pos = testString.indexOf(replacement)
 testString = testString.slice(0, pos) + testString.slice(pos + replacement.length)
 const filePath = '/test.ts'
-const languageService = createLanguageService({
+const { languageService } = createLanguageService({
     [filePath]: testString,
 })
 

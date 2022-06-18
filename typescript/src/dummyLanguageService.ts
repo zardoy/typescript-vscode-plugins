@@ -2,11 +2,11 @@
 import ts from 'typescript/lib/tsserverlibrary'
 
 export const createLanguageService = (files: Record<string, string>) => {
-    const dummyVersion = '1'
+    let dummyVersion = 1
     const languageService = ts.createLanguageService({
-        getProjectVersion: () => dummyVersion,
-        getScriptVersion: () => dummyVersion,
-        getCompilationSettings: () => ({ allowJs: true, jsx: ts.JsxEmit.Preserve }),
+        getProjectVersion: () => dummyVersion.toString(),
+        getScriptVersion: () => dummyVersion.toString(),
+        getCompilationSettings: () => ({ allowJs: true, jsx: ts.JsxEmit.Preserve, target: ts.ScriptTarget.ESNext }),
         getScriptFileNames: () => Object.keys(files),
         getScriptSnapshot: fileName => {
             const contents = files[fileName]
@@ -14,7 +14,12 @@ export const createLanguageService = (files: Record<string, string>) => {
             return ts.ScriptSnapshot.fromString(contents)
         },
         getCurrentDirectory: () => '',
-        getDefaultLibFileName: () => 'defaultLib:lib.d.ts',
+        getDefaultLibFileName: () => require.resolve('typescript/lib/lib.esnext.full.d.ts'),
     })
-    return languageService
+    return {
+        languageService,
+        updateProject() {
+            dummyVersion++
+        },
+    }
 }

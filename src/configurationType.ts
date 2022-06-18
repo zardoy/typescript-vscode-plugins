@@ -31,6 +31,7 @@ type ReplaceRule = {
     // replaceExisting?: string
 }
 
+// For easier testing, specify every default
 // TODO support scripting
 export type Configuration = {
     /**
@@ -129,5 +130,8 @@ export type Configuration = {
     // TODO
     /** Diagnostics (if not handled by eslint) & completions */
     // 'dotImportsMap.enable': boolean,
+    /**
+     * @default []
+     */
     replaceSuggestions: ReplaceRule[]
 }

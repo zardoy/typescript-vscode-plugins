@@ -1,4 +1,5 @@
 # ignore files that have typescript import
 typescript/**
 src/configurationType.ts
+src/configurationTypeCache.jsonc
 playground.ts
