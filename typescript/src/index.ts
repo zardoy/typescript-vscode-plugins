@@ -5,6 +5,7 @@ import * as emmet from '@vscode/emmet-helper'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import type { Configuration } from '../../src/configurationType'
+import isInBannedPosition from './isInBannedPosition'
 
 export = function ({ typescript }: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
     const ts = typescript
@@ -53,8 +54,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 const sourceFile = program?.getSourceFile(fileName)
                 if (!program || !sourceFile) return
                 const scriptSnapshot = info.project.getScriptSnapshot(fileName)
-                const { line, character } = info.languageService.toLineColumnOffset!(fileName, position)
-                if (!scriptSnapshot) return
+                if (!scriptSnapshot || isInBannedPosition(position, fileName, scriptSnapshot, sourceFile, info.languageService)) return
                 let prior = info.languageService.getCompletionsAtPosition(fileName, position, options)
                 // console.log(
                 //     'raw prior',
