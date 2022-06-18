@@ -66,7 +66,8 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                         name: entryName,
                         kind: ts.ScriptElementKind.alias,
                         kindModifiers: '',
-                        displayParts: typeof documentationOverride === 'string' ? [{ kind: 'text', text: documentationOverride }] : documentationOverride,
+                        displayParts: [],
+                        documentation: typeof documentationOverride === 'string' ? [{ kind: 'text', text: documentationOverride }] : documentationOverride,
                     }
                 }
                 const prior = info.languageService.getCompletionEntryDetails(
