@@ -1,3 +1,4 @@
 # ignore files that have typescript import
 typescript/**
 src/configurationType.ts
+playground.ts

@@ -30,4 +30,4 @@ export const buildTsPlugin = async (/** @type {string} */ outDir, /** @type {str
 }
 
 const name = 'typescript-essential-plugins'
-buildTsPlugin(`out/node_modules/${name}`, name, 'typescript/src/index.ts')
+await buildTsPlugin(`out/node_modules/${name}`, name, 'typescript/src/index.ts')
