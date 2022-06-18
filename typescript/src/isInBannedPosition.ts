@@ -9,9 +9,7 @@ export default (
 ): boolean => {
     const { character } = languageService.toLineColumnOffset!(fileName, position)
     const textBeforePositionLine = scriptSnapshot?.getText(position - character, position)
-    const textAfterPosition = scriptSnapshot?.getText(position, sourceFile.getLineEndOfPosition(position))
-    const newLineIndex = textAfterPosition.indexOf('\n')
-    const textAfterPositionLine = newLineIndex === -1 ? textAfterPosition : textAfterPosition.slice(0, newLineIndex)
+    const textAfterPositionLine = scriptSnapshot?.getText(position, sourceFile.getLineEndOfPosition(position))
     if (textBeforePositionLine.trimStart() === 'import ' && textAfterPositionLine.trimStart().startsWith('from')) return true
     return false
 }
