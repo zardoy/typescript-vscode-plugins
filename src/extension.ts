@@ -21,4 +21,6 @@ export const activate = async () => {
         if (affectsConfiguration(process.env.IDS_PREFIX!)) syncConfig()
     })
     syncConfig()
+    setTimeout(() => syncConfig(), 500)
+    setTimeout(() => syncConfig(), 1500)
 }
