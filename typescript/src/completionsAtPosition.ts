@@ -19,13 +19,13 @@ export const getCompletionsAtPosition = (
     const program = languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
     if (!program || !sourceFile) return
-    if (!scriptSnapshot || isInBannedPosition(position, fileName, scriptSnapshot, sourceFile, languageService)) return
+    const node = findChildContainingPosition(ts, sourceFile, position)
+    if (!scriptSnapshot || isInBannedPosition(position, fileName, scriptSnapshot, sourceFile, languageService, ts, program, node)) return
     let prior = languageService.getCompletionsAtPosition(fileName, position, options)
     // console.log(
     //     'raw prior',
     //     prior?.entries.map(entry => entry.name),
     // )
-    const node = findChildContainingPosition(ts, sourceFile, position)
     if (['.jsx', '.tsx'].some(ext => fileName.endsWith(ext))) {
         // JSX Features
         if (node) {
