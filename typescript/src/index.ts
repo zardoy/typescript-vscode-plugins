@@ -7,13 +7,17 @@ import _ from 'lodash'
 import { GetConfig } from './types'
 import { getCompletionsAtPosition, PrevCompletionMap } from './completionsAtPosition'
 
+const thisPluginMarker = Symbol('__essentialPluginsMarker__')
+
+// just to see wether issue is resolved
+let _configuration: Configuration
+const c: GetConfig = key => get(_configuration, key)
 export = function ({ typescript }: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
     const ts = typescript
-    let _configuration: Configuration
-    const c: GetConfig = key => get(_configuration, key)
 
     return {
         create(info: ts.server.PluginCreateInfo) {
+            if (info.languageService[thisPluginMarker]) return info.languageService
             // const realGetSnapshot = info.languageServiceHost.getScriptSnapshot
             // info.languageServiceHost.getScriptSnapshot = fileName => {
             //     console.log('getSnapshot', fileName)
@@ -135,6 +139,8 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
 
                 return prior
             }
+
+            info.languageService[thisPluginMarker] = true
 
             return proxy
         },
