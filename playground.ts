@@ -2,8 +2,21 @@
 import ts from 'typescript/lib/tsserverlibrary'
 import { createLanguageService } from './typescript/src/dummyLanguageService'
 
-let testString = 'const a: {/** @default test */a: 5} | {b: 6, /** yes */a: 9} = null as any;\nif ("||" in a) {}'
-const replacement = '||'
+const test = (arg: {}) => arg
+test({})
+
+let testString = /* ts */ `
+const test = {/**/}
+
+import {commands} from 'vscode'
+/*
+ * @deprecated
+ */
+const test/**/ = 5
+test
+commands.executeCommand('/**/')
+`
+const replacement = '/**/'
 const pos = testString.indexOf(replacement)
 testString = testString.slice(0, pos) + testString.slice(pos + replacement.length)
 const filePath = '/test.ts'
@@ -18,11 +31,27 @@ if (!program || !sourceFile) throw new Error('No source file')
 const typeChecker = program.getTypeChecker()
 const node = findChildContainingPosition(ts, sourceFile, pos)
 if (!node) throw new Error('No node')
-const type = typeChecker.getTypeAtLocation(node)
+
+const updateJsdocDefault = () => {
+    const checkNode = ts.isStringLiteralLike(node) ? node.parent : node
+    return ts.isBindingElement(checkNode)
+}
+
+const suggestJsdocDefault = () => {
+    const checkNode = ts.isStringLiteralLike(node) ? node.parent : node
+    if (
+        ts.isBindingElement(checkNode) ||
+        (ts.isBinaryExpression(checkNode) && checkNode.operatorToken.kind === ts.SyntaxKind.EqualsToken) ||
+        ts.isObjectLiteralExpression(checkNode)
+        ts.isPropertyAssignment(checkNode)
+    ) {
+    }
+}
+
+// ts.TypeFlags.Enum
+// languageService.getQuickInfoAtPosition(fileName, position)
 
 // explore:
-
-console.log(typeChecker.typeToString(type))
 
 function findChildContainingPosition(
     typescript: typeof import('typescript/lib/tsserverlibrary'),
