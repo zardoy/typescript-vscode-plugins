@@ -188,6 +188,7 @@ export const getCompletionsAtPosition = (
             'debugger',
             'default',
             'super',
+            'import',
         ]
         prior.entries = prior.entries.map(entry => {
             if (entry.kind !== ts.ScriptElementKind.keyword || charAhead === ' ' || bannedKeywords.includes(entry.name)) return entry
