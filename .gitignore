@@ -11,6 +11,7 @@ out
 .cache
 src/generated.ts
 src/configurationType.js
+src/configurationType.js.map
 src/configurationTypeCache.jsonc
 
 coverage

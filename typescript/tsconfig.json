@@ -3,7 +3,10 @@
     "compilerOptions": {
         "noEmit": false,
         "rootDir": "src",
+        "sourceMap": true,
         "outDir": "build"
     },
-    "include": ["src"]
+    "include": [
+        "src"
+    ]
 }
