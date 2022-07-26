@@ -3,6 +3,7 @@ import type tslib from 'typescript/lib/tsserverlibrary'
 import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './isInBannedPosition'
 import { GetConfig } from './types'
+import { findChildContainingPosition } from './utils'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | tslib.SymbolDisplayPart[] }>
 
@@ -14,7 +15,12 @@ export const getCompletionsAtPosition = (
     languageService: ts.LanguageService,
     scriptSnapshot: ts.IScriptSnapshot,
     ts: typeof tslib,
-) => {
+):
+    | {
+          completions: tslib.CompletionInfo
+          prevCompletionsMap: PrevCompletionMap
+      }
+    | undefined => {
     const prevCompletionsMap: PrevCompletionMap = {}
     const program = languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
@@ -25,6 +31,10 @@ export const getCompletionsAtPosition = (
     //     'raw prior',
     //     prior?.entries.map(entry => entry.name),
     // )
+    const ensurePrior = () => {
+        if (!prior) prior = { entries: [], isGlobalCompletion: false, isMemberCompletion: false, isNewIdentifierLocation: false }
+        return true
+    }
     const node = findChildContainingPosition(ts, sourceFile, position)
     if (['.jsx', '.tsx'].some(ext => fileName.endsWith(ext))) {
         // JSX Features
@@ -54,55 +64,56 @@ export const getCompletionsAtPosition = (
                 // const { textSpan } = proxy.getSmartSelectionRange(fileName, position)
                 // let existing = scriptSnapshot.getText(textSpan.start, textSpan.start + textSpan.length)
                 // if (existing.includes('\n')) existing = ''
-                if (!prior) prior = { entries: [], isGlobalCompletion: false, isMemberCompletion: false, isNewIdentifierLocation: false }
-                // if (existing.startsWith('.')) {
-                //     const className = existing.slice(1)
-                //     prior.entries.push({
-                //         kind: typescript.ScriptElementKind.label,
-                //         name: className,
-                //         sortText: '!5',
-                //         insertText: `<div className="${className}">$1</div>`,
-                //         isSnippet: true,
-                //     })
-                // } else if (!existing[0] || existing[0].match(/\w/)) {
-                if (c('jsxEmmet.type') === 'realEmmet') {
-                    const sendToEmmet = nodeText.split(' ').at(-1)!
-                    const emmetCompletions = emmet.doComplete(
-                        {
-                            getText: () => sendToEmmet,
-                            languageId: 'html',
-                            lineCount: 1,
-                            offsetAt: position => position.character,
-                            positionAt: offset => ({ line: 0, character: offset }),
-                            uri: '/',
-                            version: 1,
-                        },
-                        { line: 0, character: sendToEmmet.length },
-                        'html',
-                        {},
-                    ) ?? { items: [] }
-                    for (const completion of emmetCompletions.items)
-                        prior.entries.push({
-                            kind: ts.ScriptElementKind.label,
-                            name: completion.label.slice(1),
-                            sortText: '!5',
-                            // insertText: `${completion.label.slice(1)} ${completion.textEdit?.newText}`,
-                            insertText: completion.textEdit?.newText,
-                            isSnippet: true,
-                            sourceDisplay: completion.detail !== undefined ? [{ kind: 'text', text: completion.detail }] : undefined,
-                            // replacementSpan: { start: position - 5, length: 5 },
-                        })
-                } else {
-                    const tags = c('jsxPseudoEmmet.tags')
-                    for (let [tag, value] of Object.entries(tags)) {
-                        if (value === true) value = `<${tag}>$1</${tag}>`
-                        prior.entries.push({
-                            kind: ts.ScriptElementKind.label,
-                            name: tag,
-                            sortText: '!5',
-                            insertText: value,
-                            isSnippet: true,
-                        })
+                if (ensurePrior() && prior) {
+                    // if (existing.startsWith('.')) {
+                    //     const className = existing.slice(1)
+                    //     prior.entries.push({
+                    //         kind: typescript.ScriptElementKind.label,
+                    //         name: className,
+                    //         sortText: '!5',
+                    //         insertText: `<div className="${className}">$1</div>`,
+                    //         isSnippet: true,
+                    //     })
+                    // } else if (!existing[0] || existing[0].match(/\w/)) {
+                    if (c('jsxEmmet.type') === 'realEmmet') {
+                        const sendToEmmet = nodeText.split(' ').at(-1)!
+                        const emmetCompletions = emmet.doComplete(
+                            {
+                                getText: () => sendToEmmet,
+                                languageId: 'html',
+                                lineCount: 1,
+                                offsetAt: position => position.character,
+                                positionAt: offset => ({ line: 0, character: offset }),
+                                uri: '/',
+                                version: 1,
+                            },
+                            { line: 0, character: sendToEmmet.length },
+                            'html',
+                            {},
+                        ) ?? { items: [] }
+                        for (const completion of emmetCompletions.items)
+                            prior.entries.push({
+                                kind: ts.ScriptElementKind.label,
+                                name: completion.label.slice(1),
+                                sortText: '!5',
+                                // insertText: `${completion.label.slice(1)} ${completion.textEdit?.newText}`,
+                                insertText: completion.textEdit?.newText,
+                                isSnippet: true,
+                                sourceDisplay: completion.detail !== undefined ? [{ kind: 'text', text: completion.detail }] : undefined,
+                                // replacementSpan: { start: position - 5, length: 5 },
+                            })
+                    } else {
+                        const tags = c('jsxPseudoEmmet.tags')
+                        for (let [tag, value] of Object.entries(tags)) {
+                            if (value === true) value = `<${tag}>$1</${tag}>`
+                            prior.entries.push({
+                                kind: ts.ScriptElementKind.label,
+                                name: tag,
+                                sortText: '!5',
+                                insertText: value,
+                                isSnippet: true,
+                            })
+                        }
                     }
                 }
             }
@@ -235,16 +246,3 @@ const arrayMoveItemToFrom = <T>(array: T[], originalItem: ArrayPredicate<T>, ite
 }
 
 const patchText = (input: string, start: number, end: number, newText: string) => input.slice(0, start) + newText + input.slice(end)
-
-function findChildContainingPosition(
-    typescript: typeof import('typescript/lib/tsserverlibrary'),
-    sourceFile: tslib.SourceFile,
-    position: number,
-): tslib.Node | undefined {
-    function find(node: ts.Node): ts.Node | undefined {
-        if (position >= node.getStart() && position < node.getEnd()) return typescript.forEachChild(node, find) || node
-
-        return
-    }
-    return find(sourceFile)
-}
