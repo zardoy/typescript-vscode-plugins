@@ -4,6 +4,7 @@ import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './isInBannedPosition'
 import { GetConfig } from './types'
 import { findChildContainingPosition } from './utils'
+import { isGoodPositionBuiltinMethodCompletion } from './isGootPositionMethodCompletion'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | tslib.SymbolDisplayPart[] }>
 
@@ -223,6 +224,11 @@ export const getCompletionsAtPosition = (
 
         Object.assign(suggestion, rule.patch ?? {})
         if (rule.patch?.insertText) suggestion.isSnippet = true
+    }
+
+    // prevent vscode-builtin wrong insertText with methods snippets enabled
+    if (!isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position)) {
+        prior.entries = prior.entries.map(item => ({ ...item, insertText: item.insertText ?? item.name, isSnippet: true }))
     }
 
     if (c('correctSorting.enable')) prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))

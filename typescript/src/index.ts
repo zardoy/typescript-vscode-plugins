@@ -6,9 +6,9 @@ import type { Configuration } from '../../src/configurationType'
 import _ from 'lodash'
 import { GetConfig } from './types'
 import { getCompletionsAtPosition, PrevCompletionMap } from './completionsAtPosition'
-import { CompletionEntry } from 'typescript/lib/tsserverlibrary'
 import { getParameterListParts } from './completionGetMethodParameters'
 import { oneOf } from '@zardoy/utils'
+import { isGoodPositionMethodCompletion } from './isGootPositionMethodCompletion'
 
 const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 
@@ -87,8 +87,9 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 )
                 if (!prior) return
                 if (c('enableMethodSnippets') && oneOf(prior.kind as string, ts.ScriptElementKind.constElement, 'property')) {
+                    const goodPosition = isGoodPositionMethodCompletion(ts, fileName, sourceFile, position, info.languageService)
                     const punctuationIndex = prior.displayParts.findIndex(({ kind }) => kind === 'punctuation')
-                    if (punctuationIndex !== 1) {
+                    if (goodPosition && punctuationIndex !== 1) {
                         const isParsableMethod = prior.displayParts
                             // next is space
                             .slice(punctuationIndex + 2)
