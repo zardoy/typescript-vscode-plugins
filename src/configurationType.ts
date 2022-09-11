@@ -136,4 +136,9 @@ export type Configuration = {
      * @default []
      */
     replaceSuggestions: ReplaceRule[]
+    /**
+     * https://github.com/microsoft/vscode/issues/160637
+     * @default true
+     */
+    removeDefinitionFromReferences: boolean
 }

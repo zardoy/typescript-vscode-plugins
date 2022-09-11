@@ -140,6 +140,14 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 return prior
             }
 
+            proxy.findReferences = (fileName, position) => {
+                let prior = info.languageService.findReferences(fileName, position)
+                if (prior && c('removeDefinitionFromReferences')) {
+                    prior = prior.map(({ references, ...other }) => ({ ...other, references: references.filter(({ isDefinition }) => !isDefinition) }))
+                }
+                return prior
+            }
+
             info.languageService[thisPluginMarker] = true
 
             return proxy
