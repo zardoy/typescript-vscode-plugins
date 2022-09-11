@@ -87,13 +87,9 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 //     description: '',
                 //     changes: []
                 // })
-                // prior.codeActions = [{ description: '', changes: [{ fileName, textChanges: [{ span: { start: position, length: 0 }, newText: '()' }] }] }]
-                // formatOptions
-                // info.languageService.getDefinitionAtPosition(fileName, position)
                 return prior
             }
 
-            // proxy.getCombinedCodeFix(scope, fixId, formatOptions, preferences)
             proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
                 let prior = info.languageService.getApplicableRefactors(fileName, positionOrRange, preferences)
 
@@ -140,9 +136,35 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 return prior
             }
 
+            proxy.getDefinitionAndBoundSpan = (fileName, position) => {
+                const prior = info.languageService.getDefinitionAndBoundSpan(fileName, position)
+                if (!prior) return
+                // used after check
+                const firstDef = prior.definitions![0]!
+                if (
+                    c('changeDtsFileDefinitionToJs') &&
+                    prior.definitions?.length === 1 &&
+                    // default, namespace import or import path click
+                    firstDef.containerName === '' &&
+                    firstDef.fileName.endsWith('.d.ts')
+                ) {
+                    const jsFileName = `${firstDef.fileName.slice(0, -'.d.ts'.length)}.js`
+                    const isJsFileExist = info.languageServiceHost.fileExists?.(jsFileName)
+                    if (isJsFileExist) prior.definitions = [{ ...firstDef, fileName: jsFileName }]
+                }
+                if (c('miscDefinitionImprovement') && prior.definitions?.length === 2) {
+                    prior.definitions = prior.definitions.filter(({ fileName, containerName }) => {
+                        const isFcDef = fileName.endsWith('node_modules/@types/react/index.d.ts') && containerName === 'FunctionComponent'
+                        return !isFcDef
+                    })
+                }
+                return prior
+            }
+
             proxy.findReferences = (fileName, position) => {
                 let prior = info.languageService.findReferences(fileName, position)
-                if (prior && c('removeDefinitionFromReferences')) {
+                if (!prior) return
+                if (c('removeDefinitionFromReferences')) {
                     prior = prior.map(({ references, ...other }) => ({ ...other, references: references.filter(({ isDefinition }) => !isDefinition) }))
                 }
                 return prior

@@ -141,4 +141,16 @@ export type Configuration = {
      * @default true
      */
     removeDefinitionFromReferences: boolean
+    /**
+     * Small definition improvements by cleaning them out:
+     * - remove node_modules definition on React.FC component click
+     * @default true
+     */
+    miscDefinitionImprovement: boolean
+    /**
+     * Experimental, feedback welcome
+     * If default, namespace import or import path click resolves to .d.ts file, try to resolve .js file instead with the same name
+     * @default false
+     */
+    changeDtsFileDefinitionToJs: boolean
 }
