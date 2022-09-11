@@ -153,4 +153,9 @@ export type Configuration = {
      * @default false
      */
     changeDtsFileDefinitionToJs: boolean
+    /**
+     * Experimental. Also includes optional args
+     * @default true
+     */
+    enableMethodSnippets: boolean
 }

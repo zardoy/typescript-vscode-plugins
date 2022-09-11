@@ -6,6 +6,9 @@ import type { Configuration } from '../../src/configurationType'
 import _ from 'lodash'
 import { GetConfig } from './types'
 import { getCompletionsAtPosition, PrevCompletionMap } from './completionsAtPosition'
+import { CompletionEntry } from 'typescript/lib/tsserverlibrary'
+import { getParameterListParts } from './completionGetMethodParameters'
+import { oneOf } from '@zardoy/utils'
 
 const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 
@@ -83,6 +86,35 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                     data,
                 )
                 if (!prior) return
+                if (c('enableMethodSnippets') && oneOf(prior.kind as string, ts.ScriptElementKind.constElement, 'property')) {
+                    const punctuationIndex = prior.displayParts.findIndex(({ kind }) => kind === 'punctuation')
+                    if (punctuationIndex !== 1) {
+                        const isParsableMethod = prior.displayParts
+                            // next is space
+                            .slice(punctuationIndex + 2)
+                            .map(({ text }) => text)
+                            .join('')
+                            .match(/\((.*)\) => /)
+                        if (isParsableMethod) {
+                            let firstArgMeet = false
+                            const args = prior.displayParts
+                                .filter(({ kind }, index, array) => {
+                                    if (kind !== 'parameterName') return false
+                                    if (array[index - 1]!.text === '(') {
+                                        if (!firstArgMeet) {
+                                            // bad parsing, as doesn't take second and more args
+                                            firstArgMeet = true
+                                            return true
+                                        }
+                                        return false
+                                    }
+                                    return true
+                                })
+                                .map(({ text }) => text)
+                            prior.documentation = [...(prior.documentation ?? []), { kind: 'text', text: `<!-- insert-func: ${args.join(',')}-->` }]
+                        }
+                    }
+                }
                 // if (prior.kind === typescript.ScriptElementKind.constElement && prior.displayParts.map(item => item.text).join('').match(/: \(.+\) => .+/)) prior.codeActions?.push({
                 //     description: '',
                 //     changes: []
