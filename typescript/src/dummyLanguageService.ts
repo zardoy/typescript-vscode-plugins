@@ -1,9 +1,8 @@
 // only for basic testing, as vscode is actually using server
 import ts from 'typescript/lib/tsserverlibrary'
 import path from 'path'
-import fs from 'fs'
 
-export const createLanguageService = (files: Record<string, string>) => {
+export const createLanguageService = (files: Record<string, string>, { useLib = true }: { useLib?: boolean } = {}) => {
     let dummyVersion = 1
     let defaultLibDir: string | undefined
     const languageService = ts.createLanguageService({
@@ -13,7 +12,7 @@ export const createLanguageService = (files: Record<string, string>) => {
         getScriptFileNames: () => Object.keys(files),
         getScriptSnapshot: fileName => {
             let contents = files[fileName]
-            if (path.dirname(fileName) === defaultLibDir) contents = ts.sys.readFile(fileName)
+            if (useLib && path.dirname(fileName) === defaultLibDir) contents = ts.sys.readFile(fileName)
             if (contents === undefined) return
             return ts.ScriptSnapshot.fromString(contents)
         },
