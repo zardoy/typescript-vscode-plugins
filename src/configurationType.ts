@@ -114,7 +114,16 @@ export type Configuration = {
      */
     'jsxImproveElementsSuggestions.enabled': boolean
     /**
-     * Requires restart TS server
+     * @default true
+     */
+    'experimentalPostfixes.enable': boolean
+    /**
+     * Disable specific postfixes from this plugin
+     * @default []
+     */
+    'experimentalPostfixes.disablePostfixes': string[]
+    /**
+     * Requires TS server restart
      * @default false
      *  */
     // 'eventTypePatching.enable': boolean

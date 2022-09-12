@@ -6,6 +6,8 @@ import type { Configuration } from '../../src/configurationType'
 import _ from 'lodash'
 import { GetConfig } from './types'
 import { getCompletionsAtPosition, PrevCompletionMap } from './completionsAtPosition'
+import { TriggerCharacterCommand } from './ipcTypes'
+import postfixesAtPosition from './postfixesAtPosition'
 import { getParameterListParts } from './completionGetMethodParameters'
 import { oneOf } from '@zardoy/utils'
 import { isGoodPositionMethodCompletion } from './isGootPositionMethodCompletion'
@@ -53,6 +55,15 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
             let prevCompletionsMap: PrevCompletionMap
             // eslint-disable-next-line complexity
             proxy.getCompletionsAtPosition = (fileName, position, options) => {
+                const specialCommand = options?.triggerCharacter as TriggerCharacterCommand
+                if (specialCommand === 'getPostfixes') {
+                    const scriptSnapshot = info.project.getScriptSnapshot(fileName)
+                    if (!scriptSnapshot) return
+                    return {
+                        entries: [],
+                        typescriptEssentialMetadata: postfixesAtPosition(position, fileName, scriptSnapshot, info.languageService, ts),
+                    } as any
+                }
                 prevCompletionsMap = {}
                 if (!_configuration) console.log('no received configuration!')
                 const scriptSnapshot = info.project.getScriptSnapshot(fileName)
@@ -123,6 +134,12 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 return prior
             }
 
+            proxy.getNavigationTree = fileName => {
+                const prior = info.languageService.getNavigationTree(fileName)
+                return prior
+            }
+
+            // proxy.getCombinedCodeFix(scope, fixId, formatOptions, preferences)
             proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
                 let prior = info.languageService.getApplicableRefactors(fileName, positionOrRange, preferences)
 

@@ -1,6 +1,9 @@
+// TODO change to with vue
 import * as vscode from 'vscode'
+import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
-import {} from 'vscode-framework'
+import { getExtensionSetting, registerActiveDevelopmentCommand } from 'vscode-framework'
+import { PostfixCompletion, TriggerCharacterCommand } from '../typescript/src/ipcTypes'
 
 export const activate = async () => {
     const tsExtension = vscode.extensions.getExtension('vscode.typescript-language-features')
@@ -53,4 +56,67 @@ export const activate = async () => {
             }
         }
     })
+
+    type SendCommandData = {
+        position: vscode.Position
+        document: vscode.TextDocument
+    }
+    const sendCommand = async (command: TriggerCharacterCommand, sendCommandDataArg: SendCommandData) => {
+        const { document, position } = ((): SendCommandData => {
+            if (sendCommandDataArg) return sendCommandDataArg
+            const editor = getActiveRegularEditor()!
+            return {
+                document: editor.document,
+                position: editor.selection.active,
+            }
+        })()
+        console.time(`request ${command}`)
+        const result = (await vscode.commands.executeCommand('typescript.tsserverRequest', 'completionInfo', {
+            _: '%%%',
+            somethingSpecial: 'test1',
+            file: document.uri.fsPath,
+            line: position.line + 1,
+            offset: position.character,
+            triggerCharacter: command,
+        })) as any
+        console.timeEnd(`request ${command}`)
+        if (!result || !result.body) return
+        return result.body
+    }
+
+    vscode.languages.registerCompletionItemProvider(
+        defaultJsSupersetLangs,
+        {
+            async provideCompletionItems(document, position, token, context) {
+                const result = await sendCommand('getPostfixes', { document, position })
+                if (!getExtensionSetting('experimentalPostfixes.enable')) return
+                const disablePostfixes = getExtensionSetting('experimentalPostfixes.disablePostfixes')
+                // eslint-disable-next-line prefer-destructuring
+                const typescriptEssentialMetadata: PostfixCompletion[] = result.typescriptEssentialMetadata
+                if (!typescriptEssentialMetadata) return
+                return typescriptEssentialMetadata
+                    .filter(({ label }) => !disablePostfixes.includes(label))
+                    .map(
+                        ({ label, replacement, insertTextSnippet }): vscode.CompletionItem => ({
+                            label,
+                            insertText: new vscode.SnippetString(insertTextSnippet),
+                            sortText: '05',
+                            kind: vscode.CompletionItemKind.Event,
+                            additionalTextEdits: [
+                                {
+                                    newText: '',
+                                    range: new vscode.Range(
+                                        document.positionAt(replacement[0]),
+                                        replacement[1] ? document.positionAt(replacement[1]) : position,
+                                    ),
+                                },
+                            ],
+                        }),
+                    )
+            },
+        },
+        '.',
+    )
+
+    registerActiveDevelopmentCommand(async () => {})
 }

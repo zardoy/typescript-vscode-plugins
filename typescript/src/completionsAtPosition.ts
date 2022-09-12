@@ -4,6 +4,8 @@ import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './isInBannedPosition'
 import { GetConfig } from './types'
 import { findChildContainingPosition } from './utils'
+import signatureAccessCompletions from './signatureAccessCompletions'
+import fixPropertiesSorting from './fixPropertiesSorting'
 import { isGoodPositionBuiltinMethodCompletion } from './isGootPositionMethodCompletion'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | tslib.SymbolDisplayPart[] }>
@@ -120,6 +122,15 @@ export const getCompletionsAtPosition = (
             }
         }
     }
+    fixPropertiesSorting(position, node, scriptSnapshot, sourceFile, program, ts)
+    const addSignatureAccessCompletions = prior?.entries.filter(({ kind }) => kind !== ts.ScriptElementKind.warning).length
+        ? []
+        : signatureAccessCompletions(position, node, scriptSnapshot, sourceFile, program, ts)
+    if (addSignatureAccessCompletions.length) {
+        if (ensurePrior() && prior) {
+            prior.entries.push(...addSignatureAccessCompletions)
+        }
+    }
 
     if (!prior) return
 
@@ -233,7 +244,7 @@ export const getCompletionsAtPosition = (
 
     if (c('correctSorting.enable')) prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))
 
-    // console.log('signatureHelp', JSON.stringify(info.languageService.getSignatureHelpItems(fileName, position, {})))
+    console.log('signatureHelp', JSON.stringify(languageService.getSignatureHelpItems(fileName, position, {})))
     return {
         completions: prior,
         prevCompletionsMap,
