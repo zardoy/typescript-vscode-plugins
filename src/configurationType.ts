@@ -131,7 +131,31 @@ export type Configuration = {
     /** Diagnostics (if not handled by eslint) & completions */
     // 'dotImportsMap.enable': boolean,
     /**
+     * One of the most powerful setting here. It lets you remove/edit any suggestion that comes from TS.
+     * **Please** try to always specify kind (e.g. variable) of the suggestion to ensure you don't remove word-suggestion or postfix snippet
      * @default []
      */
     replaceSuggestions: ReplaceRule[]
+    /**
+     * https://github.com/microsoft/vscode/issues/160637
+     * @default true
+     */
+    removeDefinitionFromReferences: boolean
+    /**
+     * Small definition improvements by cleaning them out:
+     * - remove node_modules definition on React.FC component click
+     * @default true
+     */
+    miscDefinitionImprovement: boolean
+    /**
+     * Experimental, feedback welcome
+     * If default, namespace import or import path click resolves to .d.ts file, try to resolve .js file instead with the same name
+     * @default false
+     */
+    changeDtsFileDefinitionToJs: boolean
+    /**
+     * Experimental. Also includes optional args
+     * @default true
+     */
+    enableMethodSnippets: boolean
 }

@@ -6,6 +6,9 @@ import type { Configuration } from '../../src/configurationType'
 import _ from 'lodash'
 import { GetConfig } from './types'
 import { getCompletionsAtPosition, PrevCompletionMap } from './completionsAtPosition'
+import { getParameterListParts } from './completionGetMethodParameters'
+import { oneOf } from '@zardoy/utils'
+import { isGoodPositionMethodCompletion } from './isGootPositionMethodCompletion'
 
 const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 
@@ -83,17 +86,43 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                     data,
                 )
                 if (!prior) return
+                if (c('enableMethodSnippets') && oneOf(prior.kind as string, ts.ScriptElementKind.constElement, 'property')) {
+                    const goodPosition = isGoodPositionMethodCompletion(ts, fileName, sourceFile, position, info.languageService)
+                    const punctuationIndex = prior.displayParts.findIndex(({ kind }) => kind === 'punctuation')
+                    if (goodPosition && punctuationIndex !== 1) {
+                        const isParsableMethod = prior.displayParts
+                            // next is space
+                            .slice(punctuationIndex + 2)
+                            .map(({ text }) => text)
+                            .join('')
+                            .match(/\((.*)\) => /)
+                        if (isParsableMethod) {
+                            let firstArgMeet = false
+                            const args = prior.displayParts
+                                .filter(({ kind }, index, array) => {
+                                    if (kind !== 'parameterName') return false
+                                    if (array[index - 1]!.text === '(') {
+                                        if (!firstArgMeet) {
+                                            // bad parsing, as doesn't take second and more args
+                                            firstArgMeet = true
+                                            return true
+                                        }
+                                        return false
+                                    }
+                                    return true
+                                })
+                                .map(({ text }) => text)
+                            prior.documentation = [...(prior.documentation ?? []), { kind: 'text', text: `<!-- insert-func: ${args.join(',')}-->` }]
+                        }
+                    }
+                }
                 // if (prior.kind === typescript.ScriptElementKind.constElement && prior.displayParts.map(item => item.text).join('').match(/: \(.+\) => .+/)) prior.codeActions?.push({
                 //     description: '',
                 //     changes: []
                 // })
-                // prior.codeActions = [{ description: '', changes: [{ fileName, textChanges: [{ span: { start: position, length: 0 }, newText: '()' }] }] }]
-                // formatOptions
-                // info.languageService.getDefinitionAtPosition(fileName, position)
                 return prior
             }
 
-            // proxy.getCombinedCodeFix(scope, fixId, formatOptions, preferences)
             proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
                 let prior = info.languageService.getApplicableRefactors(fileName, positionOrRange, preferences)
 
@@ -137,6 +166,40 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 if (c('markTsCodeFixes.character'))
                     prior = prior.map(item => ({ ...item, description: `${c('markTsCodeFixes.character')} ${item.description}` }))
 
+                return prior
+            }
+
+            proxy.getDefinitionAndBoundSpan = (fileName, position) => {
+                const prior = info.languageService.getDefinitionAndBoundSpan(fileName, position)
+                if (!prior) return
+                // used after check
+                const firstDef = prior.definitions![0]!
+                if (
+                    c('changeDtsFileDefinitionToJs') &&
+                    prior.definitions?.length === 1 &&
+                    // default, namespace import or import path click
+                    firstDef.containerName === '' &&
+                    firstDef.fileName.endsWith('.d.ts')
+                ) {
+                    const jsFileName = `${firstDef.fileName.slice(0, -'.d.ts'.length)}.js`
+                    const isJsFileExist = info.languageServiceHost.fileExists?.(jsFileName)
+                    if (isJsFileExist) prior.definitions = [{ ...firstDef, fileName: jsFileName }]
+                }
+                if (c('miscDefinitionImprovement') && prior.definitions?.length === 2) {
+                    prior.definitions = prior.definitions.filter(({ fileName, containerName }) => {
+                        const isFcDef = fileName.endsWith('node_modules/@types/react/index.d.ts') && containerName === 'FunctionComponent'
+                        return !isFcDef
+                    })
+                }
+                return prior
+            }
+
+            proxy.findReferences = (fileName, position) => {
+                let prior = info.languageService.findReferences(fileName, position)
+                if (!prior) return
+                if (c('removeDefinitionFromReferences')) {
+                    prior = prior.map(({ references, ...other }) => ({ ...other, references: references.filter(({ isDefinition }) => !isDefinition) }))
+                }
                 return prior
             }
 
