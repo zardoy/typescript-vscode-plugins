@@ -4,6 +4,9 @@
         "noEmit": false,
         "rootDir": "src",
         "sourceMap": true,
+        "lib": [
+            "ESNext"
+        ],
         "outDir": "build"
     },
     "include": [
