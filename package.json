@@ -56,7 +56,7 @@
         "@types/lodash": "^4.14.182",
         "@vscode/emmet-helper": "^2.8.4",
         "@zardoy/utils": "^0.0.6",
-        "@zardoy/vscode-utils": "^0.0.14",
+        "@zardoy/vscode-utils": "^0.0.28",
         "chokidar": "^3.5.3",
         "eslint": "^8.7.0",
         "eslint-config-zardoy": "^0.2.8",

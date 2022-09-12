@@ -11,7 +11,7 @@ importers:
       '@vscode/emmet-helper': ^2.8.4
       '@zardoy/tsconfig': ^1.3.1
       '@zardoy/utils': ^0.0.6
-      '@zardoy/vscode-utils': ^0.0.14
+      '@zardoy/vscode-utils': ^0.0.28
       chokidar: ^3.5.3
       esbuild: ^0.14.38
       eslint: ^8.7.0
@@ -31,7 +31,7 @@ importers:
       '@types/lodash': 4.14.182
       '@vscode/emmet-helper': 2.8.4
       '@zardoy/utils': 0.0.6
-      '@zardoy/vscode-utils': 0.0.14_3tt4fykvjt4kqlhq7e65j4srei
+      '@zardoy/vscode-utils': 0.0.28_cq2imf3xlo2d7oce7kuqydjknm
       chokidar: 3.5.3
       eslint: 8.7.0
       eslint-config-zardoy: 0.2.8_4tfpy7rlxgvxaee6aikeliznyq
@@ -665,21 +665,33 @@ packages:
       type-fest: 2.13.1
     dev: false
 
-  /@zardoy/vscode-utils/0.0.14_3tt4fykvjt4kqlhq7e65j4srei:
-    resolution: {integrity: sha512-bSsUm+c7UyZJ1lx9w+fpizvUumZiPqgKAAhm6NQyqrp5f/jyOE4jTQpjPNhyobjQkFT+Xn9tw4cRcdkZVQ7yUA==}
+  /@zardoy/vscode-utils/0.0.28_cq2imf3xlo2d7oce7kuqydjknm:
+    resolution: {integrity: sha512-9vvlx6dXYktUlNCU3gvLKq4WKbILXBYXAAs2avpzP0ddAxsIJZkZydXdqcfN+rMrJV5VFSO8KrtMyDBCHb9hnQ==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    hasBin: true
     peerDependencies:
       '@types/vscode': ^1.65.0
+      esbuild: '*'
+      jsonc-parser: ^3.2.0
       vscode-framework: ^0.0.18
     peerDependenciesMeta:
+      esbuild:
+        optional: true
+      jsonc-parser:
+        optional: true
       vscode-framework:
         optional: true
     dependencies:
       '@types/vscode': 1.63.1
       '@zardoy/utils': 0.0.4
       chokidar: 3.5.3
+      commander: 9.4.0
+      esbuild: 0.14.38
       execa: 5.1.1
-      rambda: 7.1.0
+      fs-extra: 10.1.0
+      lodash.throttle: 4.1.1
+      rambda: 7.2.1
+      typed-jsonfile: 0.2.1
       untildify: 4.0.0
       vscode-framework: 0.0.18_ljantzegzxse3gxwrmiyr66zfm
       vscode-manifest: 0.0.8
@@ -1104,6 +1116,11 @@ packages:
     engines: {node: '>= 12'}
     dev: false
 
+  /commander/9.4.0:
+    resolution: {integrity: sha512-sRPT+umqkz90UA8M1yqYfnHlZA7fF6nSphDtxeywPZ49ysjxDQybzk13CL+mXekDRG92skbcqCLVovuCusNmFw==}
+    engines: {node: ^12.20.0 || >=14}
+    dev: false
+
   /concat-map/0.0.1:
     resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
     dev: false
@@ -1464,7 +1481,6 @@ packages:
     cpu: [x64]
     os: [android]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-android-arm64/0.13.15:
@@ -1481,7 +1497,6 @@ packages:
     cpu: [arm64]
     os: [android]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-darwin-64/0.13.15:
@@ -1498,7 +1513,6 @@ packages:
     cpu: [x64]
     os: [darwin]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-darwin-arm64/0.13.15:
@@ -1515,7 +1529,6 @@ packages:
     cpu: [arm64]
     os: [darwin]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-freebsd-64/0.13.15:
@@ -1532,7 +1545,6 @@ packages:
     cpu: [x64]
     os: [freebsd]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-freebsd-arm64/0.13.15:
@@ -1549,7 +1561,6 @@ packages:
     cpu: [arm64]
     os: [freebsd]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-linux-32/0.13.15:
@@ -1566,7 +1577,6 @@ packages:
     cpu: [ia32]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-linux-64/0.13.15:
@@ -1583,7 +1593,6 @@ packages:
     cpu: [x64]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-linux-arm/0.13.15:
@@ -1600,7 +1609,6 @@ packages:
     cpu: [arm]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-linux-arm64/0.13.15:
@@ -1617,7 +1625,6 @@ packages:
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-linux-mips64le/0.13.15:
@@ -1634,7 +1641,6 @@ packages:
     cpu: [mips64el]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-linux-ppc64le/0.13.15:
@@ -1651,7 +1657,6 @@ packages:
     cpu: [ppc64]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-linux-riscv64/0.14.38:
@@ -1660,7 +1665,6 @@ packages:
     cpu: [riscv64]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-linux-s390x/0.14.38:
@@ -1669,7 +1673,6 @@ packages:
     cpu: [s390x]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-netbsd-64/0.13.15:
@@ -1686,7 +1689,6 @@ packages:
     cpu: [x64]
     os: [netbsd]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-openbsd-64/0.13.15:
@@ -1703,7 +1705,6 @@ packages:
     cpu: [x64]
     os: [openbsd]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-sunos-64/0.13.15:
@@ -1720,7 +1721,6 @@ packages:
     cpu: [x64]
     os: [sunos]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-windows-32/0.13.15:
@@ -1737,7 +1737,6 @@ packages:
     cpu: [ia32]
     os: [win32]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-windows-64/0.13.15:
@@ -1754,7 +1753,6 @@ packages:
     cpu: [x64]
     os: [win32]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild-windows-arm64/0.13.15:
@@ -1771,7 +1769,6 @@ packages:
     cpu: [arm64]
     os: [win32]
     requiresBuild: true
-    dev: true
     optional: true
 
   /esbuild/0.13.15:
@@ -1824,7 +1821,6 @@ packages:
       esbuild-windows-32: 0.14.38
       esbuild-windows-64: 0.14.38
       esbuild-windows-arm64: 0.14.38
-    dev: true
 
   /escalade/3.1.1:
     resolution: {integrity: sha512-k0er2gUkLf8O0zKJiAhmkTnJlTvINGv7ygDNPbeIsX/TJjGJZHuh9B2UxbsaEkmlEo9MfhrSzmhIlhRlI2GXnw==}
@@ -3148,6 +3144,10 @@ packages:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
     dev: false
 
+  /lodash.throttle/4.1.1:
+    resolution: {integrity: sha512-wIkUCfVKpVsWo3JSZlc+8MB5it+2AN5W8J7YVMST30UrvcQNZ1Okbj+rbVniijTWE6FGYy4XJq/rHkas8qJMLQ==}
+    dev: false
+
   /lodash/4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
 
@@ -3786,8 +3786,8 @@ packages:
     resolution: {integrity: sha512-yosVdGg1hNGkXPzqGiOYNEpXKjEOxzUCg2rB0l+NKdyCaSf4z+i5ojbN0IqDSezMMf71YEglI+ZUTgTffn5afw==}
     dev: false
 
-  /rambda/7.1.0:
-    resolution: {integrity: sha512-HkqheuvgfSxj+Pyg4yT1fpX1KzPL9ghG5z5lAfbkwRcwIVx8P657MgrGWGaHRNI+j2Mr1d88AdHKgm8Qy0I10w==}
+  /rambda/7.2.1:
+    resolution: {integrity: sha512-Wswj8ZvzdI3VhaGPkZAxaCTwuMmGtgWt7Zxsgyo4P+iTmVnkojvyWaOep5q3ZjMIecW0wtQa66GWxaKkZ24RAA==}
     dev: false
 
   /react-is/17.0.2:
