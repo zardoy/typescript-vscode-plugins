@@ -158,4 +158,12 @@ export type Configuration = {
      * @default true
      */
     enableMethodSnippets: boolean
+    /**
+     * Support `@ts-diagnostic-disable` top-level comment for disabling spefici semantic diagnostics
+     * Example: `// @ts-diagnostic-disable
+     * Advanced usage only! Enable in `.vscode/settings.json` for projects that need this
+     * Since its changes only IDE experience, but not tsc
+     * @default false
+     */
+    supportTsDiagnosticDisableComment: boolean
 }

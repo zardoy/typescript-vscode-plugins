@@ -6,7 +6,6 @@ import type { Configuration } from '../../src/configurationType'
 import _ from 'lodash'
 import { GetConfig } from './types'
 import { getCompletionsAtPosition, PrevCompletionMap } from './completionsAtPosition'
-import { getParameterListParts } from './completionGetMethodParameters'
 import { oneOf } from '@zardoy/utils'
 import { isGoodPositionMethodCompletion } from './isGootPositionMethodCompletion'
 
@@ -134,7 +133,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
             proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
                 let prior = info.languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
                 // const scriptSnapshot = info.project.getScriptSnapshot(fileName)
-                const diagnostics = info.languageService.getSemanticDiagnostics(fileName)
+                const diagnostics = proxy.getSemanticDiagnostics(fileName)
 
                 // https://github.com/Microsoft/TypeScript/blob/v4.5.5/src/compiler/diagnosticMessages.json#L458
                 const appliableErrorCode = [1156, 1157].find(code => errorCodes.includes(code))
@@ -199,6 +198,22 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 if (!prior) return
                 if (c('removeDefinitionFromReferences')) {
                     prior = prior.map(({ references, ...other }) => ({ ...other, references: references.filter(({ isDefinition }) => !isDefinition) }))
+                }
+                return prior
+            }
+
+            proxy.getSemanticDiagnostics = fileName => {
+                let prior = info.languageService.getSemanticDiagnostics(fileName)
+                if (c('supportTsDiagnosticDisableComment')) {
+                    const scriptSnapshot = info.project.getScriptSnapshot(fileName)!
+                    const firstLine = scriptSnapshot.getText(0, scriptSnapshot.getLength()).split(/\r?\n/)[0]!
+                    if (firstLine.startsWith('//')) {
+                        const match = firstLine.match(/@ts-diagnostic-disable ((\d+, )*(\d+))/)
+                        if (match) {
+                            const codesToDisable = match[1]!.split(', ').map(Number)
+                            prior = prior.filter(({ code }) => !codesToDisable.includes(code))
+                        }
+                    }
                 }
                 return prior
             }
