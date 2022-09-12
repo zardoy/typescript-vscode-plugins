@@ -1,8 +1,9 @@
 import type tslib from 'typescript/lib/tsserverlibrary'
-import { findChildContainingPosition } from './utils'
+import { findChildContainingPosition, findChildContainingPositionMaxDepth } from './utils'
 
 export const isGoodPositionBuiltinMethodCompletion = (ts: typeof tslib, sourceFile: tslib.SourceFile, position: number) => {
-    const importClauseCandidate = findChildContainingPosition(ts, sourceFile, position, 2)
+    const importClauseCandidate = findChildContainingPositionMaxDepth(ts, sourceFile, position, 2)
+    console.log(sourceFile.getFullText().slice(0, position))
     if (importClauseCandidate?.kind === 266) return false
     const currentNode = findChildContainingPosition(ts, sourceFile, position)
     // const obj = { method() {}, arrow: () => {} }

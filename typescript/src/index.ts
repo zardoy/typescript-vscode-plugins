@@ -7,7 +7,7 @@ import _ from 'lodash'
 import { GetConfig } from './types'
 import { getCompletionsAtPosition, PrevCompletionMap } from './completionsAtPosition'
 import { oneOf } from '@zardoy/utils'
-import { isGoodPositionMethodCompletion } from './isGootPositionMethodCompletion'
+import { isGoodPositionMethodCompletion } from './isGoodPositionMethodCompletion'
 
 const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 

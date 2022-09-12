@@ -4,7 +4,7 @@ import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './isInBannedPosition'
 import { GetConfig } from './types'
 import { findChildContainingPosition } from './utils'
-import { isGoodPositionBuiltinMethodCompletion } from './isGootPositionMethodCompletion'
+import { isGoodPositionBuiltinMethodCompletion } from './isGoodPositionMethodCompletion'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | tslib.SymbolDisplayPart[] }>
 
