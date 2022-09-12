@@ -22,7 +22,7 @@
         "javascript",
         "plugin",
         "webstorm",
-        "TypeScript Hero"
+        "typescript hero"
     ],
     "activationEvents": [
         "onLanguage:javascript",

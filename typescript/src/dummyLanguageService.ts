@@ -15,6 +15,12 @@ export const createLanguageService = (files: Record<string, string>) => {
         },
         getCurrentDirectory: () => '',
         getDefaultLibFileName: () => require.resolve('typescript/lib/lib.esnext.full.d.ts'),
+        fileExists(path) {
+            return path in files
+        },
+        readFile(path) {
+            return files[path]!
+        },
     })
     return {
         languageService,
