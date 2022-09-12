@@ -8,13 +8,14 @@ export const activate = async () => {
 
     await tsExtension.activate()
 
-    // Get the API from the TS extension
     if (!tsExtension.exports || !tsExtension.exports.getAPI) return
 
+    // Get the API from the TS extension
     const api = tsExtension.exports.getAPI(0)
     if (!api) return
 
     const syncConfig = () => {
+        console.log('sending configure request for typescript-essential-plugins')
         const config = vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!)
         api.configurePlugin('typescript-essential-plugins', config)
     }
