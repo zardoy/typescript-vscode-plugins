@@ -74,5 +74,10 @@
         "trailingComma": "all",
         "arrowParens": "avoid",
         "printWidth": 160
+    },
+    "release": {
+        "changelog": {
+            "style": "gitmoji"
+        }
     }
 }
