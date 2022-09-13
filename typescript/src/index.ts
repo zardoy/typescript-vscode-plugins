@@ -8,6 +8,8 @@ import { GetConfig } from './types'
 import { getCompletionsAtPosition, PrevCompletionMap } from './completionsAtPosition'
 import { oneOf } from '@zardoy/utils'
 import { isGoodPositionMethodCompletion } from './isGoodPositionMethodCompletion'
+import { inspect } from 'util'
+import { getIndentFromPos } from './utils'
 
 const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 
@@ -132,12 +134,25 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
 
             proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
                 let prior = info.languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
+                // fix builtin codefixes/refactorings
+                prior.forEach(fix => {
+                    if (fix.fixName === 'fixConvertConstToLet') {
+                        const { start, length } = fix.changes[0]!.textChanges[0]!.span
+                        const fixedLength = 'const'.length as 5
+                        fix.changes[0]!.textChanges[0]!.span.start = start + length - fixedLength
+                        fix.changes[0]!.textChanges[0]!.span.length = fixedLength
+                    }
+                    return fix
+                })
                 // const scriptSnapshot = info.project.getScriptSnapshot(fileName)
                 const diagnostics = proxy.getSemanticDiagnostics(fileName)
 
                 // https://github.com/Microsoft/TypeScript/blob/v4.5.5/src/compiler/diagnosticMessages.json#L458
                 const appliableErrorCode = [1156, 1157].find(code => errorCodes.includes(code))
                 if (appliableErrorCode) {
+                    const program = info.languageService.getProgram()
+                    const sourceFile = program!.getSourceFile(fileName)!
+                    const startIndent = getIndentFromPos(typescript, sourceFile, end)
                     const diagnostic = diagnostics.find(({ code }) => code === appliableErrorCode)!
                     prior = [
                         ...prior,
@@ -148,8 +163,8 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                                 {
                                     fileName,
                                     textChanges: [
-                                        { span: { start: diagnostic.start!, length: 0 }, newText: '{' },
-                                        { span: { start: diagnostic.start! + diagnostic.length!, length: 0 }, newText: '}' },
+                                        { span: { start: diagnostic.start!, length: 0 }, newText: `{\n${startIndent}\t` },
+                                        { span: { start: diagnostic.start! + diagnostic.length!, length: 0 }, newText: `\n${startIndent}}` },
                                     ],
                                 },
                             ],
@@ -197,7 +212,10 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 let prior = info.languageService.findReferences(fileName, position)
                 if (!prior) return
                 if (c('removeDefinitionFromReferences')) {
-                    prior = prior.map(({ references, ...other }) => ({ ...other, references: references.filter(({ isDefinition }) => !isDefinition) }))
+                    prior = prior.map(({ references, ...other }) => ({
+                        ...other,
+                        references: references.filter(({ isDefinition }) => !isDefinition),
+                    }))
                 }
                 return prior
             }

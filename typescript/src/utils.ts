@@ -32,3 +32,13 @@ export function findChildContainingPositionMaxDepth(
     }
     return find(sourceFile)
 }
+
+export const getIndentFromPos = (typescript: typeof import('typescript/lib/tsserverlibrary'), sourceFile: tslib.SourceFile, position: number) => {
+    const { character } = typescript.getLineAndCharacterOfPosition(sourceFile, position)
+    return (
+        sourceFile
+            .getText()
+            .slice(position - character, position)
+            .match(/^\s+/)?.[0] ?? ''
+    )
+}
