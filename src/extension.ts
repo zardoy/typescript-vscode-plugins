@@ -34,7 +34,7 @@ export const activate = async () => {
             const editor = getActiveRegularEditor()!
             const startPos = editor.selection.start
             const nextSymbol = editor.document.getText(new vscode.Range(startPos, startPos.translate(0, 1)))
-            if (nextSymbol !== '(') {
+            if (!['(', '.'].includes(nextSymbol)) {
                 const snippet = new vscode.SnippetString('')
                 snippet.appendText('(')
                 const args = insertFuncArgs.split(',')
