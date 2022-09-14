@@ -90,7 +90,14 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 if (!prior) return
                 if (
                     c('enableMethodSnippets') &&
-                    oneOf(prior.kind as string, ts.ScriptElementKind.constElement, ts.ScriptElementKind.letElement, ts.ScriptElementKind.alias, 'property')
+                    oneOf(
+                        prior.kind as string,
+                        ts.ScriptElementKind.constElement,
+                        ts.ScriptElementKind.letElement,
+                        ts.ScriptElementKind.alias,
+                        ts.ScriptElementKind.variableElement,
+                        'property',
+                    )
                 ) {
                     // - 1 to look for possibly previous completing item
                     let goodPosition = isGoodPositionMethodCompletion(ts, fileName, sourceFile, position - 1, info.languageService)
