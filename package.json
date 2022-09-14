@@ -32,7 +32,7 @@
     ],
     "scripts": {
         "start": "vscode-framework start",
-        "build": "tsc && vscode-framework build && node buildTsPlugin.mjs",
+        "build": "tsc && tsc -p typescript --noEmit && vscode-framework build && node buildTsPlugin.mjs",
         "test": "pnpm test-plugin",
         "test-plugin": "vitest --globals",
         "watch-plugin": "tsc -p typescript -w",
