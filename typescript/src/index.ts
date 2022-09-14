@@ -9,7 +9,7 @@ import { getCompletionsAtPosition, PrevCompletionMap } from './completionsAtPosi
 import { oneOf } from '@zardoy/utils'
 import { isGoodPositionMethodCompletion } from './isGoodPositionMethodCompletion'
 import { inspect } from 'util'
-import { getIndentFromPos } from './utils'
+import { getParameterListParts } from './snippetForFunctionCall'
 
 const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 
@@ -77,7 +77,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                         displayParts: typeof documentationOverride === 'string' ? [{ kind: 'text', text: documentationOverride }] : documentationOverride,
                     }
                 }
-                const prior = info.languageService.getCompletionEntryDetails(
+                let prior = info.languageService.getCompletionEntryDetails(
                     fileName,
                     position,
                     prevCompletionsMap[entryName]?.originalName || entryName,
@@ -87,8 +87,19 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                     data,
                 )
                 if (!prior) return
-                if (c('enableMethodSnippets') && oneOf(prior.kind as string, ts.ScriptElementKind.constElement, 'property')) {
-                    const goodPosition = isGoodPositionMethodCompletion(ts, fileName, sourceFile, position, info.languageService)
+                if (
+                    c('enableMethodSnippets') &&
+                    oneOf(prior.kind as string, ts.ScriptElementKind.constElement, ts.ScriptElementKind.letElement, ts.ScriptElementKind.alias, 'property')
+                ) {
+                    // - 1 to look for possibly previous completing item
+                    let goodPosition = isGoodPositionMethodCompletion(ts, fileName, sourceFile, position - 1, info.languageService)
+                    let rawPartsOverride: ts.SymbolDisplayPart[] | undefined
+                    if (goodPosition && prior.kind === ts.ScriptElementKind.alias) {
+                        goodPosition =
+                            prior.displayParts[5]?.text === 'method' || (prior.displayParts[4]?.kind === 'keyword' && prior.displayParts[4].text === 'function')
+                        const { parts, gotMethodHit, hasOptionalParameters } = getParameterListParts(prior.displayParts)
+                        if (gotMethodHit) rawPartsOverride = hasOptionalParameters ? [...parts, { kind: '', text: ' ' }] : parts
+                    }
                     const punctuationIndex = prior.displayParts.findIndex(({ kind }) => kind === 'punctuation')
                     if (goodPosition && punctuationIndex !== 1) {
                         const isParsableMethod = prior.displayParts
@@ -96,15 +107,16 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                             .slice(punctuationIndex + 2)
                             .map(({ text }) => text)
                             .join('')
-                            .match(/\((.*)\) => /)
-                        if (isParsableMethod) {
+                            .match(/^\((.*)\) => /)
+                        if (rawPartsOverride || isParsableMethod) {
                             let firstArgMeet = false
-                            const args = prior.displayParts
-                                .filter(({ kind }, index, array) => {
+                            const args = (
+                                rawPartsOverride ||
+                                prior.displayParts.filter(({ kind }, index, array) => {
                                     if (kind !== 'parameterName') return false
                                     if (array[index - 1]!.text === '(') {
                                         if (!firstArgMeet) {
-                                            // bad parsing, as doesn't take second and more args
+                                            // bad parsing, as it doesn't take second and more args
                                             firstArgMeet = true
                                             return true
                                         }
@@ -112,8 +124,11 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                                     }
                                     return true
                                 })
-                                .map(({ text }) => text)
-                            prior.documentation = [...(prior.documentation ?? []), { kind: 'text', text: `<!-- insert-func: ${args.join(',')}-->` }]
+                            ).map(({ text }) => text)
+                            prior = {
+                                ...prior,
+                                documentation: [...(prior.documentation ?? []), { kind: 'text', text: `<!-- insert-func: ${args.join(',')}-->` }],
+                            }
                         }
                     }
                 }

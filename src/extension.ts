@@ -30,6 +30,7 @@ export const activate = async () => {
         const { documentation = '' } = item
         const documentationString = documentation instanceof vscode.MarkdownString ? documentation.value : documentation
         const insertFuncArgs = /<!-- insert-func: (.*)-->/.exec(documentationString)?.[1]
+        console.debug('insertFuncArgs', insertFuncArgs)
         if (enableMethodSnippets && insertFuncArgs !== undefined) {
             const editor = getActiveRegularEditor()!
             const startPos = editor.selection.start
@@ -38,8 +39,10 @@ export const activate = async () => {
                 const snippet = new vscode.SnippetString('')
                 snippet.appendText('(')
                 const args = insertFuncArgs.split(',')
-                for (const [i, arg] of args.entries()) {
+                for (let [i, arg] of args.entries()) {
                     if (!arg) continue
+                    // skip empty, but add tabstops if we explicitly want it!
+                    if (arg === ' ') arg = ''
                     snippet.appendPlaceholder(arg)
                     if (i !== args.length - 1) snippet.appendText(', ')
                 }
