@@ -106,7 +106,6 @@ test.skip('Remove Useless Function Props', () => {
         function fn() {}
         fn./*|*/
     `)
-    const entryNames = languageService.getCompletionsAtPosition(entrypoint, pos, {})
-    console.log(entryNames)
+    console.log(getCompletionsAtPosition(pos!)?.entries)
     // expect(entryNames).not.includes('bind')
 })
