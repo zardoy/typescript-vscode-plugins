@@ -86,7 +86,7 @@ test('Additional banned positions for our method snippets', () => {
     }
 })
 
-test.only('Not banned positions for our method snippets', () => {
+test('Not banned positions for our method snippets', () => {
     const cursorPositions = newFileContents(/* ts */ `
         const test = () => ({ method() {} })
         const test2 = () => {}
