@@ -9,6 +9,7 @@ import { getCompletionsAtPosition, PrevCompletionMap } from './completionsAtPosi
 import { oneOf } from '@zardoy/utils'
 import { isGoodPositionMethodCompletion } from './isGoodPositionMethodCompletion'
 import { inspect } from 'util'
+import { findChildContainingPosition, getIndentFromPos } from './utils'
 import { getParameterListParts } from './snippetForFunctionCall'
 
 const thisPluginMarker = Symbol('__essentialPluginsMarker__')
