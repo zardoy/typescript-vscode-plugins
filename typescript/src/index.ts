@@ -10,7 +10,12 @@ import { TriggerCharacterCommand } from './ipcTypes'
 import postfixesAtPosition from './postfixesAtPosition'
 import { getParameterListParts } from './completionGetMethodParameters'
 import { oneOf } from '@zardoy/utils'
-import { isGoodPositionMethodCompletion } from './isGootPositionMethodCompletion'
+import { isGoodPositionMethodCompletion } from './isGoodPositionMethodCompletion'
+import { inspect } from 'util'
+import { findChildContainingPosition, getIndentFromPos } from './utils'
+import { getParameterListParts } from './snippetForFunctionCall'
+import { getNavTreeItems } from './getPatchedNavTree'
+import { join } from 'path'
 
 const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 
@@ -87,7 +92,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                         displayParts: typeof documentationOverride === 'string' ? [{ kind: 'text', text: documentationOverride }] : documentationOverride,
                     }
                 }
-                const prior = info.languageService.getCompletionEntryDetails(
+                let prior = info.languageService.getCompletionEntryDetails(
                     fileName,
                     position,
                     prevCompletionsMap[entryName]?.originalName || entryName,
@@ -97,8 +102,26 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                     data,
                 )
                 if (!prior) return
-                if (c('enableMethodSnippets') && oneOf(prior.kind as string, ts.ScriptElementKind.constElement, 'property')) {
-                    const goodPosition = isGoodPositionMethodCompletion(ts, fileName, sourceFile, position, info.languageService)
+                if (
+                    c('enableMethodSnippets') &&
+                    oneOf(
+                        prior.kind as string,
+                        ts.ScriptElementKind.constElement,
+                        ts.ScriptElementKind.letElement,
+                        ts.ScriptElementKind.alias,
+                        ts.ScriptElementKind.variableElement,
+                        'property',
+                    )
+                ) {
+                    // - 1 to look for possibly previous completing item
+                    let goodPosition = isGoodPositionMethodCompletion(ts, fileName, sourceFile, position - 1, info.languageService)
+                    let rawPartsOverride: ts.SymbolDisplayPart[] | undefined
+                    if (goodPosition && prior.kind === ts.ScriptElementKind.alias) {
+                        goodPosition =
+                            prior.displayParts[5]?.text === 'method' || (prior.displayParts[4]?.kind === 'keyword' && prior.displayParts[4].text === 'function')
+                        const { parts, gotMethodHit, hasOptionalParameters } = getParameterListParts(prior.displayParts)
+                        if (gotMethodHit) rawPartsOverride = hasOptionalParameters ? [...parts, { kind: '', text: ' ' }] : parts
+                    }
                     const punctuationIndex = prior.displayParts.findIndex(({ kind }) => kind === 'punctuation')
                     if (goodPosition && punctuationIndex !== 1) {
                         const isParsableMethod = prior.displayParts
@@ -106,15 +129,16 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                             .slice(punctuationIndex + 2)
                             .map(({ text }) => text)
                             .join('')
-                            .match(/\((.*)\) => /)
-                        if (isParsableMethod) {
+                            .match(/^\((.*)\) => /)
+                        if (rawPartsOverride || isParsableMethod) {
                             let firstArgMeet = false
-                            const args = prior.displayParts
-                                .filter(({ kind }, index, array) => {
+                            const args = (
+                                rawPartsOverride ||
+                                prior.displayParts.filter(({ kind }, index, array) => {
                                     if (kind !== 'parameterName') return false
                                     if (array[index - 1]!.text === '(') {
                                         if (!firstArgMeet) {
-                                            // bad parsing, as doesn't take second and more args
+                                            // bad parsing, as it doesn't take second and more args
                                             firstArgMeet = true
                                             return true
                                         }
@@ -122,8 +146,11 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                                     }
                                     return true
                                 })
-                                .map(({ text }) => text)
-                            prior.documentation = [...(prior.documentation ?? []), { kind: 'text', text: `<!-- insert-func: ${args.join(',')}-->` }]
+                            ).map(({ text }) => text)
+                            prior = {
+                                ...prior,
+                                documentation: [...(prior.documentation ?? []), { kind: 'text', text: `<!-- insert-func: ${args.join(',')}-->` }],
+                            }
                         }
                     }
                 }
@@ -150,12 +177,25 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
 
             proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
                 let prior = info.languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
+                // fix builtin codefixes/refactorings
+                prior.forEach(fix => {
+                    if (fix.fixName === 'fixConvertConstToLet') {
+                        const { start, length } = fix.changes[0]!.textChanges[0]!.span
+                        const fixedLength = 'const'.length as 5
+                        fix.changes[0]!.textChanges[0]!.span.start = start + length - fixedLength
+                        fix.changes[0]!.textChanges[0]!.span.length = fixedLength
+                    }
+                    return fix
+                })
                 // const scriptSnapshot = info.project.getScriptSnapshot(fileName)
-                const diagnostics = info.languageService.getSemanticDiagnostics(fileName)
+                const diagnostics = proxy.getSemanticDiagnostics(fileName)
 
                 // https://github.com/Microsoft/TypeScript/blob/v4.5.5/src/compiler/diagnosticMessages.json#L458
                 const appliableErrorCode = [1156, 1157].find(code => errorCodes.includes(code))
                 if (appliableErrorCode) {
+                    const program = info.languageService.getProgram()
+                    const sourceFile = program!.getSourceFile(fileName)!
+                    const startIndent = getIndentFromPos(typescript, sourceFile, end)
                     const diagnostic = diagnostics.find(({ code }) => code === appliableErrorCode)!
                     prior = [
                         ...prior,
@@ -166,8 +206,8 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                                 {
                                     fileName,
                                     textChanges: [
-                                        { span: { start: diagnostic.start!, length: 0 }, newText: '{' },
-                                        { span: { start: diagnostic.start! + diagnostic.length!, length: 0 }, newText: '}' },
+                                        { span: { start: diagnostic.start!, length: 0 }, newText: `{\n${startIndent}\t` },
+                                        { span: { start: diagnostic.start! + diagnostic.length!, length: 0 }, newText: `\n${startIndent}}` },
                                     ],
                                 },
                             ],
@@ -215,9 +255,36 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                 let prior = info.languageService.findReferences(fileName, position)
                 if (!prior) return
                 if (c('removeDefinitionFromReferences')) {
-                    prior = prior.map(({ references, ...other }) => ({ ...other, references: references.filter(({ isDefinition }) => !isDefinition) }))
+                    prior = prior.map(({ references, ...other }) => ({
+                        ...other,
+                        references: references.filter(({ isDefinition }) => !isDefinition),
+                    }))
                 }
                 return prior
+            }
+
+            proxy.getSemanticDiagnostics = fileName => {
+                let prior = info.languageService.getSemanticDiagnostics(fileName)
+                if (c('supportTsDiagnosticDisableComment')) {
+                    const scriptSnapshot = info.project.getScriptSnapshot(fileName)!
+                    const firstLine = scriptSnapshot.getText(0, scriptSnapshot.getLength()).split(/\r?\n/)[0]!
+                    if (firstLine.startsWith('//')) {
+                        const match = firstLine.match(/@ts-diagnostic-disable ((\d+, )*(\d+))/)
+                        if (match) {
+                            const codesToDisable = match[1]!.split(', ').map(Number)
+                            prior = prior.filter(({ code }) => !codesToDisable.includes(code))
+                        }
+                    }
+                }
+                return prior
+            }
+
+            // didecated syntax server (which is enabled by default), which fires navtree doesn't seem to receive onConfigurationChanged
+            // so we forced to communicate via fs
+            const config = JSON.parse(ts.sys.readFile(join(__dirname, '../../plugin-config.json'), 'utf8') ?? '{}')
+            proxy.getNavigationTree = fileName => {
+                if (c('patchOutline') || config.patchOutline) return getNavTreeItems(ts, info, fileName)
+                return info.languageService.getNavigationTree(fileName)
             }
 
             info.languageService[thisPluginMarker] = true

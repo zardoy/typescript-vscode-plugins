@@ -1,4 +1,14 @@
 {
-    "extends": "@zardoy/tsconfig/node",
-    "include": ["."]
+    "extends": "@zardoy/tsconfig/",
+    "compilerOptions": {
+        "lib": [
+            "ESNext",
+            "WebWorker"
+        ]
+    },
+    // type-check sources
+    "include": [
+        "src",
+        "typescript/test"
+    ]
 }

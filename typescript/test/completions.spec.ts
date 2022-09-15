@@ -3,11 +3,18 @@ import { getCompletionsAtPosition as getCompletionsAtPositionRaw } from '../src/
 import type {} from 'vitest/globals'
 import ts from 'typescript/lib/tsserverlibrary'
 import { getDefaultConfigFunc } from './defaultSettings'
+import { isGoodPositionBuiltinMethodCompletion, isGoodPositionMethodCompletion } from '../src/isGoodPositionMethodCompletion'
+import { getNavTreeItems } from '../src/getPatchedNavTree'
+import { createRequire } from 'module'
 
-const entrypoint = '/test.ts'
+const require = createRequire(import.meta.url)
+
+const entrypoint = '/test.tsx'
 const files = { [entrypoint]: '' }
 
 const { languageService, updateProject } = createLanguageService(files)
+
+const getSourceFile = () => languageService.getProgram()!.getSourceFile(entrypoint)!
 
 const newFileContents = (contents: string, fileName = entrypoint) => {
     const cursorPositions: number[] = []
@@ -50,12 +57,121 @@ test('Banned positions', () => {
     expect(getCompletionsAtPosition(cursorPositions[2]!)?.entries).toHaveLength(1)
 })
 
-test.skip('Remove Useless Function Props', () => {
-    const [pos] = newFileContents(/* ts */ `
+test('Builtin method snippet banned positions', () => {
+    const cursorPositions = newFileContents(/* ts */ `
+      import {/*|*/} from 'test'
+      const obj = { m$1e$2thod() {}, arrow: () => {} }
+      type A = typeof obj["/*|*/"];
+      const test = () => ({ method() {} })
+      const {/*|*/} = test()
+      const {something, met/*|*/} = test()
+    `)
+    for (const [i, pos] of cursorPositions.entries()) {
+        const result = isGoodPositionBuiltinMethodCompletion(ts, getSourceFile(), pos)
+        expect(result, i.toString()).toBeFalsy()
+    }
+    const insertTextEscaping = getCompletionsAtPosition(cursorPositions[1]!)!.entries[1]?.insertText!
+    expect(insertTextEscaping).toEqual('m\\$1e\\$2thod')
+})
+
+test('Additional banned positions for our method snippets', () => {
+    const cursorPositions = newFileContents(/* ts */ `
+        const test = () => ({ method() {} })
+        test({
+            method/*|*/
+        })
+        test({
+            /*|*/
+        })
+    `)
+    for (const [i, pos] of cursorPositions.entries()) {
+        const result = isGoodPositionMethodCompletion(ts, entrypoint, getSourceFile(), pos, languageService)
+        expect(result, i.toString()).toBeFalsy()
+    }
+})
+
+test('Not banned positions for our method snippets', () => {
+    const cursorPositions = newFileContents(/* ts */ `
+        const test = () => ({ method() {} })
+        const test2 = () => {}
+        test({
+            method: /*|*/
+        })
+        test2/*|*/
+    `)
+    for (const [i, pos] of cursorPositions.entries()) {
+        const result = isGoodPositionMethodCompletion(ts, entrypoint, getSourceFile(), pos - 1, languageService)
+        expect(result, i.toString()).toBeTruthy()
+    }
+})
+
+test('Function props: cleans & highlights', () => {
+    const [pos, pos2] = newFileContents(/* ts */ `
         function fn() {}
         fn./*|*/
+        let a: {
+            (): void
+            sync: 5
+        }
+        a./*|*/
     `)
-    const entryNames = languageService.getCompletionsAtPosition(entrypoint, pos, {})
-    console.log(entryNames)
-    // expect(entryNames).not.includes('bind')
+    const entryNames = getCompletionsAtPosition(pos!)?.entryNames
+    expect(entryNames).not.includes('Symbol')
+    const entryNamesHighlighted = getCompletionsAtPosition(pos2!)?.entryNames
+    expect(entryNamesHighlighted).includes('☆sync')
 })
+
+test('Patched navtree (outline)', () => {
+    globalThis.__TS_SEVER_PATH__ = require.resolve('typescript/lib/tsserver')
+    newFileContents(/* tsx */ `
+        const classes = {
+            header: '...',
+            title: '...'
+        }
+        function A() {
+            return <Notification className="test another" id="yes">
+                before
+                <div id="ok">
+                    <div />
+                    <span class="good" />
+                </div>
+                after
+            </Notification>
+        }
+    `)
+    const navTreeItems: ts.NavigationTree = getNavTreeItems(ts, { languageService, languageServiceHost: {} } as any, entrypoint)
+    const simplify = (items: ts.NavigationTree[]) => {
+        const newItems: { text: any; childItems? }[] = []
+        for (const { text, childItems } of items) {
+            if (text === 'classes') continue
+            newItems.push({ text, ...(childItems ? { childItems: simplify(childItems) } : {}) })
+        }
+        return newItems
+    }
+    expect(simplify(navTreeItems.childItems ?? [])).toMatchInlineSnapshot(/* json */ `
+      [
+        {
+          "childItems": [
+            {
+              "childItems": [
+                {
+                  "childItems": [
+                    {
+                      "text": "div",
+                    },
+                    {
+                      "text": "span.good",
+                    },
+                  ],
+                  "text": "div#ok",
+                },
+              ],
+              "text": "Notification.test.another#yes",
+            },
+          ],
+          "text": "A",
+        },
+      ]
+    `)
+})
+

@@ -22,7 +22,7 @@
         "javascript",
         "plugin",
         "webstorm",
-        "TypeScript Hero"
+        "typescript hero"
     ],
     "activationEvents": [
         "onLanguage:javascript",
@@ -32,7 +32,7 @@
     ],
     "scripts": {
         "start": "vscode-framework start",
-        "build": "vscode-framework build && node buildTsPlugin.mjs",
+        "build": "tsc && tsc -p typescript --noEmit && vscode-framework build && node buildTsPlugin.mjs",
         "test": "pnpm test-plugin",
         "test-plugin": "vitest --globals",
         "watch-plugin": "tsc -p typescript -w",
@@ -47,8 +47,9 @@
         "fs-extra": "^10.1.0",
         "type-fest": "^2.13.1",
         "typed-jsonfile": "^0.2.1",
-        "typescript": "^4.5.4",
+        "typescript": "^4.8.3",
         "typescript-essential-plugins": "workspace:*",
+        "typescript-old": "npm:typescript@4.5.4",
         "vitest": "^0.15.1",
         "vscode-manifest": "^0.0.4"
     },
@@ -56,13 +57,14 @@
         "@types/lodash": "^4.14.182",
         "@vscode/emmet-helper": "^2.8.4",
         "@zardoy/utils": "^0.0.6",
-        "@zardoy/vscode-utils": "^0.0.14",
+        "@zardoy/vscode-utils": "^0.0.28",
         "chokidar": "^3.5.3",
         "eslint": "^8.7.0",
         "eslint-config-zardoy": "^0.2.8",
         "lodash": "^4.17.21",
         "lodash.get": "^4.4.2",
         "modify-json-file": "^1.2.2",
+        "require-from-string": "^2.0.2",
         "vscode-framework": "^0.0.18"
     },
     "prettier": {
@@ -73,5 +75,10 @@
         "trailingComma": "all",
         "arrowParens": "avoid",
         "printWidth": 160
+    },
+    "release": {
+        "changelog": {
+            "style": "gitmoji"
+        }
     }
 }

@@ -60,7 +60,7 @@ export type Configuration = {
      */
     // 'patchArrayMethods.enable': boolean
     /**
-     *  Highlight and lift non-function methods. Also applies for static class methods. Uses `bind`, `call`, `caller` detection.
+     * Highlight and lift non-function methods. Also applies for static class methods. Uses `bind`, `call`, `caller` detection.
      * @default true
      * */
     'highlightNonFunctionMethods.enable': boolean
@@ -73,7 +73,7 @@ export type Configuration = {
     /**
      * Mark QuickFixes & refactorings with 🔵
      * @default true
-     *  */
+     */
     'markTsCodeActions.enable': boolean
     /**
      * Leave empty to disable
@@ -167,4 +167,21 @@ export type Configuration = {
      * @default true
      */
     enableMethodSnippets: boolean
+    /**
+     * Support `@ts-diagnostic-disable` top-level comment for disabling spefici semantic diagnostics
+     * Example: `// @ts-diagnostic-disable
+     * Advanced usage only! Enable in `.vscode/settings.json` for projects that need this
+     * Since its changes only IDE experience, but not tsc
+     * @default false
+     */
+    supportTsDiagnosticDisableComment: boolean
+    /**
+     * Patch TypeScript outline!
+     * Extend outline with:
+     * - JSX Elements
+     * more coming soon...
+     * Experimental and might not be stable
+     * @default false
+     */
+    patchOutline: boolean
 }

@@ -3,3 +3,4 @@ typescript/**
 src/configurationType.ts
 src/configurationTypeCache.jsonc
 playground.ts
+test.ts

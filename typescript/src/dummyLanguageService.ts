@@ -16,11 +16,20 @@ export const createLanguageService = (files: Record<string, string>, { useLib = 
             if (contents === undefined) return
             return ts.ScriptSnapshot.fromString(contents)
         },
+        getScriptKind(fileName) {
+            return ts.ScriptKind.TSX
+        },
         getCurrentDirectory: () => '',
         getDefaultLibFileName: options => {
             const defaultLibPath = ts.getDefaultLibFilePath(options)
             defaultLibDir = path.dirname(defaultLibPath)
             return defaultLibPath
+        },
+        fileExists(path) {
+            return path in files
+        },
+        readFile(path) {
+            return files[path]!
         },
     })
     return {

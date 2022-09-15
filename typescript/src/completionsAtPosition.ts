@@ -239,7 +239,10 @@ export const getCompletionsAtPosition = (
 
     // prevent vscode-builtin wrong insertText with methods snippets enabled
     if (!isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position)) {
-        prior.entries = prior.entries.map(item => ({ ...item, insertText: item.insertText ?? item.name, isSnippet: true }))
+        prior.entries = prior.entries.map(item => {
+            if (item.isSnippet) return item
+            return { ...item, insertText: (item.insertText ?? item.name).replace(/\$/g, '\\$'), isSnippet: true }
+        })
     }
 
     if (c('correctSorting.enable')) prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))
