@@ -157,11 +157,9 @@ test('Patched navtree (outline)', () => {
                 {
                   "childItems": [
                     {
-                      "childItems": undefined,
                       "text": "div",
                     },
                     {
-                      "childItems": undefined,
                       "text": "span.good",
                     },
                   ],
