@@ -11,6 +11,8 @@ import { isGoodPositionMethodCompletion } from './isGoodPositionMethodCompletion
 import { inspect } from 'util'
 import { findChildContainingPosition, getIndentFromPos } from './utils'
 import { getParameterListParts } from './snippetForFunctionCall'
+import { getNavTreeItems } from './getPatchedNavTree'
+import { join } from 'path'
 
 const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 
@@ -257,6 +259,14 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                     }
                 }
                 return prior
+            }
+
+            // didecated syntax server (which is enabled by default), which fires navtree doesn't seem to receive onConfigurationChanged
+            // so we forced to communicate via fs
+            const config = JSON.parse(ts.sys.readFile(join(__dirname, '../../plugin-config.json'), 'utf8') ?? '{}')
+            proxy.getNavigationTree = fileName => {
+                if (c('patchOutline') || config.patchOutline) return getNavTreeItems(ts, info, fileName)
+                return info.languageService.getNavigationTree(fileName)
             }
 
             info.languageService[thisPluginMarker] = true

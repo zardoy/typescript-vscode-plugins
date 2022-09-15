@@ -4,8 +4,12 @@ import type {} from 'vitest/globals'
 import ts from 'typescript/lib/tsserverlibrary'
 import { getDefaultConfigFunc } from './defaultSettings'
 import { isGoodPositionBuiltinMethodCompletion, isGoodPositionMethodCompletion } from '../src/isGoodPositionMethodCompletion'
+import { getNavTreeItems } from '../src/getPatchedNavTree'
+import { createRequire } from 'module'
 
-const entrypoint = '/test.ts'
+const require = createRequire(import.meta.url)
+
+const entrypoint = '/test.tsx'
 const files = { [entrypoint]: '' }
 
 const { languageService, updateProject } = createLanguageService(files)
@@ -116,3 +120,60 @@ test('Function props: cleans & highlights', () => {
     const entryNamesHighlighted = getCompletionsAtPosition(pos2!)?.entryNames
     expect(entryNamesHighlighted).includes('☆sync')
 })
+
+test('Patched navtree (outline)', () => {
+    globalThis.__TS_SEVER_PATH__ = require.resolve('typescript/lib/tsserver')
+    newFileContents(/* tsx */ `
+        const classes = {
+            header: '...',
+            title: '...'
+        }
+        function A() {
+            return <Notification className="test another" id="yes">
+                before
+                <div id="ok">
+                    <div />
+                    <span class="good" />
+                </div>
+                after
+            </Notification>
+        }
+    `)
+    const navTreeItems: ts.NavigationTree = getNavTreeItems(ts, { languageService, languageServiceHost: {} } as any, entrypoint)
+    const simplify = (items: ts.NavigationTree[]) => {
+        const newItems: { text: any; childItems? }[] = []
+        for (const { text, childItems } of items) {
+            if (text === 'classes') continue
+            newItems.push({ text, ...(childItems ? { childItems: simplify(childItems) } : {}) })
+        }
+        return newItems
+    }
+    expect(simplify(navTreeItems.childItems ?? [])).toMatchInlineSnapshot(/* json */ `
+      [
+        {
+          "childItems": [
+            {
+              "childItems": [
+                {
+                  "childItems": [
+                    {
+                      "childItems": undefined,
+                      "text": "div",
+                    },
+                    {
+                      "childItems": undefined,
+                      "text": "span.good",
+                    },
+                  ],
+                  "text": "div#ok",
+                },
+              ],
+              "text": "Notification.test.another#yes",
+            },
+          ],
+          "text": "A",
+        },
+      ]
+    `)
+})
+

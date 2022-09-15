@@ -47,9 +47,9 @@
         "fs-extra": "^10.1.0",
         "type-fest": "^2.13.1",
         "typed-jsonfile": "^0.2.1",
-        "typescript-old": "npm:typescript@4.5.4",
         "typescript": "^4.8.3",
         "typescript-essential-plugins": "workspace:*",
+        "typescript-old": "npm:typescript@4.5.4",
         "vitest": "^0.15.1",
         "vscode-manifest": "^0.0.4"
     },
@@ -64,6 +64,7 @@
         "lodash": "^4.17.21",
         "lodash.get": "^4.4.2",
         "modify-json-file": "^1.2.2",
+        "require-from-string": "^2.0.2",
         "vscode-framework": "^0.0.18"
     },
     "prettier": {
