@@ -1,20 +1,27 @@
 // only for basic testing, as vscode is actually using server
 import ts from 'typescript/lib/tsserverlibrary'
+import path from 'path'
 
-export const createLanguageService = (files: Record<string, string>) => {
+export const createLanguageService = (files: Record<string, string>, { useLib = true }: { useLib?: boolean } = {}) => {
     let dummyVersion = 1
+    let defaultLibDir: string | undefined
     const languageService = ts.createLanguageService({
         getProjectVersion: () => dummyVersion.toString(),
         getScriptVersion: () => dummyVersion.toString(),
         getCompilationSettings: () => ({ allowJs: true, jsx: ts.JsxEmit.Preserve, target: ts.ScriptTarget.ESNext }),
         getScriptFileNames: () => Object.keys(files),
         getScriptSnapshot: fileName => {
-            const contents = files[fileName]
+            let contents = files[fileName]
+            if (useLib && path.dirname(fileName) === defaultLibDir) contents = ts.sys.readFile(fileName)
             if (contents === undefined) return
             return ts.ScriptSnapshot.fromString(contents)
         },
         getCurrentDirectory: () => '',
-        getDefaultLibFileName: () => require.resolve('typescript/lib/lib.esnext.full.d.ts'),
+        getDefaultLibFileName: options => {
+            const defaultLibPath = ts.getDefaultLibFilePath(options)
+            defaultLibDir = path.dirname(defaultLibPath)
+            return defaultLibPath
+        },
         fileExists(path) {
             return path in files
         },

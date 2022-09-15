@@ -101,11 +101,18 @@ test('Not banned positions for our method snippets', () => {
     }
 })
 
-test.skip('Remove Useless Function Props', () => {
-    const [pos] = newFileContents(/* ts */ `
+test('Function props: cleans & highlights', () => {
+    const [pos, pos2] = newFileContents(/* ts */ `
         function fn() {}
         fn./*|*/
+        let a: {
+            (): void
+            sync: 5
+        }
+        a./*|*/
     `)
-    console.log(getCompletionsAtPosition(pos!)?.entries)
-    // expect(entryNames).not.includes('bind')
+    const entryNames = getCompletionsAtPosition(pos!)?.entryNames
+    expect(entryNames).not.includes('Symbol')
+    const entryNamesHighlighted = getCompletionsAtPosition(pos2!)?.entryNames
+    expect(entryNamesHighlighted).includes('☆sync')
 })
