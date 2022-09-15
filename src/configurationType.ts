@@ -60,7 +60,7 @@ export type Configuration = {
      */
     // 'patchArrayMethods.enable': boolean
     /**
-     *  Highlight and lift non-function methods. Also applies for static class methods. Uses `bind`, `call`, `caller` detection.
+     * Highlight and lift non-function methods. Also applies for static class methods. Uses `bind`, `call`, `caller` detection.
      * @default true
      * */
     'highlightNonFunctionMethods.enable': boolean
@@ -73,7 +73,7 @@ export type Configuration = {
     /**
      * Mark QuickFixes & refactorings with 🔵
      * @default true
-     *  */
+     */
     'markTsCodeActions.enable': boolean
     /**
      * Leave empty to disable
@@ -166,4 +166,13 @@ export type Configuration = {
      * @default false
      */
     supportTsDiagnosticDisableComment: boolean
+    /**
+     * Patch TypeScript outline!
+     * Extend outline with:
+     * - JSX Elements
+     * more coming soon...
+     * Experimental and might not be stable
+     * @default false
+     */
+    patchOutline: boolean
 }

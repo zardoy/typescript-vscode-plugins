@@ -20,6 +20,7 @@ importers:
       lodash: ^4.17.21
       lodash.get: ^4.4.2
       modify-json-file: ^1.2.2
+      require-from-string: ^2.0.2
       type-fest: ^2.13.1
       typed-jsonfile: ^0.2.1
       typescript: ^4.8.3
@@ -39,6 +40,7 @@ importers:
       lodash: 4.17.21
       lodash.get: 4.4.2
       modify-json-file: 1.2.2
+      require-from-string: 2.0.2
       vscode-framework: 0.0.18_w77hramgtzb6kbct6jmnygw2sq
     devDependencies:
       '@types/fs-extra': 9.0.13
@@ -3858,6 +3860,11 @@ packages:
 
   /require-directory/2.1.1:
     resolution: {integrity: sha1-jGStX9MNqxyXbiNE/+f3kqam30I=}
+    engines: {node: '>=0.10.0'}
+    dev: false
+
+  /require-from-string/2.0.2:
+    resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
     engines: {node: '>=0.10.0'}
     dev: false
 

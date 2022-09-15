@@ -1,6 +1,9 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import * as vscode from 'vscode'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
-import {} from 'vscode-framework'
+import { extensionCtx, getExtensionSettingId } from 'vscode-framework'
+import { pickObj } from '@zardoy/utils'
+import { Configuration } from './configurationType'
 
 export const activate = async () => {
     const tsExtension = vscode.extensions.getExtension('vscode.typescript-language-features')
@@ -17,11 +20,26 @@ export const activate = async () => {
     const syncConfig = () => {
         console.log('sending configure request for typescript-essential-plugins')
         const config = vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!)
+        // eslint-disable-next-line curly
+        if (process.env.PLATFORM === 'node') {
+            // see comment in plugin
+            require('fs').writeFileSync(
+                require('path').join(extensionCtx.extensionPath, './plugin-config.json'),
+                JSON.stringify(pickObj(config as Configuration, 'patchOutline')),
+            )
+        }
+
         api.configurePlugin('typescript-essential-plugins', config)
     }
 
-    vscode.workspace.onDidChangeConfiguration(({ affectsConfiguration }) => {
-        if (affectsConfiguration(process.env.IDS_PREFIX!)) syncConfig()
+    vscode.workspace.onDidChangeConfiguration(async ({ affectsConfiguration }) => {
+        if (affectsConfiguration(process.env.IDS_PREFIX!)) {
+            syncConfig()
+            if (affectsConfiguration(getExtensionSettingId('patchOutline'))) {
+                await vscode.commands.executeCommand('typescript.restartTsServer')
+                void vscode.window.showWarningMessage('outline will be updated after text changes')
+            }
+        }
     })
     syncConfig()
 
