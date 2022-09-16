@@ -6,6 +6,7 @@ generators
 build
 dist
 out
+testsOut
 .next
 .nuxt
 .cache

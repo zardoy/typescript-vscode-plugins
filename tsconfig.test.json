@@ -1,0 +1,14 @@
+{
+    "extends": "@zardoy/tsconfig/node",
+    "compilerOptions": {
+        "outDir": "testsOut",
+        "rootDir": "integration",
+        "noEmit": false
+    },
+    "include": [
+        "integration"
+    ],
+    "exclude": [
+        "integration/fixtures"
+    ]
+}
