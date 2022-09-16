@@ -124,7 +124,7 @@ describe('Outline', () => {
         it('Text change right with no syntax server', async () => {
             await vscode.workspace.getConfiguration('typescript').update('tsserver.useSyntaxServer', 'never', vscode.ConfigurationTarget.Global)
             // void vscode.commands.executeCommand('typescript.restartTsServer')
-            await delay(500)
+            await delay(300)
             const searchText = 'NavBa3'
             const componentEndPos = document.positionAt(document.getText().indexOf(searchText) + searchText.length)
             await editor().edit(builder => {
@@ -133,7 +133,7 @@ describe('Outline', () => {
             await delay(800)
             const data = await getOutline()
             expect(simplifyOutline(data)).to.deep.equal(jsProjectExpectedOutline('NavBa4'))
-        })
+        }).timeout(6000)
     })
 })
 

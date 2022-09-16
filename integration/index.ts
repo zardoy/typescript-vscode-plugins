@@ -19,7 +19,7 @@ export const run = async () => {
                 if (failures > 0) {
                     console.error(`${failures} tests failed.`)
                     setImmediate(() => {
-                        // process.exit(1)
+                        process.exit(1)
                     })
                 } else {
                     resolve()
