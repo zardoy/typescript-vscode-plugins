@@ -8,15 +8,27 @@
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--extensionDevelopmentPath=${workspaceRoot}/out",
+                // "--disable-extensions"
             ],
-            // "outFiles": [
-            //     "${workspaceFolder}/"
-            // ],
+            "outFiles": [
+                "${workspaceFolder}/out/**/*.js"
+            ],
             "sourceMaps": true,
             "env": {
                 "TSS_DEBUG": "9229",
                 "TSS_REMOTE_DEBUG": "9229"
             }
         },
+        {
+            "name": "Attach to TS Server",
+            "type": "node",
+            "request": "attach",
+            "protocol": "inspector",
+            "port": 9229,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/out/**/*.js"
+            ],
+        }
     ]
 }
