@@ -13,6 +13,7 @@ import { findChildContainingPosition, getIndentFromPos } from './utils'
 import { getParameterListParts } from './snippetForFunctionCall'
 import { getNavTreeItems } from './getPatchedNavTree'
 import { join } from 'path'
+import getCodeActions, { REFACTORS_CATEGORY } from './codeActions/getCodeActions'
 
 const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 
@@ -154,7 +155,23 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
 
                 if (c('markTsCodeActions.enable')) prior = prior.map(item => ({ ...item, description: `🔵 ${item.description}` }))
 
+                const program = info.languageService.getProgram()
+                const sourceFile = program!.getSourceFile(fileName)!
+                const { info: refactorInfo } = getCodeActions(ts, sourceFile, positionOrRange)
+                if (refactorInfo) prior = [...prior, refactorInfo]
+
                 return prior
+            }
+
+            proxy.getEditsForRefactor = (fileName, formatOptions, positionOrRange, refactorName, actionName, preferences) => {
+                const category = refactorName
+                if (category === REFACTORS_CATEGORY) {
+                    const program = info.languageService.getProgram()
+                    const sourceFile = program!.getSourceFile(fileName)!
+                    const { edit } = getCodeActions(ts, sourceFile, positionOrRange, actionName)
+                    return edit
+                }
+                return info.languageService.getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences)
             }
 
             proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
