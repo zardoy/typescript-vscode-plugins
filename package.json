@@ -64,7 +64,7 @@
         "@vscode/emmet-helper": "^2.8.4",
         "@vscode/test-electron": "^2.1.5",
         "@zardoy/utils": "^0.0.9",
-        "@zardoy/vscode-utils": "^0.0.28",
+        "@zardoy/vscode-utils": "^0.0.32",
         "chai": "^4.3.6",
         "chokidar": "^3.5.3",
         "chokidar-cli": "^3.0.0",
