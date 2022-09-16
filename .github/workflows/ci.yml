@@ -6,11 +6,13 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
       fail-fast: true
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v2
+      - run: npx prettier --check src/**
       - name: Cache pnpm modules
         uses: actions/cache@v2
         with:
@@ -27,6 +29,6 @@ jobs:
       - run: pnpm vscode-utils prepareFrameworkBuild
       - run: pnpm build
       - run: pnpm test-plugin
-      # - uses: GabrielBB/xvfb-action@v1.6
-      #   with:
-      #     run: pnpm integration-test
+      - uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: pnpm integration-test
