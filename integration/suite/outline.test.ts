@@ -121,7 +121,7 @@ describe('Outline', () => {
             expect(simplifyOutline(data)).to.deep.equal(jsProjectExpectedOutline('NavBa3'))
         })
 
-        it('Text change right with no syntax server', async () => {
+        it('Text change with no syntax server', async () => {
             await vscode.workspace.getConfiguration('typescript').update('tsserver.useSyntaxServer', 'never', vscode.ConfigurationTarget.Global)
             // void vscode.commands.executeCommand('typescript.restartTsServer')
             await delay(300)
@@ -133,7 +133,7 @@ describe('Outline', () => {
             await delay(800)
             const data = await getOutline()
             expect(simplifyOutline(data)).to.deep.equal(jsProjectExpectedOutline('NavBa4'))
-        }).timeout(6000)
+        }).timeout(8000)
     })
 })
 
