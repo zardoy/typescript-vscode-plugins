@@ -42,3 +42,13 @@ export const getIndentFromPos = (typescript: typeof import('typescript/lib/tsser
             .match(/^\s+/)?.[0] ?? ''
     )
 }
+
+export const findClosestParent = (ts: typeof tslib, node: tslib.Node, stopKinds: tslib.SyntaxKind[], rejectKinds: tslib.SyntaxKind[]) => {
+    rejectKinds = [...rejectKinds, ts.SyntaxKind.SourceFile]
+    while (node && !stopKinds.includes(node.kind)) {
+        if (rejectKinds.includes(node.kind)) return
+        node = node.parent
+    }
+
+    return node
+}
