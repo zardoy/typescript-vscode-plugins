@@ -10,6 +10,10 @@ Add JSX elements to outline. It also makes sticky scroll works with your tags!
 
 Super recommended for react. Fragments are not rendered.
 
+## **Completions Built Different**
+
+90% work done in this extension highly improves completions experience!
+
 ### Method Snippets
 
 (*enabled by default*)

@@ -227,7 +227,7 @@ export const getCompletionsAtPosition = (
     }
 
     // prevent vscode-builtin wrong insertText with methods snippets enabled
-    if (!isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position)) {
+    if (!isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position - 1)) {
         prior.entries = prior.entries.map(item => {
             if (item.isSnippet) return item
             return { ...item, insertText: (item.insertText ?? item.name).replace(/\$/g, '\\$'), isSnippet: true }

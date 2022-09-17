@@ -20,8 +20,7 @@ const newFileContents = (contents: string, fileName = entrypoint) => {
     const cursorPositions: number[] = []
     const replacement = '/*|*/'
     let cursorIndex
-    while ((cursorIndex = contents.indexOf(replacement))) {
-        if (cursorIndex === -1) break
+    while ((cursorIndex = contents.indexOf(replacement)) !== -1) {
         contents = contents.slice(0, cursorIndex) + contents.slice(cursorIndex + replacement.length)
         cursorPositions.push(cursorIndex)
     }
@@ -58,13 +57,15 @@ test('Banned positions', () => {
 })
 
 test('Builtin method snippet banned positions', () => {
-    const cursorPositions = newFileContents(/* ts */ `
-      import {/*|*/} from 'test'
-      const obj = { m$1e$2thod() {}, arrow: () => {} }
-      type A = typeof obj["/*|*/"];
-      const test = () => ({ method() {} })
-      const {/*|*/} = test()
-      const {something, met/*|*/} = test()
+    const cursorPositions = newFileContents(/* tsx */ `
+        import {/*|*/} from 'test'
+        const obj = { m$1e$2thod() {}, arrow: () => {} }
+        type A = typeof obj["/*|*/"];
+        const test = () => ({ method() {} })
+        const {/*|*/} = test()
+        const {something, met/*|*/} = test()
+        ;<Test/*|*/ />
+        ;<Test/*|*/></Test>
     `)
     for (const [i, pos] of cursorPositions.entries()) {
         const result = isGoodPositionBuiltinMethodCompletion(ts, getSourceFile(), pos)
@@ -75,7 +76,7 @@ test('Builtin method snippet banned positions', () => {
 })
 
 test('Additional banned positions for our method snippets', () => {
-    const cursorPositions = newFileContents(/* ts */ `
+    const cursorPositions = newFileContents(/* tsx */ `
         const test = () => ({ method() {} })
         test({
             method/*|*/
@@ -83,9 +84,11 @@ test('Additional banned positions for our method snippets', () => {
         test({
             /*|*/
         })
+        ;<Test/*|*/ />
+        ;<Test/*|*/></Test>
     `)
     for (const [i, pos] of cursorPositions.entries()) {
-        const result = isGoodPositionMethodCompletion(ts, entrypoint, getSourceFile(), pos, languageService)
+        const result = isGoodPositionMethodCompletion(ts, entrypoint, getSourceFile(), pos - 1, languageService)
         expect(result, i.toString()).toBeFalsy()
     }
 })
@@ -96,6 +99,9 @@ test('Not banned positions for our method snippets', () => {
         const test2 = () => {}
         test({
             method: /*|*/
+        })
+        test({
+            method: setTimeout/*|*/
         })
         test2/*|*/
     `)
