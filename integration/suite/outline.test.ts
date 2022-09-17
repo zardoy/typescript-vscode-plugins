@@ -81,9 +81,9 @@ describe('Outline', () => {
 
     describe('Outline in js project', () => {
         it('Initial', async () => {
-            await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(fromFixtures('test-project-js')))
+            await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(fromFixtures('test-project')))
             await delay(500)
-            await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(fromFixtures('test-project-js/src/index.jsx')))
+            await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(fromFixtures('test-project/src/index.tsx')))
             await delay(600)
             document = editor().document
             const data = await getOutline()
@@ -93,7 +93,7 @@ describe('Outline', () => {
 
         it('Reopen', async () => {
             await delay(500)
-            await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(fromFixtures('test-project-js/src/index.jsx')))
+            await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(fromFixtures('test-project/src/index.tsx')))
             await delay(600)
             document = editor().document
             const data = await getOutline()
@@ -169,7 +169,7 @@ const jsProjectExpectedOutline = (navbarPosName = 'NavBar') => [
 const simplifyOutline = (items: Array<vscode.SymbolInformation & vscode.DocumentSymbol>) => {
     const newItems: Array<{ name: any; children? }> = []
     for (const { children, name } of items) {
-        if (name === 'classes') continue
+        if (['classes', 'Type'].includes(name)) continue
         newItems.push({ name, ...(children?.length ? { children: simplifyOutline(children as any) } : {}) })
     }
 

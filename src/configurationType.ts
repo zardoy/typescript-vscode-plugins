@@ -171,7 +171,7 @@ export type Configuration = {
      * Extend outline with:
      * - JSX Elements
      * more coming soon...
-     * Experimental and might not be stable
+     * Should be stable enough!
      * @default false
      */
     patchOutline: boolean

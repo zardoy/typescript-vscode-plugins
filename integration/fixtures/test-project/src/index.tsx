@@ -1,3 +1,7 @@
+interface Type {
+    [p: string]: any
+}
+
 const Component = () => {
     return (
         <div className="main__wrap">
