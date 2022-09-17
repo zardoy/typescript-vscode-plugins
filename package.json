@@ -69,6 +69,7 @@
         "chokidar": "^3.5.3",
         "chokidar-cli": "^3.0.0",
         "delay": "^5.0.0",
+        "escape-string-regexp": "^5.0.0",
         "eslint": "^8.7.0",
         "eslint-config-zardoy": "^0.2.8",
         "glob": "^8.0.3",

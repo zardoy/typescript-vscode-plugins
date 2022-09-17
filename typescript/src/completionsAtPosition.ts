@@ -5,6 +5,7 @@ import isInBannedPosition from './isInBannedPosition'
 import { GetConfig } from './types'
 import { findChildContainingPosition } from './utils'
 import { isGoodPositionBuiltinMethodCompletion } from './isGoodPositionMethodCompletion'
+import improveJsxCompletions from './jsxCompletions'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | tslib.SymbolDisplayPart[] }>
 
@@ -26,7 +27,7 @@ export const getCompletionsAtPosition = (
     const program = languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
     if (!program || !sourceFile) return
-    if (!scriptSnapshot || isInBannedPosition(position, fileName, scriptSnapshot, sourceFile, languageService)) return
+    if (!scriptSnapshot || isInBannedPosition(position, scriptSnapshot, sourceFile)) return
     let prior = languageService.getCompletionsAtPosition(fileName, position, options)
     // console.log(
     //     'raw prior',
@@ -207,6 +208,8 @@ export const getCompletionsAtPosition = (
             return { ...entry, insertText: `${entry.name} ` }
         })
     }
+
+    if (c('improveJsxCompletions') && node) prior.entries = improveJsxCompletions(ts, prior.entries, node, position, sourceFile, c('jsxCompletionsMap'))
 
     for (const rule of c('replaceSuggestions')) {
         let foundIndex: number
