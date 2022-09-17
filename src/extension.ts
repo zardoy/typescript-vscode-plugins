@@ -39,7 +39,7 @@ export const activate = async () => {
             syncConfig()
             if (affectsConfiguration(getExtensionSettingId('patchOutline'))) {
                 await vscode.commands.executeCommand('typescript.restartTsServer')
-                void vscode.window.showWarningMessage('outline will be updated after text changes')
+                void vscode.window.showWarningMessage('Outline will be updated after text changes or window reload')
             }
         }
     })

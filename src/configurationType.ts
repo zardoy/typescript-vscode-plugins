@@ -180,8 +180,37 @@ export type Configuration = {
      * Extend outline with:
      * - JSX Elements
      * more coming soon...
-     * Experimental and might not be stable
+     * Should be stable enough!
      * @default false
      */
     patchOutline: boolean
+    /**
+     * Improve JSX completions:
+     * - enable fixes
+     * - enable jsxCompletionsMap
+     * @default true
+     */
+    improveJsxCompletions: boolean
+    /**
+     * Replace JSX completions by map with `tagName#attribute` pattern as keys
+     * `tagName` can be ommited, but not `attribute` for now
+     * Example usages:
+     * - `#className`: `insertText: "={classNames$1}"`
+     * - `button#type`: `insertText: "='button'"`
+     * - `#on*`: `insertText: "={${1:($2) => $3}}"`
+     * - `Table#someProp`: `insertText: "="something"`
+     * Remove attribute:
+     * - `children`: `false`
+     * @default {}
+     */
+    jsxCompletionsMap: {
+        [rule: string]:
+            | {
+                  insertText: string
+                  // TODO make it accept 'above'?
+                  /** Make original suggestion keep below patched */
+                  duplicate?: boolean
+              }
+            | false
+    }
 }

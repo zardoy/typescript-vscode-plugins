@@ -30,7 +30,7 @@ const getPatchedNavModule = (ts: typeof tslib) => {
         },
         {
             predicateString: 'return "<unknown>";',
-            linesOffset: -2,
+            linesOffset: -1,
             addString: `
                 case ts.SyntaxKind.JsxSelfClosingElement:
                 return getNameFromJsxTag(node);

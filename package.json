@@ -32,11 +32,14 @@
     ],
     "scripts": {
         "start": "vscode-framework start",
-        "build": "tsc && tsc -p typescript --noEmit && vscode-framework build && node buildTsPlugin.mjs",
-        "test": "pnpm test-plugin",
-        "test-plugin": "vitest --globals",
-        "watch-plugin": "tsc -p typescript -w",
-        "lint": "eslint src/**"
+        "build": "tsc && tsc -p typescript --noEmit && vscode-framework build && pnpm build-plugin",
+        "build-plugin": "node buildTsPlugin.mjs",
+        "watch-plugin": "pnpm build-plugin --watch",
+        "lint": "eslint src/**",
+        "test": "pnpm test-plugin && pnpm integration-test",
+        "test-plugin": "vitest --globals --dir typescript/test/",
+        "integration-test": "node integration/prerun.mjs && tsc -p tsconfig.test.json && node testsOut/runTests.js",
+        "integration-test:watch": "chokidar \"integration/**\" -c \"pnpm integration-test\" --initial"
     },
     "devDependencies": {
         "@types/fs-extra": "^9.0.13",
@@ -54,17 +57,28 @@
         "vscode-manifest": "^0.0.4"
     },
     "dependencies": {
+        "@types/chai": "^4.3.3",
+        "@types/glob": "^8.0.0",
         "@types/lodash": "^4.14.182",
+        "@types/mocha": "^9.1.1",
         "@vscode/emmet-helper": "^2.8.4",
-        "@zardoy/utils": "^0.0.6",
-        "@zardoy/vscode-utils": "^0.0.28",
+        "@vscode/test-electron": "^2.1.5",
+        "@zardoy/utils": "^0.0.9",
+        "@zardoy/vscode-utils": "^0.0.32",
+        "chai": "^4.3.6",
         "chokidar": "^3.5.3",
+        "chokidar-cli": "^3.0.0",
+        "delay": "^5.0.0",
+        "escape-string-regexp": "^5.0.0",
         "eslint": "^8.7.0",
         "eslint-config-zardoy": "^0.2.8",
+        "glob": "^8.0.3",
         "lodash": "^4.17.21",
         "lodash.get": "^4.4.2",
+        "mocha": "^10.0.0",
         "modify-json-file": "^1.2.2",
         "require-from-string": "^2.0.2",
+        "string-dedent": "^3.0.1",
         "vscode-framework": "^0.0.18"
     },
     "prettier": {
@@ -74,7 +88,8 @@
         "tabWidth": 4,
         "trailingComma": "all",
         "arrowParens": "avoid",
-        "printWidth": 160
+        "printWidth": 160,
+        "endOfLine": "auto"
     },
     "release": {
         "changelog": {

@@ -7,8 +7,13 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # needs: test
     steps:
+      - run: npm -v
+      - run: node -v
       - uses: actions/checkout@v2
+      - run: npx prettier --check src/**
       - name: Cache pnpm modules
         uses: actions/cache@v2
         with:
@@ -21,6 +26,13 @@ jobs:
           version: latest
           run_install: |
             args: [--frozen-lockfile, --strict-peer-dependencies]
+      - run: pnpm lint
+      # - run: pnpm unit-test
+      - run: pnpm vscode-utils prepareFrameworkBuild
+      - run: pnpm build
+      - uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: pnpm integration-test
       - run: pnpx zardoy-release vscode-extension
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

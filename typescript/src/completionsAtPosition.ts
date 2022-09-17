@@ -7,6 +7,7 @@ import { findChildContainingPosition } from './utils'
 import signatureAccessCompletions from './signatureAccessCompletions'
 import fixPropertiesSorting from './fixPropertiesSorting'
 import { isGoodPositionBuiltinMethodCompletion } from './isGootPositionMethodCompletion'
+import improveJsxCompletions from './jsxCompletions'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | tslib.SymbolDisplayPart[] }>
 
@@ -28,7 +29,7 @@ export const getCompletionsAtPosition = (
     const program = languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
     if (!program || !sourceFile) return
-    if (!scriptSnapshot || isInBannedPosition(position, fileName, scriptSnapshot, sourceFile, languageService)) return
+    if (!scriptSnapshot || isInBannedPosition(position, scriptSnapshot, sourceFile)) return
     let prior = languageService.getCompletionsAtPosition(fileName, position, options)
     // console.log(
     //     'raw prior',
@@ -219,6 +220,8 @@ export const getCompletionsAtPosition = (
         })
     }
 
+    if (c('improveJsxCompletions') && node) prior.entries = improveJsxCompletions(ts, prior.entries, node, position, sourceFile, c('jsxCompletionsMap'))
+
     for (const rule of c('replaceSuggestions')) {
         let foundIndex: number
         const suggestion = prior.entries.find(({ name, kind }, index) => {
@@ -238,7 +241,7 @@ export const getCompletionsAtPosition = (
     }
 
     // prevent vscode-builtin wrong insertText with methods snippets enabled
-    if (!isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position)) {
+    if (!isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position - 1)) {
         prior.entries = prior.entries.map(item => {
             if (item.isSnippet) return item
             return { ...item, insertText: (item.insertText ?? item.name).replace(/\$/g, '\\$'), isSnippet: true }
