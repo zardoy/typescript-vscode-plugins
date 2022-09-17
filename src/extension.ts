@@ -4,6 +4,7 @@ import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 import { getExtensionSetting, registerActiveDevelopmentCommand, extensionCtx, getExtensionSettingId } from 'vscode-framework'
 import { pickObj } from '@zardoy/utils'
+import throttle from 'lodash.throttle'
 import { PostfixCompletion, TriggerCharacterCommand } from '../typescript/src/ipcTypes'
 import { Configuration } from './configurationType'
 
@@ -115,10 +116,11 @@ export const activate = async () => {
         defaultJsSupersetLangs,
         {
             async provideCompletionItems(document, position, token, context) {
+                // always execute this command to ensure we have config in loaded
+                const result = await sendCommand('getPostfixes', { document, position })
                 if (!position.character) return
                 const beforeDotPos = document.getWordRangeAtPosition(position)?.start ?? position
                 if (document.getText(new vscode.Range(beforeDotPos, beforeDotPos.translate(0, -1))) !== '.') return
-                const result = await sendCommand('getPostfixes', { document, position })
                 if (!getExtensionSetting('experimentalPostfixes.enable')) return
                 const disablePostfixes = getExtensionSetting('experimentalPostfixes.disablePostfixes')
                 // eslint-disable-next-line prefer-destructuring
@@ -164,7 +166,7 @@ export const activate = async () => {
         if (!languageId || !defaultJsSupersetLangs.includes(languageId)) return
         dispose()
         await new Promise(resolve => {
-            setTimeout(resolve, 200)
+            setTimeout(resolve, 300)
         })
         void checkPluginNeedsConfig()
     }
@@ -172,20 +174,27 @@ export const activate = async () => {
     void doInitialCheck()
 
     let reloads = 0
-    const resendConfig = async () => {
-        reloads++
-        if (reloads > 2) {
-            // avoid spamming
-            if (reloads > 3) return
-            void vscode.window.showErrorMessage("There is a problem with TypeScript plugin as it can't be configured properly. Try to restart TS")
-            return
-        }
+    const resendConfig = throttle(
+        async () => {
+            reloads++
+            if (reloads > 2) {
+                // avoid spamming
+                if (reloads > 3) return
+                void vscode.window.showErrorMessage("There is a problem with TypeScript plugin as it can't be configured properly. Try to restart TS")
+                return
+            }
 
-        syncConfig()
-        await new Promise(resolve => {
-            setTimeout(resolve, 100)
-        })
-        if (await checkPluginNeedsConfig()) void resendConfig()
-        else reloads = 0
-    }
+            syncConfig()
+            await new Promise(resolve => {
+                setTimeout(resolve, 100)
+            })
+            if (await checkPluginNeedsConfig()) void resendConfig()
+            else reloads = 0
+        },
+        200,
+        {
+            leading: true,
+            trailing: false,
+        },
+    )
 }

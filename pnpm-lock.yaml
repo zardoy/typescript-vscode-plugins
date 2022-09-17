@@ -28,6 +28,7 @@ importers:
       glob: ^8.0.3
       lodash: ^4.17.21
       lodash.get: ^4.4.2
+      lodash.throttle: ^4.1.1
       mocha: ^10.0.0
       modify-json-file: ^1.2.2
       require-from-string: ^2.0.2
@@ -59,6 +60,7 @@ importers:
       glob: 8.0.3
       lodash: 4.17.21
       lodash.get: 4.4.2
+      lodash.throttle: 4.1.1
       mocha: 10.0.0
       modify-json-file: 1.2.2
       require-from-string: 2.0.2
