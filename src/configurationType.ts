@@ -88,10 +88,6 @@ export type Configuration = {
     // 'importUpDefinition.enable': boolean
     /**
      * @default true
-     *  */
-    // 'postfixSupport.enable': boolean
-    /**
-     * @default true
      * */
     'removeCodeFixes.enable': boolean
     /**
@@ -114,7 +110,7 @@ export type Configuration = {
      */
     'jsxImproveElementsSuggestions.enabled': boolean
     /**
-     * @default true
+     * @default false
      */
     'experimentalPostfixes.enable': boolean
     /**

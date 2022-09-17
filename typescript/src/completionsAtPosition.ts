@@ -1,13 +1,13 @@
 import _ from 'lodash'
 import type tslib from 'typescript/lib/tsserverlibrary'
 import * as emmet from '@vscode/emmet-helper'
-import isInBannedPosition from './isInBannedPosition'
+import isInBannedPosition from './completions/isInBannedPosition'
 import { GetConfig } from './types'
 import { findChildContainingPosition } from './utils'
-import signatureAccessCompletions from './signatureAccessCompletions'
-import fixPropertiesSorting from './fixPropertiesSorting'
-import { isGoodPositionBuiltinMethodCompletion } from './isGootPositionMethodCompletion'
-import improveJsxCompletions from './jsxCompletions'
+import indexSignatureAccessCompletions from './completions/indexSignatureAccess'
+import fixPropertiesSorting from './completions/fixPropertiesSorting'
+import { isGoodPositionBuiltinMethodCompletion } from './completions/isGoodPositionMethodCompletion'
+import improveJsxCompletions from './completions/jsxAttributes'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | tslib.SymbolDisplayPart[] }>
 
@@ -22,6 +22,7 @@ export const getCompletionsAtPosition = (
 ):
     | {
           completions: tslib.CompletionInfo
+          /** Let default getCompletionEntryDetails to know original name or let add documentation from here */
           prevCompletionsMap: PrevCompletionMap
       }
     | undefined => {
@@ -123,26 +124,15 @@ export const getCompletionsAtPosition = (
             }
         }
     }
-    fixPropertiesSorting(position, node, scriptSnapshot, sourceFile, program, ts)
     const addSignatureAccessCompletions = prior?.entries.filter(({ kind }) => kind !== ts.ScriptElementKind.warning).length
         ? []
-        : signatureAccessCompletions(position, node, scriptSnapshot, sourceFile, program, ts)
-    if (addSignatureAccessCompletions.length) {
-        if (ensurePrior() && prior) {
-            prior.entries.push(...addSignatureAccessCompletions)
-        }
+        : indexSignatureAccessCompletions(position, node, scriptSnapshot, sourceFile, program, ts)
+    if (addSignatureAccessCompletions.length && ensurePrior() && prior) {
+        prior.entries = [...prior.entries, ...addSignatureAccessCompletions]
     }
 
     if (!prior) return
 
-    // const fullText = scriptSnapshot.getText(0, scriptSnapshot.getLength())
-    // const matchImport = /(import (.*)from )['"].*['"]/.exec(fullText.split('\n')[line]!)?.[1]
-    // if (matchImport && character <= `import${matchImport}`.length) {
-    //     console.log('override')
-    //     return
-    // }
-    // prior.isGlobalCompletion
-    // prior.entries[0]
     const entryNames = new Set(prior.entries.map(({ name }) => name))
     if (c('removeUselessFunctionProps.enable')) prior.entries = prior.entries.filter(e => !['Symbol', 'caller', 'prototype'].includes(e.name))
     if (['bind', 'call', 'caller'].every(name => entryNames.has(name)) && c('highlightNonFunctionMethods.enable')) {

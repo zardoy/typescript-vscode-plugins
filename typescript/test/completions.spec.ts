@@ -3,7 +3,7 @@ import { getCompletionsAtPosition as getCompletionsAtPositionRaw } from '../src/
 import type {} from 'vitest/globals'
 import ts from 'typescript/lib/tsserverlibrary'
 import { getDefaultConfigFunc } from './defaultSettings'
-import { isGoodPositionBuiltinMethodCompletion, isGoodPositionMethodCompletion } from '../src/isGoodPositionMethodCompletion'
+import { isGoodPositionBuiltinMethodCompletion, isGoodPositionMethodCompletion } from '../src/completions/isGoodPositionMethodCompletion'
 import { getNavTreeItems } from '../src/getPatchedNavTree'
 import { createRequire } from 'module'
 
@@ -180,4 +180,3 @@ test('Patched navtree (outline)', () => {
       ]
     `)
 })
-
