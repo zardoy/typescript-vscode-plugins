@@ -15,13 +15,11 @@ export default (position: number, fileName: string, scriptSnapshot: tslib.IScrip
     const node = findChildContainingPosition(ts, sourceFile, nodePos)
     if (!node) return []
     const postfixes: PostfixCompletion[] = []
-    // undefined, null, eq
-    // TODO doesn't include in case of ===
     let foundNode: tslib.Node | undefined
     if (
         ts.isIdentifier(node) &&
         (foundNode = findClosestParent(ts, node, [ts.SyntaxKind.BinaryExpression, ts.SyntaxKind.IfStatement], [])) &&
-        (!ts.isBinaryExpression(foundNode!) || foundNode.operatorToken.kind !== ts.SyntaxKind.EqualsEqualsEqualsToken)
+        (!ts.isBinaryExpression(foundNode!) || !isComparingToken(foundNode.operatorToken))
     ) {
         if (ts.isIdentifier(node)) {
             postfixes.push(
@@ -44,6 +42,21 @@ export default (position: number, fileName: string, scriptSnapshot: tslib.IScrip
     //     probablyAddNotSnippet(postfixes, binaryExprNode, ts)
     // }
     return postfixes
+}
+
+const isComparingToken = (node: tslib.Node) => {
+    switch (node.kind) {
+        case ts.SyntaxKind.EqualsEqualsEqualsToken:
+        case ts.SyntaxKind.EqualsEqualsToken:
+        case ts.SyntaxKind.ExclamationEqualsToken:
+        case ts.SyntaxKind.ExclamationEqualsEqualsToken:
+        case ts.SyntaxKind.LessThanToken:
+        case ts.SyntaxKind.LessThanEqualsToken:
+        case ts.SyntaxKind.GreaterThanToken:
+        case ts.SyntaxKind.GreaterThanEqualsToken:
+            return true
+    }
+    return false
 }
 
 const probablyAddNotSnippet = (postfixes: PostfixCompletion[], binaryExprNode: tslib.BinaryExpression, ts: typeof tslib) => {
