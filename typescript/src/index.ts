@@ -85,7 +85,7 @@ export = ({ typescript }: { typescript: typeof ts }) => {
                 if (
                     c('enableMethodSnippets') &&
                     oneOf(
-                        prior.kind as string,
+                        prior.kind,
                         ts.ScriptElementKind.constElement,
                         ts.ScriptElementKind.letElement,
                         ts.ScriptElementKind.alias,

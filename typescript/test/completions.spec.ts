@@ -68,6 +68,9 @@ test('Builtin method snippet banned positions', () => {
         ;<Test/*|*/></Test>
         ;<Test test={/*|*/}></Test>
         ;<Test test={a/*|*/}></Test>
+        ;<Test /*|*/></Test>
+        ;<Test a={5} /*|*/ b></Test>
+        ;<Test a/*|*/ />
     `)
     for (const [i, pos] of cursorPositions.entries()) {
         const result = isGoodPositionBuiltinMethodCompletion(ts, getSourceFile(), pos, defaultConfigFunc)
@@ -90,6 +93,9 @@ test('Additional banned positions for our method snippets', () => {
         ;<Test/*|*/></Test>
         ;<Test test={/*|*/}></Test>
         ;<Test test={a/*|*/}></Test>
+        ;<Test /*|*/></Test>
+        ;<Test a={5} /*|*/ b></Test>
+        ;<Test a/*|*/ />
     `)
     for (const [i, pos] of cursorPositions.entries()) {
         const result = isGoodPositionMethodCompletion(ts, entrypoint, getSourceFile(), pos - 1, languageService, defaultConfigFunc)
