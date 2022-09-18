@@ -101,11 +101,11 @@ export type Configuration = {
      *  */
     'jsxEmmet.type': 'realEmmet' | 'fakeEmmet' | 'disabled'
     /**
-     * Sorting matters
+     * Note: Sorting matters
      */
     'jsxPseudoEmmet.tags': { [tag: string]: true | string }
     /**
-     * Exclude lowercase / incorrent e.g. suggestions
+     * Exclude lowercase / incorrent suggestions
      * @default true
      */
     'jsxImproveElementsSuggestions.enabled': boolean
@@ -164,6 +164,12 @@ export type Configuration = {
      */
     enableMethodSnippets: boolean
     /**
+     * Wether to disable our and builtin method snippets within jsx attributes
+     * @default true
+     */
+    // TODO add smart setting
+    'disableMethodSnippets.jsxAttributes': boolean
+    /**
      * Support `@ts-diagnostic-disable` top-level comment for disabling spefici semantic diagnostics
      * Example: `// @ts-diagnostic-disable
      * Advanced usage only! Enable in `.vscode/settings.json` for projects that need this
@@ -181,8 +187,8 @@ export type Configuration = {
      */
     patchOutline: boolean
     /**
-     * Improve JSX completions:
-     * - enable fixes
+     * Improve JSX attribute completions:
+     * - enable builtin jsx attribute completion fix
      * - enable jsxCompletionsMap
      * @default true
      */

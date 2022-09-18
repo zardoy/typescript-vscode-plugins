@@ -94,7 +94,7 @@ export = ({ typescript }: { typescript: typeof ts }) => {
                     )
                 ) {
                     // - 1 to look for possibly previous completing item
-                    let goodPosition = isGoodPositionMethodCompletion(ts, fileName, sourceFile, position - 1, info.languageService)
+                    let goodPosition = isGoodPositionMethodCompletion(ts, fileName, sourceFile, position - 1, info.languageService, c)
                     let rawPartsOverride: ts.SymbolDisplayPart[] | undefined
                     if (goodPosition && prior.kind === ts.ScriptElementKind.alias) {
                         goodPosition =

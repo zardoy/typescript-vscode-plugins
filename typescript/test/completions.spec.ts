@@ -66,9 +66,11 @@ test('Builtin method snippet banned positions', () => {
         const {something, met/*|*/} = test()
         ;<Test/*|*/ />
         ;<Test/*|*/></Test>
+        ;<Test test={/*|*/}></Test>
+        ;<Test test={a/*|*/}></Test>
     `)
     for (const [i, pos] of cursorPositions.entries()) {
-        const result = isGoodPositionBuiltinMethodCompletion(ts, getSourceFile(), pos)
+        const result = isGoodPositionBuiltinMethodCompletion(ts, getSourceFile(), pos, defaultConfigFunc)
         expect(result, i.toString()).toBeFalsy()
     }
     const insertTextEscaping = getCompletionsAtPosition(cursorPositions[1]!)!.entries[1]?.insertText!
@@ -86,9 +88,11 @@ test('Additional banned positions for our method snippets', () => {
         })
         ;<Test/*|*/ />
         ;<Test/*|*/></Test>
+        ;<Test test={/*|*/}></Test>
+        ;<Test test={a/*|*/}></Test>
     `)
     for (const [i, pos] of cursorPositions.entries()) {
-        const result = isGoodPositionMethodCompletion(ts, entrypoint, getSourceFile(), pos - 1, languageService)
+        const result = isGoodPositionMethodCompletion(ts, entrypoint, getSourceFile(), pos - 1, languageService, defaultConfigFunc)
         expect(result, i.toString()).toBeFalsy()
     }
 })
@@ -106,7 +110,7 @@ test('Not banned positions for our method snippets', () => {
         test2/*|*/
     `)
     for (const [i, pos] of cursorPositions.entries()) {
-        const result = isGoodPositionMethodCompletion(ts, entrypoint, getSourceFile(), pos - 1, languageService)
+        const result = isGoodPositionMethodCompletion(ts, entrypoint, getSourceFile(), pos - 1, languageService, defaultConfigFunc)
         expect(result, i.toString()).toBeTruthy()
     }
 })

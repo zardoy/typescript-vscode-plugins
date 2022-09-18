@@ -1,7 +1,8 @@
 import type tslib from 'typescript/lib/tsserverlibrary'
+import { GetConfig } from '../types'
 import { findChildContainingPosition, findChildContainingPositionMaxDepth } from '../utils'
 
-export const isGoodPositionBuiltinMethodCompletion = (ts: typeof tslib, sourceFile: tslib.SourceFile, position: number) => {
+export const isGoodPositionBuiltinMethodCompletion = (ts: typeof tslib, sourceFile: tslib.SourceFile, position: number, c: GetConfig) => {
     const importClauseCandidate = findChildContainingPositionMaxDepth(ts, sourceFile, position, 3)
     if (importClauseCandidate && ts.isImportClause(importClauseCandidate)) return false
     const textBeforePos = sourceFile.getFullText().slice(position - 1, position)
@@ -14,6 +15,7 @@ export const isGoodPositionBuiltinMethodCompletion = (ts: typeof tslib, sourceFi
         if (ts.isJsxSelfClosingElement(currentNode) || ts.isJsxOpeningElement(currentNode)) return false
         if (ts.isShorthandPropertyAssignment(currentNode)) currentNode = currentNode.parent
         if (ts.isObjectBindingPattern(currentNode) || ts.isObjectLiteralExpression(currentNode)) return false
+        if (c('disableMethodSnippets.jsxAttributes') && ts.isJsxExpression(currentNode)) return false
     }
     return true
 }
@@ -24,8 +26,9 @@ export const isGoodPositionMethodCompletion = (
     sourceFile: tslib.SourceFile,
     position: number,
     languageService: tslib.LanguageService,
+    c: GetConfig,
 ) => {
-    if (!isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position)) return false
+    if (!isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position, c)) return false
     // const { kind, displayParts } = languageService.getQuickInfoAtPosition(fileName, position) ?? {}
     // console.log('kind', kind, displayParts?.map(({ text }) => text).join(''))
     // switch (kind) {
