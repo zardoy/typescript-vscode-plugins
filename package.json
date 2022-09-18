@@ -98,6 +98,9 @@
     "release": {
         "changelog": {
             "style": "gitmoji"
+        },
+        "preset": {
+            "runTest": false
         }
     }
 }

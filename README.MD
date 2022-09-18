@@ -8,7 +8,7 @@
 
 Add JSX elements to outline. It also makes sticky scroll works with your tags!
 
-Super recommended for react. Fragments are not rendered.
+Experimental and might not be stable. Fragments are not rendered.
 
 ## **Completions Built Different**
 
