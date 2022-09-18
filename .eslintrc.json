@@ -1,7 +1,6 @@
 {
     "extends": "zardoy",
     "rules": {
-        "curly": "off",
-        "unicorn/catch-error-name": "off"
+        "curly": "off"
     }
 }

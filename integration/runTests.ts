@@ -7,7 +7,7 @@ async function main() {
             version: 'stable',
             extensionDevelopmentPath: join(__dirname, '../out'),
             extensionTestsPath: join(__dirname, './index'),
-            launchArgs: ['--disable-extensions'],
+            launchArgs: [join(__dirname, '../integration/fixtures'), '--disable-extensions'],
         })
     } catch (error) {
         console.error(error)

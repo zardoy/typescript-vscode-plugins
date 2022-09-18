@@ -13,7 +13,6 @@ describe('JSX Attributes', () => {
     const startPos = new vscode.Position(0, 0)
     before(async function () {
         this.timeout(5000)
-        await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(fromFixtures('test-project')))
         // await vscode.workspace.getConfiguration('typescript').update('tsserver.log', 'verbose', vscode.ConfigurationTarget.Global)
         const configKey: keyof Configuration = 'jsxCompletionsMap'
         const configValue: Configuration['jsxCompletionsMap'] = {
