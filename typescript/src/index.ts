@@ -6,46 +6,32 @@ import type { Configuration } from '../../src/configurationType'
 import _ from 'lodash'
 import { GetConfig } from './types'
 import { getCompletionsAtPosition, PrevCompletionMap } from './completionsAtPosition'
+import { TriggerCharacterCommand } from './ipcTypes'
 import { oneOf } from '@zardoy/utils'
-import { isGoodPositionMethodCompletion } from './isGoodPositionMethodCompletion'
-import { inspect } from 'util'
-import { findChildContainingPosition, getIndentFromPos } from './utils'
-import { getParameterListParts } from './snippetForFunctionCall'
+import { isGoodPositionMethodCompletion } from './completions/isGoodPositionMethodCompletion'
+import { getParameterListParts } from './completions/snippetForFunctionCall'
 import { getNavTreeItems } from './getPatchedNavTree'
 import { join } from 'path'
-import getCodeActions, { REFACTORS_CATEGORY } from './codeActions/getCodeActions'
+import decorateCodeActions from './codeActions/decorateProxy'
+import decorateSemanticDiagnostics from './semanticDiagnostics'
+import decorateCodeFixes from './codeFixes'
+import decorateReferences from './references'
+import handleSpecialCommand from './specialCommands/handle'
 
 const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 
 // just to see wether issue is resolved
 let _configuration: Configuration
 const c: GetConfig = key => get(_configuration, key)
-export = function ({ typescript }: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
-    const ts = typescript
-
+export = ({ typescript }: { typescript: typeof ts }) => {
+    ts = typescript
     return {
         create(info: ts.server.PluginCreateInfo) {
+            // receive fresh config
+            _configuration = info.config
+            console.log('receive config', JSON.stringify(_configuration))
             if (info.languageService[thisPluginMarker]) return info.languageService
-            // const realGetSnapshot = info.languageServiceHost.getScriptSnapshot
-            // info.languageServiceHost.getScriptSnapshot = fileName => {
-            //     console.log('getSnapshot', fileName)
-            //     return realGetSnapshot(fileName)
-            // }
-            // const realReadFile = info.serverHost.readFile
-            // info.serverHost.readFile = fileName => {
-            //     let contents = realReadFile(fileName)
-            //     if (fileName.endsWith('/node_modules/typescript/lib/lib.dom.d.ts') && c('eventTypePatching.enable')) {
-            //         contents = contents
-            //             ?.replace('interface EventTarget {', 'interface EventTarget extends HTMLElement {')
-            //             .replace('"change": Event;', '"change": Event & {currentTarget: HTMLInputElement, target: HTMLInputElement};')
-            //             .replace('"change": Event;', '"change": Event & {currentTarget: HTMLInputElement, target: HTMLInputElement};')
-            //             .replace('"input": Event;', '"input": Event & {currentTarget: HTMLInputElement, target: HTMLInputElement};')
-            //     }
-            //     return contents
-            // }
-            // const compilerOptions = typescript.convertCompilerOptionsFromJson(options.compilerOptions, options.sourcesRoot).options
-            // console.log('getCompilationSettings', info.languageServiceHost.getCompilationSettings())
-            // info.languageServiceHost.getScriptSnapshot
+
             // Set up decorator object
             const proxy: ts.LanguageService = Object.create(null)
 
@@ -58,9 +44,14 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
             let prevCompletionsMap: PrevCompletionMap
             // eslint-disable-next-line complexity
             proxy.getCompletionsAtPosition = (fileName, position, options) => {
+                const specialCommandResult = options?.triggerCharacter
+                    ? handleSpecialCommand(info, fileName, position, options.triggerCharacter as TriggerCharacterCommand, _configuration)
+                    : undefined
+                // handled specialCommand request
+                if (specialCommandResult !== undefined) return specialCommandResult
                 prevCompletionsMap = {}
-                if (!_configuration) console.log('no received configuration!')
                 const scriptSnapshot = info.project.getScriptSnapshot(fileName)
+                // have no idea in which cases its possible, but we can't work without it
                 if (!scriptSnapshot) return
                 const result = getCompletionsAtPosition(fileName, position, options, c, info.languageService, scriptSnapshot, ts)
                 if (!result) return
@@ -99,7 +90,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                         ts.ScriptElementKind.letElement,
                         ts.ScriptElementKind.alias,
                         ts.ScriptElementKind.variableElement,
-                        'property',
+                        ts.ScriptElementKind.memberVariableElement,
                     )
                 ) {
                     // - 1 to look for possibly previous completing item
@@ -111,7 +102,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                         const { parts, gotMethodHit, hasOptionalParameters } = getParameterListParts(prior.displayParts)
                         if (gotMethodHit) rawPartsOverride = hasOptionalParameters ? [...parts, { kind: '', text: ' ' }] : parts
                     }
-                    const punctuationIndex = prior.displayParts.findIndex(({ kind }) => kind === 'punctuation')
+                    const punctuationIndex = prior.displayParts.findIndex(({ kind, text }) => kind === 'punctuation' && text === ':')
                     if (goodPosition && punctuationIndex !== 1) {
                         const isParsableMethod = prior.displayParts
                             // next is space
@@ -143,142 +134,15 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
                         }
                     }
                 }
-                // if (prior.kind === typescript.ScriptElementKind.constElement && prior.displayParts.map(item => item.text).join('').match(/: \(.+\) => .+/)) prior.codeActions?.push({
-                //     description: '',
-                //     changes: []
-                // })
                 return prior
             }
 
-            proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
-                let prior = info.languageService.getApplicableRefactors(fileName, positionOrRange, preferences)
+            decorateCodeActions(proxy, info.languageService, c)
+            decorateCodeFixes(proxy, info.languageService, c)
+            decorateSemanticDiagnostics(proxy, info, c)
+            decorateReferences(proxy, info.languageService, c)
 
-                if (c('markTsCodeActions.enable')) prior = prior.map(item => ({ ...item, description: `🔵 ${item.description}` }))
-
-                const program = info.languageService.getProgram()
-                const sourceFile = program!.getSourceFile(fileName)!
-                const { info: refactorInfo } = getCodeActions(ts, sourceFile, positionOrRange)
-                if (refactorInfo) prior = [...prior, refactorInfo]
-
-                return prior
-            }
-
-            proxy.getEditsForRefactor = (fileName, formatOptions, positionOrRange, refactorName, actionName, preferences) => {
-                const category = refactorName
-                if (category === REFACTORS_CATEGORY) {
-                    const program = info.languageService.getProgram()
-                    const sourceFile = program!.getSourceFile(fileName)!
-                    const { edit } = getCodeActions(ts, sourceFile, positionOrRange, actionName)
-                    return edit
-                }
-                return info.languageService.getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences)
-            }
-
-            proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
-                let prior = info.languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
-                // fix builtin codefixes/refactorings
-                prior.forEach(fix => {
-                    if (fix.fixName === 'fixConvertConstToLet') {
-                        const { start, length } = fix.changes[0]!.textChanges[0]!.span
-                        const fixedLength = 'const'.length as 5
-                        fix.changes[0]!.textChanges[0]!.span.start = start + length - fixedLength
-                        fix.changes[0]!.textChanges[0]!.span.length = fixedLength
-                    }
-                    return fix
-                })
-                // const scriptSnapshot = info.project.getScriptSnapshot(fileName)
-                const diagnostics = proxy.getSemanticDiagnostics(fileName)
-
-                // https://github.com/Microsoft/TypeScript/blob/v4.5.5/src/compiler/diagnosticMessages.json#L458
-                const appliableErrorCode = [1156, 1157].find(code => errorCodes.includes(code))
-                if (appliableErrorCode) {
-                    const program = info.languageService.getProgram()
-                    const sourceFile = program!.getSourceFile(fileName)!
-                    const startIndent = getIndentFromPos(typescript, sourceFile, end)
-                    const diagnostic = diagnostics.find(({ code }) => code === appliableErrorCode)!
-                    prior = [
-                        ...prior,
-                        {
-                            fixName: 'wrapBlock',
-                            description: 'Wrap in block',
-                            changes: [
-                                {
-                                    fileName,
-                                    textChanges: [
-                                        { span: { start: diagnostic.start!, length: 0 }, newText: `{\n${startIndent}\t` },
-                                        { span: { start: diagnostic.start! + diagnostic.length!, length: 0 }, newText: `\n${startIndent}}` },
-                                    ],
-                                },
-                            ],
-                        },
-                    ]
-                }
-
-                if (c('removeCodeFixes.enable')) {
-                    const toRemove = c('removeCodeFixes.codefixes')
-                    prior = prior.filter(({ fixName }) => !toRemove.includes(fixName as any))
-                }
-
-                if (c('markTsCodeFixes.character'))
-                    prior = prior.map(item => ({ ...item, description: `${c('markTsCodeFixes.character')} ${item.description}` }))
-
-                return prior
-            }
-
-            proxy.getDefinitionAndBoundSpan = (fileName, position) => {
-                const prior = info.languageService.getDefinitionAndBoundSpan(fileName, position)
-                if (!prior) return
-                // used after check
-                const firstDef = prior.definitions![0]!
-                if (
-                    c('changeDtsFileDefinitionToJs') &&
-                    prior.definitions?.length === 1 &&
-                    // default, namespace import or import path click
-                    firstDef.containerName === '' &&
-                    firstDef.fileName.endsWith('.d.ts')
-                ) {
-                    const jsFileName = `${firstDef.fileName.slice(0, -'.d.ts'.length)}.js`
-                    const isJsFileExist = info.languageServiceHost.fileExists?.(jsFileName)
-                    if (isJsFileExist) prior.definitions = [{ ...firstDef, fileName: jsFileName }]
-                }
-                if (c('miscDefinitionImprovement') && prior.definitions?.length === 2) {
-                    prior.definitions = prior.definitions.filter(({ fileName, containerName }) => {
-                        const isFcDef = fileName.endsWith('node_modules/@types/react/index.d.ts') && containerName === 'FunctionComponent'
-                        return !isFcDef
-                    })
-                }
-                return prior
-            }
-
-            proxy.findReferences = (fileName, position) => {
-                let prior = info.languageService.findReferences(fileName, position)
-                if (!prior) return
-                if (c('removeDefinitionFromReferences')) {
-                    prior = prior.map(({ references, ...other }) => ({
-                        ...other,
-                        references: references.filter(({ isDefinition }) => !isDefinition),
-                    }))
-                }
-                return prior
-            }
-
-            proxy.getSemanticDiagnostics = fileName => {
-                let prior = info.languageService.getSemanticDiagnostics(fileName)
-                if (c('supportTsDiagnosticDisableComment')) {
-                    const scriptSnapshot = info.project.getScriptSnapshot(fileName)!
-                    const firstLine = scriptSnapshot.getText(0, scriptSnapshot.getLength()).split(/\r?\n/)[0]!
-                    if (firstLine.startsWith('//')) {
-                        const match = firstLine.match(/@ts-diagnostic-disable ((\d+, )*(\d+))/)
-                        if (match) {
-                            const codesToDisable = match[1]!.split(', ').map(Number)
-                            prior = prior.filter(({ code }) => !codesToDisable.includes(code))
-                        }
-                    }
-                }
-                return prior
-            }
-
-            // didecated syntax server (which is enabled by default), which fires navtree doesn't seem to receive onConfigurationChanged
+            // dedicated syntax server (which is enabled by default), which fires navtree doesn't seem to receive onConfigurationChanged
             // so we forced to communicate via fs
             const config = JSON.parse(ts.sys.readFile(join(__dirname, '../../plugin-config.json'), 'utf8') ?? '{}')
             proxy.getNavigationTree = fileName => {
@@ -291,7 +155,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
             return proxy
         },
         onConfigurationChanged(config: any) {
-            console.log('inspect config', JSON.stringify(config))
+            console.log('update config', JSON.stringify(config))
             _configuration = config
         },
     }

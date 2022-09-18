@@ -88,10 +88,6 @@ export type Configuration = {
     // 'importUpDefinition.enable': boolean
     /**
      * @default true
-     *  */
-    // 'postfixSupport.enable': boolean
-    /**
-     * @default true
      * */
     'removeCodeFixes.enable': boolean
     /**
@@ -114,7 +110,16 @@ export type Configuration = {
      */
     'jsxImproveElementsSuggestions.enabled': boolean
     /**
-     * Requires restart TS server
+     * @default false
+     */
+    'experimentalPostfixes.enable': boolean
+    /**
+     * Disable specific postfixes from this plugin
+     * @default []
+     */
+    'experimentalPostfixes.disablePostfixes': string[]
+    /**
+     * Requires TS server restart
      * @default false
      *  */
     // 'eventTypePatching.enable': boolean

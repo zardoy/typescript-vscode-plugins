@@ -27,7 +27,7 @@ jobs:
           run_install: |
             args: [--frozen-lockfile, --strict-peer-dependencies]
       - run: pnpm lint
-      # - run: pnpm unit-test
+      - run: pnpm test-plugin
       - run: pnpm vscode-utils prepareFrameworkBuild
       - run: pnpm build
       # - uses: GabrielBB/xvfb-action@v1.6

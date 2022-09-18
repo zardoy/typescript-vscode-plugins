@@ -1,3 +1,4 @@
+import delay from 'delay'
 import { join } from 'path'
 import * as vscode from 'vscode'
 
@@ -38,4 +39,13 @@ export const replaceEditorText = async (editor: vscode.TextEditor, range: vscode
         })
         void editor.edit(builder => builder.replace(range, text))
     })
+}
+
+// allow to use .only
+let isFirstTsStart = true
+export const prepareTsStart = async () => {
+    await delay(200)
+    if (!isFirstTsStart) return
+    isFirstTsStart = false
+    await delay(2000)
 }

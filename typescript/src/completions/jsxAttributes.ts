@@ -1,6 +1,6 @@
 import { compact } from '@zardoy/utils'
 import type tslib from 'typescript/lib/tsserverlibrary'
-import { Configuration } from '../../src/configurationType'
+import { Configuration } from '../../../src/configurationType'
 import escapeStringRegexp from 'escape-string-regexp'
 
 export default (

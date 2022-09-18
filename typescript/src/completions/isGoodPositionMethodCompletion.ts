@@ -1,5 +1,5 @@
 import type tslib from 'typescript/lib/tsserverlibrary'
-import { findChildContainingPosition, findChildContainingPositionMaxDepth } from './utils'
+import { findChildContainingPosition, findChildContainingPositionMaxDepth } from '../utils'
 
 export const isGoodPositionBuiltinMethodCompletion = (ts: typeof tslib, sourceFile: tslib.SourceFile, position: number) => {
     const importClauseCandidate = findChildContainingPositionMaxDepth(ts, sourceFile, position, 3)

@@ -63,17 +63,17 @@ By default removes `Fix Missing Function Declaration` codefix. Possibly to remov
 
 Removes `Symbol`, `caller`, `prototype` completions on function / classes.
 
+### Keywords Insert Text
+
+(*enabled by default*)
+
+Appends *space* to almost all keywords e.g. `extends `, like WebStorm does.
+
 ### Patch `toString()`
 
 (*enabled by default*)
 
 Patches `toString()` insert function snippet on number types to remove tabStop.
-
-### Keywords Insert Text
-
-(*enabled by default*)
-
-Almost all keywords would insert space after the name of keyword e.g. `extends` -> `extends `
 
 ### Correct Sorting
 
