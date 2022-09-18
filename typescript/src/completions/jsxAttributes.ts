@@ -53,7 +53,9 @@ export default (
                 if (patchMethod === undefined) return entry
                 if (patchMethod === false) return
                 const patchedEntry: tslib.CompletionEntry = { ...entry, insertText: entry.name + patchMethod.insertText, isSnippet: true }
-                return patchMethod.duplicate ? [patchedEntry, entry] : patchedEntry
+                const { keepOriginal } = patchMethod
+                if (!keepOriginal) return patchedEntry
+                return keepOriginal === 'above' ? [entry, patchedEntry] : [patchedEntry, entry]
             }),
         )
     }

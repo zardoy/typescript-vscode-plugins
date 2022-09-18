@@ -204,8 +204,10 @@ export type Configuration = {
             | {
                   insertText: string
                   // TODO make it accept 'above'?
-                  /** Make original suggestion keep below patched */
-                  duplicate?: boolean
+                  /**
+                   * Make original suggestion keep below (true) or above patched
+                   */
+                  keepOriginal?: true | 'above'
               }
             | false
     }
