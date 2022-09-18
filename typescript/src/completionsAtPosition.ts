@@ -32,17 +32,14 @@ export const getCompletionsAtPosition = (
     if (!program || !sourceFile) return
     if (!scriptSnapshot || isInBannedPosition(position, scriptSnapshot, sourceFile)) return
     let prior = languageService.getCompletionsAtPosition(fileName, position, options)
-    // console.log(
-    //     'raw prior',
-    //     prior?.entries.map(entry => entry.name),
-    // )
     const ensurePrior = () => {
         if (!prior) prior = { entries: [], isGlobalCompletion: false, isMemberCompletion: false, isNewIdentifierLocation: false }
         return true
     }
     const node = findChildContainingPosition(ts, sourceFile, position)
+    const leftNode = findChildContainingPosition(ts, sourceFile, position - 1)
     if (['.jsx', '.tsx'].some(ext => fileName.endsWith(ext))) {
-        // JSX Features
+        // #region JSX tag improvements
         if (node) {
             const { SyntaxKind } = ts
             const emmetSyntaxKinds = [SyntaxKind.JsxFragment, SyntaxKind.JsxElement, SyntaxKind.JsxText]
@@ -61,6 +58,7 @@ export const getCompletionsAtPosition = (
                         entry => isStartingWithUpperCase(entry.name) && ![ts.ScriptElementKind.enumElement].includes(entry.kind),
                     )
             }
+            // #endregion
 
             if (
                 c('jsxEmmet.type') !== 'disabled' &&
@@ -210,7 +208,7 @@ export const getCompletionsAtPosition = (
         })
     }
 
-    if (c('improveJsxCompletions') && node) prior.entries = improveJsxCompletions(ts, prior.entries, node, position, sourceFile, c('jsxCompletionsMap'))
+    if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(ts, prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 
     for (const rule of c('replaceSuggestions')) {
         let foundIndex: number
@@ -240,7 +238,7 @@ export const getCompletionsAtPosition = (
 
     if (c('correctSorting.enable')) prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))
 
-    console.log('signatureHelp', JSON.stringify(languageService.getSignatureHelpItems(fileName, position, {})))
+    // console.log('signatureHelp', JSON.stringify(languageService.getSignatureHelpItems(fileName, position, {})))
     return {
         completions: prior,
         prevCompletionsMap,

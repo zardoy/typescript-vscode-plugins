@@ -11,8 +11,16 @@ export default (
     sourceFile: tslib.SourceFile,
     jsxCompletionsMap: Configuration['jsxCompletionsMap'],
 ): tslib.CompletionEntry[] => {
-    // TODO refactor to findNodeAtPosition
+    // ++ patch with jsxCompletionsMap
+    // -- don't
+    // <div| - identifier, not attribute --
+    // <div | - not identifier, not attribute ++
+    // <div t| - identifier -> attribute ++
+    // <div a={} t={} - in attributes ++
+    // <div t={|} - isn't attribute, so doesn't matter --
+    let jsxAttributeCandidate = !ts.isIdentifier(node)
     if (ts.isIdentifier(node)) node = node.parent
+    // fix builtin jsx attribute completion
     if (ts.isJsxAttribute(node) && node.initializer) {
         entries = entries.map(entry => {
             return {
@@ -21,9 +29,15 @@ export default (
             }
         })
     }
-    if (ts.isJsxAttribute(node)) node = node.parent
-    if (ts.isJsxAttributes(node)) node = node.parent
-    if (Object.keys(jsxCompletionsMap).length && (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node))) {
+    if (ts.isJsxAttribute(node)) {
+        jsxAttributeCandidate = true
+        node = node.parent
+    }
+    if (ts.isJsxAttributes(node)) {
+        jsxAttributeCandidate = true
+        node = node.parent
+    }
+    if (jsxAttributeCandidate && Object.keys(jsxCompletionsMap).length && (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node))) {
         const tagName = node.tagName.getText()
         // TODO use the same perf optimization for replaceSuggestions
         const patchEntries: Record<number, Configuration['jsxCompletionsMap'][string]> = {}
@@ -34,7 +48,7 @@ export default (
             if (comparingTagName && comparingTagName !== tagName) continue
             const comparingName = key.slice(splitTagNameIdx + 1)
             if (comparingName.includes('*')) {
-                const regexMatch = new RegExp(escapeStringRegexp(comparingName).replaceAll('\\*', '.*'))
+                const regexMatch = new RegExp(`^${escapeStringRegexp(comparingName).replaceAll('\\*', '.*')}$`)
                 entries.forEach(({ name, kind }, index) => {
                     if (kind === ts.ScriptElementKind.memberVariableElement && regexMatch.test(name)) {
                         patchEntries[index] = patchMethod
