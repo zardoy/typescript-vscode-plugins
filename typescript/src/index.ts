@@ -23,10 +23,13 @@ const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 // just to see wether issue is resolved
 let _configuration: Configuration
 const c: GetConfig = key => get(_configuration, key)
-export = function ({ typescript }: { typescript: typeof import('typescript/lib/tsserverlibrary') }) {
+export = ({ typescript }: { typescript: typeof ts }) => {
     ts = typescript
     return {
         create(info: ts.server.PluginCreateInfo) {
+            // receive fresh config
+            _configuration = info.config
+            console.log('receive config', JSON.stringify(_configuration))
             if (info.languageService[thisPluginMarker]) return info.languageService
 
             // Set up decorator object
@@ -152,7 +155,7 @@ export = function ({ typescript }: { typescript: typeof import('typescript/lib/t
             return proxy
         },
         onConfigurationChanged(config: any) {
-            console.log('inspect config', JSON.stringify(config))
+            console.log('update config', JSON.stringify(config))
             _configuration = config
         },
     }
