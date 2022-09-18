@@ -3,6 +3,7 @@
     "displayName": "TypeScript Essential Plugins",
     "version": "0.0.1",
     "license": "MIT",
+    "preview": true,
     "contributes": {
         "typescriptServerPlugins": [
             {
