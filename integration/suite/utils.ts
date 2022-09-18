@@ -47,5 +47,5 @@ export const prepareTsStart = async () => {
     await delay(200)
     if (!isFirstTsStart) return
     isFirstTsStart = false
-    await delay(1200)
+    await delay(2000)
 }
