@@ -9,6 +9,5 @@
     // type-check sources
     "include": [
         "src",
-        "typescript/test"
     ]
 }

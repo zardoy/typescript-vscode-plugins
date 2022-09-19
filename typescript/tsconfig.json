@@ -1,8 +1,10 @@
 {
     "extends": "@zardoy/tsconfig/node",
     "compilerOptions": {
-        "noEmit": false,
-        "rootDir": "src",
+        // "noEmit": false,
+        // "rootDir": "src",
+        "module": "ESNext",
+        "noEmit": true,
         "sourceMap": true,
         "lib": [
             "ESNext"
@@ -10,6 +12,7 @@
         "outDir": "build"
     },
     "include": [
-        "src"
+        "src",
+        "test"
     ]
 }

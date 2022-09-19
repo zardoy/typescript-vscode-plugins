@@ -23,6 +23,7 @@ const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 // just to see wether issue is resolved
 let _configuration: Configuration
 const c: GetConfig = key => get(_configuration, key)
+//@ts-ignore
 export = ({ typescript }: { typescript: typeof ts }) => {
     ts = typescript
     return {
@@ -48,7 +49,7 @@ export = ({ typescript }: { typescript: typeof ts }) => {
                     ? handleSpecialCommand(info, fileName, position, options.triggerCharacter as TriggerCharacterCommand, _configuration)
                     : undefined
                 // handled specialCommand request
-                if (specialCommandResult !== undefined) return specialCommandResult
+                if (specialCommandResult !== undefined) return specialCommandResult as any
                 prevCompletionsMap = {}
                 const scriptSnapshot = info.project.getScriptSnapshot(fileName)
                 // have no idea in which cases its possible, but we can't work without it
