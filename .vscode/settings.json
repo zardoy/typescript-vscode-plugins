@@ -1,13 +1,9 @@
 {
     "betterSnippets.customSnippets": [
         {
-            "name": "tslib",
-            "body": "import type tslib from 'typescript/lib/tsserverlibrary'",
-            "when": {
-                "locations": [
-                    "topLineStart"
-                ],
-            }
+            "name": "SyntaxKind",
+            "body": "ts.SyntaxKind",
+            "when": {}
         },
         {
             "name": "logKind",
