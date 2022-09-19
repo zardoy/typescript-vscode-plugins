@@ -20,7 +20,9 @@ export default (entries: ts.CompletionEntry[], _node: ts.Node | undefined, posit
     const fullText = sourceFile.getText()
     if (fullText.slice(position, position + 1) === '(') return entries
     const isSeemsArray = arrayMethods.every(comparingName =>
-        entries.some(({ name, isSnippet, kind }) => name === comparingName && !isSnippet && kind === ts.ScriptElementKind.memberFunctionElement),
+        entries.some(
+            ({ name, isSnippet, kind }) => name.replace(/^★ /, '') === comparingName && !isSnippet && kind === ts.ScriptElementKind.memberFunctionElement,
+        ),
     )
     if (!isSeemsArray) return entries
     const lineTextBefore = getLineTextBeforePos(sourceFile, position)
@@ -37,7 +39,7 @@ export default (entries: ts.CompletionEntry[], _node: ts.Node | undefined, posit
         inferredName = defaultItemName
     }
     return entries.map(entry => {
-        if (!arrayMethods.includes(entry.name)) return entry
+        if (!arrayMethods.includes(entry.name.replace(/^★ /, ''))) return entry
         const arrayItemSnippet = c('arrayMethodsSnippets.addArgTabStop') ? `(\${2:${inferredName}})` : inferredName
         let insertInnerSnippet = `${arrayItemSnippet} => $3`
         if (c('arrayMethodsSnippets.addOuterTabStop')) insertInnerSnippet = `\${1:${insertInnerSnippet}}`
