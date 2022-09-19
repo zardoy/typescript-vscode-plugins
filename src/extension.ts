@@ -8,18 +8,7 @@ import throttle from 'lodash.throttle'
 import { PostfixCompletion, TriggerCharacterCommand } from '../typescript/src/ipcTypes'
 import { Configuration } from './configurationType'
 
-export const activate = async () => {
-    const tsExtension = vscode.extensions.getExtension('vscode.typescript-language-features')
-    if (!tsExtension) return
-
-    await tsExtension.activate()
-
-    if (!tsExtension.exports || !tsExtension.exports.getAPI) return
-
-    // Get the API from the TS extension
-    const api = tsExtension.exports.getAPI(0)
-    if (!api) return
-
+export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted }) => {
     const syncConfig = () => {
         console.log('sending configure request for typescript-essential-plugins')
         const config = vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!)
@@ -32,7 +21,7 @@ export const activate = async () => {
             )
         }
 
-        api.configurePlugin('typescript-essential-plugins', config)
+        tsApi.configurePlugin('typescript-essential-plugins', config)
     }
 
     vscode.workspace.onDidChangeConfiguration(async ({ affectsConfiguration }) => {
@@ -46,7 +35,7 @@ export const activate = async () => {
     })
     syncConfig()
 
-    api.onCompletionAccepted((item: vscode.CompletionItem & { document: vscode.TextDocument }) => {
+    tsApi.onCompletionAccepted((item: vscode.CompletionItem & { document: vscode.TextDocument }) => {
         const enableMethodSnippets = vscode.workspace.getConfiguration(process.env.IDS_PREFIX, item.document).get('enableMethodSnippets')
         const { documentation = '' } = item
         const documentationString = documentation instanceof vscode.MarkdownString ? documentation.value : documentation
@@ -214,5 +203,30 @@ export const activate = async () => {
                 trailing: false,
             },
         )
+    }
+}
+
+export const activate = async () => {
+    const possiblyActivateTsPlugin = async () => {
+        const tsExtension = vscode.extensions.getExtension('vscode.typescript-language-features')
+        if (!tsExtension) return
+
+        await tsExtension.activate()
+
+        if (!tsExtension.exports || !tsExtension.exports.getAPI) return
+
+        // Get the API from the TS extension
+        const api = tsExtension.exports.getAPI(0)
+        if (!api) return
+        activateTsPlugin(api)
+        return true
+    }
+
+    const isActivated = (await possiblyActivateTsPlugin()) ?? false
+    if (!isActivated) {
+        // can be also used in future, for now only when activating TS extension manually
+        const { dispose } = vscode.extensions.onDidChange(async () => {
+            if (await possiblyActivateTsPlugin()) dispose()
+        })
     }
 }
