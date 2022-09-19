@@ -63,6 +63,17 @@ usersList.map // -> usersList.map((user) => )
 
 Highlights and lifts non-function methods. Also applies for static class methods.
 
+### Indexed Signature Completions
+
+```ts
+const bannedUsers = {
+    admin: false,
+    moderator: false,
+}
+bannedUsers[condition ? 'admin' : 'moderator'] = true
+//          adds suggestions ^      ^ deranks admin suggestion
+```
+
 ### Remove Useless Code Fixes
 
 (*enabled by default*)
