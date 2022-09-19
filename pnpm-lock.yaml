@@ -34,6 +34,7 @@ importers:
       mocha: ^10.0.0
       modify-json-file: ^1.2.2
       pluralize: github:plurals/pluralize#36f03cd2d573fa6d23e12e1529fa4627e2af74b4
+      rambda: ^7.2.1
       require-from-string: ^2.0.2
       string-dedent: ^3.0.1
       type-fest: ^2.13.1
@@ -67,6 +68,7 @@ importers:
       mocha: 10.0.0
       modify-json-file: 1.2.2
       pluralize: github.com/plurals/pluralize/36f03cd2d573fa6d23e12e1529fa4627e2af74b4
+      rambda: 7.2.1
       require-from-string: 2.0.2
       string-dedent: 3.0.1
       vscode-framework: 0.0.18_w77hramgtzb6kbct6jmnygw2sq

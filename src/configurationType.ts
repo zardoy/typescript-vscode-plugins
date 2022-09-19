@@ -81,10 +81,17 @@ export type Configuration = {
      * */
     'highlightNonFunctionMethods.enable': boolean
     /**
-     * Use originl sorting of suggestions (almost like in WebStorm). Works only with TypeScript <= 4.5.5
+     * Normalize sorting of suggestions after plugin modifications
+     * You most probably don't need to disable it
      * @default true
      * */
     'correctSorting.enable': boolean
+    /**
+     * Try to restore suggestion sorting after `.`
+     * Experimental and most probably will be changed in future
+     * @default false
+     */
+    fixSuggestionsSorting: boolean
     // TODO
     /**
      * Mark QuickFixes & refactorings with 🔵

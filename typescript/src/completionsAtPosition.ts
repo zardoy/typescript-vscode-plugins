@@ -132,6 +132,8 @@ export const getCompletionsAtPosition = (
 
     if (!prior) return
 
+    if (c('fixSuggestionsSorting')) prior.entries = fixPropertiesSorting(prior.entries, leftNode, sourceFile, program) ?? prior.entries
+
     const entryNames = new Set(prior.entries.map(({ name }) => name))
     if (c('removeUselessFunctionProps.enable')) prior.entries = prior.entries.filter(e => !['Symbol', 'caller', 'prototype'].includes(e.name))
     if (['bind', 'call', 'caller'].every(name => entryNames.has(name)) && c('highlightNonFunctionMethods.enable')) {
