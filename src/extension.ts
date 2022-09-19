@@ -2,7 +2,7 @@
 import * as vscode from 'vscode'
 import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
-import { getExtensionSetting, registerActiveDevelopmentCommand, extensionCtx, getExtensionSettingId } from 'vscode-framework'
+import { getExtensionSetting, extensionCtx, getExtensionSettingId, getExtensionCommandId } from 'vscode-framework'
 import { pickObj } from '@zardoy/utils'
 import throttle from 'lodash.throttle'
 import { PostfixCompletion, TriggerCharacterCommand } from '../typescript/src/ipcTypes'
@@ -148,6 +148,18 @@ export const activate = async () => {
         },
         '.',
     )
+
+    type RequestOptions = Partial<{
+        offset: number
+    }>
+    vscode.commands.registerCommand(getExtensionCommandId('getNodeAtPosition' as never), async (_, { offset }: RequestOptions = {}) => {
+        const { activeTextEditor } = vscode.window
+        if (!activeTextEditor) return
+        const { document } = activeTextEditor
+        const { typescriptEssentialsResponse: data } =
+            (await sendCommand('nodeAtPosition', { document, position: offset ? document.positionAt(offset) : activeTextEditor.selection.active })) ?? {}
+        return data
+    })
 
     // not removing as we can enable it back in near future
     const enableExperimentalPluginRestoration = false

@@ -1,8 +1,18 @@
 import type tslib from 'typescript/lib/tsserverlibrary'
 import postfixesAtPosition from '../completions/postfixesAtPosition'
-import { TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
+import { NodeAtPositionResponse, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
+import { findChildContainingPosition } from '../utils'
 
-export default (info: tslib.server.PluginCreateInfo, fileName: string, position: number, specialCommand: TriggerCharacterCommand, configuration: any) => {
+export default (
+    info: tslib.server.PluginCreateInfo,
+    fileName: string,
+    position: number,
+    specialCommand: TriggerCharacterCommand,
+    configuration: any,
+): void | {
+    entries: []
+    typescriptEssentialsResponse: any
+} => {
     if (specialCommand === 'check-configuration') {
         return {
             entries: [],
@@ -11,6 +21,19 @@ export default (info: tslib.server.PluginCreateInfo, fileName: string, position:
     }
     if (triggerCharacterCommands.includes(specialCommand) && !configuration) {
         throw new Error('no-ts-essential-plugin-configuration')
+    }
+    if (specialCommand === 'nodeAtPosition') {
+        const node = findChildContainingPosition(ts, info.languageService.getProgram()!.getSourceFile(fileName)!, position)
+        return {
+            entries: [],
+            typescriptEssentialsResponse: !node
+                ? undefined
+                : ({
+                      kindName: ts.SyntaxKind[node.kind],
+                      start: node.getStart(),
+                      end: node.getEnd(),
+                  } as NodeAtPositionResponse),
+        }
     }
     if (specialCommand === 'getPostfixes') {
         const scriptSnapshot = info.project.getScriptSnapshot(fileName)

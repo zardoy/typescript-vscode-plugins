@@ -1,5 +1,11 @@
-export const triggerCharacterCommands = ['find-in-import', 'getPostfixes', 'check-configuration'] as const
+export const triggerCharacterCommands = ['find-in-import', 'getPostfixes', 'nodeAtPosition', 'check-configuration'] as const
 export type TriggerCharacterCommand = typeof triggerCharacterCommands[number]
+
+export type NodeAtPositionResponse = {
+    kindName: string
+    start: number
+    end: number
+}
 
 export type PostfixCompletion = {
     label: string
