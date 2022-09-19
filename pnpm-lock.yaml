@@ -11,6 +11,7 @@ importers:
       '@types/lodash': ^4.14.182
       '@types/mocha': ^9.1.1
       '@types/node': ^16.11.21
+      '@types/pluralize': ^0.0.29
       '@types/vscode': ^1.63.1
       '@vscode/emmet-helper': ^2.8.4
       '@vscode/test-electron': ^2.1.5
@@ -32,12 +33,12 @@ importers:
       lodash.throttle: ^4.1.1
       mocha: ^10.0.0
       modify-json-file: ^1.2.2
+      pluralize: github:plurals/pluralize#36f03cd2d573fa6d23e12e1529fa4627e2af74b4
       require-from-string: ^2.0.2
       string-dedent: ^3.0.1
       type-fest: ^2.13.1
       typed-jsonfile: ^0.2.1
       typescript: ^4.8.3
-      typescript-essential-plugins: workspace:*
       typescript-old: npm:typescript@4.5.4
       vitest: ^0.15.1
       vscode-framework: ^0.0.18
@@ -47,6 +48,7 @@ importers:
       '@types/glob': 8.0.0
       '@types/lodash': 4.14.182
       '@types/mocha': 9.1.1
+      '@types/pluralize': 0.0.29
       '@vscode/emmet-helper': 2.8.4
       '@vscode/test-electron': 2.1.5
       '@zardoy/utils': 0.0.9
@@ -64,6 +66,7 @@ importers:
       lodash.throttle: 4.1.1
       mocha: 10.0.0
       modify-json-file: 1.2.2
+      pluralize: github.com/plurals/pluralize/36f03cd2d573fa6d23e12e1529fa4627e2af74b4
       require-from-string: 2.0.2
       string-dedent: 3.0.1
       vscode-framework: 0.0.18_w77hramgtzb6kbct6jmnygw2sq
@@ -78,7 +81,6 @@ importers:
       type-fest: 2.13.1
       typed-jsonfile: 0.2.1
       typescript: 4.8.3
-      typescript-essential-plugins: link:typescript
       typescript-old: /typescript/4.5.4
       vitest: 0.15.1
       vscode-manifest: 0.0.4
@@ -605,6 +607,10 @@ packages:
 
   /@types/parse-json/4.0.0:
     resolution: {integrity: sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==}
+    dev: false
+
+  /@types/pluralize/0.0.29:
+    resolution: {integrity: sha512-BYOID+l2Aco2nBik+iYS4SZX0Lf20KPILP5RGmM1IgzdwNdTs0eebiFriOPcej1sX9mLnSoiNte5zcFxssgpGA==}
     dev: false
 
   /@types/vscode/1.63.1:
@@ -5495,4 +5501,11 @@ packages:
   /yocto-queue/0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+    dev: false
+
+  github.com/plurals/pluralize/36f03cd2d573fa6d23e12e1529fa4627e2af74b4:
+    resolution: {tarball: https://codeload.github.com/plurals/pluralize/tar.gz/36f03cd2d573fa6d23e12e1529fa4627e2af74b4}
+    name: pluralize
+    version: 8.0.0
+    engines: {node: '>=4'}
     dev: false

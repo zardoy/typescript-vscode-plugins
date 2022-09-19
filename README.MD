@@ -37,6 +37,18 @@ You can turn off emmet integration in JSX and stable emmet suggestion will be *a
 
 - supports only tag expansion for now, have 2 modes
 
+### Array Method Snippets
+
+(*disabled by default*)
+
+Edits array suggestions that receive predicate in the following way:
+
+```ts
+const usersList = []
+
+usersList.map // -> usersList.map((user) => )
+```
+
 ### Remove Definition From References
 
 (*enabled by default*)

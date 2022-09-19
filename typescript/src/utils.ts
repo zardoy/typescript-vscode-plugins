@@ -52,3 +52,8 @@ export const findClosestParent = (ts: typeof tslib, node: tslib.Node, stopKinds:
 
     return node
 }
+
+export const getLineTextBeforePos = (sourceFile: ts.SourceFile, position: number) => {
+    const { character } = sourceFile.getLineAndCharacterOfPosition(position)
+    return sourceFile.getText().slice(position - character, position)
+}

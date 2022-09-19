@@ -8,6 +8,7 @@ import indexSignatureAccessCompletions from './completions/indexSignatureAccess'
 import fixPropertiesSorting from './completions/fixPropertiesSorting'
 import { isGoodPositionBuiltinMethodCompletion } from './completions/isGoodPositionMethodCompletion'
 import improveJsxCompletions from './completions/jsxAttributes'
+import arrayMethods from './completions/arrayMethods'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | tslib.SymbolDisplayPart[] }>
 
@@ -207,6 +208,8 @@ export const getCompletionsAtPosition = (
             return { ...entry, insertText: `${entry.name} ` }
         })
     }
+
+    prior.entries = arrayMethods(prior.entries, node, position, sourceFile, c)
 
     if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(ts, prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 

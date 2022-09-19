@@ -55,10 +55,26 @@ export type Configuration = {
     'suggestions.keywordsInsertText': 'none' | 'space'
     // TODO! corrent watching!
     /**
-     *
+     * Wether to enable snippets for array methods like `items.map(item => )`
+     * @default false
+     */
+    'arrayMethodsSnippets.enable': boolean
+    /**
+     * Add tabstop at arg so you can easily change it or add `i`
+     * If set to `false`, arg is added without parentheses
      * @default true
      */
-    // 'patchArrayMethods.enable': boolean
+    'arrayMethodsSnippets.addArgTabStop': boolean
+    /**
+     * Add outer tabstop so you can easily pass callback instead
+     * @default false
+     */
+    'arrayMethodsSnippets.addOuterTabStop': boolean
+    /**
+     * If set to `false` and singular item name can't be inffered, feature will be disabled
+     * @default item
+     */
+    'arrayMethodsSnippets.defaultItemName': string | false
     /**
      * Highlight and lift non-function methods. Also applies for static class methods. Uses `bind`, `call`, `caller` detection.
      * @default true
@@ -136,7 +152,7 @@ export type Configuration = {
     /** Diagnostics (if not handled by eslint) & completions */
     // 'dotImportsMap.enable': boolean,
     /**
-     * One of the most powerful setting here. It lets you remove/edit any suggestion that comes from TS.
+     * One of the most powerful setting here. It lets you remove/edit any suggestion that comes from TS. However its' experimental and can conflict with our completion changes.
      * **Please** try to always specify kind (e.g. variable) of the suggestion to ensure you don't remove word-suggestion or postfix snippet
      * @default []
      */
@@ -178,7 +194,7 @@ export type Configuration = {
      */
     supportTsDiagnosticDisableComment: boolean
     /**
-     * Patch TypeScript outline!
+     * Extend TypeScript outline!
      * Extend outline with:
      * - JSX Elements
      * more coming soon...
