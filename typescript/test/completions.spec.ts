@@ -8,6 +8,8 @@ import { getNavTreeItems } from '../src/getPatchedNavTree'
 import { createRequire } from 'module'
 
 const require = createRequire(import.meta.url)
+//@ts-ignore plugin expect it to set globallly
+globalThis.ts = ts
 
 const entrypoint = '/test.tsx'
 const files = { [entrypoint]: '' }

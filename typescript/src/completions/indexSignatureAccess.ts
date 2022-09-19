@@ -23,7 +23,7 @@ export default (
             usedProp = otherSideNode.getText().slice(1, -1)
         }
     }
-    return type.getProperties().map((prop, i) => {
+    return (type.getProperties?.() ?? []).map((prop, i) => {
         return {
             kind: ts.ScriptElementKind.string,
             name: prop.name,
