@@ -2,7 +2,7 @@ import type tslib from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from './types'
 import { getIndentFromPos } from './utils'
 
-export default (proxy: tslib.LanguageService, languageService: tslib.LanguageService, c: GetConfig) => {
+export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig) => {
     proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
         let prior = languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
         // fix builtin codefixes/refactorings

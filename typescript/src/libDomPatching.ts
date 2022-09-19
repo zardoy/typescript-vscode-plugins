@@ -1,7 +1,7 @@
 import type tslib from 'typescript/lib/tsserverlibrary'
 
 // not used for now
-export default (info: tslib.server.PluginCreateInfo) => {
+export default (info: ts.server.PluginCreateInfo) => {
     // info.serverHost.readFile = fileName => {
     //     let contents = realReadFile(fileName)
     //     if (fileName.endsWith('/node_modules/typescript/lib/lib.dom.d.ts') && c('eventTypePatching.enable')) {

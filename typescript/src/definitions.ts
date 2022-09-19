@@ -1,7 +1,7 @@
 import type tslib from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from './types'
 
-export default (proxy: tslib.LanguageService, info: tslib.server.PluginCreateInfo, c: GetConfig) => {
+export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: GetConfig) => {
     proxy.getDefinitionAndBoundSpan = (fileName, position) => {
         const prior = info.languageService.getDefinitionAndBoundSpan(fileName, position)
         if (!prior) return

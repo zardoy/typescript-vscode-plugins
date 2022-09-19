@@ -1,13 +1,10 @@
-import type tslib from 'typescript/lib/tsserverlibrary'
-
 export default (
     position: number,
-    node: tslib.Node | undefined,
-    scriptSnapshot: tslib.IScriptSnapshot,
-    sourceFile: tslib.SourceFile,
-    program: tslib.Program,
-    ts: typeof tslib,
-): tslib.CompletionEntry[] => {
+    node: ts.Node | undefined,
+    scriptSnapshot: ts.IScriptSnapshot,
+    sourceFile: ts.SourceFile,
+    program: ts.Program,
+): ts.CompletionEntry[] => {
     if (!node || !ts.isStringLiteralLike(node)) return []
     const isConditionalExpression = ts.isConditionalExpression(node.parent)
     // optimize?
@@ -30,7 +27,7 @@ export default (
         return {
             kind: ts.ScriptElementKind.string,
             name: prop.name,
-            // derang completion is used on other side
+            // derang completions used on other side
             sortText: prop.name === usedProp ? '9999' : '',
         }
     })

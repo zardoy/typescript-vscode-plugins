@@ -1,8 +1,7 @@
-import type tslib from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from '../types'
 import getCodeActions, { REFACTORS_CATEGORY } from './getCodeActions'
 
-export default (proxy: tslib.LanguageService, languageService: tslib.LanguageService, c: GetConfig) => {
+export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig) => {
     proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
         let prior = languageService.getApplicableRefactors(fileName, positionOrRange, preferences)
 

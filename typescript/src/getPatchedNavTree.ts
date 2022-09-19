@@ -45,7 +45,7 @@ const getPatchedNavModule = (ts: typeof tslib) => {
         }
     }
     const getModule = requireFromString('module.exports = (ts, getNameFromJsxTag) => {' + lines.join('\n') + 'return NavigationBar;}')
-    const getNameFromJsxTag = (node: tslib.JsxSelfClosingElement | tslib.JsxOpeningElement) => {
+    const getNameFromJsxTag = (node: ts.JsxSelfClosingElement | ts.JsxOpeningElement) => {
         const {
             attributes: { properties },
         } = node
@@ -74,7 +74,7 @@ const getPatchedNavModule = (ts: typeof tslib) => {
 
 let navModule
 
-export const getNavTreeItems = (ts: typeof tslib, info: tslib.server.PluginCreateInfo, fileName: string) => {
+export const getNavTreeItems = (ts: typeof tslib, info: ts.server.PluginCreateInfo, fileName: string) => {
     if (!navModule) navModule = getPatchedNavModule(ts)
     const program = info.languageService.getProgram()
     if (!program) throw new Error('no program')

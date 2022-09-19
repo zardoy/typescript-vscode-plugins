@@ -10,7 +10,7 @@ import { isGoodPositionBuiltinMethodCompletion } from './completions/isGoodPosit
 import improveJsxCompletions from './completions/jsxAttributes'
 import arrayMethods from './completions/arrayMethods'
 
-export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | tslib.SymbolDisplayPart[] }>
+export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
 export const getCompletionsAtPosition = (
     fileName: string,
@@ -22,7 +22,7 @@ export const getCompletionsAtPosition = (
     ts: typeof tslib,
 ):
     | {
-          completions: tslib.CompletionInfo
+          completions: ts.CompletionInfo
           /** Let default getCompletionEntryDetails to know original name or let add documentation from here */
           prevCompletionsMap: PrevCompletionMap
       }
@@ -125,7 +125,7 @@ export const getCompletionsAtPosition = (
     }
     const addSignatureAccessCompletions = prior?.entries.filter(({ kind }) => kind !== ts.ScriptElementKind.warning).length
         ? []
-        : indexSignatureAccessCompletions(position, node, scriptSnapshot, sourceFile, program, ts)
+        : indexSignatureAccessCompletions(position, node, scriptSnapshot, sourceFile, program)
     if (addSignatureAccessCompletions.length && ensurePrior() && prior) {
         prior.entries = [...prior.entries, ...addSignatureAccessCompletions]
     }
@@ -211,7 +211,7 @@ export const getCompletionsAtPosition = (
 
     prior.entries = arrayMethods(prior.entries, node, position, sourceFile, c)
 
-    if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(ts, prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
+    if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 
     for (const rule of c('replaceSuggestions')) {
         let foundIndex: number

@@ -1,7 +1,7 @@
 import type tslib from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from './types'
 
-export default (proxy: tslib.LanguageService, info: tslib.server.PluginCreateInfo, c: GetConfig) => {
+export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: GetConfig) => {
     proxy.getSemanticDiagnostics = fileName => {
         let prior = info.languageService.getSemanticDiagnostics(fileName)
         if (c('supportTsDiagnosticDisableComment')) {

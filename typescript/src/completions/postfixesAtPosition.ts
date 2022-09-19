@@ -2,7 +2,7 @@ import type tslib from 'typescript/lib/tsserverlibrary'
 import { PostfixCompletion } from '../ipcTypes'
 import { findChildContainingPosition, findClosestParent } from '../utils'
 
-export default (position: number, fileName: string, scriptSnapshot: tslib.IScriptSnapshot, languageService: tslib.LanguageService): PostfixCompletion[] => {
+export default (position: number, fileName: string, scriptSnapshot: ts.IScriptSnapshot, languageService: ts.LanguageService): PostfixCompletion[] => {
     const { character } = languageService.toLineColumnOffset!(fileName, position)
     const startLinePos = position - character
     const textBeforePositionLine = scriptSnapshot?.getText(startLinePos, position + 1)
@@ -15,7 +15,7 @@ export default (position: number, fileName: string, scriptSnapshot: tslib.IScrip
     const node = findChildContainingPosition(ts, sourceFile, nodePos)
     if (!node) return []
     const postfixes: PostfixCompletion[] = []
-    let foundNode: tslib.Node | undefined
+    let foundNode: ts.Node | undefined
     if (
         ts.isIdentifier(node) &&
         (foundNode = findClosestParent(ts, node, [ts.SyntaxKind.BinaryExpression, ts.SyntaxKind.IfStatement], [])) &&
@@ -44,7 +44,7 @@ export default (position: number, fileName: string, scriptSnapshot: tslib.IScrip
     return postfixes
 }
 
-const isComparingToken = (node: tslib.Node) => {
+const isComparingToken = (node: ts.Node) => {
     switch (node.kind) {
         case ts.SyntaxKind.EqualsEqualsEqualsToken:
         case ts.SyntaxKind.EqualsEqualsToken:
@@ -59,7 +59,7 @@ const isComparingToken = (node: tslib.Node) => {
     return false
 }
 
-const probablyAddNotSnippet = (postfixes: PostfixCompletion[], binaryExprNode: tslib.BinaryExpression, ts: typeof tslib) => {
+const probablyAddNotSnippet = (postfixes: PostfixCompletion[], binaryExprNode: ts.BinaryExpression, ts: typeof tslib) => {
     let replaceOperator: string | undefined
     switch (binaryExprNode.operatorToken as any) {
         case ts.SyntaxKind.EqualsEqualsEqualsToken:

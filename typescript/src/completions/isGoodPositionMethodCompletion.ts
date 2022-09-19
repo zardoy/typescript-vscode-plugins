@@ -2,7 +2,7 @@ import type tslib from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from '../types'
 import { findChildContainingPosition, findChildContainingPositionMaxDepth } from '../utils'
 
-export const isGoodPositionBuiltinMethodCompletion = (ts: typeof tslib, sourceFile: tslib.SourceFile, position: number, c: GetConfig) => {
+export const isGoodPositionBuiltinMethodCompletion = (ts: typeof tslib, sourceFile: ts.SourceFile, position: number, c: GetConfig) => {
     const importClauseCandidate = findChildContainingPositionMaxDepth(ts, sourceFile, position, 3)
     if (importClauseCandidate && ts.isImportClause(importClauseCandidate)) return false
     const textBeforePos = sourceFile.getFullText().slice(position - 1, position)
@@ -24,9 +24,9 @@ export const isGoodPositionBuiltinMethodCompletion = (ts: typeof tslib, sourceFi
 export const isGoodPositionMethodCompletion = (
     ts: typeof tslib,
     fileName: string,
-    sourceFile: tslib.SourceFile,
+    sourceFile: ts.SourceFile,
     position: number,
-    languageService: tslib.LanguageService,
+    languageService: ts.LanguageService,
     c: GetConfig,
 ) => {
     if (!isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position, c)) return false

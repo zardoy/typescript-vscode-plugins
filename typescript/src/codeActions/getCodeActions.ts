@@ -10,10 +10,10 @@ type SimplifiedRefactorInfo = {
 
 export type ApplyCodeAction = (
     ts: typeof tslib,
-    sourceFile: tslib.SourceFile,
+    sourceFile: ts.SourceFile,
     position: number,
-    range?: tslib.TextRange,
-) => tslib.RefactorEditInfo | SimplifiedRefactorInfo[] | undefined
+    range?: ts.TextRange,
+) => ts.RefactorEditInfo | SimplifiedRefactorInfo[] | undefined
 
 export type CodeAction = {
     name: string
@@ -29,10 +29,10 @@ export const REFACTORS_CATEGORY = 'essential-refactors'
 
 export default (
     ts: typeof tslib,
-    sourceFile: tslib.SourceFile,
-    positionOrRange: tslib.TextRange | number,
+    sourceFile: ts.SourceFile,
+    positionOrRange: ts.TextRange | number,
     requestingEditsId?: string,
-): { info?: ts.ApplicableRefactorInfo; edit: tslib.RefactorEditInfo } => {
+): { info?: ts.ApplicableRefactorInfo; edit: ts.RefactorEditInfo } => {
     const range = typeof positionOrRange !== 'number' && positionOrRange.pos !== positionOrRange.end ? positionOrRange : undefined
     const appliableCodeActions = compact(
         codeActions.map(action => {
@@ -56,7 +56,7 @@ export default (
                                   }),
                               },
                           ],
-                      } as tslib.RefactorEditInfo)
+                      } as ts.RefactorEditInfo)
                     : edits,
             }
         }),

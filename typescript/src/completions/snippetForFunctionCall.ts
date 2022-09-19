@@ -1,5 +1,3 @@
-import type tslib from 'typescript/lib/tsserverlibrary'
-
 class DisplayPartKind {
     public static readonly functionName = 'functionName'
     public static readonly methodName = 'methodName'
@@ -9,8 +7,8 @@ class DisplayPartKind {
     public static readonly text = 'text'
 }
 
-export function getParameterListParts(displayParts: ReadonlyArray<tslib.SymbolDisplayPart>) {
-    const parts: tslib.SymbolDisplayPart[] = []
+export function getParameterListParts(displayParts: ReadonlyArray<ts.SymbolDisplayPart>) {
+    const parts: ts.SymbolDisplayPart[] = []
     let gotMethodHit = false
     let isInMethod = false
     let hasOptionalParameters = false

@@ -2,9 +2,9 @@ import type tslib from 'typescript/lib/tsserverlibrary'
 
 export function findChildContainingPosition(
     typescript: typeof import('typescript/lib/tsserverlibrary'),
-    sourceFile: tslib.SourceFile,
+    sourceFile: ts.SourceFile,
     position: number,
-): tslib.Node | undefined {
+): ts.Node | undefined {
     function find(node: ts.Node): ts.Node | undefined {
         if (position >= node.getStart() && position < node.getEnd()) {
             return typescript.forEachChild(node, find) || node
@@ -17,10 +17,10 @@ export function findChildContainingPosition(
 
 export function findChildContainingPositionMaxDepth(
     typescript: typeof import('typescript/lib/tsserverlibrary'),
-    sourceFile: tslib.SourceFile,
+    sourceFile: ts.SourceFile,
     position: number,
     maxDepth?: number,
-): tslib.Node | undefined {
+): ts.Node | undefined {
     let currentDepth = 0
     function find(node: ts.Node): ts.Node | undefined {
         if (position >= node.getStart() && position < node.getEnd()) {
@@ -33,7 +33,7 @@ export function findChildContainingPositionMaxDepth(
     return find(sourceFile)
 }
 
-export const getIndentFromPos = (typescript: typeof import('typescript/lib/tsserverlibrary'), sourceFile: tslib.SourceFile, position: number) => {
+export const getIndentFromPos = (typescript: typeof import('typescript/lib/tsserverlibrary'), sourceFile: ts.SourceFile, position: number) => {
     const { character } = typescript.getLineAndCharacterOfPosition(sourceFile, position)
     return (
         sourceFile
@@ -43,7 +43,7 @@ export const getIndentFromPos = (typescript: typeof import('typescript/lib/tsser
     )
 }
 
-export const findClosestParent = (ts: typeof tslib, node: tslib.Node, stopKinds: tslib.SyntaxKind[], rejectKinds: tslib.SyntaxKind[]) => {
+export const findClosestParent = (ts: typeof tslib, node: ts.Node, stopKinds: ts.SyntaxKind[], rejectKinds: ts.SyntaxKind[]) => {
     rejectKinds = [...rejectKinds, ts.SyntaxKind.SourceFile]
     while (node && !stopKinds.includes(node.kind)) {
         if (rejectKinds.includes(node.kind)) return

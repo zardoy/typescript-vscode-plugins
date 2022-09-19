@@ -4,7 +4,7 @@ import { NodeAtPositionResponse, TriggerCharacterCommand, triggerCharacterComman
 import { findChildContainingPosition } from '../utils'
 
 export default (
-    info: tslib.server.PluginCreateInfo,
+    info: ts.server.PluginCreateInfo,
     fileName: string,
     position: number,
     specialCommand: TriggerCharacterCommand,

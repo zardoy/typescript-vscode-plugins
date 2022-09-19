@@ -1,16 +1,14 @@
 import { compact } from '@zardoy/utils'
-import type tslib from 'typescript/lib/tsserverlibrary'
 import { Configuration } from '../../../src/configurationType'
 import escapeStringRegexp from 'escape-string-regexp'
 
 export default (
-    ts: typeof tslib,
-    entries: tslib.CompletionEntry[],
-    node: tslib.Node,
+    entries: ts.CompletionEntry[],
+    node: ts.Node,
     position: number,
-    sourceFile: tslib.SourceFile,
+    sourceFile: ts.SourceFile,
     jsxCompletionsMap: Configuration['jsxCompletionsMap'],
-): tslib.CompletionEntry[] => {
+): ts.CompletionEntry[] => {
     // ++ patch with jsxCompletionsMap
     // -- don't
     // <div| - identifier, not attribute --
@@ -66,7 +64,7 @@ export default (
                 const patchMethod = patchEntries[i]
                 if (patchMethod === undefined) return entry
                 if (patchMethod === false) return
-                const patchedEntry: tslib.CompletionEntry = { ...entry, insertText: entry.name + patchMethod.insertText, isSnippet: true }
+                const patchedEntry: ts.CompletionEntry = { ...entry, insertText: entry.name + patchMethod.insertText, isSnippet: true }
                 const { keepOriginal } = patchMethod
                 if (!keepOriginal) return patchedEntry
                 return keepOriginal === 'above' ? [entry, patchedEntry] : [patchedEntry, entry]
