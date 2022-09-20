@@ -4,7 +4,6 @@ import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 import { getExtensionSetting, extensionCtx, getExtensionSettingId, getExtensionCommandId } from 'vscode-framework'
 import { pickObj } from '@zardoy/utils'
-import throttle from 'lodash.throttle'
 import { PostfixCompletion, TriggerCharacterCommand } from '../typescript/src/ipcTypes'
 import { Configuration } from './configurationType'
 
@@ -93,9 +92,6 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
             if (!result || !result.body) return
             return result.body
         } catch (err) {
-            // if (err instanceof Error && err.message.includes('no-ts-essential-plugin-configuration')) {
-            //     void resendConfig()
-            // }
             console.error(err)
         } finally {
             console.timeEnd(`request ${command}`)
@@ -149,61 +145,6 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
             (await sendCommand('nodeAtPosition', { document, position: offset ? document.positionAt(offset) : activeTextEditor.selection.active })) ?? {}
         return data
     })
-
-    // not removing as we can enable it back in near future
-    const enableExperimentalPluginRestoration = false
-
-    if (enableExperimentalPluginRestoration) {
-        // https://github.com/zardoy/typescript-vscode-plugins/issues/38
-
-        const checkPluginNeedsConfig = async () => {
-            const { typescriptEssentialsResponse } = await sendCommand('check-configuration', {
-                document: vscode.window.activeTextEditor!.document,
-                position: new vscode.Position(0, 0),
-            })
-            return !typescriptEssentialsResponse
-        }
-
-        const { dispose } = vscode.window.onDidChangeActiveTextEditor(doInitialCheck)
-        // eslint-disable-next-line no-inner-declarations
-        async function doInitialCheck() {
-            const languageId = vscode.window.activeTextEditor?.document.languageId
-            // even we have activationEvents, we need this check
-            if (!languageId || !defaultJsSupersetLangs.includes(languageId)) return
-            dispose()
-            await new Promise(resolve => {
-                setTimeout(resolve, 300)
-            })
-            void checkPluginNeedsConfig()
-        }
-
-        void doInitialCheck()
-
-        let reloads = 0
-        const resendConfig = throttle(
-            async () => {
-                reloads++
-                if (reloads > 2) {
-                    // avoid spamming
-                    if (reloads > 3) return
-                    void vscode.window.showErrorMessage("There is a problem with TypeScript plugin as it can't be configured properly. Try to restart TS")
-                    return
-                }
-
-                syncConfig()
-                await new Promise(resolve => {
-                    setTimeout(resolve, 100)
-                })
-                if (await checkPluginNeedsConfig()) void resendConfig()
-                else reloads = 0
-            },
-            200,
-            {
-                leading: true,
-                trailing: false,
-            },
-        )
-    }
 }
 
 export const activate = async () => {

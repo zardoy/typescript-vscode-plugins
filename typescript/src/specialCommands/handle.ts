@@ -13,12 +13,6 @@ export default (
     entries: []
     typescriptEssentialsResponse: any
 } => {
-    if (specialCommand === 'check-configuration') {
-        return {
-            entries: [],
-            typescriptEssentialsResponse: !!configuration,
-        }
-    }
     if (triggerCharacterCommands.includes(specialCommand) && !configuration) {
         throw new Error('no-ts-essential-plugin-configuration')
     }
