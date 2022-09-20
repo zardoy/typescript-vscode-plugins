@@ -2,12 +2,15 @@
 import * as vscode from 'vscode'
 import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
-import { getExtensionSetting, extensionCtx, getExtensionSettingId, getExtensionCommandId } from 'vscode-framework'
+import { getExtensionSetting, extensionCtx, getExtensionSettingId, getExtensionCommandId, registerActiveDevelopmentCommand } from 'vscode-framework'
 import { pickObj } from '@zardoy/utils'
 import { PostfixCompletion, TriggerCharacterCommand } from '../typescript/src/ipcTypes'
 import { Configuration } from './configurationType'
+import webImports from './webImports'
 
 export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted }) => {
+    let webWaitingForConfigSync = false
+
     const syncConfig = () => {
         console.log('sending configure request for typescript-essential-plugins')
         const config = vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!)
@@ -21,12 +24,16 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
         }
 
         tsApi.configurePlugin('typescript-essential-plugins', config)
+
+        if (process.env.PLATFORM === 'web') {
+            webWaitingForConfigSync = true
+        }
     }
 
     vscode.workspace.onDidChangeConfiguration(async ({ affectsConfiguration }) => {
         if (affectsConfiguration(process.env.IDS_PREFIX!)) {
             syncConfig()
-            if (affectsConfiguration(getExtensionSettingId('patchOutline'))) {
+            if (process.env.PLATFORM === 'node' && affectsConfiguration(getExtensionSettingId('patchOutline'))) {
                 await vscode.commands.executeCommand('typescript.restartTsServer')
                 void vscode.window.showWarningMessage('Outline will be updated after text changes or window reload')
             }
@@ -81,10 +88,13 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
             }
         })()
         console.time(`request ${command}`)
+        let requestFile = document.uri.fsPath
+        // TODO fix for all schemes
+        if (document.uri.scheme === 'untitled') requestFile = `^/untitled/ts-nul-authority/${document.uri.path}`
         try {
             const result = (await vscode.commands.executeCommand('typescript.tsserverRequest', 'completionInfo', {
                 _: '%%%',
-                file: document.uri.fsPath,
+                file: requestFile,
                 line: position.line + 1,
                 offset: position.character,
                 triggerCharacter: command,
@@ -145,6 +155,29 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
             (await sendCommand('nodeAtPosition', { document, position: offset ? document.positionAt(offset) : activeTextEditor.selection.active })) ?? {}
         return data
     })
+
+    if (process.env.PLATFORM === 'web') {
+        const possiblySyncConfig = async () => {
+            const { activeTextEditor } = vscode.window
+            if (!activeTextEditor || !vscode.languages.match(defaultJsSupersetLangs, activeTextEditor.document)) return
+            if (!webWaitingForConfigSync) return
+            // webWaitingForConfigSync = false
+            const config = vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!)
+            void sendCommand(`updateConfig${JSON.stringify(config)}` as any, undefined!)
+        }
+
+        vscode.window.onDidChangeActiveTextEditor(possiblySyncConfig)
+        void possiblySyncConfig()
+    }
+
+    webImports()
+
+    // registerActiveDevelopmentCommand(async () => {
+    //     const items: vscode.DocumentSymbol[] = await vscode.commands.executeCommand(
+    //         'vscode.executeDocumentSymbolProvider',
+    //         vscode.Uri.file(...),
+    //     )
+    // })
 }
 
 export const activate = async () => {
