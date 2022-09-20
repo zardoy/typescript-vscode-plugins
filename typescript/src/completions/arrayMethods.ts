@@ -30,10 +30,10 @@ export default (entries: ts.CompletionEntry[], _node: ts.Node | undefined, posit
     if (postfixRemoveLength === undefined) return entries
     const nodeBeforeDot = findChildContainingPosition(ts, sourceFile, position - postfixRemoveLength - 1)
     if (!nodeBeforeDot) return entries
-    if (!ts.isIdentifier(nodeBeforeDot)) return entries
-    const cleanSourceText = nodeBeforeDot.text.replace(/^(?:all)?(.+?)(?:List)?$/, '$1')
-    let inferredName = singular(cleanSourceText)
+    const cleanSourceText = getItemNameFromNode(nodeBeforeDot)?.replace(/^(?:all)?(.+?)(?:List)?$/, '$1')
+    let inferredName = cleanSourceText && singular(cleanSourceText)
     const defaultItemName = c('arrayMethodsSnippets.defaultItemName')
+    // both can be undefined
     if (inferredName === cleanSourceText) {
         if (defaultItemName === false) return entries
         inferredName = defaultItemName
@@ -49,4 +49,16 @@ export default (entries: ts.CompletionEntry[], _node: ts.Node | undefined, posit
             isSnippet: true,
         }
     })
+}
+
+const getItemNameFromNode = (node: ts.Node) => {
+    if (ts.isIdentifier(node)) return node.text
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.parent)) {
+        node = node.parent
+        while (ts.isCallExpression(node) || ts.isPropertyAccessExpression(node)) {
+            node = node.expression
+            if (ts.isIdentifier(node)) return node.text
+        }
+    }
+    return undefined
 }
