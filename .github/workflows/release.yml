@@ -30,9 +30,9 @@ jobs:
       - run: pnpm vscode-utils prepareFrameworkBuild
       - run: pnpm build
       - run: pnpm test-plugin
-      # - uses: GabrielBB/xvfb-action@v1.6
-      #   with:
-      #     run: pnpm integration-test
+      - uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: pnpm integration-test
       - run: pnpx zardoy-release vscode-extension
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

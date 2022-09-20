@@ -6,6 +6,7 @@ await buildTsPlugin('typescript', undefined, undefined, {
     watch,
     logLevel: 'info',
     sourcemap: watch,
+    enableBrowser: true,
     banner: {
         js: 'let ts',
         // js: 'const log = (...args) => console.log(...args.map(a => JSON.stringify(a)))',
