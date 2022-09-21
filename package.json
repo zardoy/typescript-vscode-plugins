@@ -34,7 +34,7 @@
     "scripts": {
         "start": "vscode-framework start",
         "build": "tsc && tsc -p typescript --noEmit && vscode-framework build && pnpm build-plugin",
-        "build-plugin": "node buildTsPlugin.mjs",
+        "build-plugin": "node buildTsPlugin.mjs && node buildTsPlugin.mjs --browser",
         "watch-plugin": "pnpm build-plugin --watch",
         "lint": "eslint src/**",
         "test": "pnpm test-plugin --run && pnpm integration-test",
@@ -67,7 +67,7 @@
         "@vscode/emmet-helper": "^2.8.4",
         "@vscode/test-electron": "^2.1.5",
         "@zardoy/utils": "^0.0.9",
-        "@zardoy/vscode-utils": "^0.0.32",
+        "@zardoy/vscode-utils": "^0.0.36",
         "chai": "^4.3.6",
         "chokidar": "^3.5.3",
         "chokidar-cli": "^3.0.0",
@@ -85,7 +85,8 @@
         "rambda": "^7.2.1",
         "require-from-string": "^2.0.2",
         "string-dedent": "^3.0.1",
-        "vscode-framework": "^0.0.18"
+        "vscode-framework": "^0.0.18",
+        "vscode-uri": "^3.0.6"
     },
     "prettier": {
         "semi": false,

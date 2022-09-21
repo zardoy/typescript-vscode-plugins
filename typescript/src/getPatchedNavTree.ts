@@ -1,11 +1,11 @@
 import type tslib from 'typescript/lib/tsserverlibrary'
-import requireFromString from 'require-from-string'
+import { nodeModules } from './utils'
 
 declare const __TS_SEVER_PATH__: string | undefined
 
 const getPatchedNavModule = (ts: typeof tslib) => {
     const tsServerPath = typeof __TS_SEVER_PATH__ !== 'undefined' ? __TS_SEVER_PATH__ : require.main!.filename
-    const mainScript = require('fs').readFileSync(tsServerPath, 'utf8') as string
+    const mainScript = nodeModules!.fs.readFileSync(tsServerPath, 'utf8') as string
     const startIdx = mainScript.indexOf('var NavigationBar;')
     const ph = '(ts.NavigationBar = {}));'
     const lines = mainScript.slice(startIdx, mainScript.indexOf(ph) + ph.length).split(/\r?\n/)
@@ -44,7 +44,7 @@ const getPatchedNavModule = (ts: typeof tslib) => {
             lines.splice(addTypeIndex + linesOffset, removeLines, ...(addString ? [addString] : []))
         }
     }
-    const getModule = requireFromString('module.exports = (ts, getNameFromJsxTag) => {' + lines.join('\n') + 'return NavigationBar;}')
+    const getModule = nodeModules!.requireFromString('module.exports = (ts, getNameFromJsxTag) => {' + lines.join('\n') + 'return NavigationBar;}')
     const getNameFromJsxTag = (node: ts.JsxSelfClosingElement | ts.JsxOpeningElement) => {
         const {
             attributes: { properties },

@@ -57,3 +57,24 @@ export const getLineTextBeforePos = (sourceFile: ts.SourceFile, position: number
     const { character } = sourceFile.getLineAndCharacterOfPosition(position)
     return sourceFile.getText().slice(position - character, position)
 }
+
+// Workaround esbuild bundle detection
+export const nodeModules = __WEB__
+    ? null
+    : {
+          emmet: require('@vscode/emmet-helper') as typeof import('@vscode/emmet-helper'),
+          requireFromString: require('require-from-string'),
+          fs: require('fs') as typeof import('fs'),
+          util: require('util') as typeof import('util'),
+          path: require('path') as typeof import('path'),
+      }
+
+/** runtime detection, shouldn't be used */
+export const isWeb = () => {
+    try {
+        require('path')
+        return false
+    } catch {
+        return true
+    }
+}

@@ -11,14 +11,12 @@ import { oneOf } from '@zardoy/utils'
 import { isGoodPositionMethodCompletion } from './completions/isGoodPositionMethodCompletion'
 import { getParameterListParts } from './completions/snippetForFunctionCall'
 import { getNavTreeItems } from './getPatchedNavTree'
-import { join } from 'path'
 import decorateCodeActions from './codeActions/decorateProxy'
 import decorateSemanticDiagnostics from './semanticDiagnostics'
 import decorateCodeFixes from './codeFixes'
 import decorateReferences from './references'
 import handleSpecialCommand from './specialCommands/handle'
 import decorateDefinitions from './definitions'
-import { isWeb } from './utils'
 
 const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 
@@ -151,10 +149,10 @@ export = ({ typescript }: { typescript: typeof ts }) => {
             decorateDefinitions(proxy, info, c)
             decorateReferences(proxy, info.languageService, c)
 
-            if (!isWeb()) {
+            if (!__WEB__) {
                 // dedicated syntax server (which is enabled by default), which fires navtree doesn't seem to receive onConfigurationChanged
                 // so we forced to communicate via fs
-                const config = JSON.parse(ts.sys.readFile(join(__dirname, '../../plugin-config.json'), 'utf8') ?? '{}')
+                const config = JSON.parse(ts.sys.readFile(require('path').join(__dirname, '../../plugin-config.json'), 'utf8') ?? '{}')
                 proxy.getNavigationTree = fileName => {
                     if (c('patchOutline') || config.patchOutline) return getNavTreeItems(ts, info, fileName)
                     return info.languageService.getNavigationTree(fileName)

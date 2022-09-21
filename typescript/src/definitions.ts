@@ -1,12 +1,10 @@
 import { GetConfig } from './types'
-import { isWeb } from './utils'
 
 export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: GetConfig) => {
-    const isInWeb = isWeb()
     proxy.getDefinitionAndBoundSpan = (fileName, position) => {
         const prior = info.languageService.getDefinitionAndBoundSpan(fileName, position)
         if (!prior) return
-        if (isInWeb)
+        if (__WEB__)
             // let extension handle it
             // TODO failedAliasResolution
             prior.definitions = prior.definitions?.filter(def => {

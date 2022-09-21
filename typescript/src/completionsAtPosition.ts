@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import type tslib from 'typescript/lib/tsserverlibrary'
-import * as emmet from '@vscode/emmet-helper'
+// import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './completions/isInBannedPosition'
 import { GetConfig } from './types'
 import { findChildContainingPosition } from './utils'
@@ -43,8 +43,6 @@ export const getCompletionsAtPosition = (
         // #region JSX tag improvements
         if (node) {
             const { SyntaxKind } = ts
-            const emmetSyntaxKinds = [SyntaxKind.JsxFragment, SyntaxKind.JsxElement, SyntaxKind.JsxText]
-            const emmetClosingSyntaxKinds = [SyntaxKind.JsxClosingElement, SyntaxKind.JsxClosingFragment]
             // TODO maybe allow fragment?
             const correntComponentSuggestionsKinds = [SyntaxKind.JsxOpeningElement, SyntaxKind.JsxSelfClosingElement]
             const nodeText = node.getFullText().slice(0, position - node.pos)
@@ -61,66 +59,21 @@ export const getCompletionsAtPosition = (
             }
             // #endregion
 
-            if (
-                c('jsxEmmet.type') !== 'disabled' &&
-                (emmetSyntaxKinds.includes(node.kind) || /* Just before closing tag */ (emmetClosingSyntaxKinds.includes(node.kind) && nodeText.length === 0))
-            ) {
-                // const { textSpan } = proxy.getSmartSelectionRange(fileName, position)
-                // let existing = scriptSnapshot.getText(textSpan.start, textSpan.start + textSpan.length)
-                // if (existing.includes('\n')) existing = ''
-                if (ensurePrior() && prior) {
-                    // if (existing.startsWith('.')) {
-                    //     const className = existing.slice(1)
-                    //     prior.entries.push({
-                    //         kind: typescript.ScriptElementKind.label,
-                    //         name: className,
-                    //         sortText: '!5',
-                    //         insertText: `<div className="${className}">$1</div>`,
-                    //         isSnippet: true,
-                    //     })
-                    // } else if (!existing[0] || existing[0].match(/\w/)) {
-                    if (c('jsxEmmet.type') === 'realEmmet') {
-                        const sendToEmmet = nodeText.split(' ').at(-1)!
-                        const emmetCompletions = emmet.doComplete(
-                            {
-                                getText: () => sendToEmmet,
-                                languageId: 'html',
-                                lineCount: 1,
-                                offsetAt: position => position.character,
-                                positionAt: offset => ({ line: 0, character: offset }),
-                                uri: '/',
-                                version: 1,
-                            },
-                            { line: 0, character: sendToEmmet.length },
-                            'html',
-                            {},
-                        ) ?? { items: [] }
-                        for (const completion of emmetCompletions.items)
-                            prior.entries.push({
-                                kind: ts.ScriptElementKind.label,
-                                name: completion.label.slice(1),
-                                sortText: '!5',
-                                // insertText: `${completion.label.slice(1)} ${completion.textEdit?.newText}`,
-                                insertText: completion.textEdit?.newText,
-                                isSnippet: true,
-                                sourceDisplay: completion.detail !== undefined ? [{ kind: 'text', text: completion.detail }] : undefined,
-                                // replacementSpan: { start: position - 5, length: 5 },
-                            })
-                    } else {
-                        const tags = c('jsxPseudoEmmet.tags')
-                        for (let [tag, value] of Object.entries(tags)) {
-                            if (value === true) value = `<${tag}>$1</${tag}>`
-                            prior.entries.push({
-                                kind: ts.ScriptElementKind.label,
-                                name: tag,
-                                sortText: '!5',
-                                insertText: value,
-                                isSnippet: true,
-                            })
-                        }
-                    }
+            // #region Fake emmet
+            if (c('jsxEmmet.type') === 'fakeEmmet' && isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position, c) && ensurePrior() && prior) {
+                const tags = c('jsxPseudoEmmet.tags')
+                for (let [tag, value] of Object.entries(tags)) {
+                    if (value === true) value = `<${tag}>$1</${tag}>`
+                    prior.entries.push({
+                        kind: ts.ScriptElementKind.label,
+                        name: tag,
+                        sortText: '!5',
+                        insertText: value,
+                        isSnippet: true,
+                    })
                 }
             }
+            // #endregion
         }
     }
     const addSignatureAccessCompletions = prior?.entries.filter(({ kind }) => kind !== ts.ScriptElementKind.warning).length
