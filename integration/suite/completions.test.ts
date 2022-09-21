@@ -5,7 +5,7 @@ import { expect } from 'chai'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment, @typescript-eslint/prefer-ts-expect-error
 import { fromFixtures, prepareTsStart } from './utils'
 
-describe('Completions', () => {
+describe.skip('Completions', () => {
     const editor = () => vscode.window.activeTextEditor!
 
     before(async function () {

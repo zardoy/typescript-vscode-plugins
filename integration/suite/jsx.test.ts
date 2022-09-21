@@ -7,7 +7,7 @@ import { fromFixtures, prepareTsStart, replaceEditorText } from './utils'
 //@ts-ignore
 import { Configuration } from '../../src/configurationType'
 
-describe('JSX Attributes', () => {
+describe.skip('JSX Attributes', () => {
     const editor = () => vscode.window.activeTextEditor!
 
     const startPos = new vscode.Position(0, 0)

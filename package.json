@@ -35,7 +35,7 @@
         "start": "vscode-framework start",
         "build": "tsc && tsc -p typescript --noEmit && vscode-framework build && pnpm build-plugin",
         "build-plugin": "node buildTsPlugin.mjs && node buildTsPlugin.mjs --browser",
-        "watch-plugin": "pnpm build-plugin --watch",
+        "watch-plugin": "node buildTsPlugin.mjs --watch",
         "lint": "eslint src/**",
         "test": "pnpm test-plugin --run && pnpm integration-test",
         "test-plugin": "vitest --globals --dir typescript/test/",
