@@ -3,8 +3,6 @@ import buildTsPlugin from '@zardoy/vscode-utils/build/buildTypescriptPlugin.js'
 import { analyzeMetafile } from 'esbuild'
 
 const result = await buildTsPlugin('typescript', undefined, undefined, {
-    // platform: 'neutral',
-    // external: ['path', 'module', 'fs', 'util'],
     minify: !process.argv.includes('--watch'),
     metafile: true,
     banner: {
