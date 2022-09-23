@@ -62,7 +62,7 @@ export const getLineTextBeforePos = (sourceFile: ts.SourceFile, position: number
 export const nodeModules = __WEB__
     ? null
     : {
-          emmet: require('@vscode/emmet-helper') as typeof import('@vscode/emmet-helper'),
+          //   emmet: require('@vscode/emmet-helper') as typeof import('@vscode/emmet-helper'),
           requireFromString: require('require-from-string'),
           fs: require('fs') as typeof import('fs'),
           util: require('util') as typeof import('util'),

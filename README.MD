@@ -10,6 +10,8 @@ Add JSX elements to outline. It also makes sticky scroll works with your tags!
 
 Super recommended for react. Fragments are not rendered.
 
+Also is not supported in the web.
+
 ## **Completions Built Different**
 
 90% work done in this extension highly improves completions experience!
@@ -27,15 +29,17 @@ const callback = (arg) => {}
 callback -> callback(arg)
 ```
 
-### Clean Emmet
+### Strict Emmet
 
-(*enabled by default*)
+(*enabled by default*) when react langs are in
 
 You can turn off emmet integration in JSX and stable emmet suggestion will be *always* within JSX elements.
 
 *Why?* <https://github.com/microsoft/vscode/issues/51537>
 
 - supports only tag expansion for now, have 2 modes
+
+Is not supported in the web for now.
 
 ### Array Method Snippets
 

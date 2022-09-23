@@ -5,6 +5,12 @@
     "license": "MIT",
     "preview": true,
     "contributes": {
+        "commands": [
+            {
+                "command": "enableStrictEmmetInJsx",
+                "title": "Enable Strict Emmet in JSX"
+            }
+        ],
         "typescriptServerPlugins": [
             {
                 "name": "typescript-essential-plugins",

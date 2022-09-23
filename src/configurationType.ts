@@ -119,10 +119,16 @@ export type Configuration = {
      *  */
     'removeCodeFixes.codefixes': ('fixMissingMember' | 'fixMissingProperties' | 'fixMissingAttributes' | 'fixMissingFunctionDeclaration')[]
     /**
-     * Only tag support
-     * @default fakeEmmet
-     *  */
-    'jsxEmmet.type': 'realEmmet' | 'fakeEmmet' | 'disabled'
+     * Use full-blown emmet in jsx/tsx files!
+     * Requires `jsxPseudoEmmet` be off and `emmet.excludeLanguages` to have `javascriptreact` and `typescriptreact`
+     * @default true
+     * */
+    jsxEmmet: boolean
+    /**
+     * Suggests only common tags such as div
+     * @default false
+     */
+    jsxPseudoEmmet: boolean
     /**
      * Note: Sorting matters
      */

@@ -13,7 +13,7 @@ patchPackageJson({
 })
 
 module.exports = defineConfig({
-    // consoleStatements: false,
+    consoleStatements: process.argv.includes('--web') ? false : undefined,
     development: {},
     target: {
         web: true,

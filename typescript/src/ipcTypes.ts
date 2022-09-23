@@ -7,6 +7,19 @@ export type NodeAtPositionResponse = {
     end: number
 }
 
+// export type EmmetResult = {
+//     label: string
+//     documentation: any
+//     insertText: string
+//     // from cursor position of course
+//     rangeLength: number
+// }[]
+
+export type EmmetResult = {
+    /** negative */
+    emmetTextOffset: number
+}
+
 export type PostfixCompletion = {
     label: string
     // replacement: [startOffset: number, endOffset?: number]

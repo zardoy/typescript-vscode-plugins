@@ -18,11 +18,11 @@ export default (
     }
     const sourceFile = info.languageService.getProgram()!.getSourceFile(fileName)!
     if (specialCommand === 'emmet-completions') {
-        const node = findChildContainingPosition(ts, sourceFile, position)
-        if (!node) return
+        const leftNode = findChildContainingPosition(ts, sourceFile, position - 1)
+        if (!leftNode) return
         return {
             entries: [],
-            typescriptEssentialsResponse: getEmmetCompletions(fileName, node, sourceFile, position, info.languageService),
+            typescriptEssentialsResponse: getEmmetCompletions(fileName, leftNode, sourceFile, position, info.languageService),
         }
     }
     if (specialCommand === 'nodeAtPosition') {
