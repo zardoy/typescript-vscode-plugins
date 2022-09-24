@@ -58,8 +58,11 @@ export const registerEmmet = async () => {
             const emmetConfig = vscode.workspace.getConfiguration('emmet')
             const emmetExcludedLangs: string[] = emmetConfig.excludeLanguages ?? []
             const addExcludeLangs = reactLangs.filter(lang => !emmetExcludedLangs.includes(lang))
-            if (addExcludeLangs.length > 0)
+            if (addExcludeLangs.length > 0) {
                 await vscode.workspace.getConfiguration('emmet').update('excludeLanguages', [...emmetExcludedLangs, ...addExcludeLangs])
+                void vscode.window.showInformationMessage(`Added to ${addExcludeLangs.join(',')} emmet.excludeLanguages`)
+            }
+
             await updateExtensionSetting('jsxEmmet', true)
             await updateExtensionSetting('jsxPseudoEmmet', false)
         })
@@ -91,7 +94,7 @@ export function getEmmetConfiguration() {
         showAbbreviationSuggestions: emmetConfig.showAbbreviationSuggestions,
         syntaxProfiles,
         variables: emmetConfig.variables,
-        excludeLanguages: emmetConfig.excludeLanguages,
+        excludeLanguages: [],
         showSuggestionsAsSnippets: emmetConfig.showSuggestionsAsSnippets,
     }
 }
