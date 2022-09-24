@@ -207,6 +207,12 @@ export type Configuration = {
      */
     supportTsDiagnosticDisableComment: boolean
     /**
+     * Adds special helpers completions in `{}`
+     * For example when you're trying to complete object props in array
+     * @default true
+     */
+    // completionHelpers: boolean
+    /**
      * Extend TypeScript outline!
      * Extend outline with:
      * - JSX Elements

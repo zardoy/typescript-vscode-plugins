@@ -9,6 +9,8 @@ import fixPropertiesSorting from './completions/fixPropertiesSorting'
 import { isGoodPositionBuiltinMethodCompletion } from './completions/isGoodPositionMethodCompletion'
 import improveJsxCompletions from './completions/jsxAttributes'
 import arrayMethods from './completions/arrayMethods'
+import prepareTextForEmmet from './specialCommands/prepareTextForEmmet'
+import objectLiteralHelpers from './completions/objectLiteralHelpers'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -38,6 +40,8 @@ export const getCompletionsAtPosition = (
         return true
     }
     const node = findChildContainingPosition(ts, sourceFile, position)
+    /** node that is one character behind
+     * useful as in most cases we work with node that is behind the cursor */
     const leftNode = findChildContainingPosition(ts, sourceFile, position - 1)
     if (['.jsx', '.tsx'].some(ext => fileName.endsWith(ext))) {
         // #region JSX tag improvements
@@ -60,7 +64,13 @@ export const getCompletionsAtPosition = (
             // #endregion
 
             // #region Fake emmet
-            if (c('jsxEmmet.type') === 'fakeEmmet' && isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position, c) && ensurePrior() && prior) {
+            if (
+                c('jsxPseudoEmmet') &&
+                leftNode &&
+                prepareTextForEmmet(fileName, leftNode, sourceFile, position, languageService) !== false &&
+                ensurePrior() &&
+                prior
+            ) {
                 const tags = c('jsxPseudoEmmet.tags')
                 for (let [tag, value] of Object.entries(tags)) {
                     if (value === true) value = `<${tag}>$1</${tag}>`
@@ -108,6 +118,8 @@ export const getCompletionsAtPosition = (
             return entry
         })
     }
+
+    // if (c('completionHelpers') && node) prior.entries = objectLiteralHelpers(node, prior.entries) ?? prior.entries
 
     if (c('patchToString.enable')) {
         //     const indexToPatch = arrayMoveItemToFrom(
@@ -164,7 +176,7 @@ export const getCompletionsAtPosition = (
         })
     }
 
-    prior.entries = arrayMethods(prior.entries, node, position, sourceFile, c)
+    prior.entries = arrayMethods(prior.entries, position, sourceFile, c) ?? prior.entries
 
     if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 
