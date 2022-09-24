@@ -1,6 +1,7 @@
 import type tslib from 'typescript/lib/tsserverlibrary'
 import { nodeModules } from './utils'
 
+// uses at testing only
 declare const __TS_SEVER_PATH__: string | undefined
 
 const getPatchedNavModule = (ts: typeof tslib) => {
