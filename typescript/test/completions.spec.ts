@@ -8,9 +8,7 @@ import { getDefaultConfigFunc } from './defaultSettings'
 import { isGoodPositionBuiltinMethodCompletion, isGoodPositionMethodCompletion } from '../src/completions/isGoodPositionMethodCompletion'
 import { getNavTreeItems } from '../src/getPatchedNavTree'
 import { createRequire } from 'module'
-import isGoodPositionForEmmetCompletion from '../src/specialCommands/prepareTextForEmmet'
 import { findChildContainingPosition } from '../src/utils'
-import handleEmmetRequest from '../src/specialCommands/emmet'
 import handleCommand from '../src/specialCommands/handle'
 
 const require = createRequire(import.meta.url)
@@ -68,8 +66,11 @@ const fileContentsSpecialPositions = (contents: string, fileName = entrypoint) =
     return cursorPositions
 }
 
+const settingsOverride = {
+    'arrayMethodsSnippets.enable': true,
+}
 //@ts-ignore
-const defaultConfigFunc = await getDefaultConfigFunc()
+const defaultConfigFunc = await getDefaultConfigFunc(settingsOverride)
 
 const getCompletionsAtPosition = (pos: number, fileName = entrypoint) => {
     if (pos === undefined) throw new Error('getCompletionsAtPosition: pos is undefined')
@@ -159,8 +160,9 @@ test('Function props: cleans & highlights', () => {
     expect(entryNamesHighlighted).includes('☆sync')
 })
 
-test.only('Emmet completion', () => {
+test('Emmet completion', () => {
     const [positivePositions, negativePositions, numPositions] = fileContentsSpecialPositions(/* tsx */ `
+    // is it readable enough?
     const a = <div d={/*f*/
         /*f*/<div>/*t*/ /*t*/test/*0*/
         /*t*/{}/*t*/ good ul>li/*1*/
@@ -193,6 +195,20 @@ test.only('Emmet completion', () => {
     }
 })
 
+test.only('Array Method Snippets', () => {
+    const positions = newFileContents(/*ts*/ `
+        const users = []
+        users./*|*/
+        ;users.filter(Boolean).flatMap/*|*/
+    `)
+    for (const [i, pos] of positions.entries()) {
+        const { entries } = getCompletionsAtPosition(pos) ?? {}
+        console.log(entries)
+        expect(entries?.find(({ name }) => name === 'flatMap')?.insertText, i.toString()).toBe('flatMap(user => $1)')
+    }
+})
+
+// TODO move/remove this test from here
 test('Patched navtree (outline)', () => {
     globalThis.__TS_SEVER_PATH__ = require.resolve('typescript/lib/tsserver')
     newFileContents(/* tsx */ `
