@@ -7,7 +7,10 @@ type SendCommandData = {
     document: vscode.TextDocument
 }
 export const sendCommand = async <T>(command: TriggerCharacterCommand, sendCommandDataArg?: SendCommandData): Promise<T | undefined> => {
-    const { document, position } = ((): SendCommandData => {
+    const {
+        document: { uri },
+        position,
+    } = ((): SendCommandData => {
         if (sendCommandDataArg) return sendCommandDataArg
         const editor = getActiveRegularEditor()!
         return {
@@ -15,10 +18,10 @@ export const sendCommand = async <T>(command: TriggerCharacterCommand, sendComma
             position: editor.selection.active,
         }
     })()
+
     console.time(`request ${command}`)
-    let requestFile = document.uri.fsPath
-    // TODO fix for all schemes
-    if (document.uri.scheme === 'untitled') requestFile = `^/untitled/ts-nul-authority/${document.uri.path}`
+    let requestFile = uri.fsPath
+    if (uri.scheme !== 'file') requestFile = `^/${uri.scheme}/${uri.authority || 'ts-nul-authority'}/${uri.path.replace(/^\//, '')}`
     try {
         const result = (await vscode.commands.executeCommand('typescript.tsserverRequest', 'completionInfo', {
             _: '%%%',
