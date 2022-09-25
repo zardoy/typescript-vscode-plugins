@@ -105,7 +105,7 @@ export type Configuration = {
     'markTsCodeFixes.character': string
     // TODO
     /**
-     * Reveal import statement as definition instead of real definition
+     * Reveal definition in import statement instead of real definition in another file
      * @default true
      *  */
     // 'importUpDefinition.enable': boolean
