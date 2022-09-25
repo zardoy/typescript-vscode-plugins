@@ -19,7 +19,7 @@ export default (entries: ts.CompletionEntry[], position: number, sourceFile: ts.
     if (!c('arrayMethodsSnippets.enable')) return
     /** Methods to patch */
 
-    const fullText = sourceFile.getText()
+    const fullText = sourceFile.getFullText()
     if (fullText.slice(position, position + 1) === '(') return
     const seemsArray = isArrayLike(entries)
     if (!seemsArray) return

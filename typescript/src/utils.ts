@@ -37,7 +37,7 @@ export const getIndentFromPos = (typescript: typeof import('typescript/lib/tsser
     const { character } = typescript.getLineAndCharacterOfPosition(sourceFile, position)
     return (
         sourceFile
-            .getText()
+            .getFullText()
             .slice(position - character, position)
             .match(/^\s+/)?.[0] ?? ''
     )
@@ -55,7 +55,7 @@ export const findClosestParent = (ts: typeof tslib, node: ts.Node, stopKinds: ts
 
 export const getLineTextBeforePos = (sourceFile: ts.SourceFile, position: number) => {
     const { character } = sourceFile.getLineAndCharacterOfPosition(position)
-    return sourceFile.getText().slice(position - character, position)
+    return sourceFile.getFullText().slice(position - character, position)
 }
 
 // Workaround esbuild bundle detection
