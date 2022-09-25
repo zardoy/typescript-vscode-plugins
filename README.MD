@@ -31,11 +31,11 @@ callback -> callback(arg)
 
 ### Strict Emmet
 
-(*enabled by default*) when react langs are in ``
+(*enabled by default*) when react langs are in `emmet.excludeLanguages`
 
-You can force enable it by using `Enable Strict Emmet in JSX` command.
+Emmet that is active **only** inside JSX tags!
 
-You can turn off emmet integration in JSX and stable emmet suggestion will be *always* within JSX elements.
+You can force enable this by using `Enable Strict Emmet in JSX` command.
 
 *Why?* Issues it fixes: [query](https://github.com/microsoft/vscode/issues?q=sort%3Aupdated-desc+51537+150671+142978+119736).
 

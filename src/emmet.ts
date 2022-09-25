@@ -64,12 +64,14 @@ export const registerEmmet = async () => {
             const emmetExcludedLangs: string[] = emmetConfig.excludeLanguages ?? []
             const addExcludeLangs = reactLangs.filter(lang => !emmetExcludedLangs.includes(lang))
             if (addExcludeLangs.length > 0) {
-                await vscode.workspace.getConfiguration('emmet').update('excludeLanguages', [...emmetExcludedLangs, ...addExcludeLangs])
+                await vscode.workspace
+                    .getConfiguration('emmet')
+                    .update('excludeLanguages', [...emmetExcludedLangs, ...addExcludeLangs], vscode.ConfigurationTarget.Global)
                 void vscode.window.showInformationMessage(`Added to ${addExcludeLangs.join(',')} emmet.excludeLanguages`)
             }
 
-            await updateExtensionSetting('jsxEmmet', true)
-            await updateExtensionSetting('jsxPseudoEmmet', false)
+            await vscode.workspace.getConfiguration(process.env.IDS_PREFIX).update('jsxEmmet', true, vscode.ConfigurationTarget.Global)
+            await vscode.workspace.getConfiguration(process.env.IDS_PREFIX).update('jsxPseudoEmmet', false, vscode.ConfigurationTarget.Global)
         })
 
         // TODO: select wrap, matching, rename tag
