@@ -39,7 +39,7 @@ You can force enable this by using `Enable Strict Emmet in JSX` command.
 
 *Why?* Issues it fixes: [query](https://github.com/microsoft/vscode/issues?q=sort%3Aupdated-desc+51537+150671+142978+119736).
 
-### Optional Features
+#### Optional Emmet Features
 
 - cleanup input & textarea suggestions
 - override `.` snippet
@@ -65,6 +65,12 @@ usersList.map // -> usersList.map((user) => )
 <https://github.com/microsoft/vscode/issues/160637>
 
 ## Minor Useful Features
+
+### Web Support
+
+> Note: when you open TS/JS file in the web for the first time you currently need to switch editors to make everything work!
+
+Web-only feature: `import` path resolution
 
 ### Highlight non-function Methods
 
