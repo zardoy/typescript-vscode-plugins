@@ -270,6 +270,6 @@ test('Patched navtree (outline)', () => {
           ],
           "text": "A",
         },
-    ]
+      ]
     `)
 })
