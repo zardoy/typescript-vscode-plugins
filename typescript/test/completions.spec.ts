@@ -176,6 +176,16 @@ test('Emmet completion', () => {
         const a = <span>/*t*/</span>
         const a = <>/*t*/</>
         const a = <React.Fragment/*f*/ key/*f*/>/*t*/</React.Fragment>
+
+        // https://github.com/microsoft/vscode/issues/119736
+
+        ;<style>/*f*/
+            .test {
+                /*f*/
+                di/*f*/
+            }
+        </style>
+        :<style>/*f*/</style>
             `)
     const numPositionsTextLength = {
         0: -4,

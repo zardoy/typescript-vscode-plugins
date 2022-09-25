@@ -31,13 +31,13 @@ callback -> callback(arg)
 
 ### Strict Emmet
 
-(*enabled by default*) when react langs are in
+(*enabled by default*) when react langs are in ``
+
+You can force enable it by using `Enable Strict Emmet in JSX` command.
 
 You can turn off emmet integration in JSX and stable emmet suggestion will be *always* within JSX elements.
 
-*Why?* <https://github.com/microsoft/vscode/issues/51537>
-
-- supports only tag expansion for now, have 2 modes
+*Why?* Issues it fixes: [query](https://github.com/microsoft/vscode/issues?q=sort%3Aupdated-desc+51537+150671+142978+119736).
 
 Is not supported in the web for now.
 
