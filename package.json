@@ -4,6 +4,7 @@
     "version": "0.0.1",
     "license": "MIT",
     "preview": true,
+    "web": true,
     "contributes": {
         "commands": [
             {
