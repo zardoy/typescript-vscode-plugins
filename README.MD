@@ -105,7 +105,7 @@ Removes `Symbol`, `caller`, `prototype` completions on function / classes.
 
 (*enabled by default*)
 
-Appends *space* to almost all keywords e.g. `extends `, like WebStorm does.
+Appends *space* to almost all keywords e.g. `const `, like WebStorm does.
 
 ### Patch `toString()`
 
