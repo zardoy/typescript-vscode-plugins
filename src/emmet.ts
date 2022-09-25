@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { registerExtensionCommand, updateExtensionSetting } from 'vscode-framework'
+import { getExtensionSetting, registerExtensionCommand, updateExtensionSetting } from 'vscode-framework'
 import { EmmetResult } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
 
@@ -41,13 +41,18 @@ export const registerEmmet = async () => {
                             rangeLength: sendToEmmet.length - range.start.character,
                         }
                     })
-                    return normalizedCompletions?.map(({ label, insertText, rangeLength, documentation }) => ({
-                        label: { label, description: 'EMMET' },
-                        sortText: '07',
-                        insertText: new vscode.SnippetString(insertText),
-                        range: new vscode.Range(position.translate(0, -rangeLength), position),
-                        documentation: documentation as string,
-                    }))
+                    return {
+                        items:
+                            improveEmmetCompletions<any>(normalizedCompletions)?.map(({ label, insertText, rangeLength, documentation, sortText }) => ({
+                                label: { label, description: 'EMMET' },
+                                // sortText is overrided if its a number
+                                sortText: Number.isNaN(+sortText) ? '075' : sortText,
+                                insertText: new vscode.SnippetString(insertText),
+                                range: new vscode.Range(position.translate(0, -rangeLength), position),
+                                documentation: documentation as string,
+                            })) ?? [],
+                        isIncomplete: true,
+                    }
                 },
             },
             // eslint-disable-next-line unicorn/no-useless-spread
@@ -71,7 +76,7 @@ export const registerEmmet = async () => {
     }
 }
 
-export function getEmmetConfiguration() {
+function getEmmetConfiguration() {
     const syntax = 'jsx'
     // TODO lang-overrides?
     const emmetConfig = vscode.workspace.getConfiguration('emmet')
@@ -97,4 +102,29 @@ export function getEmmetConfiguration() {
         excludeLanguages: [],
         showSuggestionsAsSnippets: emmetConfig.showSuggestionsAsSnippets,
     }
+}
+
+const improveEmmetCompletions = <T extends Record<'label' | 'insertText' | 'sortText', string>>(items: T[] | undefined) => {
+    if (!items) return
+    // TODO-low make to tw= by default when twin.macro is installed?
+    const dotSnippetOverride = getExtensionSetting('jsxEmmet.dotOverride')
+    const modernEmmet = getExtensionSetting('jsxEmmet.modernize')
+
+    return items.map(item => {
+        const { label } = item
+        if (label === '.' && typeof dotSnippetOverride === 'string') item.insertText = dotSnippetOverride
+        // change sorting to most used
+        if (['div', 'b'].includes(label)) item.sortText = '070'
+        if (label.startsWith('btn')) item.sortText = '073'
+        if (modernEmmet) {
+            // remove id from input suggestions
+            if (label === 'inp' || label.startsWith('input:password')) {
+                item.insertText = item.insertText.replace(/ id="\${\d}"/, '')
+            }
+
+            if (label === 'textarea') item.insertText = `<textarea>$1</textarea>`
+        }
+
+        return item
+    })
 }

@@ -125,6 +125,19 @@ export type Configuration = {
      * */
     jsxEmmet: boolean
     /**
+     * Override snippet inserted on `.` literally
+     * @default false
+     */
+    'jsxEmmet.dotOverride': string | false
+    /**
+     * We already change sorting of suggestions, but enabling this option will also make:
+     * - removing `id` from input suggestions
+     * - simplify textarea
+     * Doesn't change preview text for now!
+     * @default false
+     */
+    'jsxEmmet.modernize': boolean
+    /**
      * Suggests only common tags such as div
      * @default false
      */
