@@ -197,7 +197,7 @@ test('Emmet completion', () => {
     }
 })
 
-test.only('Array Method Snippets', () => {
+test('Array Method Snippets', () => {
     const positions = newFileContents(/*ts*/ `
         const users = []
         users./*|*/
@@ -205,8 +205,7 @@ test.only('Array Method Snippets', () => {
     `)
     for (const [i, pos] of positions.entries()) {
         const { entries } = getCompletionsAtPosition(pos) ?? {}
-        console.log(entries)
-        expect(entries?.find(({ name }) => name === 'flatMap')?.insertText, i.toString()).toBe('flatMap(user => $1)')
+        expect(entries?.find(({ name }) => name === 'flatMap')?.insertText, i.toString()).toBe('flatMap((${2:user}) => $3)')
     }
 })
 
