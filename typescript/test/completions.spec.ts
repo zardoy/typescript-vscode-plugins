@@ -163,7 +163,8 @@ test('Function props: cleans & highlights', () => {
 test('Emmet completion', () => {
     const [positivePositions, negativePositions, numPositions] = fileContentsSpecialPositions(/* tsx */ `
     // is it readable enough?
-    const a = <div d={/*f*/
+        ;<div>.test/*2*/</div>
+        const a = <div d={/*f*/
         /*f*/<div>/*t*/ /*t*/test/*0*/
         /*t*/{}/*t*/ good ul>li/*1*/
         /*t*/</div>} >/*t*/</div>;
@@ -174,11 +175,12 @@ test('Emmet completion', () => {
         const a = <div className={/*f*/}>/*t*/</div>
         const a = <span>/*t*/</span>
         const a = <>/*t*/</>
-        const a = < key/*f*/>/*t*/</>
+        const a = <React.Fragment/*f*/ key/*f*/>/*t*/</React.Fragment>
             `)
     const numPositionsTextLength = {
         0: -4,
         1: -5,
+        2: -5,
     }
     const getEmmetCompletions = pos => {
         const result = handleCommand({ languageService } as any, entrypoint, pos, 'emmet-completions', defaultConfigFunc)
@@ -187,7 +189,7 @@ test('Emmet completion', () => {
     for (const [i, pos] of positivePositions.entries()) {
         expect(getEmmetCompletions(pos), i.toString()).toBe(0)
     }
-    for (const [i, pos] of numPositions.entries()) {
+    for (const [i, pos] of Object.entries(numPositions)) {
         expect(getEmmetCompletions(pos), i.toString()).toBe(numPositionsTextLength[i])
     }
     for (const [i, pos] of negativePositions.entries()) {
