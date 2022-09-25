@@ -39,6 +39,11 @@ You can force enable this by using `Enable Strict Emmet in JSX` command.
 
 *Why?* Issues it fixes: [query](https://github.com/microsoft/vscode/issues?q=sort%3Aupdated-desc+51537+150671+142978+119736).
 
+### Optional Features
+
+- cleanup input & textarea suggestions
+- override `.` snippet
+
 Is not supported in the web for now.
 
 ### Array Method Snippets
@@ -113,3 +118,7 @@ Patches `toString()` insert function snippet on number types to remove tabStop.
 Mark all TS code actions with `🔵`, so you can be sure they're coming from TypeScript, and not some other extension.
 
 ### Builtin CodeFix Fixes
+
+## Even Even More
+
+Please look at extension settings, as this extension has much more features than described here!
