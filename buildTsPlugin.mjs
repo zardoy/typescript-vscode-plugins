@@ -1,14 +1,15 @@
 //@ts-check
 import buildTsPlugin from '@zardoy/vscode-utils/build/buildTypescriptPlugin.js'
+import { analyzeMetafile } from 'esbuild'
 
-const watch = process.argv[2] === '--watch'
-await buildTsPlugin('typescript', undefined, undefined, {
-    watch,
-    logLevel: 'info',
-    sourcemap: watch,
-    enableBrowser: true,
+const result = await buildTsPlugin('typescript', undefined, undefined, {
+    minify: !process.argv.includes('--watch'),
+    metafile: true,
     banner: {
         js: 'let ts',
         // js: 'const log = (...args) => console.log(...args.map(a => JSON.stringify(a)))',
     },
 })
+
+// @ts-ignore
+// console.log(await analyzeMetafile(result.metafile))

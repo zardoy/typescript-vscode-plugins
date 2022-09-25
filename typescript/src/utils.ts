@@ -37,7 +37,7 @@ export const getIndentFromPos = (typescript: typeof import('typescript/lib/tsser
     const { character } = typescript.getLineAndCharacterOfPosition(sourceFile, position)
     return (
         sourceFile
-            .getText()
+            .getFullText()
             .slice(position - character, position)
             .match(/^\s+/)?.[0] ?? ''
     )
@@ -55,5 +55,26 @@ export const findClosestParent = (ts: typeof tslib, node: ts.Node, stopKinds: ts
 
 export const getLineTextBeforePos = (sourceFile: ts.SourceFile, position: number) => {
     const { character } = sourceFile.getLineAndCharacterOfPosition(position)
-    return sourceFile.getText().slice(position - character, position)
+    return sourceFile.getFullText().slice(position - character, position)
+}
+
+// Workaround esbuild bundle modules
+export const nodeModules = __WEB__
+    ? null
+    : {
+          //   emmet: require('@vscode/emmet-helper') as typeof import('@vscode/emmet-helper'),
+          requireFromString: require('require-from-string'),
+          fs: require('fs') as typeof import('fs'),
+          util: require('util') as typeof import('util'),
+          path: require('path') as typeof import('path'),
+      }
+
+/** runtime detection, shouldn't be used */
+export const isWeb = () => {
+    try {
+        require('path')
+        return false
+    } catch {
+        return true
+    }
 }

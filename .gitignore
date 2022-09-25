@@ -18,6 +18,7 @@ src/configurationTypeCache.jsonc
 coverage
 *.lcov
 .nyc_output
+.vscode-test-web
 
 logs
 *.log

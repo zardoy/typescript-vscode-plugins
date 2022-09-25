@@ -10,6 +10,8 @@ Add JSX elements to outline. It also makes sticky scroll works with your tags!
 
 Super recommended for react. Fragments are not rendered.
 
+Also is not supported in the web.
+
 ## **Completions Built Different**
 
 90% work done in this extension highly improves completions experience!
@@ -27,15 +29,22 @@ const callback = (arg) => {}
 callback -> callback(arg)
 ```
 
-### Clean Emmet
+### Strict Emmet
 
-(*enabled by default*)
+(*enabled by default*) when react langs are in `emmet.excludeLanguages`
 
-You can turn off emmet integration in JSX and stable emmet suggestion will be *always* within JSX elements.
+Emmet that is active **only** inside JSX tags!
 
-*Why?* <https://github.com/microsoft/vscode/issues/51537>
+You can force enable this by using `Enable Strict Emmet in JSX` command.
 
-- supports only tag expansion for now, have 2 modes
+*Why?* Issues it fixes: [query](https://github.com/microsoft/vscode/issues?q=sort%3Aupdated-desc+51537+150671+142978+119736).
+
+#### Optional Emmet Features
+
+- cleanup input & textarea suggestions
+- override `.` snippet
+
+Is not supported in the web for now.
 
 ### Array Method Snippets
 
@@ -56,6 +65,12 @@ usersList.map // -> usersList.map((user) => )
 <https://github.com/microsoft/vscode/issues/160637>
 
 ## Minor Useful Features
+
+### Web Support
+
+> Note: when you open TS/JS file in the web for the first time you currently need to switch editors to make everything work!
+
+Web-only feature: `import` path resolution
 
 ### Highlight non-function Methods
 
@@ -90,7 +105,7 @@ Removes `Symbol`, `caller`, `prototype` completions on function / classes.
 
 (*enabled by default*)
 
-Appends *space* to almost all keywords e.g. `extends `, like WebStorm does.
+Appends *space* to almost all keywords e.g. `const `, like WebStorm does.
 
 ### Patch `toString()`
 
@@ -109,3 +124,7 @@ Patches `toString()` insert function snippet on number types to remove tabStop.
 Mark all TS code actions with `🔵`, so you can be sure they're coming from TypeScript, and not some other extension.
 
 ### Builtin CodeFix Fixes
+
+## Even Even More
+
+Please look at extension settings, as this extension has much more features than described here!

@@ -1,10 +1,16 @@
-import type tslib from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from './types'
 
 export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: GetConfig) => {
     proxy.getDefinitionAndBoundSpan = (fileName, position) => {
         const prior = info.languageService.getDefinitionAndBoundSpan(fileName, position)
         if (!prior) return
+        if (__WEB__)
+            // let extension handle it
+            // TODO failedAliasResolution
+            prior.definitions = prior.definitions?.filter(def => {
+                return !def.unverified || def.fileName === fileName
+            })
+
         // used after check
         const firstDef = prior.definitions![0]!
         if (

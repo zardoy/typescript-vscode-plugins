@@ -105,7 +105,7 @@ export type Configuration = {
     'markTsCodeFixes.character': string
     // TODO
     /**
-     * Reveal import statement as definition instead of real definition
+     * Reveal definition in import statement instead of real definition in another file
      * @default true
      *  */
     // 'importUpDefinition.enable': boolean
@@ -119,10 +119,29 @@ export type Configuration = {
      *  */
     'removeCodeFixes.codefixes': ('fixMissingMember' | 'fixMissingProperties' | 'fixMissingAttributes' | 'fixMissingFunctionDeclaration')[]
     /**
-     * Only tag support
-     * @default fakeEmmet
-     *  */
-    'jsxEmmet.type': 'realEmmet' | 'fakeEmmet' | 'disabled'
+     * Use full-blown emmet in jsx/tsx files!
+     * Requires `jsxPseudoEmmet` be off and `emmet.excludeLanguages` to have `javascriptreact` and `typescriptreact`
+     * @default true
+     * */
+    jsxEmmet: boolean
+    /**
+     * Override snippet inserted on `.` literally
+     * @default false
+     */
+    'jsxEmmet.dotOverride': string | false
+    /**
+     * We already change sorting of suggestions, but enabling this option will also make:
+     * - removing `id` from input suggestions
+     * - simplify textarea
+     * Doesn't change preview text for now!
+     * @default false
+     */
+    'jsxEmmet.modernize': boolean
+    /**
+     * Suggests only common tags such as div
+     * @default false
+     */
+    jsxPseudoEmmet: boolean
     /**
      * Note: Sorting matters
      */
@@ -200,6 +219,12 @@ export type Configuration = {
      * @default false
      */
     supportTsDiagnosticDisableComment: boolean
+    /**
+     * Adds special helpers completions in `{}`
+     * For example when you're trying to complete object props in array
+     * @default true
+     */
+    // completionHelpers: boolean
     /**
      * Extend TypeScript outline!
      * Extend outline with:

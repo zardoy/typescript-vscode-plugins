@@ -1,7 +1,7 @@
-import type tslib from 'typescript/lib/tsserverlibrary'
 import postfixesAtPosition from '../completions/postfixesAtPosition'
 import { NodeAtPositionResponse, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
 import { findChildContainingPosition } from '../utils'
+import getEmmetCompletions from './emmet'
 
 export default (
     info: ts.server.PluginCreateInfo,
@@ -16,8 +16,17 @@ export default (
     if (triggerCharacterCommands.includes(specialCommand) && !configuration) {
         throw new Error('no-ts-essential-plugin-configuration')
     }
+    const sourceFile = info.languageService.getProgram()!.getSourceFile(fileName)!
+    if (specialCommand === 'emmet-completions') {
+        const leftNode = findChildContainingPosition(ts, sourceFile, position - 1)
+        if (!leftNode) return
+        return {
+            entries: [],
+            typescriptEssentialsResponse: getEmmetCompletions(fileName, leftNode, sourceFile, position, info.languageService),
+        }
+    }
     if (specialCommand === 'nodeAtPosition') {
-        const node = findChildContainingPosition(ts, info.languageService.getProgram()!.getSourceFile(fileName)!, position)
+        const node = findChildContainingPosition(ts, sourceFile, position)
         return {
             entries: [],
             typescriptEssentialsResponse: !node
