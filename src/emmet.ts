@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { getExtensionSetting, registerExtensionCommand, updateExtensionSetting } from 'vscode-framework'
+import { getExtensionSetting, registerExtensionCommand } from 'vscode-framework'
 import { EmmetResult } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
 
@@ -11,6 +11,7 @@ export const registerEmmet = async () => {
             reactLangs,
             {
                 async provideCompletionItems(document, position, token, context) {
+                    if (!getExtensionSetting('jsxEmmet')) return
                     const emmetConfig = vscode.workspace.getConfiguration('emmet')
                     if (!emmetConfig.excludeLanguages.includes(document.languageId)) return
 
