@@ -58,6 +58,11 @@ export const getLineTextBeforePos = (sourceFile: ts.SourceFile, position: number
     return sourceFile.getFullText().slice(position - character, position)
 }
 
+export const cleanupEntryName = ({ name }: Pick<ts.CompletionEntry, 'name'>) => {
+    // intellicode highlighting
+    return name.replace(/^★ /, '')
+}
+
 // Workaround esbuild bundle modules
 export const nodeModules = __WEB__
     ? null

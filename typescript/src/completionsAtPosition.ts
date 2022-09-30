@@ -11,6 +11,7 @@ import improveJsxCompletions from './completions/jsxAttributes'
 import arrayMethods from './completions/arrayMethods'
 import prepareTextForEmmet from './specialCommands/prepareTextForEmmet'
 import objectLiteralHelpers from './completions/objectLiteralHelpers'
+import switchCaseExcludeCovered from './completions/switchCaseExcludeCovered'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -175,6 +176,8 @@ export const getCompletionsAtPosition = (
             return { ...entry, insertText: `${entry.name} ` }
         })
     }
+
+    if (leftNode && c('switchExcludeCoveredCases')) prior.entries = switchCaseExcludeCovered(prior.entries, position, sourceFile, leftNode) ?? prior.entries
 
     prior.entries = arrayMethods(prior.entries, position, sourceFile, c) ?? prior.entries
 
