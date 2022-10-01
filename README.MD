@@ -119,11 +119,24 @@ Patches `toString()` insert function snippet on number types to remove tabStop.
 
 Try to restore [original](https://github.com/microsoft/TypeScript/issues/49012) properties sorting in some places such as object destructure & dot property access.
 
+### Switch Exclude Covered Cases
+
+(*enabled by default*)
+
+Exclude already covered strings / enums from suggestions ([TS repo issue](https://github.com/microsoft/TypeScript/issues/13711)).
+
 ### Mark Code Actions
 
 (*enabled by default* with two settings)
 
 Mark all TS code actions with `🔵`, so you can be sure they're coming from TypeScript, and not some other extension.
+
+### Additional Types Suggestions
+
+```ts
+// Adds types in default constraint:
+type A<T extends 'foo' | 'bar' = ''> = ...
+```
 
 ### Builtin CodeFix Fixes
 
