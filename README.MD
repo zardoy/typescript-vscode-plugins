@@ -113,9 +113,11 @@ Appends *space* to almost all keywords e.g. `const `, like WebStorm does.
 
 Patches `toString()` insert function snippet on number types to remove tabStop.
 
-### Correct Sorting
+### Enforce Properties Sorting
 
-(*enabled by default*, but doesn't work properly in new versions for now)
+(*disabled by default*) enable with `tsEssentialPlugins.fixSuggestionsSorting`
+
+Try to restore [original](https://github.com/microsoft/TypeScript/issues/49012) properties sorting in some places such as object destructure & dot property access.
 
 ### Mark Code Actions
 
