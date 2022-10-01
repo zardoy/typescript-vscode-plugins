@@ -5,6 +5,14 @@ import { sendCommand } from './sendCommand'
 
 export const registerEmmet = async () => {
     if (process.env.PLATFORM !== 'web') {
+        let isEmmetEnabled: boolean
+        const setIsEmmetEnabled = () => {
+            isEmmetEnabled = !!vscode.extensions.getExtension('vscode.emmet')
+        }
+
+        setIsEmmetEnabled()
+        vscode.extensions.onDidChange(setIsEmmetEnabled)
+
         const emmet = await import('@vscode/emmet-helper')
         const reactLangs = ['javascriptreact', 'typescriptreact']
         vscode.languages.registerCompletionItemProvider(
@@ -13,7 +21,7 @@ export const registerEmmet = async () => {
                 async provideCompletionItems(document, position, token, context) {
                     if (!getExtensionSetting('jsxEmmet')) return
                     const emmetConfig = vscode.workspace.getConfiguration('emmet')
-                    if (!emmetConfig.excludeLanguages.includes(document.languageId)) return
+                    if (isEmmetEnabled && !emmetConfig.excludeLanguages.includes(document.languageId)) return
 
                     const result = await sendCommand<EmmetResult>('emmet-completions', { document, position })
                     if (!result) return
