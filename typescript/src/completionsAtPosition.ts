@@ -12,6 +12,7 @@ import arrayMethods from './completions/arrayMethods'
 import prepareTextForEmmet from './specialCommands/prepareTextForEmmet'
 import objectLiteralHelpers from './completions/objectLiteralHelpers'
 import switchCaseExcludeCovered from './completions/switchCaseExcludeCovered'
+import additionalTypesSuggestions from './completions/additionalTypesSuggestions'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -40,6 +41,7 @@ export const getCompletionsAtPosition = (
         if (!prior) prior = { entries: [], isGlobalCompletion: false, isMemberCompletion: false, isNewIdentifierLocation: false }
         return true
     }
+    const hasSuggestions = prior && prior.entries.filter(({ kind }) => kind !== ts.ScriptElementKind.warning).length !== 0
     const node = findChildContainingPosition(ts, sourceFile, position)
     /** node that is one character behind
      * useful as in most cases we work with node that is behind the cursor */
@@ -87,9 +89,10 @@ export const getCompletionsAtPosition = (
             // #endregion
         }
     }
-    const addSignatureAccessCompletions = prior?.entries.filter(({ kind }) => kind !== ts.ScriptElementKind.warning).length
-        ? []
-        : indexSignatureAccessCompletions(position, node, scriptSnapshot, sourceFile, program)
+    if (leftNode && !hasSuggestions && ensurePrior() && prior) {
+        prior.entries = additionalTypesSuggestions(prior.entries, program, leftNode) ?? prior.entries
+    }
+    const addSignatureAccessCompletions = hasSuggestions ? [] : indexSignatureAccessCompletions(position, node, scriptSnapshot, sourceFile, program)
     if (addSignatureAccessCompletions.length && ensurePrior() && prior) {
         prior.entries = [...prior.entries, ...addSignatureAccessCompletions]
     }
