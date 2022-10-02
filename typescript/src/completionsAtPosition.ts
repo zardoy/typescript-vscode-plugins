@@ -13,6 +13,7 @@ import prepareTextForEmmet from './specialCommands/prepareTextForEmmet'
 import objectLiteralHelpers from './completions/objectLiteralHelpers'
 import switchCaseExcludeCovered from './completions/switchCaseExcludeCovered'
 import additionalTypesSuggestions from './completions/additionalTypesSuggestions'
+import boostKeywordSuggestions from './completions/boostKeywordSuggestions'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -100,6 +101,7 @@ export const getCompletionsAtPosition = (
     if (!prior) return
 
     if (c('fixSuggestionsSorting')) prior.entries = fixPropertiesSorting(prior.entries, leftNode, sourceFile, program) ?? prior.entries
+    if (node) prior.entries = boostKeywordSuggestions(prior.entries, position, node) ?? prior.entries
 
     const entryNames = new Set(prior.entries.map(({ name }) => name))
     if (c('removeUselessFunctionProps.enable')) prior.entries = prior.entries.filter(e => !['Symbol', 'caller', 'prototype'].includes(e.name))
