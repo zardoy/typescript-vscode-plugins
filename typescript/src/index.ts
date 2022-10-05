@@ -17,6 +17,7 @@ import decorateCodeFixes from './codeFixes'
 import decorateReferences from './references'
 import handleSpecialCommand from './specialCommands/handle'
 import decorateDefinitions from './definitions'
+import decorateDocumentHighlights from './documentHighlights'
 
 const thisPluginMarker = Symbol('__essentialPluginsMarker__')
 
@@ -148,6 +149,7 @@ export = ({ typescript }: { typescript: typeof ts }) => {
             decorateSemanticDiagnostics(proxy, info, c)
             decorateDefinitions(proxy, info, c)
             decorateReferences(proxy, info.languageService, c)
+            decorateDocumentHighlights(proxy, info.languageService, c)
 
             if (!__WEB__) {
                 // dedicated syntax server (which is enabled by default), which fires navtree doesn't seem to receive onConfigurationChanged

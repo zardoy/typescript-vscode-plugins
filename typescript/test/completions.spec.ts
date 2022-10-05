@@ -219,6 +219,42 @@ test('Array Method Snippets', () => {
     }
 })
 
+test('Switch Case Exclude Covered', () => {
+    const [, _, numPositions] = fileContentsSpecialPositions(/*ts*/ `
+        let test: 'foo' | 'bar'
+        switch (test) {
+            case 'foo':
+                break;
+            case '/*|*/':
+                break;
+            default:
+                break;
+        }
+
+        enum SomeEnum {
+            A,
+            B
+        }
+        let test2: SomeEnum
+        switch (test2) {
+            case SomeEnum.B:
+                break;
+            case SomeEnum./*|*/:
+                break;
+            default:
+                break;
+        }
+    `)
+    const completionsByPos = {
+        1: ['bar'],
+        2: ['A'],
+    }
+    for (const [i, pos] of Object.entries(numPositions)) {
+        const { entryNames } = getCompletionsAtPosition(pos as number) ?? {}
+        expect(entryNames).toEqual(completionsByPos[i])
+    }
+})
+
 // TODO move/remove this test from here
 test('Patched navtree (outline)', () => {
     globalThis.__TS_SEVER_PATH__ = require.resolve('typescript/lib/tsserver')

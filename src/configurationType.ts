@@ -235,6 +235,16 @@ export type Configuration = {
      */
     patchOutline: boolean
     /**
+     * Exclude covered strings/enum cases in switch
+     * @default true
+     */
+    switchExcludeCoveredCases: boolean
+    /**
+     * Disable useless highlighting,
+     * @default disable
+     */
+    disableUselessHighlighting: 'disable' | 'inJsxArttributeStrings' | 'inAllStrings'
+    /**
      * Improve JSX attribute completions:
      * - enable builtin jsx attribute completion fix
      * - enable jsxCompletionsMap

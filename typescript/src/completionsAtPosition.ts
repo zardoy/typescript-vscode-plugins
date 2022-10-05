@@ -11,6 +11,9 @@ import improveJsxCompletions from './completions/jsxAttributes'
 import arrayMethods from './completions/arrayMethods'
 import prepareTextForEmmet from './specialCommands/prepareTextForEmmet'
 import objectLiteralHelpers from './completions/objectLiteralHelpers'
+import switchCaseExcludeCovered from './completions/switchCaseExcludeCovered'
+import additionalTypesSuggestions from './completions/additionalTypesSuggestions'
+import boostKeywordSuggestions from './completions/boostKeywordSuggestions'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -39,6 +42,7 @@ export const getCompletionsAtPosition = (
         if (!prior) prior = { entries: [], isGlobalCompletion: false, isMemberCompletion: false, isNewIdentifierLocation: false }
         return true
     }
+    const hasSuggestions = prior && prior.entries.filter(({ kind }) => kind !== ts.ScriptElementKind.warning).length !== 0
     const node = findChildContainingPosition(ts, sourceFile, position)
     /** node that is one character behind
      * useful as in most cases we work with node that is behind the cursor */
@@ -86,9 +90,10 @@ export const getCompletionsAtPosition = (
             // #endregion
         }
     }
-    const addSignatureAccessCompletions = prior?.entries.filter(({ kind }) => kind !== ts.ScriptElementKind.warning).length
-        ? []
-        : indexSignatureAccessCompletions(position, node, scriptSnapshot, sourceFile, program)
+    if (leftNode && !hasSuggestions && ensurePrior() && prior) {
+        prior.entries = additionalTypesSuggestions(prior.entries, program, leftNode) ?? prior.entries
+    }
+    const addSignatureAccessCompletions = hasSuggestions ? [] : indexSignatureAccessCompletions(position, node, scriptSnapshot, sourceFile, program)
     if (addSignatureAccessCompletions.length && ensurePrior() && prior) {
         prior.entries = [...prior.entries, ...addSignatureAccessCompletions]
     }
@@ -96,6 +101,7 @@ export const getCompletionsAtPosition = (
     if (!prior) return
 
     if (c('fixSuggestionsSorting')) prior.entries = fixPropertiesSorting(prior.entries, leftNode, sourceFile, program) ?? prior.entries
+    if (node) prior.entries = boostKeywordSuggestions(prior.entries, position, node) ?? prior.entries
 
     const entryNames = new Set(prior.entries.map(({ name }) => name))
     if (c('removeUselessFunctionProps.enable')) prior.entries = prior.entries.filter(e => !['Symbol', 'caller', 'prototype'].includes(e.name))
@@ -175,6 +181,8 @@ export const getCompletionsAtPosition = (
             return { ...entry, insertText: `${entry.name} ` }
         })
     }
+
+    if (leftNode && c('switchExcludeCoveredCases')) prior.entries = switchCaseExcludeCovered(prior.entries, position, sourceFile, leftNode) ?? prior.entries
 
     prior.entries = arrayMethods(prior.entries, position, sourceFile, c) ?? prior.entries
 
