@@ -2,8 +2,9 @@
 import * as vscode from 'vscode'
 import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
-import { extensionCtx, getExtensionSettingId, getExtensionCommandId } from 'vscode-framework'
+import { extensionCtx, getExtensionSettingId, getExtensionCommandId, registerActiveDevelopmentCommand } from 'vscode-framework'
 import { pickObj } from '@zardoy/utils'
+import { TriggerCharacterCommand } from '../typescript/src/ipcTypes'
 import { Configuration } from './configurationType'
 import webImports from './webImports'
 import { sendCommand } from './sendCommand'
@@ -76,15 +77,22 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
         }
     })
 
-    type RequestOptions = Partial<{
-        offset: number
-    }>
-    vscode.commands.registerCommand(getExtensionCommandId('getNodeAtPosition' as never), async ({ offset }: RequestOptions = {}) => {
+    const sharedRequest = (type: TriggerCharacterCommand, { offset, relativeOffset = 0 }: RequestOptions) => {
         const { activeTextEditor } = vscode.window
         if (!activeTextEditor) return
-        const { document } = activeTextEditor
-        return sendCommand('nodeAtPosition', { document, position: offset ? document.positionAt(offset) : activeTextEditor.selection.active })
-    })
+        const { document, selection } = activeTextEditor
+        offset ??= document.offsetAt(selection.active) + relativeOffset
+        return sendCommand(type, { document, position: document.positionAt(offset) })
+    }
+
+    type RequestOptions = Partial<{
+        offset: number
+        relativeOffset: number
+    }>
+    vscode.commands.registerCommand(getExtensionCommandId('getNodeAtPosition' as never), async (options: RequestOptions = {}) =>
+        sharedRequest('nodeAtPosition', options),
+    )
+    vscode.commands.registerCommand(getExtensionCommandId('getNodePath' as never), async (options: RequestOptions = {}) => sharedRequest('nodePath', options))
 
     if (process.env.PLATFORM === 'web') {
         const possiblySyncConfig = async () => {

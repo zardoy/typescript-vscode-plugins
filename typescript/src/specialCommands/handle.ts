@@ -1,6 +1,6 @@
 import postfixesAtPosition from '../completions/postfixesAtPosition'
 import { NodeAtPositionResponse, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
-import { findChildContainingPosition } from '../utils'
+import { findChildContainingPosition, getNodePath } from '../utils'
 import getEmmetCompletions from './emmet'
 
 export default (
@@ -29,13 +29,14 @@ export default (
         const node = findChildContainingPosition(ts, sourceFile, position)
         return {
             entries: [],
-            typescriptEssentialsResponse: !node
-                ? undefined
-                : ({
-                      kindName: ts.SyntaxKind[node.kind],
-                      start: node.getStart(),
-                      end: node.getEnd(),
-                  } as NodeAtPositionResponse),
+            typescriptEssentialsResponse: !node ? undefined : nodeToApiResponse(node),
+        }
+    }
+    if (specialCommand === 'nodePath') {
+        const nodes = getNodePath(sourceFile, position)
+        return {
+            entries: [],
+            typescriptEssentialsResponse: nodes.map(node => nodeToApiResponse(node)),
         }
     }
     if (specialCommand === 'getPostfixes') {
@@ -45,5 +46,13 @@ export default (
             entries: [],
             typescriptEssentialsResponse: postfixesAtPosition(position, fileName, scriptSnapshot, info.languageService),
         } as any
+    }
+}
+
+function nodeToApiResponse(node: ts.Node): NodeAtPositionResponse {
+    return {
+        kindName: ts.SyntaxKind[node.kind]!,
+        start: node.getStart(),
+        end: node.getEnd(),
     }
 }
