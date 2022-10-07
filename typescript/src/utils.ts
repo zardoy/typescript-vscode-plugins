@@ -1,4 +1,5 @@
 import type tslib from 'typescript/lib/tsserverlibrary'
+import { SetOptional } from 'type-fest'
 
 export function findChildContainingPosition(
     typescript: typeof import('typescript/lib/tsserverlibrary'),
@@ -61,6 +62,25 @@ export const getLineTextBeforePos = (sourceFile: ts.SourceFile, position: number
 export const cleanupEntryName = ({ name }: Pick<ts.CompletionEntry, 'name'>) => {
     // intellicode highlighting
     return name.replace(/^★ /, '')
+}
+
+export const boostOrAddSuggestions = (existingEntries: ts.CompletionEntry[], topEntries: SetOptional<ts.CompletionEntry, 'sortText'>[]) => {
+    const topEntryNames = topEntries.map(({ name }) => name)
+    return [
+        ...topEntries.map(entry => ({ ...entry, sortText: entry.sortText ?? `07` })),
+        ...existingEntries.filter(({ name }) => !topEntryNames.includes(name)),
+    ]
+}
+
+export const boostExistingSuggestions = (entries: ts.CompletionEntry[], predicate: (entry: ts.CompletionEntry) => boolean | number) => {
+    return [...entries].sort((a, b) => {
+        return [a, b]
+            .map(x => {
+                const res = predicate(x)
+                return res === true ? 0 : res === false ? 1 : res
+            })
+            .reduce((a, b) => a - b)
+    })
 }
 
 // Workaround esbuild bundle modules

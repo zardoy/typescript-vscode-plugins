@@ -14,6 +14,7 @@ import objectLiteralHelpers from './completions/objectLiteralHelpers'
 import switchCaseExcludeCovered from './completions/switchCaseExcludeCovered'
 import additionalTypesSuggestions from './completions/additionalTypesSuggestions'
 import boostKeywordSuggestions from './completions/boostKeywordSuggestions'
+import boostTextSuggestions from './completions/boostNameSuggestions'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -96,6 +97,11 @@ export const getCompletionsAtPosition = (
     const addSignatureAccessCompletions = hasSuggestions ? [] : indexSignatureAccessCompletions(position, node, scriptSnapshot, sourceFile, program)
     if (addSignatureAccessCompletions.length && ensurePrior() && prior) {
         prior.entries = [...prior.entries, ...addSignatureAccessCompletions]
+    }
+
+    if (leftNode) {
+        const newEntries = boostTextSuggestions(prior?.entries ?? [], position, sourceFile, leftNode, languageService)
+        if (newEntries?.length && ensurePrior() && prior) prior.entries = newEntries
     }
 
     if (!prior) return

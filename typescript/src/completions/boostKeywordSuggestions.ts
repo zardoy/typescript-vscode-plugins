@@ -1,4 +1,4 @@
-import { findChildContainingPosition } from '../utils'
+import { boostOrAddSuggestions, findChildContainingPosition } from '../utils'
 
 export default (entries: ts.CompletionEntry[], position: number, node: ts.Node): ts.CompletionEntry[] | undefined => {
     // todo-not-sure for now, requires explicit completion trigger
@@ -22,8 +22,8 @@ export default (entries: ts.CompletionEntry[], position: number, node: ts.Node):
     }
     if (extendsKeyword) addOrBoostKeywords.push('extends')
     if (addOrBoostKeywords.length === 0) return
-    return [
-        ...addOrBoostKeywords.map(keyword => ({ name: keyword, kind: ts.ScriptElementKind.keyword, sortText: '07' })),
-        ...entries.filter(({ name }) => !addOrBoostKeywords.includes(name)),
-    ]
+    return boostOrAddSuggestions(
+        entries,
+        addOrBoostKeywords.map(name => ({ name, kind: ts.ScriptElementKind.keyword })),
+    )
 }
