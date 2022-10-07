@@ -1,11 +1,7 @@
 import type tslib from 'typescript/lib/tsserverlibrary'
 import { SetOptional } from 'type-fest'
 
-export function findChildContainingPosition(
-    typescript: typeof import('typescript/lib/tsserverlibrary'),
-    sourceFile: ts.SourceFile,
-    position: number,
-): ts.Node | undefined {
+export function findChildContainingPosition(typescript: typeof tslib, sourceFile: ts.SourceFile, position: number): ts.Node | undefined {
     function find(node: ts.Node): ts.Node | undefined {
         if (position >= node.getStart() && position < node.getEnd()) {
             return typescript.forEachChild(node, find) || node
@@ -16,17 +12,12 @@ export function findChildContainingPosition(
     return find(sourceFile)
 }
 
-export function findChildContainingPositionMaxDepth(
-    typescript: typeof import('typescript/lib/tsserverlibrary'),
-    sourceFile: ts.SourceFile,
-    position: number,
-    maxDepth?: number,
-): ts.Node | undefined {
+export function findChildContainingPositionMaxDepth(sourceFile: ts.SourceFile, position: number, maxDepth?: number): ts.Node | undefined {
     let currentDepth = 0
     function find(node: ts.Node): ts.Node | undefined {
         if (position >= node.getStart() && position < node.getEnd()) {
             if (++currentDepth === maxDepth) return node
-            return typescript.forEachChild(node, find) || node
+            return ts.forEachChild(node, find) || node
         }
 
         return
@@ -34,7 +25,28 @@ export function findChildContainingPositionMaxDepth(
     return find(sourceFile)
 }
 
-export const getIndentFromPos = (typescript: typeof import('typescript/lib/tsserverlibrary'), sourceFile: ts.SourceFile, position: number) => {
+export function getNodePath(sourceFile: ts.SourceFile, position: number): ts.Node[] {
+    const nodes: ts.Node[] = []
+    function find(node: ts.Node): ts.Node | undefined {
+        if (position >= node.getStart() && position < node.getEnd()) {
+            if (node !== sourceFile) nodes.push(node)
+            return ts.forEachChild(node, find) || node
+        }
+
+        return
+    }
+    find(sourceFile)
+    return nodes
+}
+
+// todo not impl
+type MatchStringValue = keyof typeof ts.SyntaxKind | '*'
+
+export const matchNodePath = (sourceFile: ts.SourceFile, position: number, candidates: MatchStringValue[][]) => {
+    const nodesPath = getNodePath(sourceFile, position)
+}
+
+export const getIndentFromPos = (typescript: typeof tslib, sourceFile: ts.SourceFile, position: number) => {
     const { character } = typescript.getLineAndCharacterOfPosition(sourceFile, position)
     return (
         sourceFile

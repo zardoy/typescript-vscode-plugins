@@ -3,7 +3,7 @@ import { GetConfig } from '../types'
 import { findChildContainingPosition, findChildContainingPositionMaxDepth } from '../utils'
 
 export const isGoodPositionBuiltinMethodCompletion = (ts: typeof tslib, sourceFile: ts.SourceFile, position: number, c: GetConfig) => {
-    const importClauseCandidate = findChildContainingPositionMaxDepth(ts, sourceFile, position, 3)
+    const importClauseCandidate = findChildContainingPositionMaxDepth(sourceFile, position, 3)
     if (importClauseCandidate && ts.isImportClause(importClauseCandidate)) return false
     const textBeforePos = sourceFile.getFullText().slice(position - 1, position)
     let currentNode = findChildContainingPosition(ts, sourceFile, textBeforePos === ':' ? position - 1 : position)
