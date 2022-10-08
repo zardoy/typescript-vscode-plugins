@@ -3,6 +3,7 @@ import { cleanupEntryName } from '../utils'
 
 // implementation not even ideal, but it just works for string & enums, which are used in 99% cases
 export default (entries: ts.CompletionEntry[], position: number, sourceFile: ts.SourceFile, leftNode: ts.Node) => {
+    if (!leftNode.parent?.parent) return
     let nodeComp = leftNode
     let enumAccessExpr: string | null | undefined
     if (ts.isStringLiteral(leftNode)) enumAccessExpr = null
