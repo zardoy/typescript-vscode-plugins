@@ -2,7 +2,7 @@
 import * as vscode from 'vscode'
 import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
-import { extensionCtx, getExtensionSettingId, getExtensionCommandId, registerActiveDevelopmentCommand } from 'vscode-framework'
+import { extensionCtx, getExtensionSettingId, getExtensionCommandId } from 'vscode-framework'
 import { pickObj } from '@zardoy/utils'
 import { TriggerCharacterCommand } from '../typescript/src/ipcTypes'
 import { Configuration } from './configurationType'
@@ -10,6 +10,7 @@ import webImports from './webImports'
 import { sendCommand } from './sendCommand'
 import { registerEmmet } from './emmet'
 import experimentalPostfixes from './experimentalPostfixes'
+import migrateSettings from './migrateSettings'
 
 export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted }) => {
     let webWaitingForConfigSync = false
@@ -121,6 +122,8 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
 }
 
 export const activate = async () => {
+    migrateSettings()
+
     const possiblyActivateTsPlugin = async () => {
         const tsExtension = vscode.extensions.getExtension('vscode.typescript-language-features')
         if (!tsExtension) return

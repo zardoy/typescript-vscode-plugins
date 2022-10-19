@@ -19,13 +19,13 @@ export const registerEmmet = async () => {
             reactLangs,
             {
                 async provideCompletionItems(document, position, token, context) {
-                    if (!getExtensionSetting('jsxEmmet')) return
+                    if (!getExtensionSetting('jsxEmmet.enable')) return
                     const emmetConfig = vscode.workspace.getConfiguration('emmet')
                     if (isEmmetEnabled && !emmetConfig.excludeLanguages.includes(document.languageId)) return
 
                     const result = await sendCommand<EmmetResult>('emmet-completions', { document, position })
                     if (!result) return
-                    const offset = document.offsetAt(position)
+                    const offset: number = document.offsetAt(position)
                     const sendToEmmet = document.getText().slice(offset + result.emmetTextOffset, offset)
                     const emmetCompletions = emmet.doComplete(
                         {

@@ -70,7 +70,7 @@ export const getCompletionsAtPosition = (
 
             // #region Fake emmet
             if (
-                c('jsxPseudoEmmet') &&
+                c('jsxPseudoEmmet.enable') &&
                 leftNode &&
                 prepareTextForEmmet(fileName, leftNode, sourceFile, position, languageService) !== false &&
                 ensurePrior() &&
