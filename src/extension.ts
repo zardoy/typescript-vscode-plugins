@@ -11,6 +11,7 @@ import { sendCommand } from './sendCommand'
 import { registerEmmet } from './emmet'
 import experimentalPostfixes from './experimentalPostfixes'
 import migrateSettings from './migrateSettings'
+import figIntegration from './figIntegration'
 
 export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted }) => {
     let webWaitingForConfigSync = false
@@ -113,12 +114,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
     void registerEmmet()
     webImports()
 
-    // registerActiveDevelopmentCommand(async () => {
-    //     const items: vscode.DocumentSymbol[] = await vscode.commands.executeCommand(
-    //         'vscode.executeDocumentSymbolProvider',
-    //         vscode.Uri.file(...),
-    //     )
-    // })
+    void figIntegration()
 }
 
 export const activate = async () => {

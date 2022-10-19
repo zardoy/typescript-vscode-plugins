@@ -275,4 +275,12 @@ export type Configuration = {
               }
             | false
     }
+    /**
+     * The integration is enabled, only when this array is not empty
+     * Integration supports only string within function call
+     * Examples: `cp.exec(`, `executeShellCommand(`
+     * @uniqueItems
+     * @default []
+     */
+    'figIntegration.enableWhenStartsWith': string[]
 }
