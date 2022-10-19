@@ -35,6 +35,11 @@ type ReplaceRule = {
 // TODO support scripting
 export type Configuration = {
     /**
+     * Controls wether TypeScript Essentials plugin is enabled or not.
+     * @default true
+     */
+    enablePlugin: boolean
+    /**
      * Removes `Symbol`, `caller`, `prototype` everywhere
      * @default true
      *  */

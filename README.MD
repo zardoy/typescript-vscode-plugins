@@ -66,6 +66,10 @@ usersList.map // -> usersList.map((user) => )
 
 ## Minor Useful Features
 
+### `enablePlugin` setting
+
+You can quickly disable this plugin functionality by setting this setting to false. Useful for debugging a problem for example.
+
 ### Web Support
 
 > Note: when you open TS/JS file in the web for the first time you currently need to switch editors to make everything work!

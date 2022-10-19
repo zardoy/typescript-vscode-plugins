@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
+import { getExtensionSetting } from 'vscode-framework'
 import { TriggerCharacterCommand } from '../typescript/src/ipcTypes'
 
 type SendCommandData = {
@@ -7,6 +8,9 @@ type SendCommandData = {
     document: vscode.TextDocument
 }
 export const sendCommand = async <T>(command: TriggerCharacterCommand, sendCommandDataArg?: SendCommandData): Promise<T | undefined> => {
+    // plugin id disabled, languageService would not understand the special trigger character
+    if (!getExtensionSetting('enablePlugin')) return
+
     const {
         document: { uri },
         position,
