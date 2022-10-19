@@ -1,4 +1,4 @@
-import { migrateExtensionSettings } from '../../vscode-utils/build/migrateSettings'
+import { migrateExtensionSettings } from '@zardoy/vscode-utils/build/migrateSettings'
 
 export default () => {
     void migrateExtensionSettings(
