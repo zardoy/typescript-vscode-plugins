@@ -2,14 +2,16 @@
 import * as vscode from 'vscode'
 import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
-import { extensionCtx, getExtensionSettingId, getExtensionCommandId, registerActiveDevelopmentCommand } from 'vscode-framework'
+import { extensionCtx, getExtensionSettingId } from 'vscode-framework'
 import { pickObj } from '@zardoy/utils'
-import { TriggerCharacterCommand } from '../typescript/src/ipcTypes'
 import { Configuration } from './configurationType'
 import webImports from './webImports'
 import { sendCommand } from './sendCommand'
 import { registerEmmet } from './emmet'
 import experimentalPostfixes from './experimentalPostfixes'
+import migrateSettings from './migrateSettings'
+import figIntegration from './figIntegration'
+import apiCommands from './apiCommands'
 
 export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted }) => {
     let webWaitingForConfigSync = false
@@ -77,23 +79,6 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
         }
     })
 
-    const sharedRequest = (type: TriggerCharacterCommand, { offset, relativeOffset = 0 }: RequestOptions) => {
-        const { activeTextEditor } = vscode.window
-        if (!activeTextEditor) return
-        const { document, selection } = activeTextEditor
-        offset ??= document.offsetAt(selection.active) + relativeOffset
-        return sendCommand(type, { document, position: document.positionAt(offset) })
-    }
-
-    type RequestOptions = Partial<{
-        offset: number
-        relativeOffset: number
-    }>
-    vscode.commands.registerCommand(getExtensionCommandId('getNodeAtPosition' as never), async (options: RequestOptions = {}) =>
-        sharedRequest('nodeAtPosition', options),
-    )
-    vscode.commands.registerCommand(getExtensionCommandId('getNodePath' as never), async (options: RequestOptions = {}) => sharedRequest('nodePath', options))
-
     if (process.env.PLATFORM === 'web') {
         const possiblySyncConfig = async () => {
             const { activeTextEditor } = vscode.window
@@ -111,16 +96,14 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
     experimentalPostfixes()
     void registerEmmet()
     webImports()
+    apiCommands()
 
-    // registerActiveDevelopmentCommand(async () => {
-    //     const items: vscode.DocumentSymbol[] = await vscode.commands.executeCommand(
-    //         'vscode.executeDocumentSymbolProvider',
-    //         vscode.Uri.file(...),
-    //     )
-    // })
+    figIntegration()
 }
 
 export const activate = async () => {
+    migrateSettings()
+
     const possiblyActivateTsPlugin = async () => {
         const tsExtension = vscode.extensions.getExtension('vscode.typescript-language-features')
         if (!tsExtension) return

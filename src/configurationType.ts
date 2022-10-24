@@ -35,6 +35,11 @@ type ReplaceRule = {
 // TODO support scripting
 export type Configuration = {
     /**
+     * Controls wether TypeScript Essentials plugin is enabled or not.
+     * @default true
+     */
+    enablePlugin: boolean
+    /**
      * Removes `Symbol`, `caller`, `prototype` everywhere
      * @default true
      *  */
@@ -120,10 +125,10 @@ export type Configuration = {
     'removeCodeFixes.codefixes': ('fixMissingMember' | 'fixMissingProperties' | 'fixMissingAttributes' | 'fixMissingFunctionDeclaration')[]
     /**
      * Use full-blown emmet in jsx/tsx files!
-     * Requires `jsxPseudoEmmet` be off and `emmet.excludeLanguages` to have `javascriptreact` and `typescriptreact`
+     * Requires `jsxPseudoEmmet.enabled` to be disabled and `emmet.excludeLanguages` to have `javascriptreact` and `typescriptreact`
      * @default true
      * */
-    jsxEmmet: boolean
+    'jsxEmmet.enable': boolean
     /**
      * Override snippet inserted on `.` literally
      * @default false
@@ -141,7 +146,7 @@ export type Configuration = {
      * Suggests only common tags such as div
      * @default false
      */
-    jsxPseudoEmmet: boolean
+    'jsxPseudoEmmet.enable': boolean
     /**
      * Note: Sorting matters
      */
@@ -275,4 +280,12 @@ export type Configuration = {
               }
             | false
     }
+    /**
+     * The integration is enabled, only when this array is not empty
+     * Integration supports only string within function call
+     * Examples: `cp.exec(`, `executeShellCommand(`
+     * @uniqueItems
+     * @default []
+     */
+    'figIntegration.enableWhenStartsWith': string[]
 }

@@ -193,7 +193,7 @@ test('Emmet completion', () => {
         2: -5,
     }
     const getEmmetCompletions = pos => {
-        const result = handleCommand({ languageService } as any, entrypoint, pos, 'emmet-completions', defaultConfigFunc)
+        const result = handleCommand({ languageService } as any, entrypoint, pos, 'emmet-completions', languageService, defaultConfigFunc)
         return result?.typescriptEssentialsResponse?.emmetTextOffset
     }
     for (const [i, pos] of positivePositions.entries()) {
