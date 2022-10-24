@@ -17,20 +17,23 @@ import decorateDefinitions from './definitions'
 import decorateDocumentHighlights from './documentHighlights'
 import completionEntryDetails from './completionEntryDetails'
 
-const thisPluginMarker = Symbol('__essentialPluginsMarker__')
+const thisPluginMarker = '__essentialPluginsMarker__'
 
 let _configuration: Configuration
 const c: GetConfig = key => get(_configuration, key)
 
+const getInitialProxy = (languageService: ts.LanguageService, proxy = Object.create(null)): ts.LanguageService => {
+    for (const k of Object.keys(languageService)) {
+        const x = languageService[k]!
+        // @ts-expect-error - JS runtime trickery which is tricky to type tersely
+        proxy[k] = (...args: Array<Record<string, unknown>>) => x.apply(languageService, args)
+    }
+    return proxy
+}
+
 const decorateLanguageService = (info: ts.server.PluginCreateInfo, existingProxy?: ts.LanguageService) => {
     // Set up decorator object
-    const proxy: ts.LanguageService = existingProxy ?? Object.create(null)
-
-    for (const k of Object.keys(info.languageService)) {
-        const x = info.languageService[k]!
-        // @ts-expect-error - JS runtime trickery which is tricky to type tersely
-        proxy[k] = (...args: Array<Record<string, unknown>>) => x.apply(info.languageService, args)
-    }
+    const proxy = getInitialProxy(info.languageService, existingProxy)
 
     const { languageService } = info
 
@@ -58,10 +61,6 @@ const decorateLanguageService = (info: ts.server.PluginCreateInfo, existingProxy
     }
 
     proxy.getCompletionEntryDetails = (fileName, position, entryName, formatOptions, source, preferences, data) => {
-        if (fileName === 'disposeLanguageService') {
-            process.exit(1)
-            return
-        }
         const program = languageService.getProgram()
         const sourceFile = program?.getSourceFile(fileName)
         if (!program || !sourceFile) return
@@ -118,27 +117,24 @@ const plugin: ts.server.PluginModuleFactory = ({ typescript }) => {
             _configuration = info.config
             console.log('receive config', JSON.stringify(_configuration))
             if (info.languageService[thisPluginMarker]) return info.languageService
-            try {
-                info.languageService.getCompletionEntryDetails('disposeLanguageService', 0, '', undefined, undefined, undefined, undefined)
-            } catch {}
 
-            const proxy = decorateLanguageService(info, undefined)
+            const proxy = _configuration.enablePlugin === false ? getInitialProxy(info.languageService) : decorateLanguageService(info, undefined)
 
+            // #region watch enablePlugin setting
             let prevPluginEnabledSetting = _configuration.enablePlugin
             updateConfigListeners.push(() => {
-                if (prevPluginEnabledSetting && !_configuration.enablePlugin) {
+                if ((prevPluginEnabledSetting === true || prevPluginEnabledSetting === undefined) && !_configuration.enablePlugin) {
                     // plugin got disabled, restore original languageService methods
-                    for (const key of Object.keys(proxy)) {
-                        //@ts-expect-error
-                        proxy[key] = (...args: Array<Record<string, unknown>>) => info.languageService[key].apply(info.languageService, args)
-                    }
-                } else if (!prevPluginEnabledSetting && _configuration.enablePlugin) {
+                    // todo resetting doesn't work after tsconfig changes
+                    getInitialProxy(info.languageService, proxy)
+                } else if (prevPluginEnabledSetting === false && _configuration.enablePlugin) {
                     // plugin got enabled
                     decorateLanguageService(info, proxy)
                 }
 
                 prevPluginEnabledSetting = _configuration.enablePlugin
             })
+            // #endregion
 
             return proxy
         },
