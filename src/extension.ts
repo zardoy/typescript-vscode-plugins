@@ -114,7 +114,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
     void registerEmmet()
     webImports()
 
-    void figIntegration()
+    figIntegration()
 }
 
 export const activate = async () => {
