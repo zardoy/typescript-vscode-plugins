@@ -8,6 +8,7 @@ export default (
     fileName: string,
     position: number,
     specialCommand: TriggerCharacterCommand,
+    languageService: ts.LanguageService,
     configuration: any,
 ): void | {
     entries: []
@@ -25,14 +26,20 @@ export default (
             typescriptEssentialsResponse: getEmmetCompletions(fileName, leftNode, sourceFile, position, info.languageService),
         }
     }
-    if (specialCommand === 'nodeAtPosition') {
+    if (specialCommand === 'getNodeAtPosition') {
         const node = findChildContainingPosition(ts, sourceFile, position)
         return {
             entries: [],
             typescriptEssentialsResponse: !node ? undefined : nodeToApiResponse(node),
         }
     }
-    if (specialCommand === 'nodePath') {
+    if (specialCommand === 'getSpanOfEnclosingComment') {
+        return {
+            entries: [],
+            typescriptEssentialsResponse: languageService.getSpanOfEnclosingComment(fileName, position, false),
+        }
+    }
+    if (specialCommand === 'getNodePath') {
         const nodes = getNodePath(sourceFile, position)
         return {
             entries: [],

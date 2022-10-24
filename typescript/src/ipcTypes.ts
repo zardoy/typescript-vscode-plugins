@@ -1,4 +1,7 @@
-export const triggerCharacterCommands = ['find-in-import', 'getPostfixes', 'nodeAtPosition', 'nodePath', 'emmet-completions'] as const
+export const passthroughExposedApiCommands = ['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition'] as const
+
+export const triggerCharacterCommands = [...passthroughExposedApiCommands, 'emmet-completions', 'getPostfixes'] as const
+
 export type TriggerCharacterCommand = typeof triggerCharacterCommands[number]
 
 export type NodeAtPositionResponse = {

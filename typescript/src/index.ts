@@ -46,7 +46,7 @@ const decorateLanguageService = (info: ts.server.PluginCreateInfo, existingProxy
             return { entries: [] }
         }
         const specialCommandResult = options?.triggerCharacter
-            ? handleSpecialCommand(info, fileName, position, options.triggerCharacter as TriggerCharacterCommand, _configuration)
+            ? handleSpecialCommand(info, fileName, position, options.triggerCharacter as TriggerCharacterCommand, languageService, _configuration)
             : undefined
         // handled specialCommand request
         if (specialCommandResult !== undefined) return specialCommandResult as any
