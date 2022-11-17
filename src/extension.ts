@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import * as vscode from 'vscode'
 import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
-import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 import { extensionCtx, getExtensionSettingId } from 'vscode-framework'
 import { pickObj } from '@zardoy/utils'
 import { Configuration } from './configurationType'
@@ -12,6 +11,7 @@ import experimentalPostfixes from './experimentalPostfixes'
 import migrateSettings from './migrateSettings'
 import figIntegration from './figIntegration'
 import apiCommands from './apiCommands'
+import onCompletionAccepted from './onCompletionAccepted'
 
 export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted }) => {
     let webWaitingForConfigSync = false
@@ -46,38 +46,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
     })
     syncConfig()
 
-    tsApi.onCompletionAccepted((item: vscode.CompletionItem & { document: vscode.TextDocument }) => {
-        const enableMethodSnippets = vscode.workspace.getConfiguration(process.env.IDS_PREFIX, item.document).get('enableMethodSnippets')
-        const { documentation = '' } = item
-        const documentationString = documentation instanceof vscode.MarkdownString ? documentation.value : documentation
-        const insertFuncArgs = /<!-- insert-func: (.*)-->/.exec(documentationString)?.[1]
-        console.debug('insertFuncArgs', insertFuncArgs)
-        if (enableMethodSnippets && insertFuncArgs !== undefined) {
-            const editor = getActiveRegularEditor()!
-            const startPos = editor.selection.start
-            const nextSymbol = editor.document.getText(new vscode.Range(startPos, startPos.translate(0, 1)))
-            if (!['(', '.'].includes(nextSymbol)) {
-                const snippet = new vscode.SnippetString('')
-                snippet.appendText('(')
-                const args = insertFuncArgs.split(',')
-                for (let [i, arg] of args.entries()) {
-                    if (!arg) continue
-                    // skip empty, but add tabstops if we explicitly want it!
-                    if (arg === ' ') arg = ''
-                    snippet.appendPlaceholder(arg)
-                    if (i !== args.length - 1) snippet.appendText(', ')
-                }
-
-                snippet.appendText(')')
-                void editor.insertSnippet(snippet, undefined, {
-                    undoStopAfter: false,
-                    undoStopBefore: false,
-                })
-                if (vscode.workspace.getConfiguration('editor.parameterHints').get('enabled'))
-                    void vscode.commands.executeCommand('editor.action.triggerParameterHints')
-            }
-        }
-    })
+    onCompletionAccepted(tsApi)
 
     if (process.env.PLATFORM === 'web') {
         const possiblySyncConfig = async () => {
