@@ -37,10 +37,11 @@ importers:
       rambda: ^7.2.1
       require-from-string: ^2.0.2
       string-dedent: ^3.0.1
+      ts-expose-internals: ^4.8.4
       type-fest: ^2.13.1
       typed-jsonfile: ^0.2.1
       typescript: ^4.8.3
-      typescript-old: npm:typescript@4.5.4
+      unleashed-typescript: ^1.3.0
       vitest: ^0.15.1
       vscode-framework: ^0.0.18
       vscode-manifest: ^0.0.4
@@ -72,6 +73,8 @@ importers:
       rambda: 7.2.1
       require-from-string: 2.0.2
       string-dedent: 3.0.1
+      ts-expose-internals: 4.8.4
+      unleashed-typescript: 1.3.0_typescript@4.8.3
       vscode-framework: 0.0.18_w77hramgtzb6kbct6jmnygw2sq
       vscode-uri: 3.0.6
     devDependencies:
@@ -85,7 +88,6 @@ importers:
       type-fest: 2.13.1
       typed-jsonfile: 0.2.1
       typescript: 4.8.3
-      typescript-old: /typescript/4.5.4
       vitest: 0.15.1
       vscode-manifest: 0.0.4
 
@@ -4836,6 +4838,10 @@ packages:
     resolution: {integrity: sha512-iawgk0hLP3SxGKDfnDJf8wTz4p2qImnyihM5Hh/sGvQ3K37dPi/w8sRhdNIxYA1TwFwc5mDhIJq+O0RsvXBKdQ==}
     dev: false
 
+  /ts-expose-internals/4.8.4:
+    resolution: {integrity: sha512-DhGmD9ijXQ+2Zdz+MhVMKZIGFHx4imaHln1l+q8Bd7vNK2iuXRD88UujrJ7VEDZhI5mAr5gwrkQW0d3Wl9EsGw==}
+    dev: false
+
   /ts-morph/12.2.0:
     resolution: {integrity: sha512-WHXLtFDcIRwoqaiu0elAoZ/AmI+SwwDafnPKjgJmdwJ2gRVO0jMKBt88rV2liT/c6MTsXyuWbGFiHe9MRddWJw==}
     dependencies:
@@ -5016,12 +5022,6 @@ packages:
     hasBin: true
     dev: false
 
-  /typescript/4.5.4:
-    resolution: {integrity: sha512-VgYs2A2QIRuGphtzFV7aQJduJ2gyfTljngLzjpfW9FoYZF6xuw1W0vW9ghCKLfcWrCFxK81CSGRAvS1pn4fIUg==}
-    engines: {node: '>=4.2.0'}
-    hasBin: true
-    dev: true
-
   /typescript/4.8.3:
     resolution: {integrity: sha512-goMHfm00nWPa8UvR/CPSvykqf6dVV8x/dp0c5mFTMTIu0u0FlGWRioyy7Nn0PGAdHxpJZnuO/ut+PpQ8UiHAig==}
     engines: {node: '>=4.2.0'}
@@ -5053,6 +5053,17 @@ packages:
   /universalify/2.0.0:
     resolution: {integrity: sha512-hAZsKq7Yy11Zu1DE0OzWjw7nnLZmJZYTDZZyEFHZdUhV8FkH5MCfoU1XMaxXovpyW5nq5scPqq0ZDP9Zyl04oQ==}
     engines: {node: '>= 10.0.0'}
+
+  /unleashed-typescript/1.3.0_typescript@4.8.3:
+    resolution: {integrity: sha512-ORMwdtBlEQTD4Dl+HkPVfwnIG5wKBqQn72INfCHGN8dgZ3AFKwv1m7a4tL1JEGLwCUzFVH3sq/nDxPjDmvlWwg==}
+    engines: {node: '>=12', pnpm: '>=6'}
+    hasBin: true
+    requiresBuild: true
+    peerDependencies:
+      typescript: '*'
+    dependencies:
+      typescript: 4.8.3
+    dev: false
 
   /untildify/4.0.0:
     resolution: {integrity: sha512-KK8xQ1mkzZeg9inewmFVDNkg3l5LUhoq9kN6iWYB/CC9YMG8HA+c1Q8HwDe6dEX7kErrEVNVBO3fWsVq5iDgtw==}

@@ -22,7 +22,7 @@ export default (
 ): false | string => {
     const text = getTextInner(position, leftNode)
     if (text === false) return false
-    const closestElem = findClosestParent(ts, leftNode, [ts.SyntaxKind.JsxElement], [ts.SyntaxKind.JsxFragment]) as ts.JsxElement | undefined
+    const closestElem = findClosestParent(leftNode, [ts.SyntaxKind.JsxElement], [ts.SyntaxKind.JsxFragment]) as ts.JsxElement | undefined
     const bannedTags = ['style']
     const tagName = closestElem?.openingElement.tagName.getText()
     if (tagName && bannedTags.includes(tagName)) return false

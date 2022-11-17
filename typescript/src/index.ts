@@ -98,7 +98,7 @@ const decorateLanguageService = (info: ts.server.PluginCreateInfo, existingProxy
         // so we forced to communicate via fs
         const config = JSON.parse(ts.sys.readFile(require('path').join(__dirname, '../../plugin-config.json'), 'utf8') ?? '{}')
         proxy.getNavigationTree = fileName => {
-            if (c('patchOutline') || config.patchOutline) return getNavTreeItems(ts, info, fileName)
+            if (c('patchOutline') || config.patchOutline) return getNavTreeItems(info, fileName)
             return info.languageService.getNavigationTree(fileName)
         }
     }
@@ -110,7 +110,7 @@ const decorateLanguageService = (info: ts.server.PluginCreateInfo, existingProxy
 const updateConfigListeners: Array<() => void> = []
 
 const plugin: ts.server.PluginModuleFactory = ({ typescript }) => {
-    ts = typescript
+    ts = tsFull = typescript as any
     return {
         create(info) {
             // receive fresh config

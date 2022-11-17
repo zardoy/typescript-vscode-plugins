@@ -6,7 +6,7 @@ const result = await buildTsPlugin('typescript', undefined, undefined, {
     minify: !process.argv.includes('--watch'),
     metafile: true,
     banner: {
-        js: 'let ts',
+        js: 'let ts, tsFull;',
         // js: 'const log = (...args) => console.log(...args.map(a => JSON.stringify(a)))',
     },
 })

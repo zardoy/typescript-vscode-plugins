@@ -18,7 +18,7 @@ export default (position: number, fileName: string, scriptSnapshot: ts.IScriptSn
     let foundNode: ts.Node | undefined
     if (
         ts.isIdentifier(node) &&
-        (foundNode = findClosestParent(ts, node, [ts.SyntaxKind.BinaryExpression, ts.SyntaxKind.IfStatement], [])) &&
+        (foundNode = findClosestParent(node, [ts.SyntaxKind.BinaryExpression, ts.SyntaxKind.IfStatement], [])) &&
         (!ts.isBinaryExpression(foundNode!) || !isComparingToken(foundNode.operatorToken))
     ) {
         if (ts.isIdentifier(node)) {
