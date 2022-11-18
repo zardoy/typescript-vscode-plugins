@@ -6,7 +6,6 @@ const tryToApply: ApplyCodeAction = (ts, sourceFile, pos, range) => {
     const currentNode = findChildContainingPosition(ts, sourceFile, pos)
     if (!currentNode) return
     const closestBlock = findClosestParent(
-        ts,
         currentNode,
         [
             ts.SyntaxKind.IfStatement,

@@ -1,7 +1,6 @@
-import type tslib from 'typescript/lib/tsserverlibrary'
 import { SetOptional } from 'type-fest'
 
-export function findChildContainingPosition(typescript: typeof tslib, sourceFile: ts.SourceFile, position: number): ts.Node | undefined {
+export function findChildContainingPosition(typescript: typeof ts, sourceFile: ts.SourceFile, position: number): ts.Node | undefined {
     function find(node: ts.Node): ts.Node | undefined {
         if (position >= node.getStart() && position < node.getEnd()) {
             return typescript.forEachChild(node, find) || node
@@ -46,7 +45,7 @@ export const matchNodePath = (sourceFile: ts.SourceFile, position: number, candi
     const nodesPath = getNodePath(sourceFile, position)
 }
 
-export const getIndentFromPos = (typescript: typeof tslib, sourceFile: ts.SourceFile, position: number) => {
+export const getIndentFromPos = (typescript: typeof ts, sourceFile: ts.SourceFile, position: number) => {
     const { character } = typescript.getLineAndCharacterOfPosition(sourceFile, position)
     return (
         sourceFile
@@ -56,7 +55,7 @@ export const getIndentFromPos = (typescript: typeof tslib, sourceFile: ts.Source
     )
 }
 
-export const findClosestParent = (ts: typeof tslib, node: ts.Node, stopKinds: ts.SyntaxKind[], rejectKinds: ts.SyntaxKind[]) => {
+export const findClosestParent = (node: ts.Node, stopKinds: ts.SyntaxKind[], rejectKinds: ts.SyntaxKind[]) => {
     rejectKinds = [...rejectKinds, ts.SyntaxKind.SourceFile]
     while (node && !stopKinds.includes(node.kind)) {
         if (rejectKinds.includes(node.kind)) return

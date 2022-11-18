@@ -39,11 +39,30 @@ export default (entries: ts.CompletionEntry[], position: number, sourceFile: ts.
         inferredName = defaultItemName
     }
 
+    // workaround for
+    // https://github.com/microsoft/vscode/blob/4765b898acb38a44f9dd8fa7ed48e833fff6ecc6/extensions/typescript-language-features/src/languageFeatures/completions.ts#L99
+    // (overriding default range)
+    // after []. .fill was appearing above .filter becuase .filter is snippet in insertText, not changing insertText of .fill so vscode method completions calls work as expected
+    const resetRangeKinds = fullText.slice(position - 1, position) === '.' && [
+        ts.ScriptElementKind.constElement,
+        ts.ScriptElementKind.memberFunctionElement,
+        ts.ScriptElementKind.memberVariableElement,
+    ]
+
+    const arrayItemSnippet = c('arrayMethodsSnippets.addArgTabStop') ? `(\${2:${inferredName}})` : inferredName
+    let insertInnerSnippet = `${arrayItemSnippet} => $3`
+    if (c('arrayMethodsSnippets.addOuterTabStop')) insertInnerSnippet = `\${1:${insertInnerSnippet}}`
+
     return entries.map(entry => {
-        if (!arrayMethodsToPatch.includes(entry.name.replace(/^★ /, ''))) return entry
-        const arrayItemSnippet = c('arrayMethodsSnippets.addArgTabStop') ? `(\${2:${inferredName}})` : inferredName
-        let insertInnerSnippet = `${arrayItemSnippet} => $3`
-        if (c('arrayMethodsSnippets.addOuterTabStop')) insertInnerSnippet = `\${1:${insertInnerSnippet}}`
+        if (!arrayMethodsToPatch.includes(entry.name.replace(/^★ /, ''))) {
+            if (resetRangeKinds && resetRangeKinds.includes(entry.kind) && !entry.replacementSpan) {
+                return {
+                    ...entry,
+                    replacementSpan: { start: position, length: 0 },
+                }
+            }
+            return entry
+        }
         return {
             ...entry,
             insertText: `${entry.insertText ?? entry.name}(${insertInnerSnippet})`,

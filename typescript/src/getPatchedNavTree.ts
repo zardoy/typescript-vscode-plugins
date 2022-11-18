@@ -1,10 +1,9 @@
-import type tslib from 'typescript/lib/tsserverlibrary'
 import { nodeModules } from './utils'
 
 // uses at testing only
 declare const __TS_SEVER_PATH__: string | undefined
 
-const getPatchedNavModule = (ts: typeof tslib) => {
+const getPatchedNavModule = () => {
     const tsServerPath = typeof __TS_SEVER_PATH__ !== 'undefined' ? __TS_SEVER_PATH__ : require.main!.filename
     const mainScript = nodeModules!.fs.readFileSync(tsServerPath, 'utf8') as string
     const startIdx = mainScript.indexOf('var NavigationBar;')
@@ -75,8 +74,8 @@ const getPatchedNavModule = (ts: typeof tslib) => {
 
 let navModule
 
-export const getNavTreeItems = (ts: typeof tslib, info: ts.server.PluginCreateInfo, fileName: string) => {
-    if (!navModule) navModule = getPatchedNavModule(ts)
+export const getNavTreeItems = (info: ts.server.PluginCreateInfo, fileName: string) => {
+    if (!navModule) navModule = getPatchedNavModule()
     const program = info.languageService.getProgram()
     if (!program) throw new Error('no program')
     const sourceFile = program?.getSourceFile(fileName)

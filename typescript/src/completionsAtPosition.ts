@@ -15,6 +15,7 @@ import switchCaseExcludeCovered from './completions/switchCaseExcludeCovered'
 import additionalTypesSuggestions from './completions/additionalTypesSuggestions'
 import boostKeywordSuggestions from './completions/boostKeywordSuggestions'
 import boostTextSuggestions from './completions/boostNameSuggestions'
+import keywordsSpace from './completions/keywordsSpace'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -48,6 +49,7 @@ export const getCompletionsAtPosition = (
     /** node that is one character behind
      * useful as in most cases we work with node that is behind the cursor */
     const leftNode = findChildContainingPosition(ts, sourceFile, position - 1)
+    const tokenAtPosition = tsFull.getTokenAtPosition(sourceFile as any, position) as ts.Node
     if (['.jsx', '.tsx'].some(ext => fileName.endsWith(ext))) {
         // #region JSX tag improvements
         if (node) {
@@ -158,34 +160,7 @@ export const getCompletionsAtPosition = (
         })
 
     if (c('suggestions.keywordsInsertText') === 'space') {
-        const charAhead = scriptSnapshot.getText(position, position + 1)
-        const bannedKeywords = [
-            'true',
-            'false',
-            'undefined',
-            'null',
-            'never',
-            'unknown',
-            'any',
-            'symbol',
-            'string',
-            'number',
-            'boolean',
-            'object',
-            'this',
-            'catch',
-            'constructor',
-            'continue',
-            'break',
-            'debugger',
-            'default',
-            'super',
-            'import',
-        ]
-        prior.entries = prior.entries.map(entry => {
-            if (entry.kind !== ts.ScriptElementKind.keyword || charAhead === ' ' || bannedKeywords.includes(entry.name)) return entry
-            return { ...entry, insertText: `${entry.name} ` }
-        })
+        prior.entries = keywordsSpace(prior.entries, scriptSnapshot, position, tokenAtPosition)
     }
 
     if (leftNode && c('switchExcludeCoveredCases')) prior.entries = switchCaseExcludeCovered(prior.entries, position, sourceFile, leftNode) ?? prior.entries

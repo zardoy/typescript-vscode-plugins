@@ -9,6 +9,10 @@
         "lib": [
             "ESNext"
         ],
+        "types": [
+            "@zardoy/tsconfig",
+            // "ts-expose-internals"
+        ],
         "outDir": "build"
     },
     "include": [

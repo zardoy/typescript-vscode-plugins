@@ -13,7 +13,7 @@ import handleCommand from '../src/specialCommands/handle'
 
 const require = createRequire(import.meta.url)
 //@ts-ignore plugin expect it to set globallly
-globalThis.ts = ts
+globalThis.ts = globalThis.tsFull = ts
 
 const entrypoint = '/test.tsx'
 const files = { [entrypoint]: '' }
@@ -274,7 +274,7 @@ test('Patched navtree (outline)', () => {
             </Notification>
         }
     `)
-    const navTreeItems: ts.NavigationTree = getNavTreeItems(ts, { languageService, languageServiceHost: {} } as any, entrypoint)
+    const navTreeItems: ts.NavigationTree = getNavTreeItems({ languageService, languageServiceHost: {} } as any, entrypoint)
     const simplify = (items: ts.NavigationTree[]) => {
         const newItems: { text: any; childItems? }[] = []
         for (const { text, childItems } of items) {
