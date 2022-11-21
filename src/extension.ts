@@ -12,6 +12,7 @@ import migrateSettings from './migrateSettings'
 import figIntegration from './figIntegration'
 import apiCommands from './apiCommands'
 import onCompletionAccepted from './onCompletionAccepted'
+import specialCommands from './specialCommands'
 
 export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted }) => {
     let webWaitingForConfigSync = false
@@ -66,6 +67,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
     void registerEmmet()
     webImports()
     apiCommands()
+    specialCommands()
 
     figIntegration()
 }

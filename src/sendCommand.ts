@@ -6,10 +6,15 @@ import { TriggerCharacterCommand } from '../typescript/src/ipcTypes'
 type SendCommandData = {
     position: vscode.Position
     document: vscode.TextDocument
+    inputOptions?: any
 }
 export const sendCommand = async <T>(command: TriggerCharacterCommand, sendCommandDataArg?: SendCommandData): Promise<T | undefined> => {
     // plugin id disabled, languageService would not understand the special trigger character
     if (!getExtensionSetting('enablePlugin')) return
+
+    if (sendCommandDataArg?.inputOptions) {
+        command = `${command}?${JSON.stringify(sendCommandDataArg.inputOptions)}` as any
+    }
 
     const {
         document: { uri },

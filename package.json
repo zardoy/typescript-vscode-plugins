@@ -11,6 +11,11 @@
                 "command": "enableStrictEmmetInJsx",
                 "title": "Enable Strict Emmet in JSX",
                 "category": "TS Essentials JSX"
+            },
+            {
+                "command": "removeFunctionArgumentsTypesInSelection",
+                "title": "Remove Function Arguments Types in Selection",
+                "category": "TS Essentials"
             }
         ],
         "typescriptServerPlugins": [

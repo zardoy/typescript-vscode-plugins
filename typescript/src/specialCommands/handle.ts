@@ -1,5 +1,5 @@
 import postfixesAtPosition from '../completions/postfixesAtPosition'
-import { NodeAtPositionResponse, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
+import { NodeAtPositionResponse, RequestOptionsTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
 import { findChildContainingPosition, getNodePath } from '../utils'
 import getEmmetCompletions from './emmet'
 
@@ -14,6 +14,9 @@ export default (
     entries: []
     typescriptEssentialsResponse: any
 } => {
+    const _specialCommandsParts = specialCommand.split('?')
+    specialCommand = _specialCommandsParts[0]! as TriggerCharacterCommand
+    const specialCommandArg = _specialCommandsParts[1] && JSON.parse(_specialCommandsParts[1])
     if (triggerCharacterCommands.includes(specialCommand) && !configuration) {
         throw new Error('no-ts-essential-plugin-configuration')
     }
@@ -54,7 +57,30 @@ export default (
             typescriptEssentialsResponse: postfixesAtPosition(position, fileName, scriptSnapshot, info.languageService),
         } as any
     }
+    if (specialCommand === 'removeFunctionArgumentsTypesInSelection') {
+        changeType<RequestOptionsTypes['removeFunctionArgumentsTypesInSelection']>(specialCommandArg)
+
+        const node = findChildContainingPosition(ts, sourceFile, position)
+        if (!node) return
+        if (!ts.isIdentifier(node) || !node.parent || !ts.isParameter(node.parent) || !node.parent.parent?.parameters) {
+            return
+        }
+        const allParams = node.parent.parent.parameters
+        return {
+            entries: [],
+            typescriptEssentialsResponse: {
+                ranges: allParams
+                    .map(param => {
+                        if (!param.type || param.name.pos > specialCommandArg.endSelection) return
+                        return [param.name.end, param.type.end]
+                    })
+                    .filter(Boolean),
+            },
+        }
+    }
 }
+
+function changeType<T>(arg): asserts arg is T {}
 
 function nodeToApiResponse(node: ts.Node): NodeAtPositionResponse {
     return {
