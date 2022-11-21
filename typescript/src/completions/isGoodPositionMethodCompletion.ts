@@ -13,7 +13,7 @@ export const isGoodPositionBuiltinMethodCompletion = (ts: typeof tslib, sourceFi
         if (ts.isStringLiteralLike(currentNode)) return false
         if (ts.isIdentifier(currentNode)) currentNode = currentNode.parent
         if (ts.isJsxSelfClosingElement(currentNode) || ts.isJsxOpeningElement(currentNode)) return false
-        if (ts.isShorthandPropertyAssignment(currentNode)) currentNode = currentNode.parent
+        if (ts.isBindingElement(currentNode) || ts.isShorthandPropertyAssignment(currentNode)) currentNode = currentNode.parent
         if (ts.isObjectBindingPattern(currentNode) || ts.isObjectLiteralExpression(currentNode)) return false
         if (ts.isJsxAttributes(currentNode) || ts.isJsxAttribute(currentNode)) return false
         if (c('disableMethodSnippets.jsxAttributes') && ts.isJsxExpression(currentNode)) return false
