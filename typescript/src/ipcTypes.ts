@@ -7,6 +7,7 @@ export const triggerCharacterCommands = [
     'filterBySyntaxKind',
     'removeFunctionArgumentsTypesInSelection',
     'pickAndInsertFunctionArguments',
+    'getRangeOfSpecialValue',
 ] as const
 
 export type TriggerCharacterCommand = typeof triggerCharacterCommands[number]
@@ -17,12 +18,17 @@ export type NodeAtPositionResponse = {
     end: number
 }
 
+export type PickFunctionArgsType = [name: string, declaration: [number, number], args: [name: string, type: string][]]
+
 export type RequestResponseTypes = {
     removeFunctionArgumentsTypesInSelection: {
         ranges: [number, number][]
     }
+    getRangeOfSpecialValue: {
+        range: [number, number]
+    }
     pickAndInsertFunctionArguments: {
-        functions: string[]
+        functions: PickFunctionArgsType[]
     }
 }
 

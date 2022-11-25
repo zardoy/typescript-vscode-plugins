@@ -1,5 +1,6 @@
+import { compact } from '@zardoy/utils'
 import postfixesAtPosition from '../completions/postfixesAtPosition'
-import { NodeAtPositionResponse, RequestOptionsTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
+import { PickFunctionArgsType, NodeAtPositionResponse, RequestOptionsTypes, RequestResponseTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
 import { findChildContainingPosition, getNodePath } from '../utils'
 import getEmmetCompletions from './emmet'
 
@@ -76,6 +77,79 @@ export default (
                     })
                     .filter(Boolean),
             },
+        }
+    }
+    if (specialCommand === 'getRangeOfSpecialValue') {
+        let node = findChildContainingPosition(ts, sourceFile, position)
+        if (!node) return
+        let targetNode: undefined | ts.Node | [number, number]
+        if (ts.isIdentifier(node) && node.parent) {
+            node = node.parent
+            if (ts.isPropertyAssignment(node)) {
+                targetNode = node.initializer
+            }
+            else if ('body' in node) {
+                targetNode = node.body as ts.Node
+            }
+        }
+
+        ts.findAncestor(node, (n) => {
+            if (ts.isVariableDeclaration(n) && n.initializer && position < n.initializer.pos) {
+                targetNode = n.initializer
+                return true
+            }
+            if (ts.isCallExpression(n) && position < n.expression.end) {
+                const pos = n.expression.end+1
+                targetNode = [pos, pos]
+                return true
+            }
+            if (ts.isArrowFunction(n) && position < n.equalsGreaterThanToken.end) {
+                targetNode = n.body
+                return true
+            }
+            if ((ts.isForStatement(n) || ts.isForOfStatement(n) || ts.isForInStatement(n) || ts.isWhileStatement(n)) && position < n.statement.pos) {
+                targetNode = n.statement
+                return true
+            }
+            if ((ts.isIfStatement(n)) && position < n.thenStatement.pos) {
+                targetNode = n.thenStatement
+                return true
+            }
+            return false
+        })
+        if (targetNode && !Array.isArray(targetNode)) {
+        }
+        if (targetNode) {
+            return {
+                entries: [],
+                typescriptEssentialsResponse: {
+                    range: Array.isArray(targetNode) ? targetNode : [targetNode.pos, targetNode.end],
+                } satisfies RequestResponseTypes['getRangeOfSpecialValue'],
+            }
+        }
+    }
+    if (specialCommand === 'pickAndInsertFunctionArguments') {
+        // const sourceFile = (info.languageService as ReturnType<typeof tsFull['createLanguageService']>).getProgram()!.getSourceFile(fileName)!
+        // if (!sourceFile.identifiers) throw new Error('TS: no exposed identifiers map')
+        type FunctionLocation = [name: string, nodePos: ts.Node, parameterDecl: ts.NodeArray<ts.ParameterDeclaration>] | ts.SignatureDeclaration
+        const collectedNodes: FunctionLocation[] = []
+        const collectNodes = (node: ts.Node) => {
+            if (ts.isArrowFunction(node) && ts.isVariableDeclaration(node.parent) && ts.isIdentifier(node.parent.name)) collectedNodes.push([node.parent.name.text, node.parent.name, node.parameters])
+            if (ts.isFunctionLike(node) && node.name) collectedNodes.push([node.name.getText(), node.name, node.parameters])
+            node.forEachChild(collectNodes)
+        }
+        sourceFile.forEachChild(collectNodes)
+        return {
+            entries: [],
+            typescriptEssentialsResponse: {
+                functions: collectedNodes.map((arr) => {
+                    return [arr[0], [arr[1].pos, arr[1].end], compact(arr[2].map(({name, type}) => {
+                        // or maybe allow?
+                        if (!ts.isIdentifier(name)) return
+                        return [name.text, type?.getText() ?? ''];
+                    }))]
+                })
+            } satisfies RequestResponseTypes['pickAndInsertFunctionArguments'],
         }
     }
 }
