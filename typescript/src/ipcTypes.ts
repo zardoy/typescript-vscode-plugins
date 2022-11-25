@@ -1,6 +1,14 @@
 export const passthroughExposedApiCommands = ['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition'] as const
 
-export const triggerCharacterCommands = [...passthroughExposedApiCommands, 'emmet-completions', 'getPostfixes'] as const
+export const triggerCharacterCommands = [
+    ...passthroughExposedApiCommands,
+    'emmet-completions',
+    'getPostfixes',
+    'filterBySyntaxKind',
+    'removeFunctionArgumentsTypesInSelection',
+    'pickAndInsertFunctionArguments',
+    'getRangeOfSpecialValue',
+] as const
 
 export type TriggerCharacterCommand = typeof triggerCharacterCommands[number]
 
@@ -8,6 +16,26 @@ export type NodeAtPositionResponse = {
     kindName: string
     start: number
     end: number
+}
+
+export type PickFunctionArgsType = [name: string, declaration: [number, number], args: [name: string, type: string][]]
+
+export type RequestResponseTypes = {
+    removeFunctionArgumentsTypesInSelection: {
+        ranges: [number, number][]
+    }
+    getRangeOfSpecialValue: {
+        range: [number, number]
+    }
+    pickAndInsertFunctionArguments: {
+        functions: PickFunctionArgsType[]
+    }
+}
+
+export type RequestOptionsTypes = {
+    removeFunctionArgumentsTypesInSelection: {
+        endSelection: number
+    }
 }
 
 // export type EmmetResult = {

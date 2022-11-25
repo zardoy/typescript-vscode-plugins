@@ -11,6 +11,17 @@ export function findChildContainingPosition(typescript: typeof ts, sourceFile: t
     return find(sourceFile)
 }
 
+export function findChildContainingExactPosition(sourceFile: ts.SourceFile, position: number): ts.Node | undefined {
+    function find(node: ts.Node): ts.Node | undefined {
+        if (position >= node.getStart() && position <= node.getEnd()) {
+            return ts.forEachChild(node, find) || node
+        }
+
+        return
+    }
+    return find(sourceFile)
+}
+
 export function findChildContainingPositionMaxDepth(sourceFile: ts.SourceFile, position: number, maxDepth?: number): ts.Node | undefined {
     let currentDepth = 0
     function find(node: ts.Node): ts.Node | undefined {
@@ -112,5 +123,23 @@ export const isWeb = () => {
         return false
     } catch {
         return true
+    }
+}
+
+export function addObjectMethodResultInterceptors<T extends Record<string, any>>(
+    object: T,
+    interceptors: Partial<{
+        [K in keyof Required<T> as T[K] extends (...args: any[]) => any ? K : never]: (result: ReturnType<T[K]>, ...args: Parameters<T[K]>) => ReturnType<T[K]>
+    }>,
+) {
+    for (const key of Object.keys(interceptors)) {
+        const x = object[key]!
+        const callback = interceptors[key]!
+        if (typeof x !== 'function') continue
+        //@ts-ignore
+        object[key] = (...args: any) => {
+            const result = x.apply(object, args)
+            return callback(result, ...args)
+        }
     }
 }

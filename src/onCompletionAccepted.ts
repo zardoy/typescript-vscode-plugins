@@ -1,7 +1,8 @@
 import * as vscode from 'vscode'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
-import { watchExtensionSettings } from '@zardoy/vscode-utils/build/settings'
-import { getExtensionSetting, Settings } from 'vscode-framework'
+import { conditionallyRegister } from '@zardoy/vscode-utils/build/settings'
+import { expandPosition } from '@zardoy/vscode-utils/build/position'
+import { getExtensionSetting } from 'vscode-framework'
 import { oneOf } from '@zardoy/utils'
 
 export default (tsApi: { onCompletionAccepted }) => {
@@ -61,38 +62,24 @@ export default (tsApi: { onCompletionAccepted }) => {
                         return
                     }
 
-                    if (char === ';') {
-                        void vscode.window.activeTextEditor.edit(builder => {
-                            for (const { range } of contentChanges) {
-                                const pos = range.start
-                                builder.delete(new vscode.Range(pos.translate(0, -1), pos))
-                            }
-                        })
+                    if (char === ';' || char === '\n') {
+                        void vscode.window.activeTextEditor.edit(
+                            builder => {
+                                for (const { range } of contentChanges) {
+                                    const pos = range.start
+                                    builder.delete(expandPosition(document, pos, -1))
+                                }
+                            },
+                            {
+                                undoStopAfter: false,
+                                undoStopBefore: false,
+                            },
+                        )
                     }
                 } finally {
                     justAcceptedReturnKeywordSuggestion = false
                 }
             }),
-        val => val !== 'none',
+        () => getExtensionSetting('suggestions.keywordsInsertText') !== 'none',
     )
-}
-
-const conditionallyRegister = <T extends keyof Settings>(
-    settingKey: T,
-    registerFn: () => vscode.Disposable,
-    acceptSettingValue: (val: Settings[T]) => boolean = val => !!val,
-) => {
-    let disposable: vscode.Disposable | undefined
-    const changeRegisterState = () => {
-        const registerState = acceptSettingValue(getExtensionSetting(settingKey))
-        if (registerState) {
-            if (!disposable) disposable = registerFn()
-        } else {
-            disposable?.dispose()
-            disposable = undefined
-        }
-    }
-
-    changeRegisterState()
-    watchExtensionSettings([settingKey], changeRegisterState)
 }

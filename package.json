@@ -11,6 +11,31 @@
                 "command": "enableStrictEmmetInJsx",
                 "title": "Enable Strict Emmet in JSX",
                 "category": "TS Essentials JSX"
+            },
+            {
+                "command": "removeFunctionArgumentsTypesInSelection",
+                "title": "Remove Function Arguments Types in Selection",
+                "category": "TS Essentials"
+            },
+            {
+                "command": "goToEndOfValue",
+                "title": "Go to End of Special Value",
+                "category": "TS Essentials (Experimental)"
+            },
+            {
+                "command": "goToStartOfValue",
+                "title": "Go to Start of Special Value",
+                "category": "TS Essentials (Experimental)"
+            },
+            {
+                "command": "selectSpecialValue",
+                "title": "Select Special Value",
+                "category": "TS Essentials (Experimental)"
+            },
+            {
+                "command": "pickAndInsertFunctionArguments",
+                "title": "Pick and Insert Function Arguments",
+                "category": "TS Essentials"
             }
         ],
         "typescriptServerPlugins": [
@@ -57,13 +82,18 @@
         "@types/node": "^16.11.21",
         "@types/vscode": "^1.63.1",
         "@zardoy/tsconfig": "^1.3.1",
-        "esbuild": "^0.14.38",
+        "esbuild": "^0.15.15",
         "fs-extra": "^10.1.0",
         "type-fest": "^2.13.1",
         "typed-jsonfile": "^0.2.1",
-        "typescript": "^4.8.3",
-        "vitest": "^0.15.1",
+        "typescript": "^4.9.3",
+        "vitest": "^0.25.3",
         "vscode-manifest": "^0.0.4"
+    },
+    "pnpm": {
+        "overrides": {
+            "esbuild": "^0.15.15"
+        }
     },
     "dependencies": {
         "@types/chai": "^4.3.3",
@@ -74,7 +104,7 @@
         "@vscode/emmet-helper": "^2.8.4",
         "@vscode/test-electron": "^2.1.5",
         "@zardoy/utils": "^0.0.9",
-        "@zardoy/vscode-utils": "^0.0.45",
+        "@zardoy/vscode-utils": "^0.0.47",
         "chai": "^4.3.6",
         "chokidar": "^3.5.3",
         "chokidar-cli": "^3.0.0",
@@ -92,7 +122,8 @@
         "rambda": "^7.2.1",
         "require-from-string": "^2.0.2",
         "string-dedent": "^3.0.1",
-        "ts-expose-internals": "^4.8.4",
+        "ts-expose-internals": "^4.9.3",
+        "ts-simple-type": "^1.0.7",
         "unleashed-typescript": "^1.3.0",
         "vscode-framework": "^0.0.18",
         "vscode-uri": "^3.0.6"

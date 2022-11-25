@@ -101,6 +101,7 @@ test('Banned positions for all method snippets', () => {
         import {/*|*/} from 'test'
         const obj = { m$1e$2thod() {}, arrow: () => {} }
         type A = typeof obj["/*|*/"];
+        a(({ a/*|*/ }) => {})
         const test = () => ({ method() {} })
         const {/*|*/} = test()
         const {something, met/*|*/} = test()
@@ -119,7 +120,7 @@ test('Banned positions for all method snippets', () => {
         ;<Test a/*|*/ />
     `)
     for (const [i, pos] of cursorPositions.entries()) {
-        const result = isGoodPositionBuiltinMethodCompletion(ts, getSourceFile(), pos, defaultConfigFunc)
+        const result = isGoodPositionBuiltinMethodCompletion(ts, getSourceFile(), pos - 1, defaultConfigFunc)
         expect(result, i.toString()).toBeFalsy()
     }
     const insertTextEscaping = getCompletionsAtPosition(cursorPositions[1]!)!.entries[1]?.insertText!
