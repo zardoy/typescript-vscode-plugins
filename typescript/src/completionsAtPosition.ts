@@ -3,7 +3,7 @@ import type tslib from 'typescript/lib/tsserverlibrary'
 // import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './completions/isInBannedPosition'
 import { GetConfig } from './types'
-import { findChildContainingPosition } from './utils'
+import { findChildContainingExactPosition, findChildContainingPosition } from './utils'
 import indexSignatureAccessCompletions from './completions/indexSignatureAccess'
 import fixPropertiesSorting from './completions/fixPropertiesSorting'
 import { isGoodPositionBuiltinMethodCompletion } from './completions/isGoodPositionMethodCompletion'
@@ -49,7 +49,7 @@ export const getCompletionsAtPosition = (
     /** node that is one character behind
      * useful as in most cases we work with node that is behind the cursor */
     const leftNode = findChildContainingPosition(ts, sourceFile, position - 1)
-    const tokenAtPosition = tsFull.getTokenAtPosition(sourceFile as any, position) as ts.Node
+    const exactNode = findChildContainingExactPosition(sourceFile, position)
     if (['.jsx', '.tsx'].some(ext => fileName.endsWith(ext))) {
         // #region JSX tag improvements
         if (node) {
@@ -160,7 +160,7 @@ export const getCompletionsAtPosition = (
         })
 
     if (c('suggestions.keywordsInsertText') === 'space') {
-        prior.entries = keywordsSpace(prior.entries, scriptSnapshot, position, tokenAtPosition)
+        prior.entries = keywordsSpace(prior.entries, scriptSnapshot, position, exactNode)
     }
 
     if (leftNode && c('switchExcludeCoveredCases')) prior.entries = switchCaseExcludeCovered(prior.entries, position, sourceFile, leftNode) ?? prior.entries
