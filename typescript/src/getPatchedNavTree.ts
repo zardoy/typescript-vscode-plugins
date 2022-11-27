@@ -132,7 +132,7 @@ const getPatchedNavModule = (): { getNavigationTree(...args) } => {
 let navModule: { getNavigationTree: any }
 
 export const getNavTreeItems = (info: ts.server.PluginCreateInfo, fileName: string) => {
-    /* if (!navModule)  */ navModule = getPatchedNavModule()
+    if (!navModule) navModule = getPatchedNavModule()
     const program = info.languageService.getProgram()
     if (!program) throw new Error('no program')
     const sourceFile = program?.getSourceFile(fileName)
