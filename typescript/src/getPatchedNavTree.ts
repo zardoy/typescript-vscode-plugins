@@ -1,6 +1,7 @@
 import { nodeModules } from './utils'
 import * as semver from 'semver'
 import { createLanguageService } from './dummyLanguageService'
+import { getCannotFindCodes } from './utils/cannotFindCodes'
 
 // used at testing only
 declare const __TS_SEVER_PATH__: string | undefined
@@ -90,7 +91,9 @@ const getPatchedNavModule = (): { getNavigationTree(...args) } => {
             'main.ts': moduleString,
         })
         const notFoundVariables = new Set<string>()
-        for (const { messageText } of languageService.getSemanticDiagnostics('main.ts')) {
+        const cannotFindCodes = getCannotFindCodes({ includeFromLib: false })
+        for (const { code, messageText } of languageService.getSemanticDiagnostics('main.ts')) {
+            if (!cannotFindCodes.includes(code)) continue
             const notFoundName = (typeof messageText === 'object' ? messageText.messageText : messageText).match(/^Cannot find name '(.+?)'./)?.[1]
             if (!notFoundName) continue
             notFoundVariables.add(notFoundName)
