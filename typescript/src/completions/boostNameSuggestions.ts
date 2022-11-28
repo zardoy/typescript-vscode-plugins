@@ -1,4 +1,7 @@
 import { boostExistingSuggestions, boostOrAddSuggestions, findChildContainingPosition } from '../utils'
+import { getCannotFindCodes } from '../utils/cannotFindCodes'
+
+const cannotFindCodes = getCannotFindCodes({ includeFromLib: true })
 
 // 1. add suggestions for unresolved indentifiers in code
 // 2. boost identifer or type name suggestion
@@ -13,12 +16,12 @@ export default (
     // todo object key
     const fileText = sourceFile.getFullText()
     const fileTextBeforePos = fileText.slice(0, position)
-    const preConstNodeOffset = fileTextBeforePos.match(/(?:const|let) ([\w\d]*)$/i)?.[1]
+    const beforeConstNodeOffset = fileTextBeforePos.match(/(?:const|let) ([\w\d]*)$/i)?.[1]
     /** false - pick all identifiers after cursor
      * node - pick identifiers that within node */
     let filterBlock: undefined | false | ts.Node
-    if (preConstNodeOffset !== undefined) {
-        const node = findChildContainingPosition(ts, sourceFile, position - preConstNodeOffset.length - 2)
+    if (beforeConstNodeOffset !== undefined) {
+        const node = findChildContainingPosition(ts, sourceFile, position - beforeConstNodeOffset.length - 2)
         if (!node || !ts.isVariableDeclarationList(node)) return
         filterBlock = false
     } else if (ts.isIdentifier(node) && node.parent?.parent) {
@@ -45,10 +48,10 @@ export default (
     const semanticDiagnostics = languageService.getSemanticDiagnostics(sourceFile.fileName)
 
     const notFoundIdentifiers = semanticDiagnostics
-        .filter(({ code }) => [2552, 2304].includes(code))
+        .filter(({ code }) => cannotFindCodes.includes(code))
         .filter(({ start, length }) => {
             if ([start, length].some(x => x === undefined)) return false
-            if (filterBlock === false) return start! > position
+            if (filterBlock === false) return true
             const diagnosticEnd = start! + length!
             const { pos, end } = filterBlock!
             if (start! < pos) return false

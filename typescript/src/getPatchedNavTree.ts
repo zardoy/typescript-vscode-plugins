@@ -1,22 +1,33 @@
 import { nodeModules } from './utils'
+import * as semver from 'semver'
+import { createLanguageService } from './dummyLanguageService'
+import { getCannotFindCodes } from './utils/cannotFindCodes'
 
-// uses at testing only
+// used at testing only
 declare const __TS_SEVER_PATH__: string | undefined
 
-const getPatchedNavModule = () => {
+const getPatchedNavModule = (): { getNavigationTree(...args) } => {
+    // what is happening here: grabbing & patching NavigationBar module contents from actual running JS
     const tsServerPath = typeof __TS_SEVER_PATH__ !== 'undefined' ? __TS_SEVER_PATH__ : require.main!.filename
+    // current lib/tsserver.js
     const mainScript = nodeModules!.fs.readFileSync(tsServerPath, 'utf8') as string
-    const startIdx = mainScript.indexOf('var NavigationBar;')
-    const ph = '(ts.NavigationBar = {}));'
-    const lines = mainScript.slice(startIdx, mainScript.indexOf(ph) + ph.length).split(/\r?\n/)
-    const patchPlaces: {
-        predicateString: string
+    type PatchData = {
+        markerModuleStart: string
+        skipStartMarker?: boolean
+        markerModuleEnd: string /*  | RegExp */
+        patches: PatchLocation[]
+        returnModuleCode: string
+    }
+    type PatchLocation = {
+        searchString: string
         linesOffset: number
         addString?: string
         removeLines?: number
-    }[] = [
+    }
+
+    const patchLocations: PatchLocation[] = [
         {
-            predicateString: 'function addChildrenRecursively(node)',
+            searchString: 'function addChildrenRecursively(node)',
             linesOffset: 7,
             addString: `
                 case ts.SyntaxKind.JsxSelfClosingElement:
@@ -29,7 +40,7 @@ const getPatchedNavModule = () => {
                 break`,
         },
         {
-            predicateString: 'return "<unknown>";',
+            searchString: 'return "<unknown>";',
             linesOffset: -1,
             addString: `
                 case ts.SyntaxKind.JsxSelfClosingElement:
@@ -38,13 +49,59 @@ const getPatchedNavModule = () => {
                 return getNameFromJsxTag(node.openingElement);`,
         },
     ]
-    for (let { addString, linesOffset, predicateString, removeLines = 0 } of patchPlaces) {
-        const addTypeIndex = lines.findIndex(line => line.includes(predicateString))
+
+    // semver: can't use compare as it incorrectly works with build postfix
+    const isTs5 = semver.major(ts.version) >= 5
+    const {
+        markerModuleStart,
+        markerModuleEnd,
+        patches,
+        returnModuleCode,
+        skipStartMarker = false,
+    }: PatchData = !isTs5
+        ? {
+              markerModuleStart: 'var NavigationBar;',
+              markerModuleEnd: '(ts.NavigationBar = {}));',
+              patches: patchLocations,
+              returnModuleCode: 'NavigationBar',
+          }
+        : {
+              markerModuleStart: '// src/services/navigationBar.ts',
+              skipStartMarker: true,
+              markerModuleEnd: '// src/',
+              patches: patchLocations,
+              returnModuleCode: '{ getNavigationTree }',
+          }
+
+    const contentAfterModuleStart = mainScript.slice(mainScript.indexOf(markerModuleStart) + (skipStartMarker ? markerModuleStart.length : 0))
+    const lines = contentAfterModuleStart.slice(0, contentAfterModuleStart.indexOf(markerModuleEnd) + markerModuleEnd.length).split(/\r?\n/)
+
+    for (let { addString, linesOffset, searchString, removeLines = 0 } of patches) {
+        const addTypeIndex = lines.findIndex(line => line.includes(searchString))
         if (addTypeIndex !== -1) {
             lines.splice(addTypeIndex + linesOffset, removeLines, ...(addString ? [addString] : []))
+        } else {
+            console.warn(`TS Essentials: Failed to patch NavBar module (outline): ${searchString}`)
         }
     }
-    const getModule = nodeModules!.requireFromString('module.exports = (ts, getNameFromJsxTag) => {' + lines.join('\n') + 'return NavigationBar;}')
+    const getModuleString = () => `module.exports = (ts, getNameFromJsxTag) => {\n${lines.join('\n')}\nreturn ${returnModuleCode}}`
+    let moduleString = getModuleString()
+    if (isTs5) {
+        const { languageService } = createLanguageService({
+            'main.ts': moduleString,
+        })
+        const notFoundVariables = new Set<string>()
+        const cannotFindCodes = getCannotFindCodes({ includeFromLib: false })
+        for (const { code, messageText } of languageService.getSemanticDiagnostics('main.ts')) {
+            if (!cannotFindCodes.includes(code)) continue
+            const notFoundName = (typeof messageText === 'object' ? messageText.messageText : messageText).match(/^Cannot find name '(.+?)'./)?.[1]
+            if (!notFoundName) continue
+            notFoundVariables.add(notFoundName)
+        }
+        lines.unshift(`const {${[...notFoundVariables.keys()].join(', ')}} = ts;`)
+        moduleString = getModuleString()
+    }
+    const getModule = nodeModules!.requireFromString(moduleString)
     const getNameFromJsxTag = (node: ts.JsxSelfClosingElement | ts.JsxOpeningElement) => {
         const {
             attributes: { properties },
@@ -72,7 +129,7 @@ const getPatchedNavModule = () => {
     return getModule(ts, getNameFromJsxTag)
 }
 
-let navModule
+let navModule: { getNavigationTree: any }
 
 export const getNavTreeItems = (info: ts.server.PluginCreateInfo, fileName: string) => {
     if (!navModule) navModule = getPatchedNavModule()
