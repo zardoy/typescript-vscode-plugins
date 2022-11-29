@@ -93,31 +93,34 @@ export default (
             }
         }
 
-        ts.findAncestor(node, (n) => {
-            if (ts.isVariableDeclaration(n) && n.initializer && position < n.initializer.pos) {
-                targetNode = n.initializer
-                return true
-            }
-            if (ts.isCallExpression(n) && position < n.expression.end) {
-                const pos = n.expression.end+1
-                targetNode = [pos, pos]
-                return true
-            }
-            if (ts.isArrowFunction(n) && position < n.equalsGreaterThanToken.end) {
-                targetNode = n.body
-                return true
-            }
-            if ((ts.isForStatement(n) || ts.isForOfStatement(n) || ts.isForInStatement(n) || ts.isWhileStatement(n)) && position < n.statement.pos) {
-                targetNode = n.statement
-                return true
-            }
-            if ((ts.isIfStatement(n)) && position < n.thenStatement.pos) {
-                targetNode = n.thenStatement
-                return true
-            }
-            return false
-        })
+        if(!targetNode) {
+            ts.findAncestor(node, (n) => {
+                if (ts.isVariableDeclaration(n) && n.initializer && position < n.initializer.pos) {
+                    targetNode = n.initializer
+                    return true
+                }
+                if (ts.isCallExpression(n) && position < n.expression.end) {
+                    const pos = n.expression.end+1
+                    targetNode = [pos, pos]
+                    return true
+                }
+                if (ts.isArrowFunction(n) && position < n.body.pos) {
+                    targetNode = n.body
+                    return true
+                }
+                if ((ts.isForStatement(n) || ts.isForOfStatement(n) || ts.isForInStatement(n) || ts.isWhileStatement(n)) && position < n.statement.pos) {
+                    targetNode = n.statement
+                    return true
+                }
+                if ((ts.isIfStatement(n)) && position < n.thenStatement.pos) {
+                    targetNode = n.thenStatement
+                    return true
+                }
+                return false
+            })
+        }
         if (targetNode && !Array.isArray(targetNode)) {
+            // maybe additional node handling in future
         }
         if (targetNode) {
             return {
