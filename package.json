@@ -18,6 +18,11 @@
                 "category": "TS Essentials"
             },
             {
+                "command": "inspectAcceptedCompletion",
+                "title": "Inspect Accepted Completion",
+                "category": "TS Essentials (Developer)"
+            },
+            {
                 "command": "goToEndOfValue",
                 "title": "Go to End of Special Value",
                 "category": "TS Essentials (Experimental)"
