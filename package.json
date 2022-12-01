@@ -41,6 +41,16 @@
                 "command": "pickAndInsertFunctionArguments",
                 "title": "Pick and Insert Function Arguments",
                 "category": "TS Essentials"
+            },
+            {
+                "command": "goToNodeBySyntaxKind",
+                "title": "Go to Node by Syntax Kind",
+                "category": "TS Essentials"
+            },
+            {
+                "command": "goToNodeBySyntaxKindWithinBlock",
+                "title": "Go to Node by Syntax Kind Within Block",
+                "category": "TS Essentials"
             }
         ],
         "typescriptServerPlugins": [

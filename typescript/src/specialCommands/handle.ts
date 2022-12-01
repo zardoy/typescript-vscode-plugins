@@ -1,6 +1,6 @@
 import { compact } from '@zardoy/utils'
 import postfixesAtPosition from '../completions/postfixesAtPosition'
-import { PickFunctionArgsType, NodeAtPositionResponse, RequestOptionsTypes, RequestResponseTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
+import { NodeAtPositionResponse, RequestOptionsTypes, RequestResponseTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
 import { findChildContainingPosition, getNodePath } from '../utils'
 import getEmmetCompletions from './emmet'
 
@@ -93,14 +93,14 @@ export default (
             }
         }
 
-        if(!targetNode) {
+        if (!targetNode) {
             ts.findAncestor(node, (n) => {
                 if (ts.isVariableDeclaration(n) && n.initializer && position < n.initializer.pos) {
                     targetNode = n.initializer
                     return true
                 }
                 if (ts.isCallExpression(n) && position < n.expression.end) {
-                    const pos = n.expression.end+1
+                    const pos = n.expression.end + 1
                     targetNode = [pos, pos]
                     return true
                 }
@@ -129,6 +129,8 @@ export default (
                     range: Array.isArray(targetNode) ? targetNode : [targetNode.pos, targetNode.end],
                 } satisfies RequestResponseTypes['getRangeOfSpecialValue'],
             }
+        } else {
+            return
         }
     }
     if (specialCommand === 'pickAndInsertFunctionArguments') {
@@ -146,7 +148,7 @@ export default (
             entries: [],
             typescriptEssentialsResponse: {
                 functions: collectedNodes.map((arr) => {
-                    return [arr[0], [arr[1].pos, arr[1].end], compact(arr[2].map(({name, type}) => {
+                    return [arr[0], [arr[1].pos, arr[1].end], compact(arr[2].map(({ name, type }) => {
                         // or maybe allow?
                         if (!ts.isIdentifier(name)) return
                         return [name.text, type?.getText() ?? ''];
@@ -155,9 +157,29 @@ export default (
             } satisfies RequestResponseTypes['pickAndInsertFunctionArguments'],
         }
     }
+    if (specialCommand === 'filterBySyntaxKind') {
+        const collectedNodes: RequestResponseTypes['filterBySyntaxKind']['nodesByKind'] = {}
+        collectedNodes.comment ??= []
+        const collectNodes = (node: ts.Node) => {
+            const kind = ts.SyntaxKind[node.kind]!;
+            const leadingTrivia = node.getLeadingTriviaWidth(sourceFile)
+            const comments = [...tsFull.getLeadingCommentRangesOfNode(node as any, sourceFile as any) ?? [], ...tsFull.getTrailingCommentRanges(node as any, sourceFile as any) ?? []]
+            collectedNodes.comment!.push(...comments?.map((comment) => ({ range: [comment.pos, comment.end] as [number, number] })))
+            collectedNodes[kind] ??= []
+            collectedNodes[kind]!.push({ range: [node.pos + leadingTrivia, node.end] })
+            node.forEachChild(collectNodes)
+        }
+        sourceFile.forEachChild(collectNodes)
+        return {
+            entries: [],
+            typescriptEssentialsResponse: {
+                nodesByKind: collectedNodes
+            } satisfies RequestResponseTypes['filterBySyntaxKind']
+        }
+    }
 }
 
-function changeType<T>(arg): asserts arg is T {}
+function changeType<T>(arg): asserts arg is T { }
 
 function nodeToApiResponse(node: ts.Node): NodeAtPositionResponse {
     return {

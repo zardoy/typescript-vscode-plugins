@@ -18,17 +18,22 @@ export type NodeAtPositionResponse = {
     end: number
 }
 
-export type PickFunctionArgsType = [name: string, declaration: [number, number], args: [name: string, type: string][]]
+type TsRange = [number, number]
+
+export type PickFunctionArgsType = [name: string, declaration: TsRange, args: [name: string, type: string][]]
 
 export type RequestResponseTypes = {
     removeFunctionArgumentsTypesInSelection: {
-        ranges: [number, number][]
+        ranges: TsRange[]
     }
     getRangeOfSpecialValue: {
-        range: [number, number]
+        range: TsRange
     }
     pickAndInsertFunctionArguments: {
         functions: PickFunctionArgsType[]
+    }
+    filterBySyntaxKind: {
+        nodesByKind: Record<string, Array<{ range: TsRange }>>
     }
 }
 

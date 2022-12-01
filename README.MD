@@ -2,6 +2,10 @@
 
 ## Top Features
 
+### Special Commands
+
+See [special commands list](#special-commands-list)
+
 ### JSX Outline
 
 (*disabled by default*) Enable with `tsEssentialPlugins.patchOutline`
@@ -143,6 +147,12 @@ type A<T extends 'foo' | 'bar' = ''> = ...
 ```
 
 ### Builtin CodeFix Fixes
+
+## Special Commands List
+
+### Go to / Select Nodes by Kind
+
+Use cases: search excluding comments, search & replace only within strings, find interested JSX attribute node
 
 ## Even Even More
 
