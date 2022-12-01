@@ -2,19 +2,25 @@ import * as vscode from 'vscode'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 import { conditionallyRegister } from '@zardoy/vscode-utils/build/settings'
 import { expandPosition } from '@zardoy/vscode-utils/build/position'
-import { getExtensionSetting } from 'vscode-framework'
+import { getExtensionSetting, registerExtensionCommand } from 'vscode-framework'
 import { oneOf } from '@zardoy/utils'
 
 export default (tsApi: { onCompletionAccepted }) => {
     let justAcceptedReturnKeywordSuggestion = false
+    let onCompletionAcceptedOverride: ((item: any) => void) | undefined
 
     tsApi.onCompletionAccepted((item: vscode.CompletionItem & { document: vscode.TextDocument }) => {
-        const enableMethodSnippets = vscode.workspace.getConfiguration(process.env.IDS_PREFIX, item.document).get('enableMethodSnippets')
+        if (onCompletionAcceptedOverride) {
+            onCompletionAcceptedOverride(item)
+            return
+        }
+
         const { insertText, documentation = '', kind } = item
         if (kind === vscode.CompletionItemKind.Keyword && insertText === 'return ') {
             justAcceptedReturnKeywordSuggestion = true
         }
 
+        const enableMethodSnippets = vscode.workspace.getConfiguration(process.env.IDS_PREFIX, item.document).get('enableMethodSnippets')
         const documentationString = documentation instanceof vscode.MarkdownString ? documentation.value : documentation
         const insertFuncArgs = /<!-- insert-func: (.*)-->/.exec(documentationString)?.[1]
         console.debug('insertFuncArgs', insertFuncArgs)
@@ -44,6 +50,29 @@ export default (tsApi: { onCompletionAccepted }) => {
                 }
             }
         }
+    })
+
+    registerExtensionCommand('inspectAcceptedCompletion', async () => {
+        await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: 'Waiting for completion to be accepted',
+                cancellable: true,
+            },
+            async (_progress, token) => {
+                const accepted = await new Promise<boolean>(resolve => {
+                    token.onCancellationRequested(() => {
+                        onCompletionAcceptedOverride = undefined
+                        resolve(false)
+                    })
+                    onCompletionAcceptedOverride = item => {
+                        console.dir(item, { depth: 4 })
+                        resolve(true)
+                    }
+                })
+                if (accepted) void vscode.window.showInformationMessage('Completion accepted, see console for details')
+            },
+        )
     })
 
     conditionallyRegister(

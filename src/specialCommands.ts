@@ -1,10 +1,12 @@
 import * as vscode from 'vscode'
-import { getActiveRegularEditor } from '@zardoy/vscode-utils'
-import { registerExtensionCommand } from 'vscode-framework'
+import { getActiveRegularEditor, rangeToSelection } from '@zardoy/vscode-utils'
+import { getExtensionCommandId, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'
 import { showQuickPick } from '@zardoy/vscode-utils/build/quickPick'
+import _ from 'lodash'
+import { compact } from '@zardoy/utils'
 import { RequestOptionsTypes, RequestResponseTypes } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
-import { tsRangeToVscode } from './util'
+import { tsRangeToVscode, tsRangeToVscodeSelection } from './util'
 
 export default () => {
     registerExtensionCommand('removeFunctionArgumentsTypesInSelection', async () => {
@@ -55,45 +57,51 @@ export default () => {
         editor.selection = new vscode.Selection(currentValueRange.start, currentValueRange.end)
     })
 
-    registerExtensionCommand('pickAndInsertFunctionArguments', async () => {
-        const editor = getActiveRegularEditor()
-        if (!editor) return
-        const result = await sendCommand<RequestResponseTypes['pickAndInsertFunctionArguments']>('pickAndInsertFunctionArguments')
-        if (!result) return
+    const nodePicker = async <T>(data: T[], renderItem: (item: T) => Omit<VSCodeQuickPickItem, 'value'> & { nodeRange: [number, number] }) => {
+        const editor = vscode.window.activeTextEditor!
         const originalSelections = editor.selections
-
-        const renderArgs = (args: Array<[name: string, type: string]>) => `${args.map(([name, type]) => (type ? `${name}: ${type}` : name)).join(', ')}`
-
         let revealBack = true
-        const selectedFunction = await showQuickPick(
-            result.functions.map(func => {
-                const [name, _decl, args] = func
+
+        // todo-p1 button to merge nodes with duplicated contents (e.g. same strings)
+        const selected = await showQuickPick(
+            data.map(item => {
+                const custom = renderItem(item)
                 return {
-                    label: name,
-                    value: func,
-                    description: `(${renderArgs(args)})`,
+                    ...custom,
+                    value: item,
                     buttons: [
                         {
                             iconPath: new vscode.ThemeIcon('go-to-file'),
                             tooltip: 'Go to declaration',
+                            action: 'goToStartPos',
+                        },
+                        {
+                            iconPath: new vscode.ThemeIcon('arrow-both'),
+                            tooltip: 'Add to selection',
+                            action: 'addSelection',
                         },
                     ],
                 }
             }),
             {
-                onDidTriggerItemButton(event) {
+                title: 'Select node...',
+                onDidTriggerItemButton({ item, button }) {
+                    const { action } = button as any
+                    const sel = tsRangeToVscodeSelection(editor.document, (item as any).nodeRange)
                     revealBack = false
-                    this.hide()
-                    const pos = editor.document.positionAt(event.item.value[1][0])
-                    editor.selection = new vscode.Selection(pos, pos)
-                    editor.revealRange(editor.selection, vscode.TextEditorRevealType.InCenterIfOutsideViewport)
+                    if (action === 'goToStartPos') {
+                        editor.selection = new vscode.Selection(sel.start, sel.start)
+                        editor.revealRange(editor.selection, vscode.TextEditorRevealType.InCenterIfOutsideViewport)
+                        this.hide()
+                    } else {
+                        editor.selections = [...editor.selections, sel]
+                    }
                 },
                 onDidChangeFirstActive(item) {
-                    const pos = editor.document.positionAt(item.value[1][0])
+                    const pos = editor.document.positionAt((item as any).nodeRange[0])
                     editor.selection = new vscode.Selection(pos, pos)
                     editor.revealRange(editor.selection, vscode.TextEditorRevealType.InCenterIfOutsideViewport)
                 },
-                onDidShow() {},
                 matchOnDescription: true,
             },
         )
@@ -101,6 +109,23 @@ export default () => {
             editor.selections = originalSelections
             editor.revealRange(editor.selection)
         }
+
+        return selected
+    }
+
+    registerExtensionCommand('pickAndInsertFunctionArguments', async () => {
+        const editor = getActiveRegularEditor()
+        if (!editor) return
+        const result = await sendCommand<RequestResponseTypes['pickAndInsertFunctionArguments']>('pickAndInsertFunctionArguments')
+        if (!result) return
+
+        const renderArgs = (args: Array<[name: string, type: string]>) => `${args.map(([name, type]) => (type ? `${name}: ${type}` : name)).join(', ')}`
+
+        const selectedFunction = await nodePicker(result.functions, ([name, decl, args]) => ({
+            label: name,
+            description: `(${renderArgs(args)})`,
+            nodeRange: decl,
+        }))
 
         if (!selectedFunction) return
         const selectedArgs = await showQuickPick(
@@ -129,5 +154,65 @@ export default () => {
                 edit.replace(selection, renderArgs(selectedArgs))
             }
         })
+    })
+
+    registerExtensionCommand('goToNodeBySyntaxKind', async (_arg, { filterWithSelection = false }: { filterWithSelection?: boolean } = {}) => {
+        const editor = vscode.window.activeTextEditor
+        if (!editor) return
+        const { document } = editor
+        const result = await sendCommand<RequestResponseTypes['filterBySyntaxKind']>('filterBySyntaxKind')
+        if (!result) return
+        // todo optimize
+        if (filterWithSelection) {
+            result.nodesByKind = Object.fromEntries(
+                compact(
+                    Object.entries(result.nodesByKind).map(([kind, nodes]) => {
+                        const filteredNodes = nodes.filter(({ range: tsRange }) =>
+                            editor.selections.some(sel => sel.contains(tsRangeToVscode(document, tsRange))),
+                        )
+                        if (filteredNodes.length === 0) return
+                        return [kind, filteredNodes]
+                    }),
+                ),
+            )
+        }
+
+        const selectedKindNodes = await showQuickPick(
+            _.sortBy(Object.entries(result.nodesByKind), ([, nodes]) => nodes.length)
+                .reverse()
+                .map(([kind, nodes]) => ({
+                    label: kind,
+                    description: nodes.length.toString(),
+                    value: nodes,
+                    buttons: [
+                        {
+                            iconPath: new vscode.ThemeIcon('arrow-both'),
+                            tooltip: 'Select all nodes of this kind',
+                        },
+                    ],
+                })),
+            {
+                onDidTriggerItemButton(button) {
+                    editor.selections = button.item.value.map(({ range }) => tsRangeToVscodeSelection(document, range))
+                    this.hide()
+                },
+            },
+        )
+        if (!selectedKindNodes) return
+        const selectedNode = await nodePicker(selectedKindNodes, node => ({
+            label: document
+                .getText(tsRangeToVscode(document, node.range))
+                .trim()
+                .replace(/\r?\n\s+/g, ' '),
+            nodeRange: node.range,
+            value: node,
+        }))
+        if (!selectedNode) return
+        editor.selection = tsRangeToVscodeSelection(document, selectedNode.range)
+        editor.revealRange(editor.selection)
+    })
+
+    registerExtensionCommand('goToNodeBySyntaxKindWithinSelection', async () => {
+        await vscode.commands.executeCommand(getExtensionCommandId('goToNodeBySyntaxKind'), { filterWithSelection: true })
     })
 }

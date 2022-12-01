@@ -18,6 +18,11 @@
                 "category": "TS Essentials"
             },
             {
+                "command": "inspectAcceptedCompletion",
+                "title": "Inspect Accepted Completion",
+                "category": "TS Essentials (Developer)"
+            },
+            {
                 "command": "goToEndOfValue",
                 "title": "Go to End of Special Value",
                 "category": "TS Essentials (Experimental)"
@@ -35,6 +40,16 @@
             {
                 "command": "pickAndInsertFunctionArguments",
                 "title": "Pick and Insert Function Arguments",
+                "category": "TS Essentials"
+            },
+            {
+                "command": "goToNodeBySyntaxKind",
+                "title": "Go to Node by Syntax Kind",
+                "category": "TS Essentials"
+            },
+            {
+                "command": "goToNodeBySyntaxKindWithinSelection",
+                "title": "Go to Node by Syntax Kind Within Selection",
                 "category": "TS Essentials"
             }
         ],
