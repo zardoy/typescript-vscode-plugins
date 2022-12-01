@@ -48,8 +48,8 @@
                 "category": "TS Essentials"
             },
             {
-                "command": "goToNodeBySyntaxKindWithinBlock",
-                "title": "Go to Node by Syntax Kind Within Block",
+                "command": "goToNodeBySyntaxKindWithinSelection",
+                "title": "Go to Node by Syntax Kind Within Selection",
                 "category": "TS Essentials"
             }
         ],
