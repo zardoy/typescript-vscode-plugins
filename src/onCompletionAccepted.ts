@@ -16,8 +16,9 @@ export default (tsApi: { onCompletionAccepted }) => {
         }
 
         const { insertText, documentation = '', kind } = item
-        if (kind === vscode.CompletionItemKind.Keyword && insertText === 'return ') {
-            justAcceptedReturnKeywordSuggestion = true
+        if (kind === vscode.CompletionItemKind.Keyword) {
+            if (insertText === 'return ') justAcceptedReturnKeywordSuggestion = true
+            else if (insertText === 'default ') void vscode.commands.executeCommand('editor.action.triggerSuggest')
         }
 
         const enableMethodSnippets = vscode.workspace.getConfiguration(process.env.IDS_PREFIX, item.document).get('enableMethodSnippets')
