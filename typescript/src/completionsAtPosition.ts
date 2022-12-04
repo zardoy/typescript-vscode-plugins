@@ -16,6 +16,7 @@ import additionalTypesSuggestions from './completions/additionalTypesSuggestions
 import boostKeywordSuggestions from './completions/boostKeywordSuggestions'
 import boostTextSuggestions from './completions/boostNameSuggestions'
 import keywordsSpace from './completions/keywordsSpace'
+import jsdocDefault from './completions/jsdocDefault'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -166,11 +167,12 @@ export const getCompletionsAtPosition = (
     if (leftNode && c('switchExcludeCoveredCases')) prior.entries = switchCaseExcludeCovered(prior.entries, position, sourceFile, leftNode) ?? prior.entries
 
     prior.entries = arrayMethods(prior.entries, position, sourceFile, c) ?? prior.entries
+    prior.entries = jsdocDefault(prior.entries, position, sourceFile, languageService) ?? prior.entries
 
     if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 
     for (const rule of c('replaceSuggestions')) {
-        let foundIndex: number
+        let foundIndex!: number
         const suggestion = prior.entries.find(({ name, kind }, index) => {
             if (rule.suggestion !== name) return false
             if (rule.filter?.kind && kind !== rule.filter.kind) return false
@@ -179,9 +181,9 @@ export const getCompletionsAtPosition = (
         })
         if (!suggestion) continue
 
-        if (rule.delete) prior.entries.splice(foundIndex!, 1)
+        if (rule.delete) prior.entries.splice(foundIndex, 1)
 
-        if (rule.duplicateOriginal) prior.entries.splice(rule.duplicateOriginal === 'above' ? foundIndex! : foundIndex! + 1, 0, { ...suggestion })
+        if (rule.duplicateOriginal) prior.entries.splice(rule.duplicateOriginal === 'above' ? foundIndex : foundIndex + 1, 0, { ...suggestion })
 
         Object.assign(suggestion, rule.patch ?? {})
         if (rule.patch?.insertText) suggestion.isSnippet = true

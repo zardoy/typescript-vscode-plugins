@@ -11,6 +11,17 @@ export function findChildContainingPosition(typescript: typeof ts, sourceFile: t
     return find(sourceFile)
 }
 
+export function findChildContainingPositionIncludingStartTrivia(typescript: typeof ts, sourceFile: ts.SourceFile, position: number): ts.Node | undefined {
+    function find(node: ts.Node): ts.Node | undefined {
+        if (position >= node.getStart() - (node.getLeadingTriviaWidth() ?? 0) && position < node.getEnd()) {
+            return typescript.forEachChild(node, find) || node
+        }
+
+        return
+    }
+    return find(sourceFile)
+}
+
 export function findChildContainingExactPosition(sourceFile: ts.SourceFile, position: number): ts.Node | undefined {
     function find(node: ts.Node): ts.Node | undefined {
         if (position >= node.getStart() && position <= node.getEnd()) {
@@ -142,4 +153,19 @@ export function addObjectMethodResultInterceptors<T extends Record<string, any>>
             return callback(result, ...args)
         }
     }
+}
+
+const wordRangeAtPos = (text: string, position: number) => {
+    const isGood = (pos: number) => {
+        return /[-\w\d]/i.test(text.at(pos) ?? '')
+    }
+    let startPos = position
+    while (isGood(startPos)) {
+        startPos--
+    }
+    let endPos = position
+    while (isGood(endPos)) {
+        endPos++
+    }
+    return text.slice(startPos + 1, endPos)
 }

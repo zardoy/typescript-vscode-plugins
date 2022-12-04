@@ -1,4 +1,4 @@
-export default (entries: ts.CompletionEntry[], scriptSnapshot: ts.IScriptSnapshot, position: number, node) => {
+export default (entries: ts.CompletionEntry[], scriptSnapshot: ts.IScriptSnapshot, position: number, node: ts.Node | undefined) => {
     const charAhead = scriptSnapshot.getText(position, position + 1)
     if (charAhead === ' ') return entries
     const bannedKeywords = [
@@ -20,15 +20,22 @@ export default (entries: ts.CompletionEntry[], scriptSnapshot: ts.IScriptSnapsho
         'continue',
         'break',
         'debugger',
-        'default',
         'super',
         'import',
     ]
     const bannedKeywordsWhenInType = ['const', 'void', 'import']
-    const inType = isTypeNode(node)
+    const inType = node && isTypeNode(node)
+
+    const fileText = scriptSnapshot.getText(0, position)
+    const textBeforeWord = fileText.slice(0, /[\w\d]*$/i.exec(fileText)!.index)
+
+    const defaultSpaceValidBeforeContent = ['export ', '@']
+    const includeDefaultSpace = defaultSpaceValidBeforeContent.some(str => textBeforeWord.endsWith(str))
     return entries.map(entry => {
-        if (entry.kind !== ts.ScriptElementKind.keyword || bannedKeywords.includes(entry.name) || (inType && bannedKeywordsWhenInType.includes(entry.name)))
+        if (entry.kind !== ts.ScriptElementKind.keyword || bannedKeywords.includes(entry.name) || (inType && bannedKeywordsWhenInType.includes(entry.name))) {
             return entry
+        }
+        if (entry.name === 'default' && !includeDefaultSpace) return entry
         return { ...entry, insertText: `${entry.name} ` }
     })
 }
