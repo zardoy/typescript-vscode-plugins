@@ -23,12 +23,21 @@
             "name": "Attach to TS Server",
             "type": "node",
             "request": "attach",
-            "protocol": "inspector",
+            "restart": true,
             "port": 9229,
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/out/**/*.js"
             ],
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Extension + TS Plugin",
+            "configurations": [
+                "Launch Extension",
+                "Attach to TS Server"
+            ]
         }
     ]
 }
