@@ -10,13 +10,13 @@ import { isGoodPositionBuiltinMethodCompletion } from './completions/isGoodPosit
 import improveJsxCompletions from './completions/jsxAttributes'
 import arrayMethods from './completions/arrayMethods'
 import prepareTextForEmmet from './specialCommands/prepareTextForEmmet'
-import objectLiteralHelpers from './completions/objectLiteralHelpers'
 import switchCaseExcludeCovered from './completions/switchCaseExcludeCovered'
 import additionalTypesSuggestions from './completions/additionalTypesSuggestions'
 import boostKeywordSuggestions from './completions/boostKeywordSuggestions'
 import boostTextSuggestions from './completions/boostNameSuggestions'
 import keywordsSpace from './completions/keywordsSpace'
 import jsdocDefault from './completions/jsdocDefault'
+import defaultHelpers from './completions/defaultHelpers'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -142,7 +142,7 @@ export const getCompletionsAtPosition = (
         //         ({ name }) => name === 'toExponential',
         //         ({ name }) => name === 'toString',
         //     )
-        const indexToPatch = prior.entries.findIndex(({ name }) => name === 'toString')
+        const indexToPatch = prior.entries.findIndex(({ name, kind }) => name === 'toString' && kind !== ts.ScriptElementKind.warning)
         if (indexToPatch !== -1) {
             prior.entries[indexToPatch]!.insertText = `${prior.entries[indexToPatch]!.insertText ?? prior.entries[indexToPatch]!.name}()`
             prior.entries[indexToPatch]!.kind = ts.ScriptElementKind.constElement
@@ -150,6 +150,7 @@ export const getCompletionsAtPosition = (
         }
     }
 
+    if (node) prior.entries = defaultHelpers(prior.entries, node, languageService) ?? prior.entries
     const banAutoImportPackages = c('suggestions.banAutoImportPackages')
     if (banAutoImportPackages?.length)
         prior.entries = prior.entries.filter(entry => {
