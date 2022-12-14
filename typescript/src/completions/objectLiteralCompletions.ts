@@ -14,8 +14,6 @@ export default (
         // plans to make it hihgly configurable! e.g. if user wants to make some subtype leading (e.g. from [] | {})
         if (ts.isIdentifier(node)) node = node.parent
         if (ts.isShorthandPropertyAssignment(node)) node = node.parent
-        const addEntries: ts.CompletionEntry[] = []
-        const completionIndexesToRemove: number[] = []
         entries = [...entries]
         if (ts.isObjectLiteralExpression(node)) {
             const typeChecker = languageService.getProgram()!.getTypeChecker()!
@@ -28,7 +26,18 @@ export default (
                 const type = typeChecker.getTypeOfSymbolAtLocation(property, node)
                 if (!type) continue
                 if (isMethodCompletionCall(type, typeChecker)) {
-                    if (keepOriginal === 'remove') completionIndexesToRemove.push(entries.indexOf(entry))
+                    if (['above', 'remove'].includes(keepOriginal) && preferences.includeCompletionsWithObjectLiteralMethodSnippets) {
+                        const methodEntryIndex = entries.findIndex(e => e.name === entry.name && isObjectLiteralMethodSnippet(e))
+                        const methodEntry = entries[methodEntryIndex]
+                        if (methodEntry) {
+                            entries.splice(methodEntryIndex, 1)
+                            entries.splice(entries.indexOf(entry) + (keepOriginal === 'below' ? 1 : 0), keepOriginal === 'remove' ? 1 : 0, {
+                                ...methodEntry,
+                                // let correctSorting.enable sort it
+                                sortText: entry.sortText,
+                            })
+                        }
+                    }
                     continue
                 }
                 if (!enableMoreVariants) continue
@@ -40,13 +49,15 @@ export default (
                 const completingStyleMap = [
                     [getQuotedSnippet, isStringCompletion],
                     [[`: [${insertObjectArrayInnerText}],$0`, `: [],`], isArrayCompletion],
-                    [[`: {${insertObjectArrayInnerText}},$0`, `: {}`], isObjectCompletion],
+                    [[`: {${insertObjectArrayInnerText}},$0`, `: {},`], isObjectCompletion],
                 ] as const
-                const insertSnippetVariant = completingStyleMap.find(([, detector]) => detector(type, typeChecker))?.[0]
+                const fallbackSnippet = c('objectLiteralCompletions.fallbackVariant') ? ([': $0,', ': ,'] as const) : undefined
+                const insertSnippetVariant = completingStyleMap.find(([, detector]) => detector(type, typeChecker))?.[0] ?? fallbackSnippet
                 if (!insertSnippetVariant) continue
                 const [insertSnippetText, insertSnippetPreview] = typeof insertSnippetVariant === 'function' ? insertSnippetVariant() : insertSnippetVariant
                 const insertText = entry.name + insertSnippetText
-                addEntries.push({
+                const index = entries.indexOf(entry)
+                entries.splice(index + (keepOriginal === 'below' ? 1 : 0), keepOriginal === 'remove' ? 1 : 0, {
                     ...entry,
                     // todo setting incompatible!!!
                     sortText: entry.sortText,
@@ -56,33 +67,15 @@ export default (
                     insertText,
                     isSnippet: true,
                 })
-                if (keepOriginal === 'remove') entries.splice(entries.indexOf(entry), 1)
             }
-            if ((keepOriginal === 'above' || keepOriginal === 'remove') && preferences.includeCompletionsWithObjectLiteralMethodSnippets) {
-                const metMethodCompletions: string[] = []
-                entries = entries.filter((entry, i) => {
-                    if (completionIndexesToRemove.includes(i)) return false
-
-                    const { detail } = entry.labelDetails ?? {}
-                    if (detail?.startsWith('(') && detail.split('\n')[0]!.trimEnd().endsWith(')')) {
-                        addEntries.push(entry)
-                        metMethodCompletions.push(entry.name)
-                        return false
-                    }
-                    if (
-                        keepOriginal === 'remove' &&
-                        entry.kind === ts.ScriptElementKind.memberFunctionElement &&
-                        !detail &&
-                        metMethodCompletions.includes(entry.name)
-                    ) {
-                        return false
-                    }
-                    return true
-                })
-            }
-            return keepOriginal === 'above' ? [...addEntries, ...entries] : [...entries, ...addEntries]
+            return entries
         }
     }
+}
+
+const isObjectLiteralMethodSnippet = (entry: ts.CompletionEntry) => {
+    const { detail } = entry.labelDetails ?? {}
+    return detail?.startsWith('(') && detail.split('\n')[0]!.trimEnd().endsWith(')')
 }
 
 const isMethodCompletionCall = (type: ts.Type, checker: ts.TypeChecker) => {
@@ -92,12 +85,13 @@ const isMethodCompletionCall = (type: ts.Type, checker: ts.TypeChecker) => {
 
 const isStringCompletion = (type: ts.Type) => {
     if (type.flags & ts.TypeFlags.Undefined) return true
-    if (type.isStringLiteral()) return true
+    if (type.flags & ts.TypeFlags.StringLike) return true
     if (type.isUnion()) return type.types.every(type => isStringCompletion(type))
     return false
 }
 
 const isArrayCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
+    if (type.flags & ts.TypeFlags.Any) return false
     if (type.flags & ts.TypeFlags.Undefined) return true
     if (checker['isArrayLikeType'](type)) return true
     if (type.isUnion()) return type.types.every(type => isArrayCompletion(type, checker))
