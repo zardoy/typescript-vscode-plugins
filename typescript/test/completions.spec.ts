@@ -284,7 +284,7 @@ test('Object Literal Completions', () => {
           "kind": "property",
           "kindModifiers": "",
           "name": "plugins",
-          "sortText": "110",
+          "sortText": "110000",
         },
         {
           "insertText": "plugins: [
@@ -297,7 +297,7 @@ test('Object Literal Completions', () => {
             "detail": ": [],",
           },
           "name": "plugins",
-          "sortText": "116",
+          "sortText": "110001",
         },
         {
           "insertText": "additionalOptions",
@@ -305,7 +305,20 @@ test('Object Literal Completions', () => {
           "kind": "property",
           "kindModifiers": "optional",
           "name": "additionalOptions",
-          "sortText": "121",
+          "sortText": "120002",
+        },
+        {
+          "insertText": "additionalOptions: {
+      	$1
+      },$0",
+          "isSnippet": true,
+          "kind": "property",
+          "kindModifiers": "optional",
+          "labelDetails": {
+            "detail": ": {},",
+          },
+          "name": "additionalOptions",
+          "sortText": "120003",
         },
         {
           "insertText": "callback",
@@ -313,7 +326,7 @@ test('Object Literal Completions', () => {
           "kind": "method",
           "kindModifiers": "optional",
           "name": "callback",
-          "sortText": "122",
+          "sortText": "120004",
         },
         {
           "insertText": "mood",
@@ -321,7 +334,7 @@ test('Object Literal Completions', () => {
           "kind": "property",
           "kindModifiers": "optional",
           "name": "mood",
-          "sortText": "123",
+          "sortText": "120005",
         },
         {
           "insertText": "mood: \\"$1\\",$0",
@@ -332,20 +345,7 @@ test('Object Literal Completions', () => {
             "detail": ": \\"\\",",
           },
           "name": "mood",
-          "sortText": "124",
-        },
-        {
-          "insertText": "additionalOptions: {
-      	$1
-      },$0",
-          "isSnippet": true,
-          "kind": "property",
-          "kindModifiers": "optional",
-          "labelDetails": {
-            "detail": ": {}",
-          },
-          "name": "additionalOptions",
-          "sortText": "125",
+          "sortText": "120006",
         },
       ]
     `)
