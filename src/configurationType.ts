@@ -288,4 +288,24 @@ export type Configuration = {
      * @default []
      */
     'figIntegration.enableWhenStartsWith': string[]
+    /**
+     * Propose additional completions in object. Just like `typescript.suggest.objectLiteralMethodSnippets.enabled`, but also for string, arrays and objects
+     * @default true
+     */
+    'objectLiteralCompletions.moreVariants': boolean
+    /**
+     * For `objectLiteralCompletions.moreVariants`, wether to insert newline for objects / arrays
+     * @default true
+     */
+    'objectLiteralCompletions.insertNewLine': boolean
+    /**
+     * For `objectLiteralCompletions.moreVariants`
+     * @default displayBelow
+     */
+    // 'objectLiteralCompletions.deepVariants': 'disable' | 'displayBelow' | 'replaceNotDeep'
+    /**
+     * Also affects builtin typescript.suggest.objectLiteralMethodSnippets, even when additional completions disabled
+     * @default below
+     */
+    'objectLiteralCompletions.keepOriginal': 'below' | 'above' | 'remove'
 }

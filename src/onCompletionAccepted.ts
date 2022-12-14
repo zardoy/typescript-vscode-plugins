@@ -15,10 +15,17 @@ export default (tsApi: { onCompletionAccepted }) => {
             return
         }
 
-        const { insertText, documentation = '', kind } = item
+        const { label, insertText, documentation = '', kind } = item
         if (kind === vscode.CompletionItemKind.Keyword) {
             if (insertText === 'return ') justAcceptedReturnKeywordSuggestion = true
             else if (insertText === 'default ') void vscode.commands.executeCommand('editor.action.triggerSuggest')
+            return
+        }
+
+        // todo: use cleaner detection
+        if (typeof insertText === 'object' && typeof label === 'object' && label.detail && [': [],', ': {},', ': "",', ": '',"].includes(label.detail)) {
+            void vscode.commands.executeCommand('editor.action.triggerSuggest')
+            return
         }
 
         const enableMethodSnippets = vscode.workspace.getConfiguration(process.env.IDS_PREFIX, item.document).get('enableMethodSnippets')
