@@ -294,6 +294,11 @@ export type Configuration = {
      */
     'objectLiteralCompletions.moreVariants': boolean
     /**
+     * When `moreVariants` enabled, always add as fallback variant if other variant can't be derived
+     * @default false
+     */
+    'objectLiteralCompletions.fallbackVariant': boolean
+    /**
      * For `objectLiteralCompletions.moreVariants`, wether to insert newline for objects / arrays
      * @default true
      */
