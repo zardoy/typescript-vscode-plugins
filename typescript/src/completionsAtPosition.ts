@@ -10,13 +10,14 @@ import { isGoodPositionBuiltinMethodCompletion } from './completions/isGoodPosit
 import improveJsxCompletions from './completions/jsxAttributes'
 import arrayMethods from './completions/arrayMethods'
 import prepareTextForEmmet from './specialCommands/prepareTextForEmmet'
-import objectLiteralHelpers from './completions/objectLiteralHelpers'
 import switchCaseExcludeCovered from './completions/switchCaseExcludeCovered'
 import additionalTypesSuggestions from './completions/additionalTypesSuggestions'
 import boostKeywordSuggestions from './completions/boostKeywordSuggestions'
 import boostTextSuggestions from './completions/boostNameSuggestions'
 import keywordsSpace from './completions/keywordsSpace'
 import jsdocDefault from './completions/jsdocDefault'
+import defaultHelpers from './completions/defaultHelpers'
+import objectLiteralCompletions from './completions/objectLiteralCompletions'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -51,6 +52,7 @@ export const getCompletionsAtPosition = (
      * useful as in most cases we work with node that is behind the cursor */
     const leftNode = findChildContainingPosition(ts, sourceFile, position - 1)
     const exactNode = findChildContainingExactPosition(sourceFile, position)
+    options?.quotePreference
     if (['.jsx', '.tsx'].some(ext => fileName.endsWith(ext))) {
         // #region JSX tag improvements
         if (node) {
@@ -142,13 +144,16 @@ export const getCompletionsAtPosition = (
         //         ({ name }) => name === 'toExponential',
         //         ({ name }) => name === 'toString',
         //     )
-        const indexToPatch = prior.entries.findIndex(({ name }) => name === 'toString')
+        const indexToPatch = prior.entries.findIndex(({ name, kind }) => name === 'toString' && kind !== ts.ScriptElementKind.warning)
         if (indexToPatch !== -1) {
             prior.entries[indexToPatch]!.insertText = `${prior.entries[indexToPatch]!.insertText ?? prior.entries[indexToPatch]!.name}()`
             prior.entries[indexToPatch]!.kind = ts.ScriptElementKind.constElement
             // prior.entries[indexToPatch]!.isSnippet = true
         }
     }
+
+    if (node) prior.entries = defaultHelpers(prior.entries, node, languageService) ?? prior.entries
+    if (node) prior.entries = objectLiteralCompletions(prior.entries, node, languageService, options ?? {}, c) ?? prior.entries
 
     const banAutoImportPackages = c('suggestions.banAutoImportPackages')
     if (banAutoImportPackages?.length)
@@ -197,7 +202,8 @@ export const getCompletionsAtPosition = (
         })
     }
 
-    if (c('correctSorting.enable')) prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))
+    if (c('correctSorting.enable'))
+        prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index.toString().padStart(4, '0')}` }))
 
     // console.log('signatureHelp', JSON.stringify(languageService.getSignatureHelpItems(fileName, position, {})))
     return {

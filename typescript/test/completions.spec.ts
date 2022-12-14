@@ -10,6 +10,7 @@ import { getNavTreeItems } from '../src/getPatchedNavTree'
 import { createRequire } from 'module'
 import { findChildContainingPosition } from '../src/utils'
 import handleCommand from '../src/specialCommands/handle'
+import _ from 'lodash'
 
 const require = createRequire(import.meta.url)
 //@ts-ignore plugin expect it to set globallly
@@ -79,6 +80,7 @@ const getCompletionsAtPosition = (pos: number, fileName = entrypoint) => {
     return {
         ...result,
         entries: result.completions.entries,
+        entriesSorted: _.sortBy(result.completions.entries, ({ sortText }) => sortText),
         entryNames: result.completions.entries.map(({ name }) => name),
     }
 }
@@ -254,6 +256,99 @@ test('Switch Case Exclude Covered', () => {
         const { entryNames } = getCompletionsAtPosition(pos as number) ?? {}
         expect(entryNames).toEqual(completionsByPos[i])
     }
+})
+
+test('Object Literal Completions', () => {
+    const [_positivePositions, _negativePositions, numPositions] = fileContentsSpecialPositions(/* ts */ `
+    interface Options {
+        mood?: 'happy' | 'sad'
+        callback?()
+        additionalOptions?: {
+            foo?: boolean
+        }
+        plugins: Array<{ name: string, setup(build) }>
+    }
+
+    const makeDay = (options: Options) => {}
+    makeDay({
+        /*1*/
+    })
+    `)
+    const { entriesSorted } = getCompletionsAtPosition(numPositions[1]!) ?? {}
+    // todo resolve sorting problem + add tests with other keepOriginal (it was tested manually)
+    expect(entriesSorted?.map(entry => Object.fromEntries(Object.entries(entry).filter(([, value]) => value !== undefined)))).toMatchInlineSnapshot(`
+      [
+        {
+          "insertText": "plugins",
+          "isSnippet": true,
+          "kind": "property",
+          "kindModifiers": "",
+          "name": "plugins",
+          "sortText": "110000",
+        },
+        {
+          "insertText": "plugins: [
+      	$1
+      ],$0",
+          "isSnippet": true,
+          "kind": "property",
+          "kindModifiers": "",
+          "labelDetails": {
+            "detail": ": [],",
+          },
+          "name": "plugins",
+          "sortText": "110001",
+        },
+        {
+          "insertText": "additionalOptions",
+          "isSnippet": true,
+          "kind": "property",
+          "kindModifiers": "optional",
+          "name": "additionalOptions",
+          "sortText": "120002",
+        },
+        {
+          "insertText": "additionalOptions: {
+      	$1
+      },$0",
+          "isSnippet": true,
+          "kind": "property",
+          "kindModifiers": "optional",
+          "labelDetails": {
+            "detail": ": {},",
+          },
+          "name": "additionalOptions",
+          "sortText": "120003",
+        },
+        {
+          "insertText": "callback",
+          "isSnippet": true,
+          "kind": "method",
+          "kindModifiers": "optional",
+          "name": "callback",
+          "sortText": "120004",
+        },
+        {
+          "insertText": "mood",
+          "isSnippet": true,
+          "kind": "property",
+          "kindModifiers": "optional",
+          "name": "mood",
+          "sortText": "120005",
+        },
+        {
+          "insertText": "mood: \\"$1\\",$0",
+          "isSnippet": true,
+          "kind": "property",
+          "kindModifiers": "optional",
+          "labelDetails": {
+            "detail": ": \\"\\",",
+          },
+          "name": "mood",
+          "sortText": "120006",
+        },
+      ]
+    `)
 })
 
 // TODO move/remove this test from here
