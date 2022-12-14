@@ -202,7 +202,8 @@ export const getCompletionsAtPosition = (
         })
     }
 
-    if (c('correctSorting.enable')) prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index}` }))
+    if (c('correctSorting.enable'))
+        prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index.toString().padStart(4, '0')}` }))
 
     // console.log('signatureHelp', JSON.stringify(languageService.getSignatureHelpItems(fileName, position, {})))
     return {
