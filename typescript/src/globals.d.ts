@@ -1,3 +1,4 @@
+/// <reference types="vitest/importMeta" />
 import('ts-expose-internals')
 // prvided by esbuild at top-level of bundle in buildTsPlugin.mjs
 declare let ts: typeof import('typescript')

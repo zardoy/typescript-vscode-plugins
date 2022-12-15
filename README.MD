@@ -2,9 +2,11 @@
 
 ## Top Features
 
-### Special Commands
+> Here React experience hits different!
 
-See [special commands list](#special-commands-list)
+### Special Commands & Actions
+
+See [special commands list](#special-commands-list) ans [code actions list](#contributed-code-actions)
 
 ### JSX Outline
 
@@ -153,6 +155,26 @@ type A<T extends 'foo' | 'bar' = ''> = ...
 ### Go to / Select Nodes by Kind
 
 Use cases: search excluding comments, search & replace only within strings, find interested JSX attribute node
+
+## Contributed Code Actions
+
+### Swap Keys and Values in Object
+
+> *Note*: Code action displayed **only** when object is fully explicitly selected
+
+Example:
+
+```ts
+const obj = {
+    key1: 'someValue',
+    key2: getSuperUniqueKey()
+}
+// turns into
+const obj = {
+    'someValue': 'key1',
+    [getSuperUniqueKey()]: 'key2'
+}
+```
 
 ## Even Even More
 
