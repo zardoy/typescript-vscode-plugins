@@ -1,3 +1,4 @@
+/// <reference types="vitest/importMeta" />
 import { approveCast } from '../utils'
 import { CodeAction } from './getCodeActions'
 
