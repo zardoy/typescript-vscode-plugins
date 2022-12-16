@@ -80,7 +80,10 @@ const getCompletionsAtPosition = (pos: number, fileName = entrypoint) => {
     return {
         ...result,
         entries: result.completions.entries,
-        entriesSorted: _.sortBy(result.completions.entries, ({ sortText }) => sortText),
+        /** Can be used in snapshots */
+        entriesSorted: _.sortBy(result.completions.entries, ({ sortText }) => sortText)
+            .map(({ sortText, ...rest }) => rest)
+            .map(entry => Object.fromEntries(Object.entries(entry).filter(([, value]) => value !== undefined))) as ts.CompletionEntry[],
         entryNames: result.completions.entries.map(({ name }) => name),
     }
 }
@@ -261,6 +264,7 @@ test('Switch Case Exclude Covered', () => {
 test('Object Literal Completions', () => {
     const [_positivePositions, _negativePositions, numPositions] = fileContentsSpecialPositions(/* ts */ `
     interface Options {
+        usedOption
         mood?: 'happy' | 'sad'
         callback?()
         additionalOptions?: {
@@ -271,12 +275,16 @@ test('Object Literal Completions', () => {
 
     const makeDay = (options: Options) => {}
     makeDay({
+        usedOption,
         /*1*/
     })
     `)
     const { entriesSorted } = getCompletionsAtPosition(numPositions[1]!) ?? {}
     // todo resolve sorting problem + add tests with other keepOriginal (it was tested manually)
-    expect(entriesSorted?.map(entry => Object.fromEntries(Object.entries(entry).filter(([, value]) => value !== undefined)))).toMatchInlineSnapshot(`
+    for (const entry of entriesSorted ?? []) {
+        entry.insertText = entry.insertText?.replaceAll('\n', '\\n')
+    }
+    expect(entriesSorted).toMatchInlineSnapshot(`
       [
         {
           "insertText": "plugins",
@@ -284,12 +292,9 @@ test('Object Literal Completions', () => {
           "kind": "property",
           "kindModifiers": "",
           "name": "plugins",
-          "sortText": "110000",
         },
         {
-          "insertText": "plugins: [
-      	$1
-      ],$0",
+          "insertText": "plugins: [\\\\n	$1\\\\n],$0",
           "isSnippet": true,
           "kind": "property",
           "kindModifiers": "",
@@ -297,7 +302,6 @@ test('Object Literal Completions', () => {
             "detail": ": [],",
           },
           "name": "plugins",
-          "sortText": "110001",
         },
         {
           "insertText": "additionalOptions",
@@ -305,12 +309,9 @@ test('Object Literal Completions', () => {
           "kind": "property",
           "kindModifiers": "optional",
           "name": "additionalOptions",
-          "sortText": "120002",
         },
         {
-          "insertText": "additionalOptions: {
-      	$1
-      },$0",
+          "insertText": "additionalOptions: {\\\\n	$1\\\\n},$0",
           "isSnippet": true,
           "kind": "property",
           "kindModifiers": "optional",
@@ -318,7 +319,6 @@ test('Object Literal Completions', () => {
             "detail": ": {},",
           },
           "name": "additionalOptions",
-          "sortText": "120003",
         },
         {
           "insertText": "callback",
@@ -326,7 +326,6 @@ test('Object Literal Completions', () => {
           "kind": "method",
           "kindModifiers": "optional",
           "name": "callback",
-          "sortText": "120004",
         },
         {
           "insertText": "mood",
@@ -334,7 +333,6 @@ test('Object Literal Completions', () => {
           "kind": "property",
           "kindModifiers": "optional",
           "name": "mood",
-          "sortText": "120005",
         },
         {
           "insertText": "mood: \\"$1\\",$0",
@@ -345,7 +343,6 @@ test('Object Literal Completions', () => {
             "detail": ": \\"\\",",
           },
           "name": "mood",
-          "sortText": "120006",
         },
       ]
     `)

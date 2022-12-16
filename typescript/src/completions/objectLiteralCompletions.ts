@@ -22,7 +22,7 @@ export default (
             const properties = objType.getProperties()
             for (const property of properties) {
                 const entry = entries.find(({ name }) => name === property.name)
-                if (!entry) return
+                if (!entry) continue
                 const type = typeChecker.getTypeOfSymbolAtLocation(property, node)
                 if (!type) continue
                 if (isMethodCompletionCall(type, typeChecker)) {
