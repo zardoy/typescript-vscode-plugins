@@ -3,11 +3,13 @@ import { findChildContainingPosition } from '../utils'
 import objectSwapKeysAndValues from './objectSwapKeysAndValues'
 import toggleBraces from './toggleBraces'
 
-type SimplifiedRefactorInfo = {
-    start: number
-    length: number
-    newText: string
-}
+type SimplifiedRefactorInfo =
+    | {
+          start: number
+          length: number
+          newText: string
+      }
+    | ts.TextChange[]
 
 export type ApplyCodeAction = (
     sourceFile: ts.SourceFile,
@@ -45,14 +47,18 @@ export default (
                           edits: [
                               {
                                   fileName: sourceFile.fileName,
-                                  textChanges: edits.map(({ length, newText, start }) => {
-                                      return {
-                                          newText,
-                                          span: {
-                                              length,
-                                              start,
-                                          },
+                                  textChanges: edits.map(change => {
+                                      if ('start' in change) {
+                                          const { newText, start, length } = change
+                                          return {
+                                              newText,
+                                              span: {
+                                                  length,
+                                                  start,
+                                              },
+                                          }
                                       }
+                                      return change
                                   }),
                               },
                           ],

@@ -176,6 +176,39 @@ const obj = {
 }
 ```
 
+### Turn Array Into Object
+
+```ts
+const data = [
+    {
+        // test
+        key: 'bar',
+        a: 0
+    },
+    {
+        key: 'baz',
+        // yes
+        b: 1
+    }
+]
+```
+
+After selecting code action, you'll get asked for key to used (here you can use only `key`) and after applying:
+
+```ts
+const a = {
+    'bar': {
+        a: 0
+    },
+    'baz': {
+        // yes
+        b: 1
+    }
+}
+```
+
+(note that for now refactoring removes properties with comments!)
+
 ## Even Even More
 
 Please look at extension settings, as this extension has much more features than described here!

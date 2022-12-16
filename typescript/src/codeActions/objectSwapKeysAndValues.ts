@@ -6,6 +6,20 @@ const nodeToSpan = (node: ts.Node): ts.TextSpan => {
     return { start, length: node.end - start }
 }
 
+export const printNodeForObjectKey = (node: ts.Node) => {
+    const needsComputedBraces = approveCast(node, ts.isStringLiteral, ts.isNumericLiteral)
+        ? false
+        : approveCast(node, ts.isIdentifier, ts.isCallExpression, ts.isPropertyAccessExpression)
+        ? true
+        : undefined
+    if (needsComputedBraces === undefined) return
+    let nodeText = node.getText()
+    if (needsComputedBraces) {
+        nodeText = `[${nodeText}]`
+    }
+    return nodeText
+}
+
 export default {
     id: 'objectSwapKeysAndValues',
     name: 'Swap Keys and Values in Object',
@@ -18,16 +32,8 @@ export default {
             if (!ts.isPropertyAssignment(property)) continue
             const { name, initializer } = property
             if (!name || ts.isPrivateIdentifier(name)) continue
-            const needsComputedBraces = approveCast(initializer, ts.isStringLiteral, ts.isNumericLiteral)
-                ? false
-                : approveCast(initializer, ts.isIdentifier, ts.isCallExpression, ts.isPropertyAccessExpression)
-                ? true
-                : undefined
-            if (needsComputedBraces === undefined) continue
-            let initializerText = initializer.getText()
-            if (needsComputedBraces) {
-                initializerText = `[${initializerText}]`
-            }
+            const initializerText = printNodeForObjectKey(initializer)
+            if (!initializerText) continue
             edits.push({
                 newText: initializerText,
                 span: nodeToSpan(name),
