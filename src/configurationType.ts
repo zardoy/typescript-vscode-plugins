@@ -50,8 +50,13 @@ export type Configuration = {
      * @default true
      */
     'patchToString.enable': boolean
-    // TODO achieve perfomace by patching the host
-    /** @default [] */
+    /**
+     * Note: Please use `javascript`/`typescript.preferences.autoImportFileExcludePatterns` when possible, to achieve better performance!
+     * e.g. instead of declaring `@mui/icons-material` here, declare `node_modules/@mui/icons-material` in aforementioned setting.
+     *
+     * And only use this, if auto-imports coming not from physical files (e.g. some modules node imports)
+     * @default []
+     */
     'suggestions.banAutoImportPackages': string[]
     /**
      * What insert text to use for keywords (e.g. `return`)
@@ -156,6 +161,11 @@ export type Configuration = {
      * @default true
      */
     'jsxImproveElementsSuggestions.enabled': boolean
+    /**
+     * Recommended to enable to experience less uneeded suggestions unless you are using JSX Elements declared in namespaces
+     * @default false
+     */
+    'jsxImproveElementsSuggestions.filterNamespaces': boolean
     /**
      * @default false
      */
@@ -312,5 +322,6 @@ export type Configuration = {
      * Also affects builtin typescript.suggest.objectLiteralMethodSnippets, even when additional completions disabled
      * @default below
      */
+    // TODO its a bug, change to after & before with fixed behavior
     'objectLiteralCompletions.keepOriginal': 'below' | 'above' | 'remove'
 }
