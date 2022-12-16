@@ -324,4 +324,10 @@ export type Configuration = {
      */
     // TODO its a bug, change to after & before with fixed behavior
     'objectLiteralCompletions.keepOriginal': 'below' | 'above' | 'remove'
+    /**
+     * Wether to exclude non-JSX components completions in JSX component locations
+     * Requires `completion-symbol` patch
+     * @default false
+     */
+    'experiments.excludeNonJsxCompletions': boolean
 }
