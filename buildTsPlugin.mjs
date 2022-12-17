@@ -6,7 +6,7 @@ const result = await buildTsPlugin('typescript', undefined, undefined, {
     minify: !process.argv.includes('--watch'),
     metafile: true,
     define: {
-        'import.meta': 'null',
+        'import.meta': '{}',
     },
     banner: {
         js: 'let ts, tsFull;',

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
-import { getExtensionCommandId, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'
+import { getExtensionCommandId, getExtensionSetting, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'
 import { showQuickPick } from '@zardoy/vscode-utils/build/quickPick'
 import _ from 'lodash'
 import { compact } from '@zardoy/utils'
@@ -271,7 +271,12 @@ export default () => {
     // its actually a code action, but will be removed from there soon
     vscode.languages.registerCodeActionsProvider(defaultJsSupersetLangsWithVue, {
         async provideCodeActions(document, range, context, token) {
-            if (context.triggerKind !== vscode.CodeActionTriggerKind.Invoke || document !== vscode.window.activeTextEditor?.document) return
+            if (
+                context.triggerKind !== vscode.CodeActionTriggerKind.Invoke ||
+                document !== vscode.window.activeTextEditor?.document ||
+                !getExtensionSetting('enablePlugin')
+            )
+                return
             const result = await sendTurnIntoArrayRequest(range)
             if (!result) return
             const { keysCount, totalCount, totalObjectCount } = result

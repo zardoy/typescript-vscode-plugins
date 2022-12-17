@@ -19,6 +19,7 @@ export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: 
             prior.definitions?.length === 1 &&
             // default, namespace import or import path click
             firstDef.containerName === '' &&
+            firstDef.name.slice(1, -1) === firstDef.fileName.slice(0, -'.d.ts'.length) &&
             firstDef.fileName.endsWith('.d.ts')
         ) {
             const jsFileName = `${firstDef.fileName.slice(0, -'.d.ts'.length)}.js`
