@@ -1,4 +1,4 @@
-/// <reference types="vitest/importMeta" />
+/// <reference types="../../../node_modules/vitest/importMeta" />
 import { approveCast } from '../utils'
 import { CodeAction } from './getCodeActions'
 
