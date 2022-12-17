@@ -19,6 +19,7 @@ import jsdocDefault from './completions/jsdocDefault'
 import defaultHelpers from './completions/defaultHelpers'
 import objectLiteralCompletions from './completions/objectLiteralCompletions'
 import filterJsxElements from './completions/filterJsxComponents'
+import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalCompletions'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -182,6 +183,7 @@ export const getCompletionsAtPosition = (
         })
     }
 
+    prior.entries = markOrRemoveGlobalCompletions(prior.entries, position, languageService, c) ?? prior.entries
     if (exactNode) prior.entries = filterJsxElements(prior.entries, exactNode, position, languageService, c) ?? prior.entries
 
     if (c('correctSorting.enable')) {

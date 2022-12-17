@@ -45,6 +45,10 @@ export type Configuration = {
      *  */
     'removeUselessFunctionProps.enable': boolean
     /**
+     * @default disable
+     */
+    'removeOrMarkGlobalCompletions.action': 'disable' | 'mark' | 'remove'
+    /**
      * Useful for Number types.
      * Patch `toString()`: Removes arg tabstop
      * @default true
