@@ -70,6 +70,12 @@ usersList.map // -> usersList.map((user) => )
 
 <https://github.com/microsoft/vscode/issues/160637>
 
+### Remove Imports From References
+
+(*enabled by default*)
+
+Removes import statements from references when symbol has usages in the same file. Why? Because if export thing is used in another file, it might be obvious that it is imported, and most probably you are not interested in import statements.
+
 ## Minor Useful Features
 
 ### `enablePlugin` setting

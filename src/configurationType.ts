@@ -204,6 +204,10 @@ export type Configuration = {
      */
     removeDefinitionFromReferences: boolean
     /**
+     * @default true
+     */
+    removeImportsFromReferences: boolean
+    /**
      * Small definition improvements by cleaning them out:
      * - remove node_modules definition on React.FC component click
      * @default true
