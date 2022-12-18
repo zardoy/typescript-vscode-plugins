@@ -11,6 +11,7 @@
         ],
         "types": [
             "@zardoy/tsconfig",
+            "vitest/importMeta"
             // "ts-expose-internals"
         ],
         "outDir": "build"
