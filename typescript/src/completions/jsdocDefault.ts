@@ -25,6 +25,11 @@ export const getJsdocDefaultTypes = (position: number, sourceFile: ts.SourceFile
             else if (nextType.flags & ts.TypeFlags.Undefined) addSuggestions(false, 'undefined')
             else if (nextType.flags & ts.TypeFlags.Null) addSuggestions(false, 'null')
         }
+        const sortScores = {
+            undefined: 2,
+            null: 1,
+        }
+        suggestions.sort(([nameA], [nameB]) => (sortScores[nameA] ?? 0) - (sortScores[nameB] ?? 0))
         return suggestions
     } catch (err) {
         return

@@ -1,9 +1,11 @@
 import * as vscode from 'vscode'
-import { getActiveRegularEditor, rangeToSelection } from '@zardoy/vscode-utils'
-import { getExtensionCommandId, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'
+import { getActiveRegularEditor } from '@zardoy/vscode-utils'
+import { getExtensionCommandId, getExtensionSetting, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'
 import { showQuickPick } from '@zardoy/vscode-utils/build/quickPick'
 import _ from 'lodash'
 import { compact } from '@zardoy/utils'
+import { defaultJsSupersetLangsWithVue } from '@zardoy/vscode-utils/build/langs'
+import { offsetPosition } from '@zardoy/vscode-utils/build/position'
 import { RequestOptionsTypes, RequestResponseTypes } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
 import { tsRangeToVscode, tsRangeToVscodeSelection } from './util'
@@ -13,12 +15,15 @@ export default () => {
         const editor = getActiveRegularEditor()
         if (!editor) return
         const { selection, document } = editor
-        const response = await sendCommand<RequestResponseTypes['removeFunctionArgumentsTypesInSelection']>('removeFunctionArgumentsTypesInSelection', {
+        const response = await sendCommand<
+            RequestResponseTypes['removeFunctionArgumentsTypesInSelection'],
+            RequestOptionsTypes['removeFunctionArgumentsTypesInSelection']
+        >('removeFunctionArgumentsTypesInSelection', {
             document,
             position: selection.start,
             inputOptions: {
                 endSelection: document.offsetAt(selection.end),
-            } as RequestOptionsTypes['removeFunctionArgumentsTypesInSelection'],
+            },
         })
         if (!response) return
         const { ranges } = response
@@ -214,5 +219,80 @@ export default () => {
 
     registerExtensionCommand('goToNodeBySyntaxKindWithinSelection', async () => {
         await vscode.commands.executeCommand(getExtensionCommandId('goToNodeBySyntaxKind'), { filterWithSelection: true })
+    })
+
+    async function sendTurnIntoArrayRequest<T = RequestResponseTypes['turnArrayIntoObject']>(
+        range: vscode.Range,
+        selectedKeyName?: string,
+        document = vscode.window.activeTextEditor!.document,
+    ) {
+        return sendCommand<T, RequestOptionsTypes['turnArrayIntoObject']>('turnArrayIntoObject', {
+            document,
+            position: range.start,
+            inputOptions: {
+                range: [document.offsetAt(range.start), document.offsetAt(range.end)] as [number, number],
+                selectedKeyName,
+            },
+        })
+    }
+
+    registerExtensionCommand('turnArrayIntoObjectRefactoring' as any, async (_, arg?: RequestResponseTypes['turnArrayIntoObject']) => {
+        if (!arg) return
+        const { keysCount, totalCount, totalObjectCount } = arg
+        const selectedKey: string | false | undefined =
+            // eslint-disable-next-line @typescript-eslint/dot-notation
+            arg['key'] ||
+            (await showQuickPick(
+                Object.entries(keysCount).map(([key, count]) => {
+                    const isAllowed = count === totalObjectCount
+                    return { label: `${isAllowed ? '$(check)' : '$(close)'}${key}`, value: isAllowed ? key : false, description: `${count} hits` }
+                }),
+                {
+                    title: `Selected available key from ${totalObjectCount} objects (${totalCount} elements)`,
+                },
+            ))
+        if (selectedKey === undefined || selectedKey === '') return
+        if (selectedKey === false) {
+            void vscode.window.showWarningMessage("Can't use selected key as its not used in every object")
+            return
+        }
+
+        const editor = vscode.window.activeTextEditor!
+        const edits = await sendTurnIntoArrayRequest<RequestResponseTypes['turnArrayIntoObjectEdit']>(editor.selection, selectedKey)
+        if (!edits) throw new Error('Unknown error. Try debug.')
+        await editor.edit(builder => {
+            for (const { span, newText } of edits) {
+                const start = editor.document.positionAt(span.start)
+                builder.replace(new vscode.Range(start, offsetPosition(editor.document, start, span.length)), newText)
+            }
+        })
+    })
+
+    // its actually a code action, but will be removed from there soon
+    vscode.languages.registerCodeActionsProvider(defaultJsSupersetLangsWithVue, {
+        async provideCodeActions(document, range, context, token) {
+            if (
+                context.triggerKind !== vscode.CodeActionTriggerKind.Invoke ||
+                document !== vscode.window.activeTextEditor?.document ||
+                !getExtensionSetting('enablePlugin')
+            )
+                return
+            const result = await sendTurnIntoArrayRequest(range)
+            if (!result) return
+            const { keysCount, totalCount, totalObjectCount } = result
+            return [
+                {
+                    title: `Turn Array Into Object (${totalCount} elements)`,
+                    command: getExtensionCommandId('turnArrayIntoObjectRefactoring' as any),
+                    arguments: [
+                        {
+                            keysCount,
+                            totalCount,
+                            totalObjectCount,
+                        } satisfies RequestResponseTypes['turnArrayIntoObject'],
+                    ],
+                },
+            ]
+        },
     })
 }

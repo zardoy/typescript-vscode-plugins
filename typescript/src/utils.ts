@@ -170,8 +170,10 @@ const wordRangeAtPos = (text: string, position: number) => {
     return text.slice(startPos + 1, endPos)
 }
 
-export function approveCast<TOut extends TIn, TIn = any>(value: TIn | undefined, test: (value: TIn) => value is TOut): value is TOut
-export function approveCast<T>(value: T, test: (value: T) => boolean): T | undefined
-export function approveCast<T>(value: T, test: (value: T) => boolean): T | undefined {
-    return value !== undefined && test(value) ? value : undefined
+type GetIs<T> = T extends (elem: any) => elem is infer T ? T : never
+
+export function approveCast<T2 extends Array<(node: ts.Node) => node is ts.Node>>(node: ts.Node | undefined, ...oneOfTest: T2): node is GetIs<T2[number]> {
+    if (node === undefined) return false
+    if (!oneOfTest) throw new Error('Tests are not provided')
+    return oneOfTest.some(test => test(node))
 }

@@ -3,6 +3,7 @@ import postfixesAtPosition from '../completions/postfixesAtPosition'
 import { NodeAtPositionResponse, RequestOptionsTypes, RequestResponseTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
 import { findChildContainingPosition, getNodePath } from '../utils'
 import getEmmetCompletions from './emmet'
+import objectIntoArrayConverters from './objectIntoArrayConverters'
 
 export default (
     info: ts.server.PluginCreateInfo,
@@ -28,6 +29,18 @@ export default (
         return {
             entries: [],
             typescriptEssentialsResponse: getEmmetCompletions(fileName, leftNode, sourceFile, position, info.languageService),
+        }
+    }
+    if (specialCommand === 'turnArrayIntoObject') {
+        const node = findChildContainingPosition(ts, sourceFile, position)
+        changeType<RequestOptionsTypes['turnArrayIntoObject']>(specialCommandArg)
+        return {
+            entries: [],
+            typescriptEssentialsResponse: objectIntoArrayConverters(
+                { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] },
+                node,
+                specialCommandArg.selectedKeyName,
+            ),
         }
     }
     if (specialCommand === 'getNodeAtPosition') {
@@ -87,14 +100,13 @@ export default (
             node = node.parent
             if (ts.isPropertyAssignment(node)) {
                 targetNode = node.initializer
-            }
-            else if ('body' in node) {
+            } else if ('body' in node) {
                 targetNode = node.body as ts.Node
             }
         }
 
         if (!targetNode) {
-            ts.findAncestor(node, (n) => {
+            ts.findAncestor(node, n => {
                 if (ts.isVariableDeclaration(n) && n.initializer && position < n.initializer.pos) {
                     targetNode = n.initializer
                     return true
@@ -112,7 +124,7 @@ export default (
                     targetNode = n.statement
                     return true
                 }
-                if ((ts.isIfStatement(n)) && position < n.thenStatement.pos) {
+                if (ts.isIfStatement(n) && position < n.thenStatement.pos) {
                     targetNode = n.thenStatement
                     return true
                 }
@@ -139,7 +151,8 @@ export default (
         type FunctionLocation = [name: string, nodePos: ts.Node, parameterDecl: ts.NodeArray<ts.ParameterDeclaration>] | ts.SignatureDeclaration
         const collectedNodes: FunctionLocation[] = []
         const collectNodes = (node: ts.Node) => {
-            if (ts.isArrowFunction(node) && ts.isVariableDeclaration(node.parent) && ts.isIdentifier(node.parent.name)) collectedNodes.push([node.parent.name.text, node.parent.name, node.parameters])
+            if (ts.isArrowFunction(node) && ts.isVariableDeclaration(node.parent) && ts.isIdentifier(node.parent.name))
+                collectedNodes.push([node.parent.name.text, node.parent.name, node.parameters])
             if (ts.isFunctionLike(node) && node.name) collectedNodes.push([node.name.getText(), node.name, node.parameters])
             node.forEachChild(collectNodes)
         }
@@ -147,13 +160,19 @@ export default (
         return {
             entries: [],
             typescriptEssentialsResponse: {
-                functions: collectedNodes.map((arr) => {
-                    return [arr[0], [arr[1].pos, arr[1].end], compact(arr[2].map(({ name, type }) => {
-                        // or maybe allow?
-                        if (!ts.isIdentifier(name)) return
-                        return [name.text, type?.getText() ?? ''];
-                    }))]
-                })
+                functions: collectedNodes.map(arr => {
+                    return [
+                        arr[0],
+                        [arr[1].pos, arr[1].end],
+                        compact(
+                            arr[2].map(({ name, type }) => {
+                                // or maybe allow?
+                                if (!ts.isIdentifier(name)) return
+                                return [name.text, type?.getText() ?? '']
+                            }),
+                        ),
+                    ]
+                }),
             } satisfies RequestResponseTypes['pickAndInsertFunctionArguments'],
         }
     }
@@ -161,10 +180,13 @@ export default (
         const collectedNodes: RequestResponseTypes['filterBySyntaxKind']['nodesByKind'] = {}
         collectedNodes.comment ??= []
         const collectNodes = (node: ts.Node) => {
-            const kind = ts.SyntaxKind[node.kind]!;
+            const kind = ts.SyntaxKind[node.kind]!
             const leadingTrivia = node.getLeadingTriviaWidth(sourceFile)
-            const comments = [...tsFull.getLeadingCommentRangesOfNode(node as any, sourceFile as any) ?? [], ...tsFull.getTrailingCommentRanges(node as any, sourceFile as any) ?? []]
-            collectedNodes.comment!.push(...comments?.map((comment) => ({ range: [comment.pos, comment.end] as [number, number] })))
+            const comments = [
+                ...(tsFull.getLeadingCommentRangesOfNode(node as any, sourceFile as any) ?? []),
+                ...(tsFull.getTrailingCommentRanges(node as any, sourceFile as any) ?? []),
+            ]
+            collectedNodes.comment!.push(...comments?.map(comment => ({ range: [comment.pos, comment.end] as [number, number] })))
             collectedNodes[kind] ??= []
             collectedNodes[kind]!.push({ range: [node.pos + leadingTrivia, node.end] })
             node.forEachChild(collectNodes)
@@ -173,13 +195,13 @@ export default (
         return {
             entries: [],
             typescriptEssentialsResponse: {
-                nodesByKind: collectedNodes
-            } satisfies RequestResponseTypes['filterBySyntaxKind']
+                nodesByKind: collectedNodes,
+            } satisfies RequestResponseTypes['filterBySyntaxKind'],
         }
     }
 }
 
-function changeType<T>(arg): asserts arg is T { }
+function changeType<T>(arg): asserts arg is T {}
 
 function nodeToApiResponse(node: ts.Node): NodeAtPositionResponse {
     return {
