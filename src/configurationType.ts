@@ -45,13 +45,22 @@ export type Configuration = {
      *  */
     'removeUselessFunctionProps.enable': boolean
     /**
+     * @default disable
+     */
+    'removeOrMarkGlobalCompletions.action': 'disable' | 'mark' | 'remove'
+    /**
      * Useful for Number types.
      * Patch `toString()`: Removes arg tabstop
      * @default true
      */
     'patchToString.enable': boolean
-    // TODO achieve perfomace by patching the host
-    /** @default [] */
+    /**
+     * Note: Please use `javascript`/`typescript.preferences.autoImportFileExcludePatterns` when possible, to achieve better performance!
+     * e.g. instead of declaring `@mui/icons-material` here, declare `node_modules/@mui/icons-material` in aforementioned setting.
+     *
+     * And only use this, if auto-imports coming not from physical files (e.g. some modules node imports)
+     * @default []
+     */
     'suggestions.banAutoImportPackages': string[]
     /**
      * What insert text to use for keywords (e.g. `return`)
@@ -115,6 +124,19 @@ export type Configuration = {
      *  */
     // 'importUpDefinition.enable': boolean
     /**
+     * Remove definitions for TS module declarations e.g. *.css
+     * Enable it if your first definition that receives focus is TS module declaration instead of target file itself
+     * Might be really really useful in some cases
+     * @default false
+     */
+    removeModuleFileDefinitions: boolean
+    /**
+     * Enable definitions for strings that appears to be paths (relatively to file)
+     * Also must have and should be enabled if you work with path.join a lot
+     * @default false
+     */
+    enableFileDefinitions: boolean
+    /**
      * @default true
      * */
     'removeCodeFixes.enable': boolean
@@ -157,6 +179,11 @@ export type Configuration = {
      */
     'jsxImproveElementsSuggestions.enabled': boolean
     /**
+     * Recommended to enable to experience less uneeded suggestions unless you are using JSX Elements declared in namespaces
+     * @default false
+     */
+    'jsxImproveElementsSuggestions.filterNamespaces': boolean
+    /**
      * @default false
      */
     'experimentalPostfixes.enable': boolean
@@ -194,6 +221,10 @@ export type Configuration = {
      */
     removeDefinitionFromReferences: boolean
     /**
+     * @default true
+     */
+    removeImportsFromReferences: boolean
+    /**
      * Small definition improvements by cleaning them out:
      * - remove node_modules definition on React.FC component click
      * @default true
@@ -214,7 +245,6 @@ export type Configuration = {
      * Wether to disable our and builtin method snippets within jsx attributes
      * @default true
      */
-    // TODO add smart setting
     'disableMethodSnippets.jsxAttributes': boolean
     /**
      * Support `@ts-diagnostic-disable` top-level comment for disabling spefici semantic diagnostics
@@ -240,10 +270,24 @@ export type Configuration = {
      */
     patchOutline: boolean
     /**
-     * Exclude covered strings/enum cases in switch
+     * Exclude covered strings/enum cases in switch in completions
      * @default true
      */
     switchExcludeCoveredCases: boolean
+    /**
+     * Make completions case-sensetive (see https://github.com/microsoft/TypeScript/issues/46622)
+     * Might be enabled by default in future. Experimental as for now compares only start of completions.
+     * Might require completion retrigger if was triggered by not quick suggestions.
+     * @default false
+     */
+    caseSensitiveCompletions: boolean
+    /**
+     * Might be useful to enable for a moment. Note, that you can bind shortcuts within VSCode to quickly toggle settings like this
+     * Also experimental and wasnt tested in all cases
+     * Like described in `caseSensitiveCompletions` might require completion retrigger
+     * @default false
+     */
+    disableFuzzyCompletions: boolean
     /**
      * Disable useless highlighting,
      * @default disable
@@ -312,5 +356,12 @@ export type Configuration = {
      * Also affects builtin typescript.suggest.objectLiteralMethodSnippets, even when additional completions disabled
      * @default below
      */
+    // TODO its a bug, change to after & before with fixed behavior
     'objectLiteralCompletions.keepOriginal': 'below' | 'above' | 'remove'
+    /**
+     * Wether to exclude non-JSX components completions in JSX component locations
+     * Requires `completion-symbol` patch
+     * @default false
+     */
+    'experiments.excludeNonJsxCompletions': boolean
 }
