@@ -261,6 +261,26 @@ test('Switch Case Exclude Covered', () => {
     }
 })
 
+test('Case-sensetive completions', () => {
+    settingsOverride['caseSensitiveCompletions'] = true
+    const [_positivePositions, _negativePositions, numPositions] = fileContentsSpecialPositions(/* ts */ `
+        const a = {
+            TestItem: 5,
+            testItem: 5,
+            '3t': true
+            // not sure of these
+            // TestItemFoo: 5,
+            // TestItemfoo: 5,
+        }
+        a.t/*0*/
+        a['t/*0*/']
+    `)
+    for (const pos of numPositions) {
+        const { entryNames } = getCompletionsAtPosition(pos) ?? {}
+        expect(entryNames, pos.toString()).toEqual(['3t', 'testItem'])
+    }
+})
+
 test('Object Literal Completions', () => {
     const [_positivePositions, _negativePositions, numPositions] = fileContentsSpecialPositions(/* ts */ `
     interface Options {

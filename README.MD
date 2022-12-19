@@ -64,6 +64,12 @@ const usersList = []
 usersList.map // -> usersList.map((user) => )
 ```
 
+### Case-sensitive Completions
+
+(*disabled by default*)
+
+Filter out completions that start with different casing.
+
 ### Remove Definition From References
 
 (*enabled by default*)

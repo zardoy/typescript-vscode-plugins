@@ -245,7 +245,6 @@ export type Configuration = {
      * Wether to disable our and builtin method snippets within jsx attributes
      * @default true
      */
-    // TODO add smart setting
     'disableMethodSnippets.jsxAttributes': boolean
     /**
      * Support `@ts-diagnostic-disable` top-level comment for disabling spefici semantic diagnostics
@@ -271,10 +270,24 @@ export type Configuration = {
      */
     patchOutline: boolean
     /**
-     * Exclude covered strings/enum cases in switch
+     * Exclude covered strings/enum cases in switch in completions
      * @default true
      */
     switchExcludeCoveredCases: boolean
+    /**
+     * Make completions case-sensetive (see https://github.com/microsoft/TypeScript/issues/46622)
+     * Might be enabled by default in future. Experimental as for now compares only start of completions.
+     * Might require completion retrigger if was triggered by not quick suggestions.
+     * @default false
+     */
+    caseSensitiveCompletions: boolean
+    /**
+     * Might be useful to enable for a moment. Note, that you can bind shortcuts within VSCode to quickly toggle settings like this
+     * Also experimental and wasnt tested in all cases
+     * Like described in `caseSensitiveCompletions` might require completion retrigger
+     * @default false
+     */
+    disableFuzzyCompletions: boolean
     /**
      * Disable useless highlighting,
      * @default disable

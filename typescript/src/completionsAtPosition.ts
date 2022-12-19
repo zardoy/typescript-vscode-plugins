@@ -20,6 +20,7 @@ import defaultHelpers from './completions/defaultHelpers'
 import objectLiteralCompletions from './completions/objectLiteralCompletions'
 import filterJsxElements from './completions/filterJsxComponents'
 import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalCompletions'
+import { oneOf } from '@zardoy/utils'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -92,11 +93,50 @@ export const getCompletionsAtPosition = (
 
     if (!prior) return
 
+    if (c('caseSensitiveCompletions')) {
+        const fullText = sourceFile.getFullText()
+        const currentWord = fullText.slice(0, position).match(/[\w\d]+$/)
+        if (currentWord) {
+            const firstEnteredChar = fullText.at(currentWord.index!) ?? ''
+            /** @returns -1 - lowercase, 1 - uppercase, 0 - ignore */
+            const getCharCasing = (char: string) => {
+                if (char.toLocaleUpperCase() !== char) return -1
+                if (char.toLocaleLowerCase() !== char) return 1
+                return 0
+            }
+            const typedStartCasing = getCharCasing(firstEnteredChar)
+            // check wether it is actually a case char and not a number for example
+            if (typedStartCasing !== 0) {
+                prior.entries = prior.entries.filter(entry => {
+                    const entryCasing = getCharCasing(entry.name.at(0) ?? '')
+                    if (entryCasing === 0) return true
+                    return entryCasing === typedStartCasing
+                })
+            }
+        }
+    }
+
+    if (c('disableFuzzyCompletions')) {
+        const fullText = sourceFile.getFullText()
+        const currentWord = fullText.slice(0, position).match(/[\w\d]+$/)
+        if (currentWord) {
+            prior.entries = prior.entries.filter(entry => {
+                if (entry.name.startsWith(currentWord[0])) return true
+                return false
+            })
+        }
+    }
+
     if (c('fixSuggestionsSorting')) prior.entries = fixPropertiesSorting(prior.entries, leftNode, sourceFile, program) ?? prior.entries
     if (node) prior.entries = boostKeywordSuggestions(prior.entries, position, node) ?? prior.entries
 
     const entryNames = new Set(prior.entries.map(({ name }) => name))
-    if (c('removeUselessFunctionProps.enable')) prior.entries = prior.entries.filter(e => !['Symbol', 'caller', 'prototype'].includes(e.name))
+    if (c('removeUselessFunctionProps.enable')) {
+        prior.entries = prior.entries.filter(entry => {
+            if (oneOf(entry.kind, ts.ScriptElementKind.warning)) return true
+            return !['Symbol', 'caller', 'prototype'].includes(entry.name)
+        })
+    }
     if (['bind', 'call', 'caller'].every(name => entryNames.has(name)) && c('highlightNonFunctionMethods.enable')) {
         const standardProps = new Set(['Symbol', 'apply', 'arguments', 'bind', 'call', 'caller', 'length', 'name', 'prototype', 'toString'])
         // TODO lift up!
