@@ -1,5 +1,6 @@
 //@ts-ignore plugin expect it to set globallly
 globalThis.__WEB__ = false
+import { pickObj } from '@zardoy/utils'
 import { createLanguageService } from '../src/dummyLanguageService'
 import { getCompletionsAtPosition as getCompletionsAtPositionRaw } from '../src/completionsAtPosition'
 import type {} from 'vitest/globals'
@@ -73,9 +74,10 @@ const settingsOverride = {
 //@ts-ignore
 const defaultConfigFunc = await getDefaultConfigFunc(settingsOverride)
 
-const getCompletionsAtPosition = (pos: number, fileName = entrypoint) => {
+const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, shouldHave }: { fileName?: string; shouldHave?: boolean } = {}) => {
     if (pos === undefined) throw new Error('getCompletionsAtPosition: pos is undefined')
     const result = getCompletionsAtPositionRaw(fileName, pos, {}, defaultConfigFunc, languageService, ts.ScriptSnapshot.fromString(files[entrypoint]), ts)
+    if (shouldHave) expect(result).not.toBeUndefined()
     if (!result) return
     return {
         ...result,
@@ -420,5 +422,70 @@ test('Patched navtree (outline)', () => {
           "text": "A",
         },
       ]
+    `)
+})
+
+test('In Keyword Completions', () => {
+    const [pos] = newFileContents(/* ts */ `
+        declare const a: { a: boolean, b: string } | { a: number, c: number } | string
+        if ('/*|*/' in a) {}
+    `)
+    const completion = pickObj(getCompletionsAtPosition(pos!, { shouldHave: true })!, 'entriesSorted', 'prevCompletionsMap')
+    // TODO this test is bad case of demonstrating how it can be used with string in union (IT SHOULDNT!)
+    // but it is here to ensure this is no previous crash issue, indexes are correct when used only with objects
+    expect(completion).toMatchInlineSnapshot(`
+      {
+        "entriesSorted": [
+          {
+            "insertText": "a",
+            "isSnippet": true,
+            "kind": "string",
+            "name": "a",
+            "sourceDisplay": [
+              {
+                "kind": "text",
+                "text": "2, 3",
+              },
+            ],
+          },
+          {
+            "insertText": "b",
+            "isSnippet": true,
+            "kind": "string",
+            "name": "☆b",
+            "sourceDisplay": [
+              {
+                "kind": "text",
+                "text": "2",
+              },
+            ],
+          },
+          {
+            "insertText": "c",
+            "isSnippet": true,
+            "kind": "string",
+            "name": "☆c",
+            "sourceDisplay": [
+              {
+                "kind": "text",
+                "text": "3",
+              },
+            ],
+          },
+        ],
+        "prevCompletionsMap": {
+          "a": {
+            "documentationOverride": "2: boolean
+
+      3: number",
+          },
+          "☆b": {
+            "documentationOverride": "2: string",
+          },
+          "☆c": {
+            "documentationOverride": "3: number",
+          },
+        },
+      }
     `)
 })

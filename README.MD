@@ -94,6 +94,10 @@ You can quickly disable this plugin functionality by setting this setting to fal
 
 Web-only feature: `import` path resolution
 
+### `in` Keyword Suggestions
+
+[Demo](https://github.com/zardoy/typescript-vscode-plugins/pull/19)
+
 ### Highlight non-function Methods
 
 (*enabled by default*)
