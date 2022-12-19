@@ -137,6 +137,14 @@ export const isWeb = () => {
     }
 }
 
+// spec isnt strict as well
+export const notStrictStringCompletion = (entry: ts.CompletionEntry): ts.CompletionEntry => ({
+    ...entry,
+    // todo
+    name: `◯${entry.name}`,
+    insertText: entry.insertText ?? entry.name,
+})
+
 export function addObjectMethodResultInterceptors<T extends Record<string, any>>(
     object: T,
     interceptors: Partial<{

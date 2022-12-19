@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import type tslib from 'typescript/lib/tsserverlibrary'
+import inKeywordCompletions from './inKeywordCompletions'
 // import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './completions/isInBannedPosition'
 import { GetConfig } from './types'
@@ -185,6 +186,17 @@ export const getCompletionsAtPosition = (
             // TODO change to startsWith?
             return !banAutoImportPackages.includes(text)
         })
+
+    const inKeywordCompletionsResult = inKeywordCompletions(position, node, sourceFile, program, languageService)
+    if (inKeywordCompletionsResult) {
+        prior.entries.push(...inKeywordCompletionsResult.completions)
+        Object.assign(
+            prevCompletionsMap,
+            _.mapValues(inKeywordCompletionsResult.docPerCompletion, value => ({
+                documentationOverride: value,
+            })),
+        )
+    }
 
     if (c('suggestions.keywordsInsertText') === 'space') {
         prior.entries = keywordsSpace(prior.entries, scriptSnapshot, position, exactNode)
