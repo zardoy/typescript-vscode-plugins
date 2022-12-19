@@ -124,6 +124,19 @@ export type Configuration = {
      *  */
     // 'importUpDefinition.enable': boolean
     /**
+     * Remove definitions for TS module declarations e.g. *.css
+     * Enable it if your first definition that receives focus is TS module declaration instead of target file itself
+     * Might be really really useful in some cases
+     * @default false
+     */
+    removeModuleFileDefinitions: boolean
+    /**
+     * Enable definitions for strings that appears to be paths (relatively to file)
+     * Also must have and should be enabled if you work with path.join a lot
+     * @default false
+     */
+    enableFileDefinitions: boolean
+    /**
      * @default true
      * */
     'removeCodeFixes.enable': boolean
