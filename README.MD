@@ -2,11 +2,9 @@
 
 ## Top Features
 
-> Here React experience hits different!
+### Special Commands
 
-### Special Commands & Actions
-
-See [special commands list](#special-commands-list) ans [code actions list](#contributed-code-actions)
+See [special commands list](#special-commands-list)
 
 ### JSX Outline
 
@@ -64,23 +62,11 @@ const usersList = []
 usersList.map // -> usersList.map((user) => )
 ```
 
-### Case-sensitive Completions
-
-(*disabled by default*)
-
-Filter out completions that start with different casing.
-
 ### Remove Definition From References
 
 (*enabled by default*)
 
 <https://github.com/microsoft/vscode/issues/160637>
-
-### Remove Imports From References
-
-(*enabled by default*)
-
-Removes import statements from references when symbol has usages in the same file. Why? Because if export thing is used in another file, it might be obvious that it is imported, and most probably you are not interested in import statements.
 
 ## Minor Useful Features
 
@@ -167,59 +153,6 @@ type A<T extends 'foo' | 'bar' = ''> = ...
 ### Go to / Select Nodes by Kind
 
 Use cases: search excluding comments, search & replace only within strings, find interested JSX attribute node
-
-## Contributed Code Actions
-
-### Swap Keys and Values in Object
-
-> *Note*: Code action displayed **only** when object is fully explicitly selected
-
-Example:
-
-```ts
-const obj = {
-    key1: 'someValue',
-    key2: getSuperUniqueKey()
-}
-// turns into
-const obj = {
-    'someValue': 'key1',
-    [getSuperUniqueKey()]: 'key2'
-}
-```
-
-### Turn Array Into Object
-
-```ts
-const data = [
-    {
-        // test
-        key: 'bar',
-        a: 0
-    },
-    {
-        key: 'baz',
-        // yes
-        b: 1
-    }
-]
-```
-
-After selecting code action, you'll get asked for key to used (here you can use only `key`) and after applying:
-
-```ts
-const a = {
-    'bar': {
-        a: 0
-    },
-    'baz': {
-        // yes
-        b: 1
-    }
-}
-```
-
-(note that for now refactoring removes properties with comments!)
 
 ## Even Even More
 

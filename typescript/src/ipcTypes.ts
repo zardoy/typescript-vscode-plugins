@@ -8,7 +8,6 @@ export const triggerCharacterCommands = [
     'removeFunctionArgumentsTypesInSelection',
     'pickAndInsertFunctionArguments',
     'getRangeOfSpecialValue',
-    'turnArrayIntoObject',
 ] as const
 
 export type TriggerCharacterCommand = typeof triggerCharacterCommands[number]
@@ -23,9 +22,6 @@ type TsRange = [number, number]
 
 export type PickFunctionArgsType = [name: string, declaration: TsRange, args: [name: string, type: string][]]
 
-/**
- * @keysSuggestions TriggerCharacterCommand
- */
 export type RequestResponseTypes = {
     removeFunctionArgumentsTypesInSelection: {
         ranges: TsRange[]
@@ -39,21 +35,11 @@ export type RequestResponseTypes = {
     filterBySyntaxKind: {
         nodesByKind: Record<string, Array<{ range: TsRange }>>
     }
-    turnArrayIntoObject: {
-        keysCount: Record<string, number>
-        totalCount: number
-        totalObjectCount: number
-    }
-    turnArrayIntoObjectEdit: ts.TextChange[]
 }
 
 export type RequestOptionsTypes = {
     removeFunctionArgumentsTypesInSelection: {
         endSelection: number
-    }
-    turnArrayIntoObject: {
-        range: [number, number]
-        selectedKeyName?: string
     }
 }
 

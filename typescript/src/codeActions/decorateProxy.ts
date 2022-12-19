@@ -9,7 +9,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
 
         const program = languageService.getProgram()
         const sourceFile = program!.getSourceFile(fileName)!
-        const { info: refactorInfo } = getCodeActions(sourceFile, positionOrRange)
+        const { info: refactorInfo } = getCodeActions(ts, sourceFile, positionOrRange)
         if (refactorInfo) prior = [...prior, refactorInfo]
 
         return prior
@@ -20,7 +20,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         if (category === REFACTORS_CATEGORY) {
             const program = languageService.getProgram()
             const sourceFile = program!.getSourceFile(fileName)!
-            const { edit } = getCodeActions(sourceFile, positionOrRange, actionName)
+            const { edit } = getCodeActions(ts, sourceFile, positionOrRange, actionName)
             return edit
         }
         return languageService.getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences)

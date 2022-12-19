@@ -1,21 +1,18 @@
 import { compact } from '@zardoy/utils'
-import { findChildContainingPosition } from '../utils'
-import objectSwapKeysAndValues from './objectSwapKeysAndValues'
+import type tslib from 'typescript/lib/tsserverlibrary'
 import toggleBraces from './toggleBraces'
 
-type SimplifiedRefactorInfo =
-    | {
-          start: number
-          length: number
-          newText: string
-      }
-    | ts.TextChange[]
+type SimplifiedRefactorInfo = {
+    start: number
+    length: number
+    newText: string
+}
 
 export type ApplyCodeAction = (
+    ts: typeof tslib,
     sourceFile: ts.SourceFile,
     position: number,
-    range: ts.TextRange | undefined,
-    node: ts.Node | undefined,
+    range?: ts.TextRange,
 ) => ts.RefactorEditInfo | SimplifiedRefactorInfo[] | undefined
 
 export type CodeAction = {
@@ -24,21 +21,22 @@ export type CodeAction = {
     tryToApply: ApplyCodeAction
 }
 
-const codeActions: CodeAction[] = [/* toggleBraces */ objectSwapKeysAndValues]
+const codeActions: CodeAction[] = [
+    /* toggleBraces */
+]
 
 export const REFACTORS_CATEGORY = 'essential-refactors'
 
 export default (
+    ts: typeof tslib,
     sourceFile: ts.SourceFile,
     positionOrRange: ts.TextRange | number,
     requestingEditsId?: string,
 ): { info?: ts.ApplicableRefactorInfo; edit: ts.RefactorEditInfo } => {
     const range = typeof positionOrRange !== 'number' && positionOrRange.pos !== positionOrRange.end ? positionOrRange : undefined
-    const pos = typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos
-    const node = findChildContainingPosition(ts, sourceFile, pos)
     const appliableCodeActions = compact(
         codeActions.map(action => {
-            const edits = action.tryToApply(sourceFile, pos, range, node)
+            const edits = action.tryToApply(ts, sourceFile, typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos, range)
             if (!edits) return
             return {
                 ...action,
@@ -47,18 +45,14 @@ export default (
                           edits: [
                               {
                                   fileName: sourceFile.fileName,
-                                  textChanges: edits.map(change => {
-                                      if ('start' in change) {
-                                          const { newText, start, length } = change
-                                          return {
-                                              newText,
-                                              span: {
-                                                  length,
-                                                  start,
-                                              },
-                                          }
+                                  textChanges: edits.map(({ length, newText, start }) => {
+                                      return {
+                                          newText,
+                                          span: {
+                                              length,
+                                              start,
+                                          },
                                       }
-                                      return change
                                   }),
                               },
                           ],

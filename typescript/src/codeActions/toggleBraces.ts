@@ -2,7 +2,7 @@ import { Statement } from 'typescript/lib/tsserverlibrary'
 import { findChildContainingPosition, findClosestParent, getIndentFromPos } from '../utils'
 import { ApplyCodeAction, CodeAction } from './getCodeActions'
 
-const tryToApply: ApplyCodeAction = (sourceFile, pos, range) => {
+const tryToApply: ApplyCodeAction = (ts, sourceFile, pos, range) => {
     const currentNode = findChildContainingPosition(ts, sourceFile, pos)
     if (!currentNode) return
     const closestBlock = findClosestParent(
