@@ -1,6 +1,6 @@
-import { join } from 'path'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
+import { join } from 'path-browserify'
 
 export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: GetConfig) => {
     proxy.getDefinitionAndBoundSpan = (fileName, position) => {
