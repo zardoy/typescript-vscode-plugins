@@ -19,11 +19,10 @@ export default (
             const typeChecker = languageService.getProgram()!.getTypeChecker()!
             const objType = typeChecker.getContextualType(node)
             if (!objType) return
-            // its doesn't return all actual properties in some cases e.g. it would be more correct to use symbols from entries, but there is a block from TS
             const properties = objType.getProperties()
             for (const property of properties) {
                 const entry = entries.find(({ name }) => name === property.name)
-                if (!entry) continue
+                if (!entry) return
                 const type = typeChecker.getTypeOfSymbolAtLocation(property, node)
                 if (!type) continue
                 if (isMethodCompletionCall(type, typeChecker)) {
@@ -101,12 +100,7 @@ const isArrayCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
 
 const isObjectCompletion = (type: ts.Type) => {
     if (type.flags & ts.TypeFlags.Undefined) return true
-    if (type.flags & ts.TypeFlags.Object) {
-        if ((type as ts.ObjectType).objectFlags & ts.ObjectFlags.Class) return false
-        // complete with regexp?
-        if (type.symbol?.escapedName === 'RegExp') return false
-        return true
-    }
+    if (type.flags & ts.TypeFlags.Object) return true
     if (type.isUnion()) return type.types.every(type => isObjectCompletion(type))
     return false
 }

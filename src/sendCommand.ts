@@ -3,12 +3,12 @@ import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 import { getExtensionSetting } from 'vscode-framework'
 import { TriggerCharacterCommand } from '../typescript/src/ipcTypes'
 
-type SendCommandData<K> = {
+type SendCommandData = {
     position: vscode.Position
     document: vscode.TextDocument
-    inputOptions?: K
+    inputOptions?: any
 }
-export const sendCommand = async <T, K = any>(command: TriggerCharacterCommand, sendCommandDataArg?: SendCommandData<K>): Promise<T | undefined> => {
+export const sendCommand = async <T>(command: TriggerCharacterCommand, sendCommandDataArg?: SendCommandData): Promise<T | undefined> => {
     // plugin id disabled, languageService would not understand the special trigger character
     if (!getExtensionSetting('enablePlugin')) return
 
@@ -19,7 +19,7 @@ export const sendCommand = async <T, K = any>(command: TriggerCharacterCommand, 
     const {
         document: { uri },
         position,
-    } = ((): SendCommandData<any> => {
+    } = ((): SendCommandData => {
         if (sendCommandDataArg) return sendCommandDataArg
         const editor = getActiveRegularEditor()!
         return {

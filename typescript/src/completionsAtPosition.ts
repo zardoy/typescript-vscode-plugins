@@ -18,9 +18,6 @@ import keywordsSpace from './completions/keywordsSpace'
 import jsdocDefault from './completions/jsdocDefault'
 import defaultHelpers from './completions/defaultHelpers'
 import objectLiteralCompletions from './completions/objectLiteralCompletions'
-import filterJsxElements from './completions/filterJsxComponents'
-import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalCompletions'
-import { oneOf } from '@zardoy/utils'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -55,28 +52,49 @@ export const getCompletionsAtPosition = (
      * useful as in most cases we work with node that is behind the cursor */
     const leftNode = findChildContainingPosition(ts, sourceFile, position - 1)
     const exactNode = findChildContainingExactPosition(sourceFile, position)
-    if (node) {
-        // #region Fake emmet
-        if (
-            c('jsxPseudoEmmet.enable') &&
-            leftNode &&
-            prepareTextForEmmet(fileName, leftNode, sourceFile, position, languageService) !== false &&
-            ensurePrior() &&
-            prior
-        ) {
-            const tags = c('jsxPseudoEmmet.tags')
-            for (let [tag, value] of Object.entries(tags)) {
-                if (value === true) value = `<${tag}>$1</${tag}>`
-                prior.entries.push({
-                    kind: ts.ScriptElementKind.label,
-                    name: tag,
-                    sortText: '!5',
-                    insertText: value,
-                    isSnippet: true,
-                })
+    options?.quotePreference
+    if (['.jsx', '.tsx'].some(ext => fileName.endsWith(ext))) {
+        // #region JSX tag improvements
+        if (node) {
+            const { SyntaxKind } = ts
+            // TODO maybe allow fragment?
+            const correntComponentSuggestionsKinds = [SyntaxKind.JsxOpeningElement, SyntaxKind.JsxSelfClosingElement]
+            const nodeText = node.getFullText().slice(0, position - node.pos)
+            if (correntComponentSuggestionsKinds.includes(node.kind) && c('jsxImproveElementsSuggestions.enabled') && !nodeText.includes(' ') && prior) {
+                let lastPart = nodeText.split('.').at(-1)!
+                if (lastPart.startsWith('<')) lastPart = lastPart.slice(1)
+                const isStartingWithUpperCase = (str: string) => str[0] === str[0]?.toUpperCase()
+                // check if starts with lowercase
+                if (isStartingWithUpperCase(lastPart))
+                    // TODO! compare with suggestions from lib.dom
+                    prior.entries = prior.entries.filter(
+                        entry => isStartingWithUpperCase(entry.name) && ![ts.ScriptElementKind.enumElement].includes(entry.kind),
+                    )
             }
+            // #endregion
+
+            // #region Fake emmet
+            if (
+                c('jsxPseudoEmmet.enable') &&
+                leftNode &&
+                prepareTextForEmmet(fileName, leftNode, sourceFile, position, languageService) !== false &&
+                ensurePrior() &&
+                prior
+            ) {
+                const tags = c('jsxPseudoEmmet.tags')
+                for (let [tag, value] of Object.entries(tags)) {
+                    if (value === true) value = `<${tag}>$1</${tag}>`
+                    prior.entries.push({
+                        kind: ts.ScriptElementKind.label,
+                        name: tag,
+                        sortText: '!5',
+                        insertText: value,
+                        isSnippet: true,
+                    })
+                }
+            }
+            // #endregion
         }
-        // #endregion
     }
     if (leftNode && !hasSuggestions && ensurePrior() && prior) {
         prior.entries = additionalTypesSuggestions(prior.entries, program, leftNode) ?? prior.entries
@@ -93,50 +111,11 @@ export const getCompletionsAtPosition = (
 
     if (!prior) return
 
-    if (c('caseSensitiveCompletions')) {
-        const fullText = sourceFile.getFullText()
-        const currentWord = fullText.slice(0, position).match(/[\w\d]+$/)
-        if (currentWord) {
-            const firstEnteredChar = fullText.at(currentWord.index!) ?? ''
-            /** @returns -1 - lowercase, 1 - uppercase, 0 - ignore */
-            const getCharCasing = (char: string) => {
-                if (char.toLocaleUpperCase() !== char) return -1
-                if (char.toLocaleLowerCase() !== char) return 1
-                return 0
-            }
-            const typedStartCasing = getCharCasing(firstEnteredChar)
-            // check wether it is actually a case char and not a number for example
-            if (typedStartCasing !== 0) {
-                prior.entries = prior.entries.filter(entry => {
-                    const entryCasing = getCharCasing(entry.name.at(0) ?? '')
-                    if (entryCasing === 0) return true
-                    return entryCasing === typedStartCasing
-                })
-            }
-        }
-    }
-
-    if (c('disableFuzzyCompletions')) {
-        const fullText = sourceFile.getFullText()
-        const currentWord = fullText.slice(0, position).match(/[\w\d]+$/)
-        if (currentWord) {
-            prior.entries = prior.entries.filter(entry => {
-                if (entry.name.startsWith(currentWord[0])) return true
-                return false
-            })
-        }
-    }
-
     if (c('fixSuggestionsSorting')) prior.entries = fixPropertiesSorting(prior.entries, leftNode, sourceFile, program) ?? prior.entries
     if (node) prior.entries = boostKeywordSuggestions(prior.entries, position, node) ?? prior.entries
 
     const entryNames = new Set(prior.entries.map(({ name }) => name))
-    if (c('removeUselessFunctionProps.enable')) {
-        prior.entries = prior.entries.filter(entry => {
-            if (oneOf(entry.kind, ts.ScriptElementKind.warning)) return true
-            return !['Symbol', 'caller', 'prototype'].includes(entry.name)
-        })
-    }
+    if (c('removeUselessFunctionProps.enable')) prior.entries = prior.entries.filter(e => !['Symbol', 'caller', 'prototype'].includes(e.name))
     if (['bind', 'call', 'caller'].every(name => entryNames.has(name)) && c('highlightNonFunctionMethods.enable')) {
         const standardProps = new Set(['Symbol', 'apply', 'arguments', 'bind', 'call', 'caller', 'length', 'name', 'prototype', 'toString'])
         // TODO lift up!
@@ -223,16 +202,10 @@ export const getCompletionsAtPosition = (
         })
     }
 
-    prior.entries = markOrRemoveGlobalCompletions(prior.entries, position, languageService, c) ?? prior.entries
-    if (exactNode) prior.entries = filterJsxElements(prior.entries, exactNode, position, languageService, c) ?? prior.entries
+    if (c('correctSorting.enable'))
+        prior.entries = prior.entries.map((entry, index) => ({ ...entry, sortText: `${entry.sortText ?? ''}${index.toString().padStart(4, '0')}` }))
 
-    if (c('correctSorting.enable')) {
-        prior.entries = prior.entries.map(({ ...entry }, index) => ({
-            ...entry,
-            sortText: `${entry.sortText ?? ''}${index.toString().padStart(4, '0')}`,
-            symbol: undefined,
-        }))
-    }
+    // console.log('signatureHelp', JSON.stringify(languageService.getSignatureHelpItems(fileName, position, {})))
     return {
         completions: prior,
         prevCompletionsMap,
