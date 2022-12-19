@@ -1,19 +1,32 @@
 import type tslib from 'typescript/lib/tsserverlibrary'
 import { PostfixCompletion } from '../ipcTypes'
 import { findChildContainingPosition, findClosestParent } from '../utils'
+import { isAssignableToType, toSimpleType } from 'ts-simple-type'
+import { join } from 'path'
+import { newVirtualFileContents, virtualFileName } from '../overrideSourceFiles'
 
 export default (position: number, fileName: string, scriptSnapshot: ts.IScriptSnapshot, languageService: ts.LanguageService): PostfixCompletion[] => {
     const { character } = languageService.toLineColumnOffset!(fileName, position)
     const startLinePos = position - character
     const textBeforePositionLine = scriptSnapshot?.getText(startLinePos, position + 1)
-    const program = languageService.getProgram()
-    const sourceFile = program?.getSourceFile(fileName)
+    const program = (languageService as ReturnType<typeof tsFull['createLanguageService']>).getProgram()!
+    const sourceFile = program.getSourceFile(fileName)
     if (!textBeforePositionLine || !sourceFile) return []
     const dotIdx = textBeforePositionLine.lastIndexOf('.')
     if (dotIdx === -1) return []
     const nodePos = startLinePos + dotIdx - 1
+    //@ts-ignore
     const node = findChildContainingPosition(ts, sourceFile, nodePos)
     if (!node) return []
+    newVirtualFileContents('type A = number')
+    //@ts-ignore
+    const typeChecker = (program as import('unleashed-typescript').Program)!.getTypeChecker()
+    const type = typeChecker.getTypeAtLocation(node)
+    const sourceFile2 = program.getSourceFile(virtualFileName)!
+    const node2 = findChildContainingPosition(ts, sourceFile2 as any, 5)
+    const typeOriginal = typeChecker.getTypeAtLocation(node2!)
+    const isGood = typeChecker.isTypeAssignableTo(type, typeOriginal)
+    // const { statements } = ts.createSourceFile('temp.ts', 'type A = string', ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX)
     const postfixes: PostfixCompletion[] = []
     let foundNode: ts.Node | undefined
     if (

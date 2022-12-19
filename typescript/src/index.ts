@@ -16,6 +16,7 @@ import handleSpecialCommand from './specialCommands/handle'
 import decorateDefinitions from './definitions'
 import decorateDocumentHighlights from './documentHighlights'
 import completionEntryDetails from './completionEntryDetails'
+import overrideSourceFiles from './overrideSourceFiles'
 
 const thisPluginMarker = '__essentialPluginsMarker__'
 
@@ -119,6 +120,8 @@ const plugin: ts.server.PluginModuleFactory = ({ typescript }) => {
             if (info.languageService[thisPluginMarker]) return info.languageService
 
             const proxy = _configuration.enablePlugin === false ? getInitialProxy(info.languageService) : decorateLanguageService(info, undefined)
+
+            overrideSourceFiles(info)
 
             // #region watch enablePlugin setting
             let prevPluginEnabledSetting = _configuration.enablePlugin

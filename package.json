@@ -51,6 +51,11 @@
                 "command": "goToNodeBySyntaxKindWithinSelection",
                 "title": "Go to Node by Syntax Kind Within Selection",
                 "category": "TS Essentials"
+            },
+            {
+                "command": "searchReplaceQuery",
+                "title": "Search or Replace Query",
+                "category": "TS Essentials"
             }
         ],
         "typescriptServerPlugins": [
