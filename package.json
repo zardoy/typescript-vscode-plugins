@@ -23,6 +23,16 @@
                 "category": "TS Essentials (Developer)"
             },
             {
+                "command": "startCompletionDefinitionInspection",
+                "title": "Start Completion Definition Inspection",
+                "category": "TS Essentials (Developer)"
+            },
+            {
+                "command": "goToCompletionDefinition",
+                "title": "Go to Completion Definition",
+                "category": "TS Essentials"
+            },
+            {
                 "command": "goToEndOfValue",
                 "title": "Go to End of Special Value",
                 "category": "TS Essentials (Experimental)"
