@@ -42,7 +42,11 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                         let node = findChildContainingPositionMaxDepth(sourceFile, end, 6)
                         if (!node) return true
                         if (ts.isIdentifier(node)) node = node.parent
-                        if (approveCast(node, ts.isNamedImports, ts.isImportSpecifier, ts.isImportClause, ts.isImportEqualsDeclaration)) return false
+                        if (
+                            approveCast(node, ts.isNamedImports, ts.isImportSpecifier, ts.isImportClause, ts.isImportEqualsDeclaration, ts.isImportDeclaration)
+                        ) {
+                            return false
+                        }
                         return true
                     }),
                 }
