@@ -193,7 +193,7 @@ Some settings examples:
 <!-- just duplicated from configurationType -->
 
 ```jsonc
-"suggestions.ignoreAutoImport": [
+"suggestions.ignoreAutoImports": [
   "path", // ignore path, but not path/posix or path/win32 modules
   "path/*", // ignore path, path/posix and path/win32
   "path/*#join", // ignore path, path/posix and path/win32, but only join symbol

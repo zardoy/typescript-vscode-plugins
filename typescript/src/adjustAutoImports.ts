@@ -40,7 +40,7 @@ const initIgnoreAutoImport = () => {
 }
 
 export const getIgnoreAutoImportSetting = (c: GetConfig) => {
-    return c('suggestions.ignoreAutoImport').map((spec): ParsedIgnoreSetting => {
+    return c('suggestions.ignoreAutoImports').map((spec): ParsedIgnoreSetting => {
         const hashIndex = spec.indexOf('#')
         let module = hashIndex === -1 ? spec : spec.slice(0, hashIndex)
         const moduleCompare = module.endsWith('/*') ? 'startsWith' : 'strict'
@@ -67,8 +67,8 @@ export const getIgnoreAutoImportSetting = (c: GetConfig) => {
     })
 }
 
-export const isAutoImportEntryShouldBeIgnored = (ignoreAutoImportSetting: ParsedIgnoreSetting[], targetModule: string, symbol: string) => {
-    for (const { module, moduleCompare, isAnySymbol, symbols } of ignoreAutoImportSetting) {
+export const isAutoImportEntryShouldBeIgnored = (ignoreAutoImportsSetting: ParsedIgnoreSetting[], targetModule: string, symbol: string) => {
+    for (const { module, moduleCompare, isAnySymbol, symbols } of ignoreAutoImportsSetting) {
         const isIgnoreModule = moduleCompare === 'startsWith' ? targetModule.startsWith(module) : targetModule === module
         if (!isIgnoreModule) continue
         if (isAnySymbol) return true

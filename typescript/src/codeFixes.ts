@@ -26,7 +26,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         let prior: readonly ts.CodeFixAction[]
         try {
             const { importFixName } = tsFull.codefix
-            const ignoreAutoImportSetting = getIgnoreAutoImportSetting(c)
+            const ignoreAutoImportsSetting = getIgnoreAutoImportSetting(c)
             const sortFn = changeSortingOfAutoImport(c, (node as ts.Identifier).text)
             tsFull.codefix.createCodeFixAction = (fixName, changes, description, fixId, fixAllDescription, command) => {
                 if (fixName !== importFixName) return oldCreateCodeFixAction(fixName, changes, description, fixId, fixAllDescription, command)
@@ -35,7 +35,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 if (placeholderIndexesInfo) {
                     const targetModule = description[placeholderIndexesInfo[1] + 1]
                     const symbolName = placeholderIndexesInfo[2] !== undefined ? description[placeholderIndexesInfo[2] + 1] : (node as ts.Identifier).text
-                    const toIgnore = isAutoImportEntryShouldBeIgnored(ignoreAutoImportSetting, targetModule, symbolName)
+                    const toIgnore = isAutoImportEntryShouldBeIgnored(ignoreAutoImportsSetting, targetModule, symbolName)
                     if (toIgnore) {
                         return {
                             fixName: 'IGNORE',
@@ -162,7 +162,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 sourceFile,
             }
             const errorCodes = getFixAllErrorCodes()
-            const ignoreAutoImportSetting = getIgnoreAutoImportSetting(c)
+            const ignoreAutoImportsSetting = getIgnoreAutoImportSetting(c)
             for (const diagnostic of semanticDiagnostics) {
                 if (!errorCodes.includes(diagnostic.code)) continue
                 const oldFirst = tsFull.first
@@ -175,7 +175,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                                 if (fix.kind === (ImportFixKind.PromoteTypeOnly as number)) return false
                                 const shouldBeIgnored =
                                     c('autoImport.alwaysIgnoreInImportAll').includes(fix.moduleSpecifier) ||
-                                    isAutoImportEntryShouldBeIgnored(ignoreAutoImportSetting, fix.moduleSpecifier, symbolName)
+                                    isAutoImportEntryShouldBeIgnored(ignoreAutoImportsSetting, fix.moduleSpecifier, symbolName)
                                 return !shouldBeIgnored
                             }),
                             ({ fix }) => sortFn(fix.moduleSpecifier),

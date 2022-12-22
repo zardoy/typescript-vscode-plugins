@@ -4,12 +4,12 @@ import { GetConfig } from '../types'
 import { sortBy } from 'rambda'
 
 export default (entries: ts.CompletionEntry[], languageService: ts.LanguageService, c: GetConfig) => {
-    const ignoreAutoImportSetting = getIgnoreAutoImportSetting(c)
+    const ignoreAutoImportsSetting = getIgnoreAutoImportSetting(c)
 
     let newEntries = entries.filter(({ sourceDisplay, name }) => {
         if (!sourceDisplay) return
         const targetModule = ts.displayPartsToString(sourceDisplay)
-        const toIgnore = isAutoImportEntryShouldBeIgnored(ignoreAutoImportSetting, targetModule, name)
+        const toIgnore = isAutoImportEntryShouldBeIgnored(ignoreAutoImportsSetting, targetModule, name)
         return !toIgnore
     })
     // todo I'm not sure of incomplete completion (wasnt tested)

@@ -74,7 +74,7 @@ export type Configuration = {
      * - jquery/* - ignore absolutely all auto imports from jquery, even if it was declared virtually (declare module)
      * @default []
      */
-    'suggestions.ignoreAutoImport': string[]
+    'suggestions.ignoreAutoImports': string[]
     /**
      * Disable it only if it causes problems / crashes with TypeScript, which of course should never happen
      * But it wasn't tested on very old versions
@@ -394,7 +394,7 @@ export type Configuration = {
      */
     'autoImport.changeSorting': { [pathAndOrSymbol: string]: string[] }
     /**
-     * Advanced. Use `suggestions.ignoreAutoImport` setting if possible.
+     * Advanced. Use `suggestions.ignoreAutoImports` setting if possible.
      *
      * Packages to ignore in import all fix.
      *

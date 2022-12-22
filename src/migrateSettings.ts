@@ -20,7 +20,7 @@ export default () => {
             {
                 rename: {
                     old: 'suggestions.banAutoImportPackages',
-                    new: 'suggestions.ignoreAutoImport',
+                    new: 'suggestions.ignoreAutoImports',
                     mustBePrimitive: false,
                 },
             },
