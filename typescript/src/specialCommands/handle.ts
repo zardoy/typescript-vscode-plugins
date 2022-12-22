@@ -12,6 +12,8 @@ export default (
     specialCommand: TriggerCharacterCommand,
     languageService: ts.LanguageService,
     configuration: any,
+    preferences: ts.UserPreferences,
+    formatOptions?: ts.FormatCodeSettings,
 ): void | {
     entries: []
     typescriptEssentialsResponse: any
@@ -69,6 +71,32 @@ export default (
         return {
             entries: [],
             typescriptEssentialsResponse: postfixesAtPosition(position, fileName, scriptSnapshot, info.languageService),
+        } as any
+    }
+    if (specialCommand === 'getFixAllEdits') {
+        // code adopted is for asyncInSync fix for now
+        const interestedCodes = [1308]
+        const recordedStarts = new Set<number>()
+        const diagnostics = languageService.getSemanticDiagnostics(fileName)
+        const edits: ts.TextChange[] = []
+        for (const { code, start, length } of diagnostics) {
+            if (!interestedCodes.includes(code)) continue
+            const fixes = languageService.getCodeFixesAtPosition(fileName, start!, start! + length!, [code], formatOptions ?? {}, preferences)
+            for (const fix of fixes) {
+                if (fix.fixName === 'fixAwaitInSyncFunction') {
+                    const textChange = fix.changes[0]!.textChanges[0]!
+                    const { start } = textChange.span
+                    if (!recordedStarts.has(start)) {
+                        recordedStarts.add(start)
+                        edits.push(textChange)
+                    }
+                    break
+                }
+            }
+        }
+        return {
+            entries: [],
+            typescriptEssentialsResponse: edits,
         } as any
     }
     if (specialCommand === 'removeFunctionArgumentsTypesInSelection') {

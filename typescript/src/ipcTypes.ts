@@ -9,6 +9,7 @@ export const triggerCharacterCommands = [
     'pickAndInsertFunctionArguments',
     'getRangeOfSpecialValue',
     'turnArrayIntoObject',
+    'getFixAllEdits',
 ] as const
 
 export type TriggerCharacterCommand = typeof triggerCharacterCommands[number]
@@ -45,6 +46,7 @@ export type RequestResponseTypes = {
         totalObjectCount: number
     }
     turnArrayIntoObjectEdit: ts.TextChange[]
+    getFixAllEdits: ts.TextChange[]
 }
 
 export type RequestOptionsTypes = {

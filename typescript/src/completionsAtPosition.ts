@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import type tslib from 'typescript/lib/tsserverlibrary'
 import inKeywordCompletions from './inKeywordCompletions'
 // import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './completions/isInBannedPosition'
@@ -20,8 +19,9 @@ import jsdocDefault from './completions/jsdocDefault'
 import defaultHelpers from './completions/defaultHelpers'
 import objectLiteralCompletions from './completions/objectLiteralCompletions'
 import filterJsxElements from './completions/filterJsxComponents'
-import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalCompletions'
+import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalLibCompletions'
 import { oneOf } from '@zardoy/utils'
+import filterWIthIgnoreAutoImports from './completions/filterWIthIgnoreAutoImports'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -32,7 +32,7 @@ export const getCompletionsAtPosition = (
     c: GetConfig,
     languageService: ts.LanguageService,
     scriptSnapshot: ts.IScriptSnapshot,
-    ts: typeof tslib,
+    formatOptions?: ts.FormatCodeSettings,
 ):
     | {
           completions: ts.CompletionInfo
@@ -45,7 +45,7 @@ export const getCompletionsAtPosition = (
     const sourceFile = program?.getSourceFile(fileName)
     if (!program || !sourceFile) return
     if (!scriptSnapshot || isInBannedPosition(position, scriptSnapshot, sourceFile)) return
-    let prior = languageService.getCompletionsAtPosition(fileName, position, options)
+    let prior = languageService.getCompletionsAtPosition(fileName, position, options, formatOptions)
     const ensurePrior = () => {
         if (!prior) prior = { entries: [], isGlobalCompletion: false, isMemberCompletion: false, isNewIdentifierLocation: false }
         return true
@@ -175,17 +175,9 @@ export const getCompletionsAtPosition = (
     }
 
     if (node) prior.entries = defaultHelpers(prior.entries, node, languageService) ?? prior.entries
-    if (node) prior.entries = objectLiteralCompletions(prior.entries, node, languageService, options ?? {}, c) ?? prior.entries
-
-    const banAutoImportPackages = c('suggestions.banAutoImportPackages')
-    if (banAutoImportPackages?.length)
-        prior.entries = prior.entries.filter(entry => {
-            if (!entry.sourceDisplay) return true
-            const text = entry.sourceDisplay.map(item => item.text).join('')
-            if (text.startsWith('.')) return true
-            // TODO change to startsWith?
-            return !banAutoImportPackages.includes(text)
-        })
+    if (exactNode) prior.entries = objectLiteralCompletions(prior.entries, exactNode, languageService, options ?? {}, c) ?? prior.entries
+    // 90%
+    if (prior.isGlobalCompletion) prior.entries = filterWIthIgnoreAutoImports(prior.entries, languageService, c)
 
     const inKeywordCompletionsResult = inKeywordCompletions(position, node, sourceFile, program, languageService)
     if (inKeywordCompletionsResult) {
@@ -235,7 +227,7 @@ export const getCompletionsAtPosition = (
         })
     }
 
-    prior.entries = markOrRemoveGlobalCompletions(prior.entries, position, languageService, c) ?? prior.entries
+    if (prior.isGlobalCompletion) prior.entries = markOrRemoveGlobalCompletions(prior.entries, position, languageService, c) ?? prior.entries
     if (exactNode) prior.entries = filterJsxElements(prior.entries, exactNode, position, languageService, c) ?? prior.entries
 
     if (c('correctSorting.enable')) {

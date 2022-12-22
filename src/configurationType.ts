@@ -45,9 +45,10 @@ export type Configuration = {
      *  */
     'removeUselessFunctionProps.enable': boolean
     /**
+     * Of course it makes no sense to use `remove`, but `mark` might be really useful
      * @default disable
      */
-    'removeOrMarkGlobalCompletions.action': 'disable' | 'mark' | 'remove'
+    'removeOrMarkGlobalLibCompletions.action': 'disable' | 'mark' | 'remove'
     /**
      * Useful for Number types.
      * Patch `toString()`: Removes arg tabstop
@@ -55,13 +56,31 @@ export type Configuration = {
      */
     'patchToString.enable': boolean
     /**
+     * Format of this setting is very close to `jsxCompletionsMap` setting:
+     * `path#symbol` (exact) or `path/*#symbol` (`#symbol` part can be ommited)
+     *
      * Note: Please use `javascript`/`typescript.preferences.autoImportFileExcludePatterns` when possible, to achieve better performance!
+     *
      * e.g. instead of declaring `@mui/icons-material` here, declare `node_modules/@mui/icons-material` in aforementioned setting.
      *
      * And only use this, if auto-imports coming not from physical files (e.g. some modules node imports)
+     *
+     * Examples:
+     * - `path` - ignore path, but not path/posix or path/win32 modules
+     * - `path/*` - ignore path, path/posix and path/win32
+     * - `path/*#join` - ignore path, path/posix and path/win32, but only join symbol
+     * - `path/*#join,resolve` - ignore path, path/posix and path/win32, but only join and resolve symbol
+     *
+     * - jquery/* - ignore absolutely all auto imports from jquery, even if it was declared virtually (declare module)
      * @default []
      */
-    'suggestions.banAutoImportPackages': string[]
+    'suggestions.ignoreAutoImports': string[]
+    /**
+     * Disable it only if it causes problems / crashes with TypeScript, which of course should never happen
+     * But it wasn't tested on very old versions
+     * @default false
+     */
+    // 'advanced.disableAutoImportCodeFixPatching': boolean
     /**
      * What insert text to use for keywords (e.g. `return`)
      * @default space
@@ -364,4 +383,23 @@ export type Configuration = {
      * @default false
      */
     'experiments.excludeNonJsxCompletions': boolean
+    /**
+     * Map *symbol - array of modules* to change sorting of imports - first available takes precedence in auto import code fixes (+ import all action)
+     *
+     * Examples:
+     * - `join`: ['path/posix'] // other suggestions will be below
+     * - `resolve`: ['*', 'path/posix'] // make `path/posix` appear below any other suggestions
+     * - `useEventListener`: ['.'] // `.` (dot) is reserved for local suggestions, which makes them appear above other
+     * @default {}
+     */
+    'autoImport.changeSorting': { [pathAndOrSymbol: string]: string[] }
+    /**
+     * Advanced. Use `suggestions.ignoreAutoImports` setting if possible.
+     *
+     * Packages to ignore in import all fix.
+     *
+     * TODO syntaxes /* and module#symbol unsupported (easy)
+     * @default []
+     */
+    'autoImport.alwaysIgnoreInImportAll': string[]
 }

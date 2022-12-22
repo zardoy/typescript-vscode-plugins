@@ -14,7 +14,10 @@ patchPackageJson({
 
 module.exports = defineConfig({
     consoleStatements: process.argv.includes('--web') ? false : undefined,
-    development: {},
+    development: {
+        // @ts-ignore
+        executable: '---------',
+    },
     target: {
         web: true,
         desktop: true,

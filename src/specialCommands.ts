@@ -8,7 +8,7 @@ import { defaultJsSupersetLangsWithVue } from '@zardoy/vscode-utils/build/langs'
 import { offsetPosition } from '@zardoy/vscode-utils/build/position'
 import { RequestOptionsTypes, RequestResponseTypes } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
-import { tsRangeToVscode, tsRangeToVscodeSelection } from './util'
+import { tsRangeToVscode, tsRangeToVscodeSelection, tsTextChangesToVcodeTextEdits } from './util'
 
 export default () => {
     registerExtensionCommand('removeFunctionArgumentsTypesInSelection', async () => {
@@ -260,23 +260,28 @@ export default () => {
         const editor = vscode.window.activeTextEditor!
         const edits = await sendTurnIntoArrayRequest<RequestResponseTypes['turnArrayIntoObjectEdit']>(editor.selection, selectedKey)
         if (!edits) throw new Error('Unknown error. Try debug.')
-        await editor.edit(builder => {
-            for (const { span, newText } of edits) {
-                const start = editor.document.positionAt(span.start)
-                builder.replace(new vscode.Range(start, offsetPosition(editor.document, start, span.length)), newText)
-            }
-        })
+        const edit = new vscode.WorkspaceEdit()
+        edit.set(editor.document.uri, tsTextChangesToVcodeTextEdits(editor.document, edits))
+        await vscode.workspace.applyEdit(edit)
     })
 
     // its actually a code action, but will be removed from there soon
     vscode.languages.registerCodeActionsProvider(defaultJsSupersetLangsWithVue, {
         async provideCodeActions(document, range, context, token) {
-            if (
-                context.triggerKind !== vscode.CodeActionTriggerKind.Invoke ||
-                document !== vscode.window.activeTextEditor?.document ||
-                !getExtensionSetting('enablePlugin')
-            )
+            if (document !== vscode.window.activeTextEditor?.document || !getExtensionSetting('enablePlugin')) {
                 return
+            }
+
+            if (context.only?.contains(vscode.CodeActionKind.SourceFixAll)) {
+                const fixAllEdits = await sendCommand<RequestResponseTypes['getFixAllEdits']>('getFixAllEdits')
+                if (!fixAllEdits) return
+                const edit = new vscode.WorkspaceEdit()
+                edit.set(document.uri, tsTextChangesToVcodeTextEdits(document, fixAllEdits))
+                await vscode.workspace.applyEdit(edit)
+                return
+            }
+
+            if (context.triggerKind !== vscode.CodeActionTriggerKind.Invoke) return
             const result = await sendTurnIntoArrayRequest(range)
             if (!result) return
             const { keysCount, totalCount, totalObjectCount } = result
