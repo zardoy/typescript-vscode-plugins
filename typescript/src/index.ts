@@ -96,17 +96,11 @@ const decorateLanguageService = (info: ts.server.PluginCreateInfo, existingProxy
     }
 
     decorateCodeActions(proxy, info.languageService, c)
-    decorateCodeFixes(proxy, info.languageService, c)
+    decorateCodeFixes(proxy, info.languageService, c, info.languageServiceHost)
     decorateSemanticDiagnostics(proxy, info, c)
     decorateDefinitions(proxy, info, c)
     decorateReferences(proxy, info.languageService, c)
     decorateDocumentHighlights(proxy, info.languageService, c)
-
-    // todo arg definition
-    proxy.getCombinedCodeFix = (scope, fixId, formatOptions, preferences) => {
-        const prior = proxy.getCombinedCodeFix(scope, fixId, formatOptions, preferences)
-        return prior
-    }
 
     if (!__WEB__) {
         // dedicated syntax server (which is enabled by default), which fires navtree doesn't seem to receive onConfigurationChanged

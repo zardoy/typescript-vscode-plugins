@@ -56,13 +56,31 @@ export type Configuration = {
      */
     'patchToString.enable': boolean
     /**
+     * Format of this setting is very close to `jsxCompletionsMap` setting:
+     * `path#symbol` (exact) or `path/*#symbol` (`#symbol` part can be ommited)
+     *
      * Note: Please use `javascript`/`typescript.preferences.autoImportFileExcludePatterns` when possible, to achieve better performance!
+     *
      * e.g. instead of declaring `@mui/icons-material` here, declare `node_modules/@mui/icons-material` in aforementioned setting.
      *
      * And only use this, if auto-imports coming not from physical files (e.g. some modules node imports)
+     *
+     * Examples:
+     * - `path` - ignore path, but not path/posix or path/win32 modules
+     * - `path/*` - ignore path, path/posix and path/win32
+     * - `path/*#join` - ignore path, path/posix and path/win32, but only join symbol
+     * - `path/*#join,resolve` - ignore path, path/posix and path/win32, but only join and resolve symbol
+     *
+     * - jquery/* - ignore absolutely all auto imports from jquery, even if it was declared virtually (declare module)
      * @default []
      */
-    'suggestions.banAutoImportPackages': string[]
+    'suggestions.ignoreAutoImport': string[]
+    /**
+     * Disable it only if it causes problems / crashes with TypeScript, which of course should never happen
+     * But it wasn't tested on very old versions
+     * @default false
+     */
+    // 'advanced.disableAutoImportCodeFixPatching': boolean
     /**
      * What insert text to use for keywords (e.g. `return`)
      * @default space
@@ -366,15 +384,22 @@ export type Configuration = {
      */
     'experiments.excludeNonJsxCompletions': boolean
     /**
-     * Format of this setting is very close to `jsxCompletionsMap` setting:
-     * path#symbol
-     * Examples (keys in object):
-     * #join - adjust `join` symbol from every module
-     * path/win32#join - adjust `join` symbol from from path/win32 module
-     * path/
-     * Adjust actions (values in object):
-     * false - completely disable symbol(s) suggesting
-     * array of strings - change sorting of - first takes precedence for auto-imports (code actions & suggestions)
+     * Map *symbol - array of modules* to change sorting of imports - first available takes precedence in auto import code fixes (+ import all action)
+     *
+     * Examples:
+     * - `join`: ['path/posix'] // other suggestions will be below
+     * - `resolve`: ['*', 'path/posix'] // make `path/posix` appear below any other suggestions
+     * - `useEventListener`: ['.'] // `.` (dot) is reserved for local suggestions, which makes them appear above other
+     * @default {}
      */
-    'autoImport.adjustBySymbol': { ['path#symbol'] }
+    'autoImport.changeSorting': { [pathAndOrSymbol: string]: string[] }
+    /**
+     * Advanced. Use `suggestions.ignoreAutoImport` setting if possible.
+     *
+     * Packages to ignore in import all fix.
+     *
+     * TODO syntaxes /* and module#symbol unsupported (easy)
+     * @default []
+     */
+    'autoImport.alwaysIgnoreInImportAll': string[]
 }

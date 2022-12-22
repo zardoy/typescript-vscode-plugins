@@ -21,6 +21,7 @@ import objectLiteralCompletions from './completions/objectLiteralCompletions'
 import filterJsxElements from './completions/filterJsxComponents'
 import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalLibCompletions'
 import { oneOf } from '@zardoy/utils'
+import filterWIthIgnoreAutoImports from './completions/filterWIthIgnoreAutoImports'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -175,16 +176,8 @@ export const getCompletionsAtPosition = (
 
     if (node) prior.entries = defaultHelpers(prior.entries, node, languageService) ?? prior.entries
     if (exactNode) prior.entries = objectLiteralCompletions(prior.entries, exactNode, languageService, options ?? {}, c) ?? prior.entries
-
-    const banAutoImportPackages = c('suggestions.banAutoImportPackages')
-    if (banAutoImportPackages?.length)
-        prior.entries = prior.entries.filter(entry => {
-            if (!entry.sourceDisplay) return true
-            const text = entry.sourceDisplay.map(item => item.text).join('')
-            if (text.startsWith('.')) return true
-            // TODO change to startsWith?
-            return !banAutoImportPackages.includes(text)
-        })
+    // 90%
+    if (prior.isGlobalCompletion) prior.entries = filterWIthIgnoreAutoImports(prior.entries, languageService, c)
 
     const inKeywordCompletionsResult = inKeywordCompletions(position, node, sourceFile, program, languageService)
     if (inKeywordCompletionsResult) {

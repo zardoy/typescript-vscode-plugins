@@ -17,6 +17,13 @@ export default () => {
                     mustBePrimitive: true,
                 },
             },
+            {
+                rename: {
+                    old: 'suggestions.banAutoImportPackages',
+                    new: 'suggestions.ignoreAutoImport',
+                    mustBePrimitive: false,
+                },
+            },
         ],
         process.env.IDS_PREFIX!,
     )

@@ -179,6 +179,38 @@ const a = 5
 a = 6
 ```
 
+## Auto Imports
+
+With this plugin you have total (almost) control over auto imports that appear in completions, quick fixes and import all quick fix. Some examples of what you can do:
+
+- I never want to see `join` suggestion from `path/win32` module (it's a Node.js [module](https://nodejs.org/dist/latest-v18.x/docs/api/path.html#pathwin32), defined via module augmentation)
+- I never want to see any suggestions from `path/*` modules
+- I always want `join` to be imported from `path/posix` module on window (also would appear first in completions & single quick fix)
+- I always want `useState` to be imported from local files first
+
+Some settings examples:
+
+<!-- just duplicated from configurationType -->
+
+```jsonc
+"suggestions.ignoreAutoImport": [
+  "path", // ignore path, but not path/posix or path/win32 modules
+  "path/*", // ignore path, path/posix and path/win32
+  "path/*#join", // ignore path, path/posix and path/win32, but only join symbol
+  "path/*#join,resolve", // ignore path, path/posix and path/win32, but only join and resolve symbol
+],
+"autoImport.changeSorting": {
+    "join": ["path/posix"], // other suggestions will be below
+    "resolve": ["*", "path/posix"], // make `path/posix` appear below any other suggestions
+    "useState": ["."], // `.` (dot) is reserved for local suggestions, which makes them appear above other
+},
+// for some even more specific cases?
+// "autoImport.alwaysIgnoreInImportAll": ["lodash"] // exclude all possible imports from import all request
+```
+
+> Note: changeSorting might not preserve sorting of other existing suggestions which not defined by rules, there is WIP
+> Also I'm thinking of making it learn and syncing of most-used imports automatically
+
 ## Special Commands List
 
 ### Go to / Select Nodes by Kind
