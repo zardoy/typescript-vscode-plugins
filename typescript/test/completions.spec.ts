@@ -76,7 +76,7 @@ const defaultConfigFunc = await getDefaultConfigFunc(settingsOverride)
 
 const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, shouldHave }: { fileName?: string; shouldHave?: boolean } = {}) => {
     if (pos === undefined) throw new Error('getCompletionsAtPosition: pos is undefined')
-    const result = getCompletionsAtPositionRaw(fileName, pos, {}, defaultConfigFunc, languageService, ts.ScriptSnapshot.fromString(files[entrypoint]), ts)
+    const result = getCompletionsAtPositionRaw(fileName, pos, {}, defaultConfigFunc, languageService, ts.ScriptSnapshot.fromString(files[entrypoint]))
     if (shouldHave) expect(result).not.toBeUndefined()
     if (!result) return
     return {
@@ -201,7 +201,7 @@ test('Emmet completion', () => {
         2: -5,
     }
     const getEmmetCompletions = pos => {
-        const result = handleCommand({ languageService } as any, entrypoint, pos, 'emmet-completions', languageService, defaultConfigFunc)
+        const result = handleCommand({ languageService } as any, entrypoint, pos, 'emmet-completions', languageService, defaultConfigFunc, {})
         return result?.typescriptEssentialsResponse?.emmetTextOffset
     }
     for (const [i, pos] of positivePositions.entries()) {
