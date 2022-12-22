@@ -20,7 +20,7 @@ import jsdocDefault from './completions/jsdocDefault'
 import defaultHelpers from './completions/defaultHelpers'
 import objectLiteralCompletions from './completions/objectLiteralCompletions'
 import filterJsxElements from './completions/filterJsxComponents'
-import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalCompletions'
+import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalLibCompletions'
 import { oneOf } from '@zardoy/utils'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>

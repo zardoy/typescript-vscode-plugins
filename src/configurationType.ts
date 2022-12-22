@@ -45,9 +45,10 @@ export type Configuration = {
      *  */
     'removeUselessFunctionProps.enable': boolean
     /**
+     * Of course it makes no sense to use `remove`, but `mark` might be really useful
      * @default disable
      */
-    'removeOrMarkGlobalCompletions.action': 'disable' | 'mark' | 'remove'
+    'removeOrMarkGlobalLibCompletions.action': 'disable' | 'mark' | 'remove'
     /**
      * Useful for Number types.
      * Patch `toString()`: Removes arg tabstop
@@ -364,4 +365,16 @@ export type Configuration = {
      * @default false
      */
     'experiments.excludeNonJsxCompletions': boolean
+    /**
+     * Format of this setting is very close to `jsxCompletionsMap` setting:
+     * path#symbol
+     * Examples (keys in object):
+     * #join - adjust `join` symbol from every module
+     * path/win32#join - adjust `join` symbol from from path/win32 module
+     * path/
+     * Adjust actions (values in object):
+     * false - completely disable symbol(s) suggesting
+     * array of strings - change sorting of - first takes precedence for auto-imports (code actions & suggestions)
+     */
+    'autoImport.adjustBySymbol': { ['path#symbol'] }
 }
