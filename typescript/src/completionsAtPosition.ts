@@ -190,17 +190,6 @@ export const getCompletionsAtPosition = (
         )
     }
 
-    const inKeywordCompletionsResult = inKeywordCompletions(position, node, sourceFile, program, languageService)
-    if (inKeywordCompletionsResult) {
-        prior.entries.push(...inKeywordCompletionsResult.completions)
-        Object.assign(
-            prevCompletionsMap,
-            _.mapValues(inKeywordCompletionsResult.docPerCompletion, value => ({
-                documentationOverride: value,
-            })),
-        )
-    }
-
     if (c('suggestions.keywordsInsertText') === 'space') {
         prior.entries = keywordsSpace(prior.entries, scriptSnapshot, position, exactNode)
     }

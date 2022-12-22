@@ -7,7 +7,7 @@ export default (entries: ts.CompletionEntry[], languageService: ts.LanguageServi
     const ignoreAutoImportsSetting = getIgnoreAutoImportSetting(c)
 
     let newEntries = entries.filter(({ sourceDisplay, name }) => {
-        if (!sourceDisplay) return
+        if (!sourceDisplay) return true
         const targetModule = ts.displayPartsToString(sourceDisplay)
         const toIgnore = isAutoImportEntryShouldBeIgnored(ignoreAutoImportsSetting, targetModule, name)
         return !toIgnore
