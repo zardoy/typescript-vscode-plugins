@@ -175,7 +175,7 @@ export const getCompletionsAtPosition = (
     }
 
     if (node) prior.entries = defaultHelpers(prior.entries, node, languageService) ?? prior.entries
-    if (node) prior.entries = objectLiteralCompletions(prior.entries, node, languageService, options ?? {}, c) ?? prior.entries
+    if (exactNode) prior.entries = objectLiteralCompletions(prior.entries, exactNode, languageService, options ?? {}, c) ?? prior.entries
 
     const banAutoImportPackages = c('suggestions.banAutoImportPackages')
     if (banAutoImportPackages?.length)
