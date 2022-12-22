@@ -23,12 +23,12 @@ export default (entries: ts.CompletionEntry[], position: number, languageService
             if (action === 'remove') return undefined
             return {
                 ...entry,
-                sourceDisplay: [
-                    {
-                        kind: 'text',
-                        text: libCompletionEnding,
-                    },
-                ],
+                // TODO for some reason in member compl client (vscode) resolves it to [object Object] with labelDetails
+                insertText: entry.name,
+                labelDetails: {
+                    ...entry.labelDetails,
+                    description: libCompletionEnding,
+                },
             }
         }),
     )

@@ -164,7 +164,20 @@ Mark all TS code actions with `🔵`, so you can be sure they're coming from Typ
 type A<T extends 'foo' | 'bar' = ''> = ...
 ```
 
-### Builtin CodeFix Fixes
+### Builtin Code Fix Fixes
+
+With this plugin fixes some builtin code actions and these code fixes will work *correctly*:
+
+```ts
+// ctrl+s fix: only one async is added
+const syncFunction = () => {
+    await fetch()
+    await fetch()
+}
+const a = 5
+// const to let fix
+a = 6
+```
 
 ## Special Commands List
 

@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import type tslib from 'typescript/lib/tsserverlibrary'
 import inKeywordCompletions from './inKeywordCompletions'
 // import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './completions/isInBannedPosition'
@@ -32,7 +31,7 @@ export const getCompletionsAtPosition = (
     c: GetConfig,
     languageService: ts.LanguageService,
     scriptSnapshot: ts.IScriptSnapshot,
-    ts: typeof tslib,
+    formatOptions?: ts.FormatCodeSettings,
 ):
     | {
           completions: ts.CompletionInfo
@@ -45,7 +44,7 @@ export const getCompletionsAtPosition = (
     const sourceFile = program?.getSourceFile(fileName)
     if (!program || !sourceFile) return
     if (!scriptSnapshot || isInBannedPosition(position, scriptSnapshot, sourceFile)) return
-    let prior = languageService.getCompletionsAtPosition(fileName, position, options)
+    let prior = languageService.getCompletionsAtPosition(fileName, position, options, formatOptions)
     const ensurePrior = () => {
         if (!prior) prior = { entries: [], isGlobalCompletion: false, isMemberCompletion: false, isNewIdentifierLocation: false }
         return true
@@ -235,7 +234,7 @@ export const getCompletionsAtPosition = (
         })
     }
 
-    prior.entries = markOrRemoveGlobalCompletions(prior.entries, position, languageService, c) ?? prior.entries
+    if (prior.isGlobalCompletion) prior.entries = markOrRemoveGlobalCompletions(prior.entries, position, languageService, c) ?? prior.entries
     if (exactNode) prior.entries = filterJsxElements(prior.entries, exactNode, position, languageService, c) ?? prior.entries
 
     if (c('correctSorting.enable')) {

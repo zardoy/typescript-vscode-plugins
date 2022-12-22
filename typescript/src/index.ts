@@ -39,14 +39,23 @@ const decorateLanguageService = (info: ts.server.PluginCreateInfo, existingProxy
 
     let prevCompletionsMap: PrevCompletionMap
     // eslint-disable-next-line complexity
-    proxy.getCompletionsAtPosition = (fileName, position, options) => {
+    proxy.getCompletionsAtPosition = (fileName, position, options, formatOptions) => {
         const updateConfigCommand = 'updateConfig'
         if (options?.triggerCharacter?.startsWith(updateConfigCommand)) {
             _configuration = JSON.parse(options.triggerCharacter.slice(updateConfigCommand.length))
             return { entries: [] }
         }
         const specialCommandResult = options?.triggerCharacter
-            ? handleSpecialCommand(info, fileName, position, options.triggerCharacter as TriggerCharacterCommand, languageService, _configuration)
+            ? handleSpecialCommand(
+                  info,
+                  fileName,
+                  position,
+                  options.triggerCharacter as TriggerCharacterCommand,
+                  languageService,
+                  _configuration,
+                  options,
+                  formatOptions,
+              )
             : undefined
         // handled specialCommand request
         if (specialCommandResult !== undefined) return specialCommandResult as any
@@ -54,7 +63,7 @@ const decorateLanguageService = (info: ts.server.PluginCreateInfo, existingProxy
         const scriptSnapshot = info.project.getScriptSnapshot(fileName)
         // have no idea in which cases its possible, but we can't work without it
         if (!scriptSnapshot) return
-        const result = getCompletionsAtPosition(fileName, position, options, c, info.languageService, scriptSnapshot, ts)
+        const result = getCompletionsAtPosition(fileName, position, options, c, info.languageService, scriptSnapshot, formatOptions)
         if (!result) return
         prevCompletionsMap = result.prevCompletionsMap
         return result.completions
@@ -92,6 +101,12 @@ const decorateLanguageService = (info: ts.server.PluginCreateInfo, existingProxy
     decorateDefinitions(proxy, info, c)
     decorateReferences(proxy, info.languageService, c)
     decorateDocumentHighlights(proxy, info.languageService, c)
+
+    // todo arg definition
+    proxy.getCombinedCodeFix = (scope, fixId, formatOptions, preferences) => {
+        const prior = proxy.getCombinedCodeFix(scope, fixId, formatOptions, preferences)
+        return prior
+    }
 
     if (!__WEB__) {
         // dedicated syntax server (which is enabled by default), which fires navtree doesn't seem to receive onConfigurationChanged

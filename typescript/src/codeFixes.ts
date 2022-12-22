@@ -1,4 +1,3 @@
-import type tslib from 'typescript/lib/tsserverlibrary'
 import addMissingProperties from './codeFixes/addMissingProperties'
 import { GetConfig } from './types'
 import { findChildContainingPosition, getIndentFromPos } from './utils'
@@ -16,6 +15,10 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 const fixedLength = 'const'.length as 5
                 fix.changes[0]!.textChanges[0]!.span.start = start + length - fixedLength
                 fix.changes[0]!.textChanges[0]!.span.length = fixedLength
+            }
+            // don't let it trigger on ctrl+s https://github.com/microsoft/vscode/blob/e8a3071ea4344d9d48ef8a4df2c097372b0c5161/extensions/typescript-language-features/src/languageFeatures/fixAll.ts#L142
+            if (fix.fixName === 'fixAwaitInSyncFunction') {
+                fix.fixName = 'fixedFixAwaitInSyncFunction'
             }
             return fix
         })
