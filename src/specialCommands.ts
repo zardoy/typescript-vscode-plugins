@@ -278,6 +278,7 @@ export default () => {
                 const edit = new vscode.WorkspaceEdit()
                 edit.set(document.uri, tsTextChangesToVcodeTextEdits(document, fixAllEdits))
                 await vscode.workspace.applyEdit(edit)
+                return
             }
 
             if (context.triggerKind !== vscode.CodeActionTriggerKind.Invoke) return
