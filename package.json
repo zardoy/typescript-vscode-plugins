@@ -80,7 +80,7 @@
         "onLanguage:typescriptreact"
     ],
     "scripts": {
-        "start": "vscode-framework start",
+        "start": "vscode-framework start --skip-launching",
         "build": "tsc && tsc -p typescript --noEmit && vscode-framework build && pnpm build-plugin",
         "build-plugin": "node buildTsPlugin.mjs && node buildTsPlugin.mjs --browser",
         "watch-plugin": "node buildTsPlugin.mjs --watch",
