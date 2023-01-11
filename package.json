@@ -77,7 +77,8 @@
         "onLanguage:javascript",
         "onLanguage:javascriptreact",
         "onLanguage:typescript",
-        "onLanguage:typescriptreact"
+        "onLanguage:typescriptreact",
+        "onLanguage:vue"
     ],
     "scripts": {
         "start": "vscode-framework start --skip-launching",
