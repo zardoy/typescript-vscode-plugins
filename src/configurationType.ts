@@ -53,9 +53,9 @@ export type Configuration = {
     enablePlugin: boolean
     /**
      * Wether to enable support in Vue SFC files via Volar config file.
-     * Changing setting requires volar server restart
+     * Changing setting false->true->false requires volar server restart
      * Experimental.
-     * @default true
+     * @default false
      */
     enableVueSupport: boolean
     /**
