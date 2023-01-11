@@ -6,16 +6,21 @@ type ReplaceRule = {
      * e.g. `readFile`, `^readFile` (global) or `fs.readFile`
      */
     suggestion: string
+    /**
+     * Also its possible to specify any other completion properties. For example:
+     * - sourceDisplay
+     */
     filter?: {
         kind?: keyof Record<ScriptElementKind, string>
-        /** doesn't support globs and not generally recommended */
-        sourceDisplay?: boolean
         fileNamePattern?: string
         languageMode?: keyof typeof ScriptKind
     }
-    /** by default only one entry is being proccessed */
+    /** by default only first entry is proccessed */
     processMany?: boolean
     delete?: boolean
+    /**
+     * - true - original suggestion will be shown below current
+     */
     duplicateOriginal?: boolean | 'above'
     patch?: Partial<{
         name: string

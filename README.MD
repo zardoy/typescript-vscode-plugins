@@ -92,9 +92,11 @@ You can quickly disable this plugin functionality by setting this setting to fal
 
 ### Vue Support
 
-`.vue` SFC files support is enabled out of the box when [Vue Language Features (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) is installed.
+`.vue` SFC files support is disabled, but can be enabled with setting and when [Vue Language Features (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) is installed.
 
-For the first time, it will configure `volar.vueserver.configFilePath` setting, to disable Vue support use `"tsEssentialPlugins.enableVueSupport": true` setting.
+Enable now: `"tsEssentialPlugins.enableVueSupport": true` (if you're not using local `./volar.config.js`)
+
+For the first time, it will configure `volar.vueserver.configFilePath` setting.
 
 This also makes plugin work in Volar's takeover mode!
 

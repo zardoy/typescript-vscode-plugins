@@ -216,7 +216,7 @@ export const getCompletionsAtPosition = (
 
     if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 
-    const processedEntryIdxs: number[] = []
+    const processedEntries = new Set<ts.CompletionEntry>()
     for (const rule of c('replaceSuggestions')) {
         if (rule.filter?.fileNamePattern) {
             // todo replace with something better
@@ -242,8 +242,9 @@ export const getCompletionsAtPosition = (
             // todo-low (perf debt) clone probably should be used this
             const entry = prior!.entries[entryIndex]!
             if (rule.duplicateOriginal) {
-                processedEntryIdxs.push(entryIndex + 1)
-                prior!.entries.splice(rule.duplicateOriginal === 'above' ? entryIndex : entryIndex + 1, 0, { ...entry })
+                const duplicateEntry = { ...entry }
+                prior!.entries.splice(rule.duplicateOriginal === 'above' ? entryIndex : entryIndex + 1, 0, duplicateEntry)
+                processedEntries.add(duplicateEntry)
             }
 
             const { patch } = rule
@@ -259,12 +260,11 @@ export const getCompletionsAtPosition = (
                 entry.insertText = entry.name
             }
             if (rule.patch?.insertText) entry.isSnippet = true
-            processedEntryIdxs.push(entryIndex)
-            prior!.entries.splice(entryIndex, 1, entry)
+            processedEntries.add(entry)
         }
 
         entry: for (const [i, entry] of prior!.entries.entries()) {
-            if (processedEntryIdxs.includes(i)) continue
+            if (processedEntries.has(entry)) continue
             const { name } = entry
             if (!nameComparator(name)) continue
             const { fileNamePattern, languageMode, ...simpleEntryFilters } = rule.filter ?? {}
