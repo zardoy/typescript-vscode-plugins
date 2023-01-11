@@ -66,7 +66,7 @@ export default (
         }
     }
     if (specialCommand === 'getPostfixes') {
-        const scriptSnapshot = info.project.getScriptSnapshot(fileName)
+        const scriptSnapshot = info.languageServiceHost.getScriptSnapshot(fileName)
         if (!scriptSnapshot) return
         return {
             entries: [],

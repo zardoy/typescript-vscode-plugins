@@ -1,14 +1,20 @@
-import { ScriptElementKind } from 'typescript/lib/tsserverlibrary'
+import { ScriptElementKind, ScriptKind } from 'typescript/lib/tsserverlibrary'
 
 type ReplaceRule = {
-    /** e.g. `readFile`, `^readFile` (global) or `fs.readFile` */
+    /**
+     * Name of completion
+     * e.g. `readFile`, `^readFile` (global) or `fs.readFile`
+     */
     suggestion: string
     filter?: {
-        // package?: string
-        // TODO
-        kind?: keyof typeof ScriptElementKind
+        kind?: keyof Record<ScriptElementKind, string>
+        /** doesn't support globs and not generally recommended */
+        sourceDisplay?: boolean
+        fileNamePattern?: string
+        languageMode?: keyof typeof ScriptKind
     }
-    // action
+    /** by default only one entry is being proccessed */
+    processMany?: boolean
     delete?: boolean
     duplicateOriginal?: boolean | 'above'
     patch?: Partial<{
@@ -16,9 +22,14 @@ type ReplaceRule = {
         kind: keyof typeof ScriptElementKind
         /** Might be useless when `correntSorting.enable` is true */
         sortText: string
-        /** Generally not recommended */
-        // kindModifiers: string
-        insertText: string
+        insertText: string | true
+        /** Wether insertText differs from completion name */
+        snippetLike: boolean
+        labelDetails: {
+            /** on the right */
+            detail?: string
+            description?: string
+        }
     }>
     /** Works only with `correntSorting.enable` set to true (default) */
     // movePos?: number
@@ -36,9 +47,25 @@ type ReplaceRule = {
 export type Configuration = {
     /**
      * Controls wether TypeScript Essentials plugin is enabled or not.
+     * Does not affect Vue support enablement
      * @default true
      */
     enablePlugin: boolean
+    /**
+     * Wether to enable support in Vue SFC files via Volar config file.
+     * Changing setting requires volar server restart
+     * Experimental.
+     * @default true
+     */
+    enableVueSupport: boolean
+    /**
+     * @default true
+     */
+    vueSpecificImprovements: boolean
+    /**
+     * Temporary setting to enable loading config from other locations (also to expose plugin)
+     */
+    // volarLoadConfigPaths: string[]
     /**
      * Removes `Symbol`, `caller`, `prototype` everywhere
      * @default true

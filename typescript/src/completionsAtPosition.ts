@@ -22,6 +22,7 @@ import filterJsxElements from './completions/filterJsxComponents'
 import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalLibCompletions'
 import { oneOf } from '@zardoy/utils'
 import filterWIthIgnoreAutoImports from './completions/ignoreAutoImports'
+import escapeStringRegexp from 'escape-string-regexp'
 
 export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
 
@@ -32,7 +33,8 @@ export const getCompletionsAtPosition = (
     c: GetConfig,
     languageService: ts.LanguageService,
     scriptSnapshot: ts.IScriptSnapshot,
-    formatOptions?: ts.FormatCodeSettings,
+    formatOptions: ts.FormatCodeSettings | undefined,
+    additionalData: { scriptKind: ts.ScriptKind },
 ):
     | {
           completions: ts.CompletionInfo
@@ -199,24 +201,84 @@ export const getCompletionsAtPosition = (
     prior.entries = arrayMethods(prior.entries, position, sourceFile, c) ?? prior.entries
     prior.entries = jsdocDefault(prior.entries, position, sourceFile, languageService) ?? prior.entries
 
+    if ((fileName.endsWith('.vue.ts') || fileName.endsWith('.vue.js')) && c('vueSpecificImprovements') && exactNode) {
+        let node = ts.isIdentifier(exactNode) ? exactNode.parent : exactNode
+        if (ts.isPropertyAssignment(node)) node = node.parent
+        if (
+            ts.isObjectLiteralExpression(node) &&
+            ts.isCallExpression(node.parent) &&
+            ts.isIdentifier(node.parent.expression) &&
+            node.parent.expression.text === 'defineComponent'
+        ) {
+            prior.entries = prior.entries.filter(({ name, kind }) => kind === ts.ScriptElementKind.warning || !name.startsWith('__'))
+        }
+    }
+
     if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 
+    const processedEntryIdxs: number[] = []
     for (const rule of c('replaceSuggestions')) {
-        let foundIndex!: number
-        const suggestion = prior.entries.find(({ name, kind }, index) => {
-            if (rule.suggestion !== name) return false
-            if (rule.filter?.kind && kind !== rule.filter.kind) return false
-            foundIndex = index
-            return true
-        })
-        if (!suggestion) continue
+        if (rule.filter?.fileNamePattern) {
+            // todo replace with something better
+            const fileRegex = tsFull.getRegexFromPattern(tsFull.getPatternFromSpec(rule.filter.fileNamePattern, program.getCurrentDirectory(), 'files')!, false)
+            if (fileRegex && !fileRegex.test(fileName)) continue
+        }
+        if (rule.filter?.languageMode && ts.ScriptKind[rule.filter.languageMode] !== additionalData.scriptKind) continue
+        let nameComparator: (n: string) => boolean
+        if (rule.suggestion.includes('*')) {
+            const regex = new RegExp(`^${escapeStringRegexp(rule.suggestion).replaceAll('\\*', '.*')}$`)
+            nameComparator = n => regex.test(n)
+        } else {
+            nameComparator = n => n === rule.suggestion
+        }
 
-        if (rule.delete) prior.entries.splice(foundIndex, 1)
+        const entryIndexesToRemove: number[] = []
+        const processEntryWithRule = (entryIndex: number) => {
+            if (rule.delete) {
+                entryIndexesToRemove.push(entryIndex)
+                return
+            }
 
-        if (rule.duplicateOriginal) prior.entries.splice(rule.duplicateOriginal === 'above' ? foundIndex : foundIndex + 1, 0, { ...suggestion })
+            // todo-low (perf debt) clone probably should be used this
+            const entry = prior!.entries[entryIndex]!
+            if (rule.duplicateOriginal) {
+                processedEntryIdxs.push(entryIndex + 1)
+                prior!.entries.splice(rule.duplicateOriginal === 'above' ? entryIndex : entryIndex + 1, 0, { ...entry })
+            }
 
-        Object.assign(suggestion, rule.patch ?? {})
-        if (rule.patch?.insertText) suggestion.isSnippet = true
+            const { patch } = rule
+            if (patch) {
+                const { labelDetails, ...justPatch } = patch
+                if (labelDetails) {
+                    entry.labelDetails ??= {}
+                    Object.assign(entry.labelDetails, labelDetails)
+                }
+                Object.assign(entry, justPatch)
+            }
+            if (patch?.insertText === true) {
+                entry.insertText = entry.name
+            }
+            if (rule.patch?.insertText) entry.isSnippet = true
+            processedEntryIdxs.push(entryIndex)
+            prior!.entries.splice(entryIndex, 1, entry)
+        }
+
+        entry: for (const [i, entry] of prior!.entries.entries()) {
+            if (processedEntryIdxs.includes(i)) continue
+            const { name } = entry
+            if (!nameComparator(name)) continue
+            const { fileNamePattern, languageMode, ...simpleEntryFilters } = rule.filter ?? {}
+            for (const [filterKey, filterValue] of Object.entries(simpleEntryFilters)) {
+                if (entry[filterKey] !== filterValue) continue entry
+            }
+            processEntryWithRule(i)
+            if (!rule.processMany) break
+        }
+
+        let iStep = 0
+        for (const i of entryIndexesToRemove) {
+            prior.entries.splice(i - iStep++, 1)
+        }
     }
 
     // prevent vscode-builtin wrong insertText with methods snippets enabled

@@ -76,7 +76,16 @@ const defaultConfigFunc = await getDefaultConfigFunc(settingsOverride)
 
 const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, shouldHave }: { fileName?: string; shouldHave?: boolean } = {}) => {
     if (pos === undefined) throw new Error('getCompletionsAtPosition: pos is undefined')
-    const result = getCompletionsAtPositionRaw(fileName, pos, {}, defaultConfigFunc, languageService, ts.ScriptSnapshot.fromString(files[entrypoint]))
+    const result = getCompletionsAtPositionRaw(
+        fileName,
+        pos,
+        {},
+        defaultConfigFunc,
+        languageService,
+        ts.ScriptSnapshot.fromString(files[entrypoint]),
+        undefined,
+        { scriptKind: ts.ScriptKind.TSX },
+    )
     if (shouldHave) expect(result).not.toBeUndefined()
     if (!result) return
     return {
