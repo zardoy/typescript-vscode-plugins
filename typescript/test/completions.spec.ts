@@ -115,6 +115,7 @@ test('Banned positions', () => {
 test('Banned positions for all method snippets', () => {
     const cursorPositions = newFileContents(/* tsx */ `
         import {/*|*/} from 'test'
+        export {/*|*/} from 'test'
         const obj = { m$1e$2thod() {}, arrow: () => {} }
         type A = typeof obj["/*|*/"];
         a(({ a/*|*/ }) => {})
