@@ -88,6 +88,18 @@ Removes import statements from references when symbol has usages in the same fil
 
 You can quickly disable this plugin functionality by setting this setting to false. Useful for debugging a problem for example.
 
+> Note: this setting doesn't disable Vue support.
+
+### Vue Support
+
+`.vue` SFC files support is disabled, but can be enabled with setting and when [Vue Language Features (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) is installed.
+
+Enable now: `"tsEssentialPlugins.enableVueSupport": true` (if you're not using local `./volar.config.js`)
+
+For the first time, it will configure `volar.vueserver.configFilePath` setting.
+
+This also makes plugin work in Volar's takeover mode!
+
 ### Web Support
 
 > Note: when you open TS/JS file in the web for the first time you currently need to switch editors to make everything work!

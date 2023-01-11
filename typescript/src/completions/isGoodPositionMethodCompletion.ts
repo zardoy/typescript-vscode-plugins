@@ -11,7 +11,9 @@ export const isGoodPositionBuiltinMethodCompletion = (ts: typeof tslib, sourceFi
         // const obj = { method() {}, arrow: () => {} }
         // type A = typeof obj["|"]
         if (ts.isStringLiteralLike(currentNode)) return false
+        if (ts.isNamedExports(currentNode)) return false
         if (ts.isIdentifier(currentNode)) currentNode = currentNode.parent
+        if (ts.isExportSpecifier(currentNode)) return false
         if (ts.isJsxSelfClosingElement(currentNode) || ts.isJsxOpeningElement(currentNode)) return false
         if (ts.isBindingElement(currentNode) || ts.isShorthandPropertyAssignment(currentNode)) currentNode = currentNode.parent
         if (ts.isObjectBindingPattern(currentNode) || ts.isObjectLiteralExpression(currentNode)) return false

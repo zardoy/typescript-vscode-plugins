@@ -99,14 +99,15 @@ const isArrayCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
     return false
 }
 
-const isObjectCompletion = (type: ts.Type) => {
+const isObjectCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
     if (type.flags & ts.TypeFlags.Undefined) return true
+    if (checker['isArrayLikeType'](type)) return false
     if (type.flags & ts.TypeFlags.Object) {
         if ((type as ts.ObjectType).objectFlags & ts.ObjectFlags.Class) return false
         // complete with regexp?
         if (type.symbol?.escapedName === 'RegExp') return false
         return true
     }
-    if (type.isUnion()) return type.types.every(type => isObjectCompletion(type))
+    if (type.isUnion()) return type.types.every(type => isObjectCompletion(type, checker))
     return false
 }

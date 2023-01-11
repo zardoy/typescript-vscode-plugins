@@ -1,24 +1,40 @@
-import { ScriptElementKind } from 'typescript/lib/tsserverlibrary'
+import { ScriptElementKind, ScriptKind } from 'typescript/lib/tsserverlibrary'
 
 type ReplaceRule = {
-    /** e.g. `readFile`, `^readFile` (global) or `fs.readFile` */
+    /**
+     * Name of completion
+     * e.g. `readFile`, `^readFile` (global) or `fs.readFile`
+     */
     suggestion: string
+    /**
+     * Also its possible to specify any other completion properties. For example:
+     * - sourceDisplay
+     */
     filter?: {
-        // package?: string
-        // TODO
-        kind?: keyof typeof ScriptElementKind
+        kind?: keyof Record<ScriptElementKind, string>
+        fileNamePattern?: string
+        languageMode?: keyof typeof ScriptKind
     }
-    // action
+    /** by default only first entry is proccessed */
+    processMany?: boolean
     delete?: boolean
+    /**
+     * - true - original suggestion will be shown below current
+     */
     duplicateOriginal?: boolean | 'above'
     patch?: Partial<{
         name: string
         kind: keyof typeof ScriptElementKind
         /** Might be useless when `correntSorting.enable` is true */
         sortText: string
-        /** Generally not recommended */
-        // kindModifiers: string
-        insertText: string
+        insertText: string | true
+        /** Wether insertText differs from completion name */
+        snippetLike: boolean
+        labelDetails: {
+            /** on the right */
+            detail?: string
+            description?: string
+        }
     }>
     /** Works only with `correntSorting.enable` set to true (default) */
     // movePos?: number
@@ -36,9 +52,25 @@ type ReplaceRule = {
 export type Configuration = {
     /**
      * Controls wether TypeScript Essentials plugin is enabled or not.
+     * Does not affect Vue support enablement
      * @default true
      */
     enablePlugin: boolean
+    /**
+     * Wether to enable support in Vue SFC files via Volar config file.
+     * Changing setting false->true->false requires volar server restart
+     * Experimental.
+     * @default false
+     */
+    enableVueSupport: boolean
+    /**
+     * @default true
+     */
+    vueSpecificImprovements: boolean
+    /**
+     * Temporary setting to enable loading config from other locations (also to expose plugin)
+     */
+    // volarLoadConfigPaths: string[]
     /**
      * Removes `Symbol`, `caller`, `prototype` everywhere
      * @default true

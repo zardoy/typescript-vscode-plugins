@@ -1,6 +1,20 @@
 //@ts-check
 import buildTsPlugin from '@zardoy/vscode-utils/build/buildTypescriptPlugin.js'
-import { analyzeMetafile } from 'esbuild'
+import { build, analyzeMetafile } from 'esbuild'
+
+build({
+    // bundle: true,
+    // minify: !watch,
+    entryPoints: ['./typescript/src/volarConfig.ts'],
+    outfile: './out/volarConfig.js',
+    format: 'cjs',
+    logLevel: 'info',
+    platform: 'node',
+    // banner: {
+    //     js: 'let ts, tsFull;',
+    // },
+    // treeShaking: true,
+})
 
 const result = await buildTsPlugin('typescript', undefined, undefined, {
     minify: !process.argv.includes('--watch'),

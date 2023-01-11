@@ -76,7 +76,16 @@ const defaultConfigFunc = await getDefaultConfigFunc(settingsOverride)
 
 const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, shouldHave }: { fileName?: string; shouldHave?: boolean } = {}) => {
     if (pos === undefined) throw new Error('getCompletionsAtPosition: pos is undefined')
-    const result = getCompletionsAtPositionRaw(fileName, pos, {}, defaultConfigFunc, languageService, ts.ScriptSnapshot.fromString(files[entrypoint]))
+    const result = getCompletionsAtPositionRaw(
+        fileName,
+        pos,
+        {},
+        defaultConfigFunc,
+        languageService,
+        ts.ScriptSnapshot.fromString(files[entrypoint]),
+        undefined,
+        { scriptKind: ts.ScriptKind.TSX },
+    )
     if (shouldHave) expect(result).not.toBeUndefined()
     if (!result) return
     return {
@@ -108,6 +117,7 @@ test('Banned positions for all method snippets', () => {
         import {/*|*/} from 'test'
         const obj = { m$1e$2thod() {}, arrow: () => {} }
         type A = typeof obj["/*|*/"];
+        export {/*|*/} from 'test'
         a(({ a/*|*/ }) => {})
         const test = () => ({ method() {} })
         const {/*|*/} = test()

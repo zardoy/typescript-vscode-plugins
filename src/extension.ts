@@ -13,6 +13,7 @@ import figIntegration from './figIntegration'
 import apiCommands from './apiCommands'
 import onCompletionAccepted from './onCompletionAccepted'
 import specialCommands from './specialCommands'
+import vueVolarSupport from './vueVolarSupport'
 
 export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted }) => {
     let webWaitingForConfigSync = false
@@ -70,6 +71,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
     specialCommands()
 
     figIntegration()
+    vueVolarSupport()
 }
 
 export const activate = async () => {
