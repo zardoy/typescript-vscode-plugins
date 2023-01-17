@@ -18,6 +18,7 @@ export default () => {
 
     handler()
     watchExtensionSettings(['enableVueSupport'], handler)
+    vscode.extensions.onDidChange(handler)
 }
 
 const isConfigValueChanged = (id: string) => {

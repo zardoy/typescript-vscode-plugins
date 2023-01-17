@@ -23,8 +23,12 @@ import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalLibCo
 import { oneOf } from '@zardoy/utils'
 import filterWIthIgnoreAutoImports from './completions/ignoreAutoImports'
 import escapeStringRegexp from 'escape-string-regexp'
+import addSourceDefinition from './completions/addSourceDefinition'
 
-export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[] }>
+export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[]; documentationAppend?: string }>
+export type PrevCompletionsAdditionalData = {
+    enableMethodCompletion: boolean
+}
 
 export const getCompletionsAtPosition = (
     fileName: string,
@@ -40,6 +44,7 @@ export const getCompletionsAtPosition = (
           completions: ts.CompletionInfo
           /** Let default getCompletionEntryDetails to know original name or let add documentation from here */
           prevCompletionsMap: PrevCompletionMap
+          prevCompletionsAdittionalData: PrevCompletionsAdditionalData
       }
     | undefined => {
     const prevCompletionsMap: PrevCompletionMap = {}
@@ -214,6 +219,8 @@ export const getCompletionsAtPosition = (
         }
     }
 
+    prior.entries = addSourceDefinition(prior.entries, prevCompletionsMap, c) ?? prior.entries
+
     if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 
     const processedEntries = new Set<ts.CompletionEntry>()
@@ -282,7 +289,8 @@ export const getCompletionsAtPosition = (
     }
 
     // prevent vscode-builtin wrong insertText with methods snippets enabled
-    if (!isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position - 1, c)) {
+    const goodPositionForMethodCompletions = isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position - 1, c)
+    if (!goodPositionForMethodCompletions) {
         prior.entries = prior.entries.map(item => {
             if (item.isSnippet) return item
             return { ...item, insertText: (item.insertText ?? item.name).replace(/\$/g, '\\$'), isSnippet: true }
@@ -302,6 +310,9 @@ export const getCompletionsAtPosition = (
     return {
         completions: prior,
         prevCompletionsMap,
+        prevCompletionsAdittionalData: {
+            enableMethodCompletion: goodPositionForMethodCompletions,
+        },
     }
 }
 

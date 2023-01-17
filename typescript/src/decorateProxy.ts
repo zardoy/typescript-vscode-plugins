@@ -1,4 +1,4 @@
-import { getCompletionsAtPosition, PrevCompletionMap } from './completionsAtPosition'
+import { getCompletionsAtPosition, PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
 import { TriggerCharacterCommand } from './ipcTypes'
 import { getNavTreeItems } from './getPatchedNavTree'
 import decorateCodeActions from './codeActions/decorateProxy'
@@ -37,6 +37,7 @@ export const decorateLanguageService = (
     const proxy = getInitialProxy(languageService, existingProxy)
 
     let prevCompletionsMap: PrevCompletionMap
+    let prevCompletionsAdittionalData: PrevCompletionsAdditionalData
     // eslint-disable-next-line complexity
     proxy.getCompletionsAtPosition = (fileName, position, options, formatOptions) => {
         const updateConfigCommand = 'updateConfig'
@@ -66,6 +67,7 @@ export const decorateLanguageService = (
         const result = getCompletionsAtPosition(fileName, position, options, c, languageService, scriptSnapshot, formatOptions, { scriptKind })
         if (!result) return
         prevCompletionsMap = result.prevCompletionsMap
+        prevCompletionsAdittionalData = result.prevCompletionsAdittionalData
         return result.completions
     }
 
@@ -73,7 +75,7 @@ export const decorateLanguageService = (
         const program = languageService.getProgram()
         const sourceFile = program?.getSourceFile(fileName)
         if (!program || !sourceFile) return
-        const { documentationOverride } = prevCompletionsMap[entryName] ?? {}
+        const { documentationOverride, documentationAppend } = prevCompletionsMap[entryName] ?? {}
         if (documentationOverride) {
             return {
                 name: entryName,
@@ -92,7 +94,10 @@ export const decorateLanguageService = (
             data,
         )
         if (!prior) return
-        return completionEntryDetails(languageService, c, fileName, position, sourceFile, prior)
+        if (documentationAppend) {
+            prior.documentation = [...(prior.documentation ?? []), { kind: 'text', text: documentationAppend }]
+        }
+        return completionEntryDetails(languageService, c, fileName, position, sourceFile, prior, prevCompletionsAdittionalData)
     }
 
     decorateCodeActions(proxy, languageService, c)

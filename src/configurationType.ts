@@ -434,4 +434,11 @@ export type Configuration = {
      * @default []
      */
     'autoImport.alwaysIgnoreInImportAll': string[]
+    /**
+     * Enable to display additional information about source declaration in completion's documentation
+     * For now only displays function's body
+     * Requires symbol patching
+     * @default false
+     */
+    displayAdditionalInfoInCompletions: boolean
 }
