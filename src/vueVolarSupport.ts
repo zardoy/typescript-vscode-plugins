@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 import { watchExtensionSettings } from '@zardoy/vscode-utils/build/settings'
 import { extensionCtx, getExtensionSetting } from 'vscode-framework'
+import { join } from 'path-browserify'
 
 export default () => {
     const handler = () => {
@@ -23,5 +24,9 @@ export default () => {
 
 const isConfigValueChanged = (id: string) => {
     const config = vscode.workspace.getConfiguration('')
-    return config.get(id) !== config.inspect(id)!.defaultValue
+    const userValue = config.get<string>(id)
+    if (userValue === config.inspect(id)!.defaultValue) return false
+    // means that value was set by us programmatically, let's update it
+    if (userValue?.startsWith(join(extensionCtx.extensionPath, '..'))) return false
+    return true
 }
