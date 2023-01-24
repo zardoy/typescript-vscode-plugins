@@ -1,6 +1,6 @@
 import { oneOf } from '@zardoy/utils'
-import { isGoodPositionMethodCompletion } from './completions/isGoodPositionMethodCompletion'
 import { getParameterListParts } from './completions/snippetForFunctionCall'
+import { PrevCompletionsAdditionalData } from './completionsAtPosition'
 import { GetConfig } from './types'
 
 export default (
@@ -10,6 +10,7 @@ export default (
     position: number,
     sourceFile: ts.SourceFile,
     prior: ts.CompletionEntryDetails,
+    { enableMethodCompletion }: PrevCompletionsAdditionalData,
 ) => {
     if (
         c('enableMethodSnippets') &&
@@ -23,15 +24,15 @@ export default (
         )
     ) {
         // - 1 to look for possibly previous completing item
-        let goodPosition = isGoodPositionMethodCompletion(ts, fileName, sourceFile, position - 1, languageService, c)
         let rawPartsOverride: ts.SymbolDisplayPart[] | undefined
-        if (goodPosition && prior.kind === ts.ScriptElementKind.alias) {
-            goodPosition = prior.displayParts[5]?.text === 'method' || (prior.displayParts[4]?.kind === 'keyword' && prior.displayParts[4].text === 'function')
+        if (enableMethodCompletion && prior.kind === ts.ScriptElementKind.alias) {
+            enableMethodCompletion =
+                prior.displayParts[5]?.text === 'method' || (prior.displayParts[4]?.kind === 'keyword' && prior.displayParts[4].text === 'function')
             const { parts, gotMethodHit, hasOptionalParameters } = getParameterListParts(prior.displayParts)
             if (gotMethodHit) rawPartsOverride = hasOptionalParameters ? [...parts, { kind: '', text: ' ' }] : parts
         }
         const punctuationIndex = prior.displayParts.findIndex(({ kind, text }) => kind === 'punctuation' && text === ':')
-        if (goodPosition && punctuationIndex !== 1) {
+        if (enableMethodCompletion && punctuationIndex !== 1) {
             const isParsableMethod = prior.displayParts
                 // next is space
                 .slice(punctuationIndex + 2)

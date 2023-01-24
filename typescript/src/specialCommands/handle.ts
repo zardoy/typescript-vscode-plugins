@@ -1,7 +1,7 @@
 import { compact } from '@zardoy/utils'
 import postfixesAtPosition from '../completions/postfixesAtPosition'
 import { NodeAtPositionResponse, RequestOptionsTypes, RequestResponseTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
-import { findChildContainingPosition, getNodePath } from '../utils'
+import { findChildContainingExactPosition, findChildContainingPosition, getNodePath } from '../utils'
 import getEmmetCompletions from './emmet'
 import objectIntoArrayConverters from './objectIntoArrayConverters'
 
@@ -121,7 +121,7 @@ export default (
         }
     }
     if (specialCommand === 'getRangeOfSpecialValue') {
-        let node = findChildContainingPosition(ts, sourceFile, position)
+        let node = findChildContainingExactPosition(sourceFile, position)
         if (!node) return
         let targetNode: undefined | ts.Node | [number, number]
         if (ts.isIdentifier(node) && node.parent) {
@@ -130,6 +130,9 @@ export default (
                 targetNode = node.initializer
             } else if ('body' in node) {
                 targetNode = node.body as ts.Node
+            } else if (ts.isJsxOpeningElement(node) || ts.isJsxOpeningFragment(node) || ts.isJsxSelfClosingElement(node)) {
+                const pos = node.end
+                targetNode = [pos, pos]
             }
         }
 
@@ -150,6 +153,10 @@ export default (
                 }
                 if ((ts.isForStatement(n) || ts.isForOfStatement(n) || ts.isForInStatement(n) || ts.isWhileStatement(n)) && position < n.statement.pos) {
                     targetNode = n.statement
+                    return true
+                }
+                if (ts.isIfStatement(n) && position < n.thenStatement.pos) {
+                    targetNode = n.thenStatement
                     return true
                 }
                 if (ts.isIfStatement(n) && position < n.thenStatement.pos) {

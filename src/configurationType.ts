@@ -211,6 +211,7 @@ export type Configuration = {
      * We already change sorting of suggestions, but enabling this option will also make:
      * - removing `id` from input suggestions
      * - simplify textarea
+     * - removes uppercase suggestions e.g. `Foo` (write React component name after `<` for proper completions)
      * Doesn't change preview text for now!
      * @default false
      */
@@ -277,7 +278,8 @@ export type Configuration = {
     removeImportsFromReferences: boolean
     /**
      * Small definition improvements by cleaning them out:
-     * - remove node_modules definition on React.FC component click
+     * - remove node_modules type definition on React.FC components (e.g. <Foo />)
+     * - remove classes index definition on css modules (https://github.com/clinyong/vscode-css-modules/issues/63#issuecomment-1372851831)
      * @default true
      */
     miscDefinitionImprovement: boolean
@@ -434,4 +436,11 @@ export type Configuration = {
      * @default []
      */
     'autoImport.alwaysIgnoreInImportAll': string[]
+    /**
+     * Enable to display additional information about source declaration in completion's documentation
+     * For now only displays function's body
+     * Requires symbol patching
+     * @default false
+     */
+    displayAdditionalInfoInCompletions: boolean
 }
