@@ -277,7 +277,8 @@ export type Configuration = {
     removeImportsFromReferences: boolean
     /**
      * Small definition improvements by cleaning them out:
-     * - remove node_modules definition on React.FC component click
+     * - remove node_modules type definition on React.FC components (e.g. <Foo />)
+     * - remove classes index definition on css modules (https://github.com/clinyong/vscode-css-modules/issues/63#issuecomment-1372851831)
      * @default true
      */
     miscDefinitionImprovement: boolean
