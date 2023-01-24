@@ -47,7 +47,7 @@ You can force enable this by using `Enable Strict Emmet in JSX` command.
 
 #### Optional Emmet Features
 
-- cleanup input & textarea suggestions
+- cleanup suggestions (can be enabled `jsxEmmet.modernize`)
 - override `.` snippet
 
 Is not supported in the web for now.
@@ -156,6 +156,11 @@ Patches `toString()` insert function snippet on number types to remove tabStop.
 (*disabled by default*) enable with `tsEssentialPlugins.fixSuggestionsSorting`
 
 Try to restore [original](https://github.com/microsoft/TypeScript/issues/49012) properties sorting in some places such as object destructure & dot property access.
+
+### File Extension Suggestions
+
+We extend completion list with extensions from module augmentation (e.g. `.css` files if you have `declare module '*.css'`).
+But for unchecked contexts list of extensions can be extended with `tsEssentialPlugins.additionalIncludeExtensions` setting.
 
 ### Switch Exclude Covered Cases
 

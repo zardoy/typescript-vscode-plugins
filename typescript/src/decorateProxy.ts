@@ -64,7 +64,8 @@ export const decorateLanguageService = (
         const scriptKind = languageServiceHost.getScriptKind!(fileName)
         // have no idea in which cases its possible, but we can't work without it
         if (!scriptSnapshot) return
-        const result = getCompletionsAtPosition(fileName, position, options, c, languageService, scriptSnapshot, formatOptions, { scriptKind })
+        const compilerOptions = languageServiceHost.getCompilationSettings()
+        const result = getCompletionsAtPosition(fileName, position, options, c, languageService, scriptSnapshot, formatOptions, { scriptKind, compilerOptions })
         if (!result) return
         prevCompletionsMap = result.prevCompletionsMap
         prevCompletionsAdittionalData = result.prevCompletionsAdittionalData

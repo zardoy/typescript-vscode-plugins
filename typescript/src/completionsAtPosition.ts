@@ -20,7 +20,7 @@ import defaultHelpers from './completions/defaultHelpers'
 import objectLiteralCompletions from './completions/objectLiteralCompletions'
 import filterJsxElements from './completions/filterJsxComponents'
 import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalLibCompletions'
-import { oneOf } from '@zardoy/utils'
+import { compact, oneOf } from '@zardoy/utils'
 import filterWIthIgnoreAutoImports from './completions/ignoreAutoImports'
 import escapeStringRegexp from 'escape-string-regexp'
 import addSourceDefinition from './completions/addSourceDefinition'
@@ -38,7 +38,7 @@ export const getCompletionsAtPosition = (
     languageService: ts.LanguageService,
     scriptSnapshot: ts.IScriptSnapshot,
     formatOptions: ts.FormatCodeSettings | undefined,
-    additionalData: { scriptKind: ts.ScriptKind },
+    additionalData: { scriptKind: ts.ScriptKind; compilerOptions: ts.CompilerOptions },
 ):
     | {
           completions: ts.CompletionInfo
@@ -52,7 +52,18 @@ export const getCompletionsAtPosition = (
     const sourceFile = program?.getSourceFile(fileName)
     if (!program || !sourceFile) return
     if (!scriptSnapshot || isInBannedPosition(position, scriptSnapshot, sourceFile)) return
-    let prior = languageService.getCompletionsAtPosition(fileName, position, options, formatOptions)
+    const exactNode = findChildContainingExactPosition(sourceFile, position)
+    const isCheckedFile =
+        !tsFull.isSourceFileJS(sourceFile as any) || !!tsFull.isCheckJsEnabledForFile(sourceFile as any, additionalData.compilerOptions as any)
+    const unpatch = patchBuiltinMethods(c, languageService, isCheckedFile)
+    const getPrior = () => {
+        try {
+            return languageService.getCompletionsAtPosition(fileName, position, options, formatOptions)
+        } finally {
+            unpatch()
+        }
+    }
+    let prior = getPrior()
     const ensurePrior = () => {
         if (!prior) prior = { entries: [], isGlobalCompletion: false, isMemberCompletion: false, isNewIdentifierLocation: false }
         return true
@@ -62,7 +73,6 @@ export const getCompletionsAtPosition = (
     /** node that is one character behind
      * useful as in most cases we work with node that is behind the cursor */
     const leftNode = findChildContainingPosition(ts, sourceFile, position - 1)
-    const exactNode = findChildContainingExactPosition(sourceFile, position)
     if (node) {
         // #region Fake emmet
         if (
@@ -327,4 +337,42 @@ const arrayMoveItemToFrom = <T>(array: T[], originalItem: ArrayPredicate<T>, ite
     return originalItemIndex
 }
 
-const patchText = (input: string, start: number, end: number, newText: string) => input.slice(0, start) + newText + input.slice(end)
+const patchBuiltinMethods = (c: GetConfig, languageService: ts.LanguageService, isCheckedFile: boolean) => {
+    let addFileExtensions: string[] | undefined
+    const getAddFileExtensions = () => {
+        const typeChecker = languageService.getProgram()!.getTypeChecker()!
+        const ambientModules = typeChecker.getAmbientModules()
+        /** file extensions from ambient modules declarations e.g. *.css */
+        const fileExtensions = compact(
+            ambientModules.map(module => {
+                const name = module.name.slice(1, -1)
+                if (!name.startsWith('*.') || name.includes('/')) return
+                return name.slice(1)
+            }),
+        )
+        if (!isCheckedFile) fileExtensions.push(...c('additionalIncludeExtensions').map(ext => (ext === '*' ? '' : ext)))
+        return fileExtensions
+    }
+    // Its known that fuzzy completion don't work within import completions
+    // TODO! when file name without with half-ending is typed it doesn't these completions! (seems ts bug, but probably can be fixed here)
+    // e.g. /styles.css import './styles.c|' - no completions
+    const oldGetSupportedExtensions = tsFull.getSupportedExtensions
+    //@ts-expect-error monkey patch
+    tsFull.getSupportedExtensions = (options, extraFileExtensions) => {
+        addFileExtensions ??= getAddFileExtensions()
+        // though I extensions could be just inlined as is
+        return oldGetSupportedExtensions(
+            options,
+            extraFileExtensions?.length
+                ? extraFileExtensions
+                : addFileExtensions.map(ext => ({
+                      extension: ext,
+                      isMixedContent: true,
+                      scriptKind: ts.ScriptKind.Deferred,
+                  })),
+        )
+    }
+    return () => {
+        tsFull.getSupportedExtensions = oldGetSupportedExtensions
+    }
+}
