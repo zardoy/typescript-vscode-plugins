@@ -138,7 +138,7 @@ export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: 
                         }
                         return false
                     })
-                    if (moduleDeclaration?.name.getText() === '*.module.css') return false
+                    if (moduleDeclaration?.name.text === '*.module.css') return false
                 }
                 return true
             })
