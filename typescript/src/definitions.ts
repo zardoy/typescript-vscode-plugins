@@ -1,6 +1,7 @@
 import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
 import { join } from 'path-browserify'
+import { ModuleDeclaration } from 'typescript'
 
 export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: GetConfig) => {
     proxy.getDefinitionAndBoundSpan = (fileName, position) => {
@@ -35,7 +36,8 @@ export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: 
                     }
                 }
 
-                // thoughts about type definition: no impl here, will be simpler to do this in core
+                // partial fix for https://github.com/microsoft/TypeScript/issues/49033 (string literal in function call definition)
+                // thoughts about type definition: no impl here, will be simpler to do this in core instead
                 if (ts.isCallExpression(node.parent)) {
                     const parameterIndex = node.parent.arguments.indexOf(node)
                     const typeChecker = program.getTypeChecker()
@@ -116,12 +118,30 @@ export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: 
             const isJsFileExist = info.languageServiceHost.fileExists?.(jsFileName)
             if (isJsFileExist) prior.definitions = [{ ...firstDef, fileName: jsFileName }]
         }
-        if (c('miscDefinitionImprovement') && prior.definitions?.length === 2) {
-            prior.definitions = prior.definitions.filter(({ fileName, containerName }) => {
-                const isFcDef = fileName.endsWith('node_modules/@types/react/index.d.ts') && containerName === 'FunctionComponent'
-                return !isFcDef
+        if (c('miscDefinitionImprovement') && prior.definitions) {
+            const filterOutReactFcDef = prior.definitions.length === 2
+            prior.definitions = prior.definitions.filter(({ fileName, containerName, containerKind, kind, name, ...rest }) => {
+                const isFcDef = filterOutReactFcDef && fileName.endsWith('node_modules/@types/react/index.d.ts') && containerName === 'FunctionComponent'
+                if (isFcDef) return false
+                // filter out css modules index definition
+                if (containerName === 'classes' && containerKind === undefined && rest['isAmbient'] && kind === 'index' && name === '__index') {
+                    // ensure we don't filter out something important?
+                    const nodeAtDefinition = findChildContainingExactPosition(
+                        info.languageService.getProgram()!.getSourceFile(fileName)!,
+                        firstDef.textSpan.start,
+                    )
+                    let moduleDeclaration: ModuleDeclaration | undefined
+                    ts.findAncestor(nodeAtDefinition, node => {
+                        if (ts.isModuleDeclaration(node)) {
+                            moduleDeclaration = node
+                            return 'quit'
+                        }
+                        return false
+                    })
+                    if (moduleDeclaration?.name.getText() === '*.module.css') return false
+                }
+                return true
             })
-            // 11
         }
 
         if (
