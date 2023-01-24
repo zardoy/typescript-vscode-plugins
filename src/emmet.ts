@@ -1,5 +1,5 @@
-import { compact } from '@zardoy/utils'
 import * as vscode from 'vscode'
+import { compact } from '@zardoy/utils'
 import { getExtensionSetting, registerExtensionCommand } from 'vscode-framework'
 import { EmmetResult } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
@@ -33,6 +33,7 @@ export const registerEmmet = async () => {
                             lastStartOffset = undefined
                             return
                         }
+
                         lastStartOffset = curosrOffset + result.emmetTextOffset
                     }
 
@@ -142,9 +143,10 @@ const improveEmmetCompletions = <T extends Record<'label' | 'insertText' | 'sort
             if (label.startsWith('btn')) item.sortText = '073'
             if (modernEmmet) {
                 // note that it still allows to use Item* pattern
-                if (sendedText[0] && sendedText[0] !== sendedText[0].toLowerCase() && item.insertText === `<${sendedText}>\${0}</${sendedText}>`) {
+                if (sendedText[0] && !sendedText.startsWith(sendedText[0].toLowerCase()) && item.insertText === `<${sendedText}>\${0}</${sendedText}>`) {
                     return undefined
                 }
+
                 // remove id from input suggestions
                 if (label === 'inp' || label.startsWith('input:password')) {
                     item.insertText = item.insertText.replace(/ id="\${\d}"/, '')
