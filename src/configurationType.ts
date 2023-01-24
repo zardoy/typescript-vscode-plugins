@@ -192,10 +192,18 @@ export type Configuration = {
      * */
     'removeCodeFixes.enable': boolean
     /**
+     * Additional file extension to include in completions (suggestions)
+     *
+     * **For unchecked files only**, for checked files use module augmentation.
+     * Example: `["css"]` or `["*"]` that will include literally every file extension
+     * @default []
+     */
+    additionalIncludeExtensions: string[]
+    /**
      * @default ["fixMissingFunctionDeclaration"]
      * @uniqueItems true
      *  */
-    'removeCodeFixes.codefixes': ('fixMissingMember' | 'fixMissingProperties' | 'fixMissingAttributes' | 'fixMissingFunctionDeclaration')[]
+    'removeCodeFixes.codefixes': FixId[]
     /**
      * Use full-blown emmet in jsx/tsx files!
      * Requires `jsxPseudoEmmet.enabled` to be disabled and `emmet.excludeLanguages` to have `javascriptreact` and `typescriptreact`
@@ -444,3 +452,87 @@ export type Configuration = {
      */
     displayAdditionalInfoInCompletions: boolean
 }
+
+// scrapped using search editor. config: caseInsesetive, context lines: 0, regex: const fix\w+ = "[^ ]+"
+type FixId =
+    | 'addConvertToUnknownForNonOverlappingTypes'
+    | 'addMissingAsync'
+    | 'addMissingAwait'
+    | 'addMissingConst'
+    | 'addMissingDeclareProperty'
+    | 'addMissingInvocationForDecorator'
+    | 'addNameToNamelessParameter'
+    | 'annotateWithTypeFromJSDoc'
+    | 'fixConvertConstToLet'
+    | 'convertFunctionToEs6Class'
+    | 'convertLiteralTypeToMappedType'
+    | 'convertToAsyncFunction'
+    | 'fixConvertToMappedObjectType'
+    | 'convertToTypeOnlyExport'
+    | 'convertToTypeOnlyImport'
+    | 'correctQualifiedNameToIndexedAccessType'
+    | 'disableJsDiagnostics'
+    | 'disableJsDiagnostics'
+    | 'addMissingConstraint'
+    | 'fixMissingMember'
+    | 'fixMissingProperties'
+    | 'fixMissingAttributes'
+    | 'fixMissingFunctionDeclaration'
+    | 'addMissingNewOperator'
+    | 'fixAddModuleReferTypeMissingTypeof'
+    | 'addVoidToPromise'
+    | 'addVoidToPromise'
+    | 'fixAwaitInSyncFunction'
+    | 'fixCannotFindModule'
+    | 'installTypesPackage'
+    | 'fixClassDoesntImplementInheritedAbstractMember'
+    | 'fixClassIncorrectlyImplementsInterface'
+    | 'classSuperMustPrecedeThisAccess'
+    | 'constructorForDerivedNeedSuperCall'
+    | 'enableExperimentalDecorators'
+    | 'fixEnableJsxFlag'
+    | 'fixExpectedComma'
+    | 'extendsInterfaceBecomesImplements'
+    | 'forgottenThisPropertyAccess'
+    | 'fixImplicitThis'
+    | 'fixImportNonExportedMember'
+    | 'fixIncorrectNamedTupleSyntax'
+    | 'invalidImportSyntax'
+    | 'fixInvalidJsxCharacters_expression'
+    | 'fixInvalidJsxCharacters_htmlEntity'
+    | 'fixJSDocTypes_plain'
+    | 'fixJSDocTypes_nullable'
+    | 'fixMissingCallParentheses'
+    | 'fixNaNEquality'
+    | 'fixNoPropertyAccessFromIndexSignature'
+    | 'fixOverrideModifier'
+    | 'fixAddOverrideModifier'
+    | 'fixRemoveOverrideModifier'
+    | 'fixPropertyAssignment'
+    | 'fixPropertyOverrideAccessor'
+    | 'fixReturnTypeInAsyncFunction'
+    | 'fixSpelling'
+    | 'strictClassInitialization'
+    | 'addMissingPropertyDefiniteAssignmentAssertions'
+    | 'addMissingPropertyUndefinedType'
+    | 'addMissingPropertyInitializer'
+    | 'fixUnreachableCode'
+    | 'fixUnreferenceableDecoratorMetadata'
+    | 'unusedIdentifier'
+    | 'unusedIdentifier_prefix'
+    | 'unusedIdentifier_delete'
+    | 'unusedIdentifier_deleteImports'
+    | 'unusedIdentifier_infer'
+    | 'fixUnusedLabel'
+    | 'inferFromUsage'
+    | 'removeAccidentalCallParentheses'
+    | 'removeUnnecessaryAwait'
+    | 'requireInTs'
+    | 'returnValueCorrect'
+    | 'fixAddReturnStatement'
+    | 'fixRemoveBracesFromArrowFunctionBody'
+    | 'fixWrapTheBlockWithParen'
+    | 'splitTypeOnlyImport'
+    | 'useBigintLiteral'
+    | 'useDefaultImport'
+    | 'wrapJsxInFragment'
