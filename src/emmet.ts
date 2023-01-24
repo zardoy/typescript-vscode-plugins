@@ -15,6 +15,7 @@ export const registerEmmet = async () => {
 
         const emmet = await import('@vscode/emmet-helper')
         const reactLangs = ['javascriptreact', 'typescriptreact']
+        let lastStartOffset: number | undefined
         vscode.languages.registerCompletionItemProvider(
             reactLangs,
             {
@@ -23,10 +24,18 @@ export const registerEmmet = async () => {
                     const emmetConfig = vscode.workspace.getConfiguration('emmet')
                     if (isEmmetEnabled && !emmetConfig.excludeLanguages.includes(document.languageId)) return
 
-                    const result = await sendCommand<EmmetResult>('emmet-completions', { document, position })
-                    if (!result) return
-                    const offset: number = document.offsetAt(position)
-                    const sendToEmmet = document.getText().slice(offset + result.emmetTextOffset, offset)
+                    const curosrOffset: number = document.offsetAt(position)
+
+                    if (context.triggerKind !== vscode.CompletionTriggerKind.TriggerForIncompleteCompletions || !lastStartOffset) {
+                        const result = await sendCommand<EmmetResult>('emmet-completions', { document, position })
+                        if (!result) {
+                            lastStartOffset = undefined
+                            return
+                        }
+                        lastStartOffset = curosrOffset + result.emmetTextOffset
+                    }
+
+                    const sendToEmmet = document.getText().slice(lastStartOffset, curosrOffset)
                     const emmetCompletions = emmet.doComplete(
                         {
                             getText: () => sendToEmmet,
