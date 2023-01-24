@@ -84,7 +84,7 @@ const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, shouldHa
         languageService,
         ts.ScriptSnapshot.fromString(files[entrypoint]),
         undefined,
-        { scriptKind: ts.ScriptKind.TSX },
+        { scriptKind: ts.ScriptKind.TSX, compilerOptions: {} },
     )
     if (shouldHave) expect(result).not.toBeUndefined()
     if (!result) return
