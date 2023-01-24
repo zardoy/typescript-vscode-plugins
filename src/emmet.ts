@@ -1,3 +1,4 @@
+import { compact } from '@zardoy/utils'
 import * as vscode from 'vscode'
 import { getExtensionSetting, registerExtensionCommand } from 'vscode-framework'
 import { EmmetResult } from '../typescript/src/ipcTypes'
@@ -61,14 +62,16 @@ export const registerEmmet = async () => {
                     })
                     return {
                         items:
-                            improveEmmetCompletions<any>(normalizedCompletions)?.map(({ label, insertText, rangeLength, documentation, sortText }) => ({
-                                label: { label, description: 'EMMET' },
-                                // sortText is overrided if its a number
-                                sortText: Number.isNaN(+sortText) ? '075' : sortText,
-                                insertText: new vscode.SnippetString(insertText),
-                                range: new vscode.Range(position.translate(0, -rangeLength), position),
-                                documentation: documentation as string,
-                            })) ?? [],
+                            improveEmmetCompletions<any>(normalizedCompletions, sendToEmmet)?.map(
+                                ({ label, insertText, rangeLength, documentation, sortText }) => ({
+                                    label: { label, description: 'EMMET' },
+                                    // sortText is overrided if its a number
+                                    sortText: Number.isNaN(+sortText) ? '075' : sortText,
+                                    insertText: new vscode.SnippetString(insertText),
+                                    range: new vscode.Range(position.translate(0, -rangeLength), position),
+                                    documentation: documentation as string,
+                                }),
+                            ) ?? [],
                         isIncomplete: true,
                     }
                 },
@@ -124,27 +127,33 @@ function getEmmetConfiguration() {
     }
 }
 
-const improveEmmetCompletions = <T extends Record<'label' | 'insertText' | 'sortText', string>>(items: T[] | undefined) => {
+const improveEmmetCompletions = <T extends Record<'label' | 'insertText' | 'sortText', string>>(items: T[] | undefined, sendedText: string) => {
     if (!items) return
     // TODO-low make to tw= by default when twin.macro is installed?
     const dotSnippetOverride = getExtensionSetting('jsxEmmet.dotOverride')
     const modernEmmet = getExtensionSetting('jsxEmmet.modernize')
 
-    return items.map(item => {
-        const { label } = item
-        if (label === '.' && typeof dotSnippetOverride === 'string') item.insertText = dotSnippetOverride
-        // change sorting to most used
-        if (['div', 'b'].includes(label)) item.sortText = '070'
-        if (label.startsWith('btn')) item.sortText = '073'
-        if (modernEmmet) {
-            // remove id from input suggestions
-            if (label === 'inp' || label.startsWith('input:password')) {
-                item.insertText = item.insertText.replace(/ id="\${\d}"/, '')
+    return compact(
+        items.map(item => {
+            const { label } = item
+            if (label === '.' && typeof dotSnippetOverride === 'string') item.insertText = dotSnippetOverride
+            // change sorting to most used
+            if (['div', 'b'].includes(label)) item.sortText = '070'
+            if (label.startsWith('btn')) item.sortText = '073'
+            if (modernEmmet) {
+                // note that it still allows to use Item* pattern
+                if (sendedText[0] && sendedText[0] !== sendedText[0].toLowerCase() && item.insertText === `<${sendedText}>\${0}</${sendedText}>`) {
+                    return undefined
+                }
+                // remove id from input suggestions
+                if (label === 'inp' || label.startsWith('input:password')) {
+                    item.insertText = item.insertText.replace(/ id="\${\d}"/, '')
+                }
+
+                if (label === 'textarea') item.insertText = `<textarea>$1</textarea>`
             }
 
-            if (label === 'textarea') item.insertText = `<textarea>$1</textarea>`
-        }
-
-        return item
-    })
+            return item
+        }),
+    )
 }

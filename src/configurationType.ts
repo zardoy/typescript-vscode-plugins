@@ -211,6 +211,7 @@ export type Configuration = {
      * We already change sorting of suggestions, but enabling this option will also make:
      * - removing `id` from input suggestions
      * - simplify textarea
+     * - removes uppercase suggestions e.g. `Foo` (write React component name after `<` for proper completions)
      * Doesn't change preview text for now!
      * @default false
      */
