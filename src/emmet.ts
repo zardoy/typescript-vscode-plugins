@@ -25,7 +25,7 @@ export const registerEmmet = async () => {
                     const emmetConfig = vscode.workspace.getConfiguration('emmet')
                     if (isEmmetEnabled && !emmetConfig.excludeLanguages.includes(document.languageId)) return
 
-                    const curosrOffset: number = document.offsetAt(position)
+                    const cursorOffset: number = document.offsetAt(position)
 
                     if (context.triggerKind !== vscode.CompletionTriggerKind.TriggerForIncompleteCompletions || !lastStartOffset) {
                         const result = await sendCommand<EmmetResult>('emmet-completions', { document, position })
@@ -34,10 +34,10 @@ export const registerEmmet = async () => {
                             return
                         }
 
-                        lastStartOffset = curosrOffset + result.emmetTextOffset
+                        lastStartOffset = cursorOffset + result.emmetTextOffset
                     }
 
-                    const sendToEmmet = document.getText().slice(lastStartOffset, curosrOffset)
+                    const sendToEmmet = document.getText().slice(lastStartOffset, cursorOffset)
                     const emmetCompletions = emmet.doComplete(
                         {
                             getText: () => sendToEmmet,
