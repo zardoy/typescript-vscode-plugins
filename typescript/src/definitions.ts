@@ -120,16 +120,13 @@ export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: 
         }
         if (c('miscDefinitionImprovement') && prior.definitions) {
             const filterOutReactFcDef = prior.definitions.length === 2
-            prior.definitions = prior.definitions.filter(({ fileName, containerName, containerKind, kind, name, ...rest }) => {
+            prior.definitions = prior.definitions.filter(({ fileName, containerName, containerKind, kind, name, textSpan, ...rest }) => {
                 const isFcDef = filterOutReactFcDef && fileName.endsWith('node_modules/@types/react/index.d.ts') && containerName === 'FunctionComponent'
                 if (isFcDef) return false
                 // filter out css modules index definition
                 if (containerName === 'classes' && containerKind === undefined && rest['isAmbient'] && kind === 'index' && name === '__index') {
                     // ensure we don't filter out something important?
-                    const nodeAtDefinition = findChildContainingExactPosition(
-                        info.languageService.getProgram()!.getSourceFile(fileName)!,
-                        firstDef.textSpan.start,
-                    )
+                    const nodeAtDefinition = findChildContainingExactPosition(info.languageService.getProgram()!.getSourceFile(fileName)!, textSpan.start)
                     let moduleDeclaration: ModuleDeclaration | undefined
                     ts.findAncestor(nodeAtDefinition, node => {
                         if (ts.isModuleDeclaration(node)) {
@@ -138,19 +135,25 @@ export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: 
                         }
                         return false
                     })
-                    if (moduleDeclaration?.name.text === '*.module.css') return false
+                    const cssModules = ['*.module.css', '*.module.scss', '*.module.sass', '*.module.less', '*.module.styl']
+                    if (moduleDeclaration?.name.text && cssModules.includes(moduleDeclaration.name.text)) return false
                 }
                 return true
             })
         }
 
-        if (
-            c('removeModuleFileDefinitions') &&
-            prior.definitions?.length === 1 &&
-            firstDef.kind === ts.ScriptElementKind.moduleElement &&
-            firstDef.name.slice(1, -1).startsWith('*.')
-        ) {
-            return
+        if (c('removeModuleFileDefinitions')) {
+            prior.definitions = prior.definitions?.filter(def => {
+                if (
+                    def.kind === ts.ScriptElementKind.moduleElement &&
+                    def.name.slice(1, -1).startsWith('*.') &&
+                    def.containerKind === undefined &&
+                    def['isAmbient']
+                ) {
+                    return false
+                }
+                return true
+            })
         }
 
         return prior
