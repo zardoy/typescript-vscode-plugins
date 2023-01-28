@@ -46,6 +46,7 @@ export default (
         }
     }
     if (specialCommand === 'getNodeAtPosition') {
+        // ensure return data is the same as for node in getNodePath
         const node = findChildContainingPosition(ts, sourceFile, position)
         return {
             entries: [],
