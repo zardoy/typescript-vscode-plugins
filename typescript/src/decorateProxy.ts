@@ -11,6 +11,7 @@ import decorateDocumentHighlights from './documentHighlights'
 import completionEntryDetails from './completionEntryDetails'
 import { GetConfig } from './types'
 import lodashGet from 'lodash.get'
+import decorateWorkspaceSymbolSearch from './workspaceSymbolSearch'
 
 /** @internal */
 export const thisPluginMarker = '__essentialPluginsMarker__'
@@ -107,6 +108,7 @@ export const decorateLanguageService = (
     decorateDefinitions(proxy, info, c)
     decorateReferences(proxy, languageService, c)
     decorateDocumentHighlights(proxy, languageService, c)
+    decorateWorkspaceSymbolSearch(proxy, languageService, c, languageServiceHost)
 
     if (pluginSpecificSyntaxServerConfigCheck) {
         if (!__WEB__) {
