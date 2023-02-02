@@ -10,6 +10,7 @@ export const triggerCharacterCommands = [
     'getRangeOfSpecialValue',
     'turnArrayIntoObject',
     'getFixAllEdits',
+    'acceptRenameWithParams',
 ] as const
 
 export type TriggerCharacterCommand = typeof triggerCharacterCommands[number]
@@ -56,6 +57,11 @@ export type RequestOptionsTypes = {
     turnArrayIntoObject: {
         range: [number, number]
         selectedKeyName?: string
+    }
+    acceptRenameWithParams: {
+        comments: boolean
+        strings: boolean
+        alias: boolean
     }
 }
 

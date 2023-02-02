@@ -1,5 +1,6 @@
 import { compact } from '@zardoy/utils'
 import postfixesAtPosition from '../completions/postfixesAtPosition'
+import { overrideRequestPreferences } from '../decorateProxy'
 import { NodeAtPositionResponse, RequestOptionsTypes, RequestResponseTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
 import { findChildContainingExactPosition, findChildContainingPosition, getNodePath } from '../utils'
 import getEmmetCompletions from './emmet'
@@ -179,6 +180,14 @@ export default (
             }
         } else {
             return
+        }
+    }
+    if (specialCommand === 'acceptRenameWithParams') {
+        changeType<RequestOptionsTypes['acceptRenameWithParams']>(specialCommandArg)
+        overrideRequestPreferences.rename = specialCommandArg
+        return {
+            entries: [],
+            typescriptEssentialsResponse: undefined,
         }
     }
     if (specialCommand === 'pickAndInsertFunctionArguments') {

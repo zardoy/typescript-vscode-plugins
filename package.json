@@ -53,6 +53,19 @@
                 "category": "TS Essentials"
             }
         ],
+        "keybindings": [
+            {
+                "key": "ctrl+shift+enter",
+                "mac": "cmd+shift+enter",
+                "command": "tsEssentialPlugins.acceptRenameWithParams",
+                "args": {
+                    "strings": true,
+                    "comments": true,
+                    "preview": true
+                },
+                "when": "renameInputVisible && editorLangId =~ /javascript|javascriptreact|typescript|typescriptreact|vue/"
+            }
+        ],
         "typescriptServerPlugins": [
             {
                 "name": "typescript-essential-plugins",

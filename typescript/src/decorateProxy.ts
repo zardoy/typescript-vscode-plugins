@@ -1,5 +1,5 @@
 import { getCompletionsAtPosition, PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
-import { TriggerCharacterCommand } from './ipcTypes'
+import { RequestOptionsTypes, TriggerCharacterCommand } from './ipcTypes'
 import { getNavTreeItems } from './getPatchedNavTree'
 import decorateCodeActions from './codeActions/decorateProxy'
 import decorateSemanticDiagnostics from './semanticDiagnostics'
@@ -23,6 +23,10 @@ export const getInitialProxy = (languageService: ts.LanguageService, proxy = Obj
         proxy[k] = (...args: Array<Record<string, unknown>>) => x.apply(languageService, args)
     }
     return proxy
+}
+
+export const overrideRequestPreferences = {
+    rename: undefined as undefined | RequestOptionsTypes['acceptRenameWithParams'],
 }
 
 export const decorateLanguageService = (
@@ -109,6 +113,23 @@ export const decorateLanguageService = (
     decorateReferences(proxy, languageService, c)
     decorateDocumentHighlights(proxy, languageService, c)
     decorateWorkspaceSymbolSearch(proxy, languageService, c, languageServiceHost)
+    proxy.findRenameLocations = (fileName, position, findInStrings, findInComments, providePrefixAndSuffixTextForRename) => {
+        if (overrideRequestPreferences.rename) {
+            try {
+                const { comments, strings, alias } = overrideRequestPreferences.rename
+                return languageService.findRenameLocations(
+                    fileName,
+                    position,
+                    strings ?? findInStrings,
+                    comments ?? findInComments,
+                    alias ?? providePrefixAndSuffixTextForRename,
+                )
+            } finally {
+                overrideRequestPreferences.rename = undefined
+            }
+        }
+        return languageService.findRenameLocations(fileName, position, findInStrings, findInComments, providePrefixAndSuffixTextForRename)
+    }
 
     if (pluginSpecificSyntaxServerConfigCheck) {
         if (!__WEB__) {

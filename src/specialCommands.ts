@@ -265,6 +265,25 @@ export default () => {
         await vscode.workspace.applyEdit(edit)
     })
 
+    registerExtensionCommand('acceptRenameWithParams' as any, async (_, { preview = false, comments = null, strings = null, alias = null } = {}) => {
+        const editor = vscode.window.activeTextEditor
+        if (!editor) return
+        const {
+            document,
+            selection: { active: position },
+        } = editor
+        await sendCommand<RequestOptionsTypes['acceptRenameWithParams']>('acceptRenameWithParams', {
+            document,
+            position,
+            inputOptions: {
+                alias,
+                comments,
+                strings,
+            } satisfies RequestOptionsTypes['acceptRenameWithParams'],
+        })
+        await vscode.commands.executeCommand(preview ? 'acceptRenameInputWithPreview' : 'acceptRenameInput')
+    })
+
     // its actually a code action, but will be removed from there soon
     vscode.languages.registerCodeActionsProvider(defaultJsSupersetLangsWithVue, {
         async provideCodeActions(document, range, context, token) {
