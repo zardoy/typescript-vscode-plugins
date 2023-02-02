@@ -64,10 +64,6 @@ export type Configuration = {
      */
     enableVueSupport: boolean
     /**
-     * @default true
-     */
-    vueSpecificImprovements: boolean
-    /**
      * Temporary setting to enable loading config from other locations (also to expose plugin)
      */
     // volarLoadConfigPaths: string[]

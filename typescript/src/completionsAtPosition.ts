@@ -216,7 +216,9 @@ export const getCompletionsAtPosition = (
     prior.entries = arrayMethods(prior.entries, position, sourceFile, c) ?? prior.entries
     prior.entries = jsdocDefault(prior.entries, position, sourceFile, languageService) ?? prior.entries
 
-    if ((fileName.endsWith('.vue.ts') || fileName.endsWith('.vue.js')) && c('vueSpecificImprovements') && exactNode) {
+    // #region Vue (Volar) specific
+    const isVueFile = fileName.endsWith('.vue.ts') || fileName.endsWith('.vue.js')
+    if (isVueFile && exactNode) {
         let node = ts.isIdentifier(exactNode) ? exactNode.parent : exactNode
         if (ts.isPropertyAssignment(node)) node = node.parent
         if (
@@ -228,6 +230,7 @@ export const getCompletionsAtPosition = (
             prior.entries = prior.entries.filter(({ name, kind }) => kind === ts.ScriptElementKind.warning || !name.startsWith('__'))
         }
     }
+    // #endregion
 
     prior.entries = addSourceDefinition(prior.entries, prevCompletionsMap, c) ?? prior.entries
 
