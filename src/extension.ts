@@ -14,6 +14,7 @@ import apiCommands from './apiCommands'
 import onCompletionAccepted from './onCompletionAccepted'
 import specialCommands from './specialCommands'
 import vueVolarSupport from './vueVolarSupport'
+import moreCompletions from './moreCompletions'
 
 export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted }) => {
     let webWaitingForConfigSync = false
@@ -65,6 +66,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
     }
 
     experimentalPostfixes()
+    moreCompletions()
     void registerEmmet()
     webImports()
     apiCommands()

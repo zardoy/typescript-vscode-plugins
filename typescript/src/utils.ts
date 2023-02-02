@@ -185,3 +185,15 @@ export function approveCast<T2 extends Array<(node: ts.Node) => node is ts.Node>
     if (!oneOfTest) throw new Error('Tests are not provided')
     return oneOfTest.some(test => test(node))
 }
+
+export const patchMethod = <T, K extends keyof T>(obj: T, method: K, overriden: (oldMethod: T[K]) => T[K]) => {
+    const oldValue = obj[method]
+    Object.defineProperty(obj, method, {
+        value: overriden(oldValue),
+    })
+    return () => {
+        Object.defineProperty(obj, method, {
+            value: oldValue,
+        })
+    }
+}

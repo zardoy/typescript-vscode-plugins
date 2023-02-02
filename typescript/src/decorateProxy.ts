@@ -12,6 +12,7 @@ import completionEntryDetails from './completionEntryDetails'
 import { GetConfig } from './types'
 import lodashGet from 'lodash.get'
 import decorateWorkspaceSymbolSearch from './workspaceSymbolSearch'
+import decorateFormatFeatures from './decorateFormatFeatures'
 
 /** @internal */
 export const thisPluginMarker = '__essentialPluginsMarker__'
@@ -113,6 +114,7 @@ export const decorateLanguageService = (
     decorateReferences(proxy, languageService, c)
     decorateDocumentHighlights(proxy, languageService, c)
     decorateWorkspaceSymbolSearch(proxy, languageService, c, languageServiceHost)
+    decorateFormatFeatures(proxy, languageService, c)
     proxy.findRenameLocations = (fileName, position, findInStrings, findInComments, providePrefixAndSuffixTextForRename) => {
         if (overrideRequestPreferences.rename) {
             try {
