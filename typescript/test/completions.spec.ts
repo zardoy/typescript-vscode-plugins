@@ -505,7 +505,7 @@ test('In Keyword Completions', () => {
 
 test('Format ignore', () => {
     decorateFormatFeatures(languageService, { ...languageService }, defaultConfigFunc)
-    const [pos] = newFileContents(/* ts */ `
+    newFileContents(/* ts */ `
 const a = {
     //@ts-format-ignore-region
     a:   1,
