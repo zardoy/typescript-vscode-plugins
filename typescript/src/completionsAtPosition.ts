@@ -357,22 +357,23 @@ const patchBuiltinMethods = (c: GetConfig, languageService: ts.LanguageService, 
     // TODO! when file name without with half-ending is typed it doesn't these completions! (seems ts bug, but probably can be fixed here)
     // e.g. /styles.css import './styles.c|' - no completions
     const oldGetSupportedExtensions = tsFull.getSupportedExtensions
-    //@ts-expect-error monkey patch
-    tsFull.getSupportedExtensions = (options, extraFileExtensions) => {
-        addFileExtensions ??= getAddFileExtensions()
-        // though I extensions could be just inlined as is
-        return oldGetSupportedExtensions(
-            options,
-            extraFileExtensions?.length
-                ? extraFileExtensions
-                : addFileExtensions.map(ext => ({
-                      extension: ext,
-                      isMixedContent: true,
-                      scriptKind: ts.ScriptKind.Deferred,
-                  })),
-        )
-    }
+    Object.defineProperty(tsFull, 'getSupportedExtensions', {
+        value: (options, extraFileExtensions) => {
+            addFileExtensions ??= getAddFileExtensions()
+            // though I extensions could be just inlined as is
+            return oldGetSupportedExtensions(
+                options,
+                extraFileExtensions?.length
+                    ? extraFileExtensions
+                    : addFileExtensions.map(ext => ({
+                          extension: ext,
+                          isMixedContent: true,
+                          scriptKind: ts.ScriptKind.Deferred,
+                      })),
+            )
+        },
+    })
     return () => {
-        tsFull.getSupportedExtensions = oldGetSupportedExtensions
+        Object.defineProperty(tsFull, 'getSupportedExtensions', { value: oldGetSupportedExtensions })
     }
 }
