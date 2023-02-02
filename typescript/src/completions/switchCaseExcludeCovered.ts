@@ -2,6 +2,7 @@ import { oneOf } from '@zardoy/utils'
 import { cleanupEntryName } from '../utils'
 
 // implementation not even ideal, but it just works for string & enums, which are used in 99% cases
+// todo remove when 5.0 is released after 3 months
 export default (entries: ts.CompletionEntry[], position: number, sourceFile: ts.SourceFile, leftNode: ts.Node) => {
     if (!leftNode.parent?.parent) return
     let nodeComp = leftNode

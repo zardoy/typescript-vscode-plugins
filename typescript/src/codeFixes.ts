@@ -65,6 +65,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         } finally {
             tsFull.codefix.createCodeFixAction = oldCreateCodeFixAction
         }
+        // todo remove when 5.0 is released after 3 months
         // #region fix builtin codefixes/refactorings
         prior.forEach(fix => {
             if (fix.fixName === 'fixConvertConstToLet') {
