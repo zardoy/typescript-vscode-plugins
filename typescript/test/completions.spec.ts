@@ -506,24 +506,28 @@ test('In Keyword Completions', () => {
 test('Format ignore', () => {
     decorateFormatFeatures(languageService, { ...languageService }, defaultConfigFunc)
     const [pos] = newFileContents(/* ts */ `
-      const a = {
-        //@ts-format-ignore-region
-        a:   1,
-        a1:  2,
-        //@ts-format-ignore-endregion
-        b:  3,
-        //@ts-format-ignore-line
-        c:  4,
-    }
-    `)
-    const edits = languageService.getFormattingEditsForRange(entrypoint, 0, files[entrypoint]!.length, {}).filter(x => !!x.newText)
+const a = {
+    //@ts-format-ignore-region
+    a:   1,
+    a1:  2,
+    //@ts-format-ignore-endregion
+    b:  3,
+    //@ts-format-ignore-line
+    c:  4,
+}`)
+    const edits = languageService.getFormattingEditsForRange(entrypoint, 0, files[entrypoint]!.length, ts.getDefaultFormatCodeSettings())
+    // const sourceFile = languageService.getProgram()!.getSourceFile(entrypoint)!
+    // const text = sourceFile.getFullText()
+    // edits.forEach(edit => {
+    //     console.log(text.slice(0, edit.span.start) + '<<<' + edit.newText + '>>>' + text.slice(edit.span.start + edit.span.length))
+    // })
     expect(edits).toMatchInlineSnapshot(/* json */ `
       [
         {
           "newText": " ",
           "span": {
             "length": 2,
-            "start": 134,
+            "start": 108,
           },
         },
       ]
