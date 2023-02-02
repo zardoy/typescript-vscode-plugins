@@ -228,6 +228,34 @@ Some settings examples:
 > Note: changeSorting might not preserve sorting of other existing suggestions which not defined by rules, there is WIP
 > Also I'm thinking of making it learn and syncing of most-used imports automatically
 
+## Rename Features
+
+There is builtin mechanism to rename variable occurrences in strings & comments, it is disabled in VS Code without a way to enable it.
+
+However this extension also has builtin keybinding `Ctrl+Shift+Enter` that can be pressed when input box is visible to enable aforementioned behavior for renaming with preview.
+
+But note renaming in strings & comments will happen only for files in which variable is actually referenced.
+
+You can add this to `keybindings.json` to disable previewing before renaming:
+
+```js
+{
+    "key": "ctrl+shift+enter",
+    "command": "tsEssentialPlugins.acceptRenameWithParams",
+    "args": {
+        "strings": true,
+        "comments": true,
+        // "preview": true // true by default
+        // "alias": true // you can also specify here wether to introduce alias on rename if applicable (overriding global setting)
+    },
+    "when": "renameInputVisible"
+}
+```
+
+Another options that is accepted is
+
+> Note: VS Code has builtin setting to disable introducing aliases (e.g. for imports & object properties)
+
 ## Special Commands List
 
 ### Go to / Select Nodes by Kind

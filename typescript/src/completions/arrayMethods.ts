@@ -1,6 +1,6 @@
 import { GetConfig } from '../types'
 import { findChildContainingPosition, getLineTextBeforePos } from '../utils'
-import { singular } from 'pluralize'
+import pluralize from 'pluralize'
 
 const arrayMethodsToPatch = [
     'forEach',
@@ -31,7 +31,7 @@ export default (entries: ts.CompletionEntry[], position: number, sourceFile: ts.
     if (!nodeBeforeDot) return
 
     const cleanSourceText = getItemNameFromNode(nodeBeforeDot)?.replace(/^(?:all)?(.+?)(?:List)?$/, '$1')
-    let inferredName = cleanSourceText && singular(cleanSourceText)
+    let inferredName = cleanSourceText && pluralize.singular(cleanSourceText)
     const defaultItemName = c('arrayMethodsSnippets.defaultItemName')
     // both can be undefined
     if (inferredName === cleanSourceText) {

@@ -12,6 +12,9 @@ import { createRequire } from 'module'
 import { findChildContainingPosition } from '../src/utils'
 import handleCommand from '../src/specialCommands/handle'
 import _ from 'lodash'
+import decorateFormatFeatures from '../src/decorateFormatFeatures'
+
+// TODO rename file to plugin.spec.ts or move other tests
 
 const require = createRequire(import.meta.url)
 //@ts-ignore plugin expect it to set globallly
@@ -497,5 +500,36 @@ test('In Keyword Completions', () => {
           },
         },
       }
+    `)
+})
+
+test('Format ignore', () => {
+    decorateFormatFeatures(languageService, { ...languageService }, defaultConfigFunc)
+    newFileContents(/* ts */ `
+const a = {
+    //@ts-format-ignore-region
+    a:   1,
+    a1:  2,
+    //@ts-format-ignore-endregion
+    b:  3,
+    //@ts-format-ignore-line
+    c:  4,
+}`)
+    const edits = languageService.getFormattingEditsForRange(entrypoint, 0, files[entrypoint]!.length, ts.getDefaultFormatCodeSettings())
+    // const sourceFile = languageService.getProgram()!.getSourceFile(entrypoint)!
+    // const text = sourceFile.getFullText()
+    // edits.forEach(edit => {
+    //     console.log(text.slice(0, edit.span.start) + '<<<' + edit.newText + '>>>' + text.slice(edit.span.start + edit.span.length))
+    // })
+    expect(edits).toMatchInlineSnapshot(/* json */ `
+      [
+        {
+          "newText": " ",
+          "span": {
+            "length": 2,
+            "start": 108,
+          },
+        },
+      ]
     `)
 })
