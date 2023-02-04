@@ -250,15 +250,6 @@ export type Configuration = {
      */
     'jsxImproveElementsSuggestions.filterNamespaces': boolean
     /**
-     * @default false
-     */
-    'experimentalPostfixes.enable': boolean
-    /**
-     * Disable specific postfixes from this plugin
-     * @default []
-     */
-    'experimentalPostfixes.disablePostfixes': string[]
-    /**
      * Requires TS server restart
      * @default false
      *  */

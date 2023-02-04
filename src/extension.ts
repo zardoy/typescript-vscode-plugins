@@ -7,7 +7,6 @@ import { Configuration } from './configurationType'
 import webImports from './webImports'
 import { sendCommand } from './sendCommand'
 import { registerEmmet } from './emmet'
-import experimentalPostfixes from './experimentalPostfixes'
 import migrateSettings from './migrateSettings'
 import figIntegration from './figIntegration'
 import apiCommands from './apiCommands'
@@ -65,7 +64,6 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
         void possiblySyncConfig()
     }
 
-    experimentalPostfixes()
     moreCompletions()
     void registerEmmet()
     webImports()

@@ -3,7 +3,6 @@ export const passthroughExposedApiCommands = ['getNodePath', 'getSpanOfEnclosing
 export const triggerCharacterCommands = [
     ...passthroughExposedApiCommands,
     'emmet-completions',
-    'getPostfixes',
     'filterBySyntaxKind',
     'removeFunctionArgumentsTypesInSelection',
     'pickAndInsertFunctionArguments',

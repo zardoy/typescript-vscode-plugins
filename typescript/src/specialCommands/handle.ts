@@ -1,5 +1,4 @@
 import { compact } from '@zardoy/utils'
-import postfixesAtPosition from '../completions/postfixesAtPosition'
 import { overrideRequestPreferences } from '../decorateProxy'
 import { NodeAtPositionResponse, RequestOptionsTypes, RequestResponseTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
 import { findChildContainingExactPosition, findChildContainingPosition, getNodePath } from '../utils'
@@ -66,14 +65,6 @@ export default (
             entries: [],
             typescriptEssentialsResponse: nodes.map(node => nodeToApiResponse(node)),
         }
-    }
-    if (specialCommand === 'getPostfixes') {
-        const scriptSnapshot = info.languageServiceHost.getScriptSnapshot(fileName)
-        if (!scriptSnapshot) return
-        return {
-            entries: [],
-            typescriptEssentialsResponse: postfixesAtPosition(position, fileName, scriptSnapshot, info.languageService),
-        } as any
     }
     if (specialCommand === 'getFixAllEdits') {
         // code adopted is for asyncInSync fix for now
