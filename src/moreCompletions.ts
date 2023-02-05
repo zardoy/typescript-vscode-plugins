@@ -6,7 +6,7 @@ export default () => {
         defaultJsSupersetLangsWithVue,
         {
             provideCompletionItems(document, position, token, context) {
-                const regex = /\/\/@?[\w-]*/
+                const regex = /\/\/ ?@?[\w-]*/
                 let range = document.getWordRangeAtPosition(position, regex)
                 if (!range) return
                 const rangeText = document.getText(range)
@@ -14,12 +14,12 @@ export default () => {
                     return
                 }
 
-                range = range.with(range.start.translate(0, 2), range.end)
+                range = range.with(range.start.translate(0, rangeText.indexOf('@')), range.end)
                 const tsDirectives = ['@ts-format-ignore-line', '@ts-format-ignore-region', '@ts-format-ignore-endregion']
                 return tsDirectives.map((directive, i) => {
                     const completionItem = new vscode.CompletionItem(directive, vscode.CompletionItemKind.Snippet)
                     completionItem.range = range
-                    completionItem.sortText = `z${i}`
+                    completionItem.sortText = `@z${i}`
                     return completionItem
                 })
             },

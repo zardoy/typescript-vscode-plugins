@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import * as vscode from 'vscode'
 import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
-import { extensionCtx, getExtensionSettingId } from 'vscode-framework'
+import { extensionCtx, getExtensionSetting, getExtensionSettingId } from 'vscode-framework'
 import { pickObj } from '@zardoy/utils'
+import { watchExtensionSettings } from '@zardoy/vscode-utils/build/settings'
 import { Configuration } from './configurationType'
 import webImports from './webImports'
 import { sendCommand } from './sendCommand'
 import { registerEmmet } from './emmet'
-import experimentalPostfixes from './experimentalPostfixes'
 import migrateSettings from './migrateSettings'
 import figIntegration from './figIntegration'
 import apiCommands from './apiCommands'
@@ -16,12 +16,20 @@ import specialCommands from './specialCommands'
 import vueVolarSupport from './vueVolarSupport'
 import moreCompletions from './moreCompletions'
 
-export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted }) => {
+let isActivated = false
+// let erroredStatusBarItem: vscode.StatusBarItem | undefined
+
+export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted } | undefined) => {
+    if (isActivated) return
+    isActivated = true
     let webWaitingForConfigSync = false
 
     const syncConfig = () => {
+        if (!tsApi) return
         console.log('sending configure request for typescript-essential-plugins')
         const config = vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!)
+
+        tsApi.configurePlugin('typescript-essential-plugins', config)
 
         if (process.env.PLATFORM === 'node') {
             // see comment in plugin
@@ -30,8 +38,6 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
                 JSON.stringify(pickObj(config as Configuration, 'patchOutline')),
             )
         }
-
-        tsApi.configurePlugin('typescript-essential-plugins', config)
 
         if (process.env.PLATFORM === 'web') {
             webWaitingForConfigSync = true
@@ -49,7 +55,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
     })
     syncConfig()
 
-    onCompletionAccepted(tsApi)
+    if (tsApi) onCompletionAccepted(tsApi)
 
     if (process.env.PLATFORM === 'web') {
         const possiblySyncConfig = async () => {
@@ -65,7 +71,6 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
         void possiblySyncConfig()
     }
 
-    experimentalPostfixes()
     moreCompletions()
     void registerEmmet()
     webImports()
@@ -81,24 +86,47 @@ export const activate = async () => {
 
     const possiblyActivateTsPlugin = async () => {
         const tsExtension = vscode.extensions.getExtension('vscode.typescript-language-features')
-        if (!tsExtension) return
+        if (tsExtension) {
+            await tsExtension.activate()
 
-        await tsExtension.activate()
+            if (!tsExtension.exports || !tsExtension.exports.getAPI) {
+                throw new Error("TS extension doesn't export API")
+            }
 
-        if (!tsExtension.exports || !tsExtension.exports.getAPI) return
+            // Get the API from the TS extension
+            const api = tsExtension.exports.getAPI(0)
+            if (!api) {
+                throw new Error("TS extension doesn't have API")
+            }
 
-        // Get the API from the TS extension
-        const api = tsExtension.exports.getAPI(0)
-        if (!api) return
-        activateTsPlugin(api)
-        return true
+            activateTsPlugin(api)
+            return true
+        }
+
+        if (vscode.extensions.getExtension('Vue.volar') && getExtensionSetting('enableVueSupport')) {
+            activateTsPlugin(undefined)
+            return true
+        }
+
+        return false
     }
 
     const isActivated = (await possiblyActivateTsPlugin()) ?? false
     if (!isActivated) {
-        // can be also used in future, for now only when activating TS extension manually
-        const { dispose } = vscode.extensions.onDidChange(async () => {
-            if (await possiblyActivateTsPlugin()) dispose()
+        // can be also used in future, for now only when activating TS or Volar extension manually
+        const disposables = []
+        const { dispose } = vscode.extensions.onDidChange(
+            async () => {
+                if (await possiblyActivateTsPlugin()) dispose()
+            },
+            undefined,
+            disposables,
+        )
+        watchExtensionSettings(['enableVueSupport'], async () => {
+            if (await possiblyActivateTsPlugin()) {
+                // todo
+                // disposables.forEach(d => d.dispose())
+            }
         })
     }
 }

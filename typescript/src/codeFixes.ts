@@ -2,7 +2,7 @@ import _ from 'lodash'
 import addMissingProperties from './codeFixes/addMissingProperties'
 import { changeSortingOfAutoImport, getIgnoreAutoImportSetting, isAutoImportEntryShouldBeIgnored } from './adjustAutoImports'
 import { GetConfig } from './types'
-import { findChildContainingPosition, getIndentFromPos } from './utils'
+import { findChildContainingPosition, getIndentFromPos, patchMethod } from './utils'
 
 // codeFixes that I managed to put in files
 const externalCodeFixes = [addMissingProperties]
@@ -166,31 +166,41 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             const ignoreAutoImportsSetting = getIgnoreAutoImportSetting(c)
             for (const diagnostic of semanticDiagnostics) {
                 if (!errorCodes.includes(diagnostic.code)) continue
-                const oldFirst = tsFull.first
-                const oldForEachExternalModuleToImportFrom = tsFull.forEachExternalModuleToImportFrom
+                const toUnpatch: (() => any)[] = []
                 try {
-                    tsFull.first = ((fixes: FixInfo[]) => {
-                        const sortFn = changeSortingOfAutoImport(c, fixes[0]!.symbolName)
-                        fixes = _.sortBy(
-                            fixes.filter(({ fix, symbolName }) => {
-                                if (fix.kind === (ImportFixKind.PromoteTypeOnly as number)) return false
-                                const shouldBeIgnored =
-                                    c('autoImport.alwaysIgnoreInImportAll').includes(fix.moduleSpecifier) ||
-                                    isAutoImportEntryShouldBeIgnored(ignoreAutoImportsSetting, fix.moduleSpecifier, symbolName)
-                                return !shouldBeIgnored
-                            }),
-                            ({ fix }) => sortFn(fix.moduleSpecifier),
-                        )
-                        return fixes[0]
-                    }) as any
-                    // patching is fun
-                    tsFull.forEachExternalModuleToImportFrom = (program, host, preferences, _useAutoImportProvider, cb) => {
-                        return oldForEachExternalModuleToImportFrom(program, host, preferences, true, cb)
-                    }
+                    toUnpatch.push(
+                        patchMethod(
+                            tsFull,
+                            'first',
+                            () =>
+                                ((fixes: FixInfo[]) => {
+                                    const sortFn = changeSortingOfAutoImport(c, fixes[0]!.symbolName)
+                                    fixes = _.sortBy(
+                                        fixes.filter(({ fix, symbolName }) => {
+                                            if (fix.kind === (ImportFixKind.PromoteTypeOnly as number)) return false
+                                            const shouldBeIgnored =
+                                                c('autoImport.alwaysIgnoreInImportAll').includes(fix.moduleSpecifier) ||
+                                                isAutoImportEntryShouldBeIgnored(ignoreAutoImportsSetting, fix.moduleSpecifier, symbolName)
+                                            return !shouldBeIgnored
+                                        }),
+                                        ({ fix }) => sortFn(fix.moduleSpecifier),
+                                    )
+                                    return fixes[0]
+                                }) as any,
+                        ),
+                        patchMethod(
+                            tsFull,
+                            'forEachExternalModuleToImportFrom',
+                            oldForEachExternalModuleToImportFrom => (program, host, preferences, _useAutoImportProvider, cb) => {
+                                return oldForEachExternalModuleToImportFrom(program, host, preferences, true, cb)
+                            },
+                        ),
+                    )
                     importAdder.addImportFromDiagnostic({ ...diagnostic, file: sourceFile as any } as any, context)
                 } finally {
-                    tsFull.first = oldFirst
-                    tsFull.forEachExternalModuleToImportFrom = oldForEachExternalModuleToImportFrom
+                    for (const unpatch of toUnpatch) {
+                        unpatch()
+                    }
                 }
             }
             return tsFull.codefix.createCombinedCodeActions(tsFull.textChanges.ChangeTracker.with(context, importAdder.writeFixes))

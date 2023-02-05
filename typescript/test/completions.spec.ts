@@ -510,9 +510,9 @@ const a = {
     //@ts-format-ignore-region
     a:   1,
     a1:  2,
-    //@ts-format-ignore-endregion
+    // @ts-format-ignore-endregion
     b:  3,
-    //@ts-format-ignore-line
+    // @ts-format-ignore-line Any content don't care
     c:  4,
 }`)
     const edits = languageService.getFormattingEditsForRange(entrypoint, 0, files[entrypoint]!.length, ts.getDefaultFormatCodeSettings())
@@ -527,7 +527,7 @@ const a = {
           "newText": " ",
           "span": {
             "length": 2,
-            "start": 108,
+            "start": 109,
           },
         },
       ]
