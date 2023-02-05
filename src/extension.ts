@@ -29,6 +29,8 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
         console.log('sending configure request for typescript-essential-plugins')
         const config = vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!)
 
+        tsApi.configurePlugin('typescript-essential-plugins', config)
+
         if (process.env.PLATFORM === 'node') {
             // see comment in plugin
             require('fs').writeFileSync(
@@ -36,8 +38,6 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
                 JSON.stringify(pickObj(config as Configuration, 'patchOutline')),
             )
         }
-
-        tsApi.configurePlugin('typescript-essential-plugins', config)
 
         if (process.env.PLATFORM === 'web') {
             webWaitingForConfigSync = true
