@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 import { getExtensionSetting } from 'vscode-framework'
-import { TriggerCharacterCommand } from '../typescript/src/ipcTypes'
+import { passthroughExposedApiCommands, TriggerCharacterCommand } from '../typescript/src/ipcTypes'
 
 type SendCommandData<K> = {
     position: vscode.Position
@@ -10,7 +10,20 @@ type SendCommandData<K> = {
 }
 export const sendCommand = async <T, K = any>(command: TriggerCharacterCommand, sendCommandDataArg?: SendCommandData<K>): Promise<T | undefined> => {
     // plugin id disabled, languageService would not understand the special trigger character
-    if (!getExtensionSetting('enablePlugin')) return
+    if (!getExtensionSetting('enablePlugin')) {
+        console.warn('Ignoring request because plugin is disabled')
+        return
+    }
+    if (!vscode.extensions.getExtension('vscode.typescript-language-features')) {
+        const message = 'Special commands are not supported in Volar takeover mode'
+        if (passthroughExposedApiCommands.includes(command as any)) {
+            // don't spam in case of api command
+            console.error(message)
+        } else {
+            throw new Error(message)
+        }
+        return
+    }
 
     if (sendCommandDataArg?.inputOptions) {
         command = `${command}?${JSON.stringify(sendCommandDataArg.inputOptions)}` as any
