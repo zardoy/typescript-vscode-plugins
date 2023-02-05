@@ -14,6 +14,7 @@ export const sendCommand = async <T, K = any>(command: TriggerCharacterCommand, 
         console.warn('Ignoring request because plugin is disabled')
         return
     }
+
     if (!vscode.extensions.getExtension('vscode.typescript-language-features')) {
         const message = 'Special commands are not supported in Volar takeover mode'
         if (passthroughExposedApiCommands.includes(command as any)) {
@@ -22,6 +23,7 @@ export const sendCommand = async <T, K = any>(command: TriggerCharacterCommand, 
         } else {
             throw new Error(message)
         }
+
         return
     }
 
