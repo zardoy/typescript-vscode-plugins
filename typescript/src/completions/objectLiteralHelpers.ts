@@ -5,7 +5,7 @@ export default (node: ts.Node, entries: ts.CompletionEntry[]): ts.CompletionEntr
     if (ts.isObjectLiteralExpression(node) && isArrayLike(entries)) {
         return [
             {
-                name: '(array)',
+                name: '<array properties>',
                 kind: ts.ScriptElementKind.label,
                 sortText: '07',
                 insertText: '[]',

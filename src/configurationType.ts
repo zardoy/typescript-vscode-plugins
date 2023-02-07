@@ -48,7 +48,6 @@ type ReplaceRule = {
 }
 
 // For easier testing, specify every default
-// TODO support scripting
 export type Configuration = {
     /**
      * Controls wether TypeScript Essentials plugin is enabled or not.
@@ -63,6 +62,11 @@ export type Configuration = {
      * @default false
      */
     enableVueSupport: boolean
+    /**
+     * Override default setting values (except `enablePlugin` and `enableVueSupport`)
+     * @default 'no-override'
+     */
+    // overrideDefaults: 'no-override' | 'all-off' | 'recommended' | 'all-on'
     /**
      * Temporary setting to enable loading config from other locations (also to expose plugin)
      */

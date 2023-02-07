@@ -2,6 +2,7 @@
 //@ts-ignore
 import type { Configuration } from '../../src/configurationType'
 import { decorateLanguageService, getInitialProxy, thisPluginMarker } from './decorateProxy'
+import patchConfig from './patchConfig'
 
 let _configObj = {
     config: undefined! as Configuration,
@@ -14,7 +15,7 @@ const plugin: ts.server.PluginModuleFactory = ({ typescript }) => {
     return {
         create(info) {
             // receive fresh config
-            _configObj.config = info.config
+            _configObj.config = patchConfig(info.config)
             console.log('receive config', JSON.stringify(_configObj.config))
             if (info.languageService[thisPluginMarker]) return info.languageService
 
@@ -43,7 +44,7 @@ const plugin: ts.server.PluginModuleFactory = ({ typescript }) => {
         },
         onConfigurationChanged(config) {
             console.log('update config', JSON.stringify(config))
-            _configObj.config = config
+            _configObj.config = patchConfig(config)
             for (const updateConfigListener of updateConfigListeners) {
                 updateConfigListener()
             }
