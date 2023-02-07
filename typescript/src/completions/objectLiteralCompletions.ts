@@ -21,11 +21,15 @@ export default (
         const objType = typeChecker.getContextualType(node)
         if (!objType) return
         const types = objType.isUnion() ? objType.types : [objType]
-        const properties = types.flatMap(type => {
-            if (isFunctionType(type, typeChecker)) return []
-            if (isObjectCompletion(type, typeChecker)) return typeChecker.getPropertiesOfType(type)
-            return []
-        })
+        const properties = types
+            .flatMap(type => {
+                if (isFunctionType(type, typeChecker)) return []
+                if (isObjectCompletion(type, typeChecker)) return typeChecker.getPropertiesOfType(type)
+                return []
+            })
+            .filter((property, i, arr) => {
+                return !arr.find(({ name }, k) => name === property.name && i !== k)
+            })
         for (const property of properties) {
             const entry = entries.find(({ name }) => name === property.name)
             if (!entry) continue

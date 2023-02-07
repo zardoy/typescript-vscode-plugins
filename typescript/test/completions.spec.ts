@@ -314,13 +314,16 @@ test('Object Literal Completions', () => {
         usedOption,
         /*1*/
     })
+
+    const somethingWithUntions: { a: string } | { a: any[], b: string } = {/*2*/}
     `)
-    const { entriesSorted } = getCompletionsAtPosition(numPositions[1]!) ?? {}
+    const { entriesSorted: pos1 } = getCompletionsAtPosition(numPositions[1]!)!
+    const { entriesSorted: pos2 } = getCompletionsAtPosition(numPositions[2]!)!
     // todo resolve sorting problem + add tests with other keepOriginal (it was tested manually)
-    for (const entry of entriesSorted ?? []) {
+    for (const entry of [...pos1, ...pos2]) {
         entry.insertText = entry.insertText?.replaceAll('\n', '\\n')
     }
-    expect(entriesSorted).toMatchInlineSnapshot(`
+    expect(pos1).toMatchInlineSnapshot(/* json */ `
       [
         {
           "insertText": "plugins",
@@ -386,6 +389,34 @@ test('Object Literal Completions', () => {
             "detail": ": \\"\\",",
           },
           "name": "mood",
+        },
+      ]
+    `)
+    expect(pos2).toMatchInlineSnapshot(`
+      [
+        {
+          "insertText": "a",
+          "isSnippet": true,
+          "kind": "property",
+          "kindModifiers": "",
+          "name": "a",
+        },
+        {
+          "insertText": "b",
+          "isSnippet": true,
+          "kind": "property",
+          "kindModifiers": "",
+          "name": "b",
+        },
+        {
+          "insertText": "b: \\"$1\\",$0",
+          "isSnippet": true,
+          "kind": "property",
+          "kindModifiers": "",
+          "labelDetails": {
+            "detail": ": \\"\\",",
+          },
+          "name": "b",
         },
       ]
     `)
