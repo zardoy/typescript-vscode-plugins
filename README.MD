@@ -8,6 +8,8 @@
 
 See [special commands list](#special-commands-list) ans [code actions list](#contributed-code-actions)
 
+> Note: you can disable all optional features `tsEssentialPlugins.overrideDefaults` setting right after install.
+
 ### JSX Outline
 
 (*disabled by default*) Enable with `tsEssentialPlugins.patchOutline`
