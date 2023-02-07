@@ -1,6 +1,7 @@
 import { compact } from '@zardoy/utils'
 import { findChildContainingPosition } from '../utils'
 import objectSwapKeysAndValues from './objectSwapKeysAndValues'
+import changeStringReplaceToRegex from './changeStringReplaceToRegex'
 import toggleBraces from './toggleBraces'
 
 type SimplifiedRefactorInfo =
@@ -24,7 +25,7 @@ export type CodeAction = {
     tryToApply: ApplyCodeAction
 }
 
-const codeActions: CodeAction[] = [/* toggleBraces */ objectSwapKeysAndValues]
+const codeActions: CodeAction[] = [/* toggleBraces */ objectSwapKeysAndValues, changeStringReplaceToRegex]
 
 export const REFACTORS_CATEGORY = 'essential-refactors'
 
