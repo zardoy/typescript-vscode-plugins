@@ -20,14 +20,18 @@ export default (
         const typeChecker = languageService.getProgram()!.getTypeChecker()!
         const objType = typeChecker.getContextualType(node)
         if (!objType) return
-        // its doesn't return all actual properties in some cases e.g. it would be more correct to use symbols from entries, but there is a block from TS
-        const properties = objType.getProperties()
+        const types = objType.isUnion() ? objType.types : [objType]
+        const properties = types.flatMap(type => {
+            if (isFunctionType(type, typeChecker)) return []
+            if (isObjectCompletion(type, typeChecker)) return typeChecker.getPropertiesOfType(type)
+            return []
+        })
         for (const property of properties) {
             const entry = entries.find(({ name }) => name === property.name)
             if (!entry) continue
             const type = typeChecker.getTypeOfSymbolAtLocation(property, node)
             if (!type) continue
-            if (isMethodCompletionCall(type, typeChecker)) {
+            if (isFunctionType(type, typeChecker)) {
                 if (['above', 'remove'].includes(keepOriginal) && preferences.includeCompletionsWithObjectLiteralMethodSnippets) {
                     const methodEntryIndex = entries.findIndex(e => e.name === entry.name && isObjectLiteralMethodSnippet(e))
                     const methodEntry = entries[methodEntryIndex]
@@ -79,28 +83,36 @@ const isObjectLiteralMethodSnippet = (entry: ts.CompletionEntry) => {
     return detail?.startsWith('(') && detail.split('\n')[0]!.trimEnd().endsWith(')')
 }
 
-const isMethodCompletionCall = (type: ts.Type, checker: ts.TypeChecker) => {
+const isFunctionType = (type: ts.Type, checker: ts.TypeChecker) => {
     if (checker.getSignaturesOfType(type, ts.SignatureKind.Call).length > 0) return true
-    if (type.isUnion()) return type.types.some(type => isMethodCompletionCall(type, checker))
+    if (type.isUnion()) return type.types.some(type => isFunctionType(type, checker))
+}
+
+const isEverySubtype = (type: ts.UnionType, predicate: (type: ts.Type) => boolean): boolean => {
+    // union cannot consist of only undefined types
+    return type.types.every(type => {
+        if (type.flags & ts.TypeFlags.Undefined) return true
+        return predicate(type)
+    })
 }
 
 const isStringCompletion = (type: ts.Type) => {
-    if (type.flags & ts.TypeFlags.Undefined) return true
+    if (type.flags & ts.TypeFlags.Undefined) return false
     if (type.flags & ts.TypeFlags.StringLike) return true
-    if (type.isUnion()) return type.types.every(type => isStringCompletion(type))
+    if (type.isUnion()) return isEverySubtype(type, type => isStringCompletion(type))
     return false
 }
 
 const isArrayCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
     if (type.flags & ts.TypeFlags.Any) return false
-    if (type.flags & ts.TypeFlags.Undefined) return true
+    if (type.flags & ts.TypeFlags.Undefined) return false
     if (checker['isArrayLikeType'](type)) return true
-    if (type.isUnion()) return type.types.every(type => isArrayCompletion(type, checker))
+    if (type.isUnion()) return isEverySubtype(type, type => isArrayCompletion(type, checker))
     return false
 }
 
 const isObjectCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
-    if (type.flags & ts.TypeFlags.Undefined) return true
+    if (type.flags & ts.TypeFlags.Undefined) return false
     if (checker['isArrayLikeType'](type)) return false
     if (type.flags & ts.TypeFlags.Object) {
         if ((type as ts.ObjectType).objectFlags & ts.ObjectFlags.Class) return false
@@ -108,6 +120,6 @@ const isObjectCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
         if (type.symbol?.escapedName === 'RegExp') return false
         return true
     }
-    if (type.isUnion()) return type.types.every(type => isObjectCompletion(type, checker))
+    if (type.isUnion()) return isEverySubtype(type, type => isObjectCompletion(type, checker))
     return false
 }

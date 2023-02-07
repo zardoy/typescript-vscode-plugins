@@ -306,9 +306,10 @@ test('Object Literal Completions', () => {
             foo?: boolean
         }
         plugins: Array<{ name: string, setup(build) }>
+        undefinedOption: undefined
     }
 
-    const makeDay = (options: Options) => {}
+    const makeDay = (options?: Options) => {}
     makeDay({
         usedOption,
         /*1*/
@@ -337,6 +338,13 @@ test('Object Literal Completions', () => {
             "detail": ": [],",
           },
           "name": "plugins",
+        },
+        {
+          "insertText": "undefinedOption",
+          "isSnippet": true,
+          "kind": "property",
+          "kindModifiers": "",
+          "name": "undefinedOption",
         },
         {
           "insertText": "additionalOptions",
