@@ -1,7 +1,6 @@
 import { GetConfig } from './types'
-import { patchMethod } from './utils'
 
-export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig) => {
+export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
     // todo: add our formatting rules!
     // tsFull.formatting.getAllRules
 
@@ -13,8 +12,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         if (line.startsWith(expected)) return true
         return false
     }
-    const isFormattingLineIgnored = (sourceFile: ts.SourceFile, position: number) => {
-        const fullText = sourceFile.getFullText()
+    const isFormattingLineIgnored = (fullText: string, position: number) => {
         // check that lines before line are not ignored
         const linesBefore = fullText.slice(0, position).split('\n')
         if (isExpectedDirective(linesBefore[linesBefore.length - 2], '@ts-format-ignore-line')) {
@@ -32,20 +30,24 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         }
         return isInsideIgnoredRegion
     }
-    const toPatchFormatMethods = ['formatSelection', 'formatOnOpeningCurly', 'formatOnClosingCurly', 'formatOnSemicolon', 'formatOnEnter']
-    for (const toPatchFormatMethod of toPatchFormatMethods) {
-        patchMethod(tsFull.formatting, toPatchFormatMethod as any, oldFn => (...args) => {
-            const result = oldFn(...args)
-            // arg position depends on the method, so we need to find it
-            const sourceFile = args.find(arg => ts.isSourceFile(arg as any))
-            return result.filter(({ span }) => {
-                if (isFormattingLineIgnored(sourceFile as ts.SourceFile, span.start)) {
+
+    for (const method of [
+        'getFormattingEditsForDocument',
+        'getFormattingEditsForRange',
+        'getFormattingEditsAfterKeystroke',
+    ] satisfies (keyof ts.LanguageService)[]) {
+        proxy[method] = (...args) => {
+            const textChanges: ts.TextChange[] = (languageService[method] as any)(...args)
+            const fileName = args[0]
+            const scriptSnapshot = languageServiceHost.getScriptSnapshot(fileName)!
+            const fileContent = scriptSnapshot.getText(0, scriptSnapshot.getLength())
+
+            return textChanges.filter(({ span }) => {
+                if (isFormattingLineIgnored(fileContent, span.start)) {
                     return false
                 }
                 return true
             })
-        })
+        }
     }
-    // we could easily patch languageService methods getFormattingEditsForDocument, getFormattingEditsAfterKeystroke and getFormattingEditsForRange
-    // but since formatting happens in syntax server, we don't have access to actual sourceFile, so we can't provide implementation
 }

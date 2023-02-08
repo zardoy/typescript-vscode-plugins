@@ -114,7 +114,7 @@ export const decorateLanguageService = (
     decorateReferences(proxy, languageService, c)
     decorateDocumentHighlights(proxy, languageService, c)
     decorateWorkspaceSymbolSearch(proxy, languageService, c, languageServiceHost)
-    decorateFormatFeatures(proxy, languageService, c)
+    decorateFormatFeatures(proxy, languageService, languageServiceHost, c)
     proxy.findRenameLocations = (fileName, position, findInStrings, findInComments, providePrefixAndSuffixTextForRename) => {
         if (overrideRequestPreferences.rename) {
             try {
