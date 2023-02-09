@@ -3,6 +3,9 @@ import('ts-expose-internals')
 declare let ts: typeof import('typescript')
 declare let tsFull: typeof import('typescript-full')
 
+declare type FullChecker = import('typescript-full').TypeChecker
+declare type FullSourceFile = import('typescript-full').SourceFile
+
 // declare type ts = import('typescript')
 // export {}
 // export * from 'typescript'

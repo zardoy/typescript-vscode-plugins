@@ -96,8 +96,8 @@ export const getCompletionsAtPosition = (
         }
         // #endregion
     }
-    if (leftNode && !hasSuggestions && ensurePrior() && prior) {
-        prior.entries = additionalTypesSuggestions(prior.entries, program, leftNode) ?? prior.entries
+    if (node && !hasSuggestions && ensurePrior() && prior) {
+        prior.entries = additionalTypesSuggestions(prior.entries, program, node) ?? prior.entries
     }
     const addSignatureAccessCompletions = hasSuggestions ? [] : indexSignatureAccessCompletions(position, node, scriptSnapshot, sourceFile, program)
     if (addSignatureAccessCompletions.length && ensurePrior() && prior) {
