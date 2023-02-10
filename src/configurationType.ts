@@ -322,11 +322,16 @@ export type Configuration = {
      * Extend TypeScript outline!
      * Extend outline with:
      * - JSX Elements
-     * more coming soon...
-     * Should be stable enough!
+     * - Type Alias Declarations
+     * Should be stable!
      * @default false
      */
     patchOutline: boolean
+    /**
+     * Recommended to enable if you use `patchOutline`
+     * @default false
+     */
+    'outline.arraysTuplesNumberedItems': boolean
     /**
      * Exclude covered strings/enum cases in switch in completions
      * @default true

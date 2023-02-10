@@ -2,11 +2,14 @@ import { nodeModules } from './utils'
 import * as semver from 'semver'
 import { createLanguageService } from './dummyLanguageService'
 import { getCannotFindCodes } from './utils/cannotFindCodes'
+import { Configuration } from './types'
 
 // used at testing only
 declare const __TS_SEVER_PATH__: string | undefined
 
-const getPatchedNavModule = (): { getNavigationTree(...args) } => {
+type AdditionalFeatures = Record<'arraysTuplesNumberedItems', boolean>
+
+const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavigationTree(...args) } => {
     // what is happening here: grabbing & patching NavigationBar module contents from actual running JS
     const tsServerPath = typeof __TS_SEVER_PATH__ !== 'undefined' ? __TS_SEVER_PATH__ : require.main!.filename
     // current lib/tsserver.js
@@ -23,13 +26,14 @@ const getPatchedNavModule = (): { getNavigationTree(...args) } => {
         linesOffset: number
         addString?: string
         removeLines?: number
+        // transform?: (found: string, content: string, position: number) => [string?, string?]
     }
 
     const patchLocations: PatchLocation[] = [
         {
             searchString: 'function addChildrenRecursively(node)',
             linesOffset: 7,
-            addString: `
+            addString: /* js */ `
                 case ts.SyntaxKind.JsxSelfClosingElement:
                     addLeafNode(node)
                     break;
@@ -37,16 +41,45 @@ const getPatchedNavModule = (): { getNavigationTree(...args) } => {
                     startNode(node)
                     ts.forEachChild(node, addChildrenRecursively);
                     endNode()
-                break`,
+                    break;`,
         },
+        {
+            searchString: 'case 262 /* SyntaxKind.TypeAliasDeclaration */',
+            linesOffset: 3,
+            // https://github.com/microsoft/TypeScript/pull/52558/
+            addString: /* js */ `
+                case ts.SyntaxKind.TypeAliasDeclaration:
+                    addNodeWithRecursiveChild(node, node.type);
+                    break;
+            `,
+        },
+        {
+            searchString: 'case 262 /* SyntaxKind.TypeAliasDeclaration */',
+            linesOffset: 0,
+            removeLines: 1,
+        },
+        // prettier-ignore
+        ...additionalFeatures.arraysTuplesNumberedItems ? [{
+            searchString: 'function addChildrenRecursively(node)',
+            linesOffset: 7,
+            addString: /* js */ `
+                case ts.SyntaxKind.TupleType:
+                case ts.SyntaxKind.ArrayLiteralExpression:
+                    const { elements } = node;
+                    for (const [i, element] of elements.entries()) {
+                        addNodeWithRecursiveChild(element, element, ts.setTextRange(ts.factory.createIdentifier(i.toString()), element));
+                    }
+                    break;
+            `,
+        }] : [],
         {
             searchString: 'return "<unknown>";',
             linesOffset: -1,
-            addString: `
+            addString: /* js */ `
                 case ts.SyntaxKind.JsxSelfClosingElement:
-                return getNameFromJsxTag(node);
+                    return getNameFromJsxTag(node);
                 case ts.SyntaxKind.JsxElement:
-                return getNameFromJsxTag(node.openingElement);`,
+                    return getNameFromJsxTag(node.openingElement);`,
         },
     ]
 
@@ -131,10 +164,11 @@ const getPatchedNavModule = (): { getNavigationTree(...args) } => {
 
 let navModule: { getNavigationTree: any }
 
-export const getNavTreeItems = (info: ts.server.PluginCreateInfo, fileName: string) => {
-    if (!navModule) navModule = getPatchedNavModule()
+export const getNavTreeItems = (info: ts.server.PluginCreateInfo, fileName: string, additionalFeatures: AdditionalFeatures) => {
+    if (!navModule) navModule = getPatchedNavModule(additionalFeatures)
     const program = info.languageService.getProgram()
     if (!program) throw new Error('no program')
+    // sourceFile is unreliable to use here, as it's not the same as the one used within original getNavigationTree
     const sourceFile = program?.getSourceFile(fileName)
     if (!sourceFile) throw new Error('no sourceFile')
 
