@@ -1,32 +1,16 @@
-//@ts-ignore plugin expect it to set globallly
-globalThis.__WEB__ = false
 import { pickObj } from '@zardoy/utils'
-import { createLanguageService } from '../src/dummyLanguageService'
 import { getCompletionsAtPosition as getCompletionsAtPositionRaw } from '../src/completionsAtPosition'
 import type {} from 'vitest/globals'
-import ts from 'typescript/lib/tsserverlibrary'
-import { getDefaultConfigFunc } from './defaultSettings'
 import { isGoodPositionBuiltinMethodCompletion, isGoodPositionMethodCompletion } from '../src/completions/isGoodPositionMethodCompletion'
-import { getNavTreeItems } from '../src/getPatchedNavTree'
-import { createRequire } from 'module'
-import { findChildContainingPosition } from '../src/utils'
+import { findChildContainingExactPosition } from '../src/utils'
 import handleCommand from '../src/specialCommands/handle'
 import _ from 'lodash'
-import decorateFormatFeatures from '../src/decorateFormatFeatures'
+import { defaultConfigFunc, entrypoint, settingsOverride, sharedLanguageService } from './shared'
 
-// TODO rename file to plugin.spec.ts or move other tests
-
-const require = createRequire(import.meta.url)
-//@ts-ignore plugin expect it to set globallly
-globalThis.ts = globalThis.tsFull = ts
-
-const entrypoint = '/test.tsx'
-const files = { [entrypoint]: '' }
-
-const { languageService, updateProject } = createLanguageService(files)
+const { languageService, languageServiceHost, updateProject, getCurrentFile } = sharedLanguageService
 
 const getSourceFile = () => languageService.getProgram()!.getSourceFile(entrypoint)!
-const getNode = (pos: number) => findChildContainingPosition(ts, getSourceFile(), pos)
+const getNode = (pos: number) => findChildContainingExactPosition(getSourceFile(), pos)
 
 const newFileContents = (contents: string, fileName = entrypoint) => {
     const cursorPositions: number[] = []
@@ -36,8 +20,9 @@ const newFileContents = (contents: string, fileName = entrypoint) => {
         contents = contents.slice(0, cursorIndex) + contents.slice(cursorIndex + replacement.length)
         cursorPositions.push(cursorIndex)
     }
-    files[fileName] = contents
-    updateProject()
+    updateProject({
+        [fileName]: contents,
+    })
     return cursorPositions
 }
 
@@ -62,8 +47,9 @@ const fileContentsSpecialPositions = (contents: string, fileName = entrypoint) =
         }
         replacement.lastIndex -= matchLength
     }
-    files[fileName] = contents
-    updateProject()
+    updateProject({
+        [fileName]: contents,
+    })
     if (cursorPositionsOnly.some(arr => arr.length)) {
         if (process.env.CI) throw new Error('Only positions not allowed on CI')
         return cursorPositionsOnly
@@ -71,11 +57,63 @@ const fileContentsSpecialPositions = (contents: string, fileName = entrypoint) =
     return cursorPositions
 }
 
-const settingsOverride = {
-    'arrayMethodsSnippets.enable': true,
+interface CompletionPartMatcher {
+    names?: string[]
+    all?: Pick<ts.CompletionEntry, 'kind' | 'isSnippet'>
 }
-//@ts-ignore
-const defaultConfigFunc = await getDefaultConfigFunc(settingsOverride)
+
+interface CompletionMatcher {
+    exact?: CompletionPartMatcher
+    includes?: CompletionPartMatcher
+    excludes?: string[]
+}
+
+interface CodeActionMatcher {
+    apply?: {
+        name: string
+    }
+}
+
+const fourslashLikeTester = (contents: string, fileName = entrypoint) => {
+    const [positive, _negative, numberedPositions] = fileContentsSpecialPositions(contents, fileName)
+    return {
+        completion: (marker: number | number[], matcher: CompletionMatcher, meta?) => {
+            for (const mark of Array.isArray(marker) ? marker : [marker]) {
+                if (numberedPositions[mark] === undefined) throw new Error(`No marker ${mark} found`)
+                const result = getCompletionsAtPosition(numberedPositions[mark]!, { shouldHave: true })!
+                const message = ` at marker ${mark}`
+                const { exact, includes, excludes } = matcher
+                if (exact) {
+                    const { names, all } = exact
+                    if (names) {
+                        expect(result?.entryNames, message).toEqual(names)
+                    }
+                    if (all) {
+                        for (const entry of result.entries) {
+                            expect(entry, entry.name + message).toContain(all)
+                        }
+                    }
+                }
+                if (includes) {
+                    const { names, all } = includes
+                    if (names) {
+                        expect(result?.entryNames, message).toContain(names)
+                    }
+                    if (all) {
+                        for (const entry of result.entries.filter(e => names?.includes(e.name))) {
+                            expect(entry, entry.name + message).toContain(all)
+                        }
+                    }
+                }
+                if (excludes) {
+                    expect(result?.entryNames, message).not.toContain(excludes)
+                }
+            }
+        },
+        // TODO implement
+        codeAction: (marker: number | number[], matcher: CodeActionMatcher, meta?) => {},
+    }
+}
 
 const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, shouldHave }: { fileName?: string; shouldHave?: boolean } = {}) => {
     if (pos === undefined) throw new Error('getCompletionsAtPosition: pos is undefined')
@@ -85,7 +123,7 @@ const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, shouldHa
         {},
         defaultConfigFunc,
         languageService,
-        ts.ScriptSnapshot.fromString(files[entrypoint]),
+        languageServiceHost.getScriptSnapshot(entrypoint)!,
         undefined,
         { scriptKind: ts.ScriptKind.TSX, compilerOptions: {} },
     )
@@ -277,7 +315,7 @@ test('Switch Case Exclude Covered', () => {
 })
 
 test('Case-sensetive completions', () => {
-    settingsOverride['caseSensitiveCompletions'] = true
+    settingsOverride.caseSensitiveCompletions = true
     const [_positivePositions, _negativePositions, numPositions] = fileContentsSpecialPositions(/* ts */ `
         const a = {
             TestItem: 5,
@@ -294,6 +332,44 @@ test('Case-sensetive completions', () => {
         const { entryNames } = getCompletionsAtPosition(pos) ?? {}
         expect(entryNames, pos.toString()).toEqual(['3t', 'testItem'])
     }
+})
+
+test('Omit<..., ""> suggestions', () => {
+    const tester = fourslashLikeTester(/* ts */ `
+      interface A {
+          a: string;
+          b: number;
+      }
+      type B = Omit<A, "/*1*/">;
+      type B = Omit<A, "a" | "/*2*/">;
+    `)
+    tester.completion(1, {
+        exact: {
+            names: ['a', 'b'],
+        },
+    })
+    tester.completion(2, {
+        exact: {
+            names: ['b'],
+        },
+    })
+})
+
+test('Additional types suggestions', () => {
+    const tester = fourslashLikeTester(/* ts */ `
+      type A<T /*1*/> = T;
+      type A<T extends 'a' | 'b' = '/*2*/'> = T;
+    `)
+    tester.completion(1, {
+        exact: {
+            names: ['extends'],
+        },
+    })
+    tester.completion(2, {
+        exact: {
+            names: ['a', 'b'],
+        },
+    })
 })
 
 test('Object Literal Completions', () => {
@@ -392,88 +468,23 @@ test('Object Literal Completions', () => {
         },
       ]
     `)
-    expect(pos2).toMatchInlineSnapshot(`
+    expect(pos2.map(x => x.insertText)).toMatchInlineSnapshot(`
       [
-        {
-          "insertText": "a",
-          "isSnippet": true,
-          "kind": "property",
-          "kindModifiers": "",
-          "name": "a",
-        },
-        {
-          "insertText": "b",
-          "isSnippet": true,
-          "kind": "property",
-          "kindModifiers": "",
-          "name": "b",
-        },
-        {
-          "insertText": "b: \\"$1\\",$0",
-          "isSnippet": true,
-          "kind": "property",
-          "kindModifiers": "",
-          "labelDetails": {
-            "detail": ": \\"\\",",
-          },
-          "name": "b",
-        },
+        "a",
+        "b",
+        "b: \\"$1\\",$0",
       ]
     `)
 })
 
-// TODO move/remove this test from here
-test('Patched navtree (outline)', () => {
-    globalThis.__TS_SEVER_PATH__ = require.resolve('typescript/lib/tsserver')
-    newFileContents(/* tsx */ `
-        const classes = {
-            header: '...',
-            title: '...'
-        }
-        function A() {
-            return <Notification className="test another" id="yes">
-                before
-                <div id="ok">
-                    <div />
-                    <span class="good" />
-                </div>
-                after
-            </Notification>
-        }
-    `)
-    const navTreeItems: ts.NavigationTree = getNavTreeItems({ languageService, languageServiceHost: {} } as any, entrypoint)
-    const simplify = (items: ts.NavigationTree[]) => {
-        const newItems: { text: any; childItems? }[] = []
-        for (const { text, childItems } of items) {
-            if (text === 'classes') continue
-            newItems.push({ text, ...(childItems ? { childItems: simplify(childItems) } : {}) })
-        }
-        return newItems
-    }
-    expect(simplify(navTreeItems.childItems ?? [])).toMatchInlineSnapshot(/* json */ `
-      [
-        {
-          "childItems": [
-            {
-              "childItems": [
-                {
-                  "childItems": [
-                    {
-                      "text": "div",
-                    },
-                    {
-                      "text": "span.good",
-                    },
-                  ],
-                  "text": "div#ok",
-                },
-              ],
-              "text": "Notification.test.another#yes",
-            },
-          ],
-          "text": "A",
-        },
-      ]
+test('Extract to type / interface name inference', () => {
+    fourslashLikeTester(/* ts */ `
+        const foo: { bar: string; } = { bar: 'baz' }
+        const foo = { bar: 'baz' } satisfies { bar: 5 }
+
+        const fn = (foo: { bar: 'baz' }, foo = {} as { bar: 'baz' }) => {}
+
+        const obj = { foo: { bar: 'baz' } as { bar: string; } }
     `)
 })
 
@@ -539,36 +550,5 @@ test('In Keyword Completions', () => {
           },
         },
       }
-    `)
-})
-
-test('Format ignore', () => {
-    decorateFormatFeatures(languageService, { ...languageService }, defaultConfigFunc)
-    newFileContents(/* ts */ `
-const a = {
-    //@ts-format-ignore-region
-    a:   1,
-    a1:  2,
-    // @ts-format-ignore-endregion
-    b:  3,
-    // @ts-format-ignore-line Any content don't care
-    c:  4,
-}`)
-    const edits = languageService.getFormattingEditsForRange(entrypoint, 0, files[entrypoint]!.length, ts.getDefaultFormatCodeSettings())
-    // const sourceFile = languageService.getProgram()!.getSourceFile(entrypoint)!
-    // const text = sourceFile.getFullText()
-    // edits.forEach(edit => {
-    //     console.log(text.slice(0, edit.span.start) + '<<<' + edit.newText + '>>>' + text.slice(edit.span.start + edit.span.length))
-    // })
-    expect(edits).toMatchInlineSnapshot(/* json */ `
-      [
-        {
-          "newText": " ",
-          "span": {
-            "length": 2,
-            "start": 109,
-          },
-        },
-      ]
     `)
 })

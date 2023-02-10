@@ -100,7 +100,7 @@
         "watch-plugin": "node buildTsPlugin.mjs --watch",
         "lint": "eslint src/**",
         "test": "pnpm test-plugin --run && pnpm integration-test",
-        "test-plugin": "vitest --globals --dir typescript/test/",
+        "test-plugin": "vitest --globals --dir typescript/test/ --environment ts-plugin",
         "integration-test": "node integration/prerun.mjs && tsc -p tsconfig.test.json && node testsOut/runTests.js",
         "integration-test:watch": "chokidar \"integration/**\" -c \"pnpm integration-test\" --initial",
         "postinstall": "patch-package"
@@ -118,7 +118,9 @@
         "type-fest": "^2.13.1",
         "typed-jsonfile": "^0.2.1",
         "typescript": "^4.9.3",
+        "vite": "^4.1.1",
         "vitest": "^0.26.0",
+        "vitest-environment-ts-plugin": "./vitest-environment-ts-plugin",
         "vscode-manifest": "^0.0.4"
     },
     "pnpm": {
