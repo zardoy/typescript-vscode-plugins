@@ -1,4 +1,4 @@
-import { CodeAction } from './getCodeActions'
+import { CodeAction } from '../getCodeActions'
 import escapeStringRegexp from 'escape-string-regexp'
 
 const nodeToSpan = (node: ts.Node): ts.TextSpan => {

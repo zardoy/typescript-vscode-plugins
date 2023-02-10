@@ -1,5 +1,5 @@
-import { approveCast } from '../utils'
-import { CodeAction } from './getCodeActions'
+import { approveCast } from '../../utils'
+import { CodeAction } from '../getCodeActions'
 
 const nodeToSpan = (node: ts.Node): ts.TextSpan => {
     const start = node.pos + (node.getLeadingTriviaWidth() ?? 0)
