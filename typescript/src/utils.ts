@@ -1,4 +1,5 @@
 import { SetOptional } from 'type-fest'
+import * as semver from 'semver'
 
 export function findChildContainingPosition(typescript: typeof ts, sourceFile: ts.SourceFile, position: number): ts.Node | undefined {
     function find(node: ts.Node): ts.Node | undefined {
@@ -115,6 +116,9 @@ export const boostExistingSuggestions = (entries: ts.CompletionEntry[], predicat
             .reduce((a, b) => a - b)
     })
 }
+
+// semver: can't use compare as it incorrectly works with build postfix
+export const isTs5 = semver.major(ts.version) >= 5
 
 // Workaround esbuild bundle modules
 export const nodeModules = __WEB__

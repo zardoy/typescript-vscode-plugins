@@ -3,7 +3,7 @@ import inKeywordCompletions from './inKeywordCompletions'
 // import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './completions/isInBannedPosition'
 import { GetConfig } from './types'
-import { findChildContainingExactPosition, findChildContainingPosition } from './utils'
+import { findChildContainingExactPosition, findChildContainingPosition, isTs5 } from './utils'
 import indexSignatureAccessCompletions from './completions/indexSignatureAccess'
 import fixPropertiesSorting from './completions/fixPropertiesSorting'
 import { isGoodPositionBuiltinMethodCompletion } from './completions/isGoodPositionMethodCompletion'
@@ -60,7 +60,7 @@ export const getCompletionsAtPosition = (
         try {
             return languageService.getCompletionsAtPosition(fileName, position, options, formatOptions)
         } finally {
-            unpatch()
+            unpatch?.()
         }
     }
     let prior = getPrior()
@@ -341,6 +341,8 @@ const arrayMoveItemToFrom = <T>(array: T[], originalItem: ArrayPredicate<T>, ite
 }
 
 const patchBuiltinMethods = (c: GetConfig, languageService: ts.LanguageService, isCheckedFile: boolean) => {
+    if (isTs5 && (isCheckedFile || !c('additionalIncludeExtensions').length)) return
+
     let addFileExtensions: string[] | undefined
     const getAddFileExtensions = () => {
         const typeChecker = languageService.getProgram()!.getTypeChecker()!

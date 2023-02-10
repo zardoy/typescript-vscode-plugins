@@ -1,8 +1,6 @@
-import { nodeModules } from './utils'
-import * as semver from 'semver'
+import { isTs5, nodeModules } from './utils'
 import { createLanguageService } from './dummyLanguageService'
 import { getCannotFindCodes } from './utils/cannotFindCodes'
-import { Configuration } from './types'
 
 // used at testing only
 declare const __TS_SEVER_PATH__: string | undefined
@@ -83,8 +81,6 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
         },
     ]
 
-    // semver: can't use compare as it incorrectly works with build postfix
-    const isTs5 = semver.major(ts.version) >= 5
     const {
         markerModuleStart,
         markerModuleEnd,
