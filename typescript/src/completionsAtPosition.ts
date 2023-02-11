@@ -24,10 +24,29 @@ import { compact, oneOf } from '@zardoy/utils'
 import filterWIthIgnoreAutoImports from './completions/ignoreAutoImports'
 import escapeStringRegexp from 'escape-string-regexp'
 import addSourceDefinition from './completions/addSourceDefinition'
+import { sharedCompletionContext } from './completions/sharedContext'
+import displayImportedInfo from './completions/displayImportedInfo'
 
-export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[]; documentationAppend?: string }>
+export type PrevCompletionMap = Record<
+    string,
+    {
+        originalName?: string
+        /** use only if codeactions cant be returned (no source) */
+        documentationOverride?: string | ts.SymbolDisplayPart[]
+        detailPrepend?: string
+        documentationAppend?: string
+        // textChanges?: ts.TextChange[]
+    }
+>
 export type PrevCompletionsAdditionalData = {
     enableMethodCompletion: boolean
+}
+
+type GetCompletionAtPositionReturnType = {
+    completions: ts.CompletionInfo
+    /** Let default getCompletionEntryDetails to know original name or let add documentation from here */
+    prevCompletionsMap: PrevCompletionMap
+    prevCompletionsAdittionalData: PrevCompletionsAdditionalData
 }
 
 export const getCompletionsAtPosition = (
@@ -39,14 +58,7 @@ export const getCompletionsAtPosition = (
     scriptSnapshot: ts.IScriptSnapshot,
     formatOptions: ts.FormatCodeSettings | undefined,
     additionalData: { scriptKind: ts.ScriptKind; compilerOptions: ts.CompilerOptions },
-):
-    | {
-          completions: ts.CompletionInfo
-          /** Let default getCompletionEntryDetails to know original name or let add documentation from here */
-          prevCompletionsMap: PrevCompletionMap
-          prevCompletionsAdittionalData: PrevCompletionsAdditionalData
-      }
-    | undefined => {
+): GetCompletionAtPositionReturnType | undefined => {
     const prevCompletionsMap: PrevCompletionMap = {}
     const program = languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
@@ -55,6 +67,18 @@ export const getCompletionsAtPosition = (
     const exactNode = findChildContainingExactPosition(sourceFile, position)
     const isCheckedFile =
         !tsFull.isSourceFileJS(sourceFile as any) || !!tsFull.isCheckJsEnabledForFile(sourceFile as any, additionalData.compilerOptions as any)
+    Object.assign(sharedCompletionContext, {
+        position,
+        languageService,
+        sourceFile,
+        program,
+        isCheckedFile,
+        node: exactNode,
+        prevCompletionsMap,
+        c,
+        formatOptions: formatOptions || {},
+        preferences: options || {},
+    } satisfies typeof sharedCompletionContext)
     const unpatch = patchBuiltinMethods(c, languageService, isCheckedFile)
     const getPrior = () => {
         try {
@@ -233,6 +257,7 @@ export const getCompletionsAtPosition = (
     // #endregion
 
     prior.entries = addSourceDefinition(prior.entries, prevCompletionsMap, c) ?? prior.entries
+    displayImportedInfo(prior.entries)
 
     if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 

@@ -114,6 +114,12 @@ export type Configuration = {
      * @default space
      */
     'suggestions.keywordsInsertText': 'none' | 'space'
+    /**
+     * Will be `format-short` by default in future as super useful!
+     * Requires symbol patch
+     * @default disable
+     */
+    'suggestions.displayImportedInfo': 'disable' | 'short-format' | 'long-format'
     // TODO! corrent watching!
     /**
      * Wether to enable snippets for array methods like `items.map(item => )`
@@ -447,9 +453,28 @@ export type Configuration = {
      */
     'autoImport.alwaysIgnoreInImportAll': string[]
     /**
+     * @default {}
+     */
+    'autoImport.changeToNamespaceImport': {
+        [module: string]: {
+            /**
+             * @default module (key)
+             */
+            namespace?: string
+            /**
+             * @default false
+             */
+            useDefaultImport?: boolean
+            /**
+             * Set to `false` if module is acessible from global variable
+             * @default true */
+            addImport?: boolean
+        }
+    }
+    /**
      * Enable to display additional information about source declaration in completion's documentation
      * For now only displays function's body
-     * Requires symbol patching
+     * Requires symbol patch
      * @default false
      */
     displayAdditionalInfoInCompletions: boolean
