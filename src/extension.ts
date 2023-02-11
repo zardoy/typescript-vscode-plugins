@@ -15,6 +15,7 @@ import onCompletionAccepted from './onCompletionAccepted'
 import specialCommands from './specialCommands'
 import vueVolarSupport from './vueVolarSupport'
 import moreCompletions from './moreCompletions'
+import { mergeSettingsFromScopes } from './mergeSettings'
 
 let isActivated = false
 // let erroredStatusBarItem: vscode.StatusBarItem | undefined
@@ -28,6 +29,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
         if (!tsApi) return
         console.log('sending configure request for typescript-essential-plugins')
         const config: any = vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!)
+        mergeSettingsFromScopes(config, 'typescript', extensionCtx.extension.packageJSON)
 
         tsApi.configurePlugin('typescript-essential-plugins', config)
 

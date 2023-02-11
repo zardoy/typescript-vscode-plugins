@@ -21,6 +21,9 @@ const plugin = (context => {
         // todo support vue-specific settings
         const originalLsMethods = { ...typescript.languageService }
 
+        configurationHost.getConfiguration<any>('[vue]').then(_configuration => {
+            console.log('_configuration', _configuration)
+        })
         configurationHost.getConfiguration<any>('tsEssentialPlugins').then(_configuration => {
             // if (typescript.languageService[thisPluginMarker]) return
             const config = patchConfig(_configuration)
