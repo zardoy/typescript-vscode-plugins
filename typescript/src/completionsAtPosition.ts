@@ -341,7 +341,7 @@ const arrayMoveItemToFrom = <T>(array: T[], originalItem: ArrayPredicate<T>, ite
 }
 
 const patchBuiltinMethods = (c: GetConfig, languageService: ts.LanguageService, isCheckedFile: boolean) => {
-    if (isTs5 && (isCheckedFile || !c('additionalIncludeExtensions').length)) return
+    if (isTs5() && (isCheckedFile || !c('additionalIncludeExtensions').length)) return
 
     let addFileExtensions: string[] | undefined
     const getAddFileExtensions = () => {

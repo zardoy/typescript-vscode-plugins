@@ -87,7 +87,7 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
         patches,
         returnModuleCode,
         skipStartMarker = false,
-    }: PatchData = !isTs5
+    }: PatchData = !isTs5()
         ? {
               markerModuleStart: 'var NavigationBar;',
               markerModuleEnd: '(ts.NavigationBar = {}));',
@@ -115,7 +115,7 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
     }
     const getModuleString = () => `module.exports = (ts, getNameFromJsxTag) => {\n${lines.join('\n')}\nreturn ${returnModuleCode}}`
     let moduleString = getModuleString()
-    if (isTs5) {
+    if (isTs5()) {
         const { languageService } = createLanguageService({
             'main.ts': moduleString,
         })

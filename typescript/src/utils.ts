@@ -118,7 +118,7 @@ export const boostExistingSuggestions = (entries: ts.CompletionEntry[], predicat
 }
 
 // semver: can't use compare as it incorrectly works with build postfix
-export const isTs5 = semver.major(ts.version) >= 5
+export const isTs5 = () => semver.major(ts.version) >= 5
 
 // Workaround esbuild bundle modules
 export const nodeModules = __WEB__
