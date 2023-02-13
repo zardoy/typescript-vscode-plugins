@@ -58,6 +58,7 @@ export default (
             const insertObjectArrayInnerText = c('objectLiteralCompletions.insertNewLine') ? '\n\t$1\n' : '$1'
             const completingStyleMap = [
                 [getQuotedSnippet, isStringCompletion],
+                [[': ${1|true,false|},$0', `: true/false,`], isBooleanCompletion],
                 [[`: [${insertObjectArrayInnerText}],$0`, `: [],`], isArrayCompletion],
                 [[`: {${insertObjectArrayInnerText}},$0`, `: {},`], isObjectCompletion],
             ] as const
@@ -104,6 +105,14 @@ const isStringCompletion = (type: ts.Type) => {
     if (type.flags & ts.TypeFlags.Undefined) return false
     if (type.flags & ts.TypeFlags.StringLike) return true
     if (type.isUnion()) return isEverySubtype(type, type => isStringCompletion(type))
+    return false
+}
+
+const isBooleanCompletion = (type: ts.Type) => {
+    if (type.flags & ts.TypeFlags.Undefined) return false
+    // todo support boolean literals (boolean like)
+    if (type.flags & ts.TypeFlags.Boolean) return true
+    if (type.isUnion()) return isEverySubtype(type, type => isBooleanCompletion(type))
     return false
 }
 
