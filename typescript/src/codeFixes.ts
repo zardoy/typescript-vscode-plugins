@@ -185,6 +185,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                                         }),
                                         ({ fix }) => sortFn(fix.moduleSpecifier),
                                     )
+                                    if (!fixes[0]) throw new Error('No fixes')
                                     return fixes[0]
                                 }) as any,
                         ),
@@ -196,7 +197,12 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                             },
                         ),
                     )
-                    importAdder.addImportFromDiagnostic({ ...diagnostic, file: sourceFile as any } as any, context)
+                    try {
+                        importAdder.addImportFromDiagnostic({ ...diagnostic, file: sourceFile as any } as any, context)
+                    } catch (err) {
+                        if (err.message === 'No fixes') continue
+                        throw err
+                    }
                 } finally {
                     for (const unpatch of toUnpatch) {
                         unpatch()
