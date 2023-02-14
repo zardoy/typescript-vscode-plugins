@@ -118,7 +118,7 @@ export const boostExistingSuggestions = (entries: ts.CompletionEntry[], predicat
 }
 
 // semver: can't use compare as it incorrectly works with build postfix
-export const isTs5 = semver.major(ts.version) >= 5
+export const isTs5 = () => semver.major(ts.version) >= 5
 
 // Workaround esbuild bundle modules
 export const nodeModules = __WEB__
@@ -165,6 +165,30 @@ export function addObjectMethodResultInterceptors<T extends Record<string, any>>
             return callback(result, ...args)
         }
     }
+}
+
+// have absolutely no idea why such useful utility is not publicly available
+export const getChangesTracker = formatOptions => {
+    return new tsFull.textChanges.ChangeTracker(/* will be normalized by vscode anyway */ '\n', tsFull.formatting.getFormatContext(formatOptions, {}))
+}
+
+export const getCancellationToken = (languageServiceHost: ts.LanguageServiceHost) => {
+    let cancellationToken = languageServiceHost.getCancellationToken?.() as ts.CancellationToken | undefined
+    // if (!cancellationToken) {
+    //     debugger
+    // }
+    cancellationToken ??= {
+        isCancellationRequested: () => false,
+        throwIfCancellationRequested: () => {},
+    }
+    if (!cancellationToken.throwIfCancellationRequested) {
+        cancellationToken.throwIfCancellationRequested = () => {
+            if (cancellationToken!.isCancellationRequested()) {
+                throw new ts.OperationCanceledException()
+            }
+        }
+    }
+    return cancellationToken
 }
 
 const wordRangeAtPos = (text: string, position: number) => {

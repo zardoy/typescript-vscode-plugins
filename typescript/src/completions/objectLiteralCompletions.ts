@@ -20,16 +20,7 @@ export default (
         const typeChecker = languageService.getProgram()!.getTypeChecker()!
         const objType = typeChecker.getContextualType(node)
         if (!objType) return
-        const types = objType.isUnion() ? objType.types : [objType]
-        const properties = types
-            .flatMap(type => {
-                if (isFunctionType(type, typeChecker)) return []
-                if (isObjectCompletion(type, typeChecker)) return typeChecker.getPropertiesOfType(type)
-                return []
-            })
-            .filter((property, i, arr) => {
-                return !arr.find(({ name }, k) => name === property.name && i !== k)
-            })
+        const properties = getAllPropertiesOfType(objType, typeChecker)
         for (const property of properties) {
             const entry = entries.find(({ name }) => name === property.name)
             if (!entry) continue
@@ -58,6 +49,7 @@ export default (
             const insertObjectArrayInnerText = c('objectLiteralCompletions.insertNewLine') ? '\n\t$1\n' : '$1'
             const completingStyleMap = [
                 [getQuotedSnippet, isStringCompletion],
+                [[': ${1|true,false|},$0', `: true/false,`], isBooleanCompletion],
                 [[`: [${insertObjectArrayInnerText}],$0`, `: [],`], isArrayCompletion],
                 [[`: {${insertObjectArrayInnerText}},$0`, `: {},`], isObjectCompletion],
             ] as const
@@ -107,6 +99,14 @@ const isStringCompletion = (type: ts.Type) => {
     return false
 }
 
+const isBooleanCompletion = (type: ts.Type) => {
+    if (type.flags & ts.TypeFlags.Undefined) return false
+    // todo support boolean literals (boolean like)
+    if (type.flags & ts.TypeFlags.Boolean) return true
+    if (type.isUnion()) return isEverySubtype(type, type => isBooleanCompletion(type))
+    return false
+}
+
 const isArrayCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
     if (type.flags & ts.TypeFlags.Any) return false
     if (type.flags & ts.TypeFlags.Undefined) return false
@@ -126,4 +126,24 @@ const isObjectCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
     }
     if (type.isUnion()) return isEverySubtype(type, type => isObjectCompletion(type, checker))
     return false
+}
+
+export const getAllPropertiesOfType = (type: ts.Type, typeChecker: ts.TypeChecker) => {
+    const types = type.isUnion() ? type.types : [type]
+    let objectCount = 0
+    const properties = types
+        .flatMap(type => {
+            if (isFunctionType(type, typeChecker)) return []
+            if (isObjectCompletion(type, typeChecker)) {
+                objectCount++
+                return typeChecker.getPropertiesOfType(type)
+            }
+            return []
+        })
+        .filter((property, i, arr) => {
+            // perf
+            if (objectCount === 1) return true
+            return !arr.find(({ name }, k) => name === property.name && i !== k)
+        })
+    return properties
 }

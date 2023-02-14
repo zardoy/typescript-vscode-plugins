@@ -1,4 +1,4 @@
-import { isTs5, nodeModules } from './utils'
+import { getCancellationToken, isTs5, nodeModules } from './utils'
 import { createLanguageService } from './dummyLanguageService'
 import { getCannotFindCodes } from './utils/cannotFindCodes'
 
@@ -87,7 +87,7 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
         patches,
         returnModuleCode,
         skipStartMarker = false,
-    }: PatchData = !isTs5
+    }: PatchData = !isTs5()
         ? {
               markerModuleStart: 'var NavigationBar;',
               markerModuleEnd: '(ts.NavigationBar = {}));',
@@ -115,7 +115,7 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
     }
     const getModuleString = () => `module.exports = (ts, getNameFromJsxTag) => {\n${lines.join('\n')}\nreturn ${returnModuleCode}}`
     let moduleString = getModuleString()
-    if (isTs5) {
+    if (isTs5()) {
         const { languageService } = createLanguageService({
             'main.ts': moduleString,
         })
@@ -168,9 +168,5 @@ export const getNavTreeItems = (info: ts.server.PluginCreateInfo, fileName: stri
     const sourceFile = program?.getSourceFile(fileName)
     if (!sourceFile) throw new Error('no sourceFile')
 
-    const cancellationToken = info.languageServiceHost.getCompilerHost?.()?.getCancellationToken?.() ?? {
-        isCancellationRequested: () => false,
-        throwIfCancellationRequested: () => {},
-    }
-    return navModule.getNavigationTree(sourceFile, cancellationToken)
+    return navModule.getNavigationTree(sourceFile, getCancellationToken(info.languageServiceHost))
 }
