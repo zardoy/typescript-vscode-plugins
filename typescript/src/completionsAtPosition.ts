@@ -169,7 +169,7 @@ export const getCompletionsAtPosition = (
         }
     }
 
-    if (c('fixSuggestionsSorting')) prior.entries = fixPropertiesSorting(prior.entries, leftNode, sourceFile, program) ?? prior.entries
+    prior.entries = fixPropertiesSorting(prior.entries) ?? prior.entries
     if (node) prior.entries = boostKeywordSuggestions(prior.entries, position, node) ?? prior.entries
 
     const entryNames = new Set(prior.entries.map(({ name }) => name))

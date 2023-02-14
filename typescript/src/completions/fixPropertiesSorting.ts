@@ -1,7 +1,11 @@
 import { oneOf } from '@zardoy/utils'
-import { groupBy, partition } from 'rambda'
+import { partition } from 'rambda'
+import { getAllPropertiesOfType } from './objectLiteralCompletions'
+import { sharedCompletionContext } from './sharedContext'
 
-export default (entries: ts.CompletionEntry[], node: ts.Node | undefined, sourceFile: ts.SourceFile, program: ts.Program) => {
+export default (entries: ts.CompletionEntry[]) => {
+    const { node, program, c } = sharedCompletionContext
+    if (!c('fixSuggestionsSorting')) return
     if (!node) return
     // if (ts.isObjectLiteralExpression(node) && ts.isCallExpression(node.parent)) {
     //     const typeChecker = program.getTypeChecker()
@@ -10,6 +14,7 @@ export default (entries: ts.CompletionEntry[], node: ts.Node | undefined, source
     // }
     let rightNode: ts.Node | undefined
     const upperNode = ts.isIdentifier(node) ? node.parent : node
+    if (ts.isObjectLiteralExpression(node)) rightNode = node
     if (ts.isPropertyAccessExpression(upperNode)) rightNode = upperNode.expression
     else if (ts.isObjectBindingPattern(node)) {
         if (ts.isVariableDeclaration(node.parent)) {
@@ -25,8 +30,8 @@ export default (entries: ts.CompletionEntry[], node: ts.Node | undefined, source
     }
     if (!rightNode) return
     const typeChecker = program.getTypeChecker()
-    const type = typeChecker.getTypeAtLocation(rightNode)
-    const sourceProps = type.getProperties?.()?.map(({ name }) => name)
+    const type = typeChecker.getContextualType(rightNode as ts.Expression) ?? typeChecker.getTypeAtLocation(rightNode)
+    const sourceProps = getAllPropertiesOfType(type, typeChecker)?.map(({ name }) => name)
     // languageService.getSignatureHelpItems(fileName, position, {}))
     if (!sourceProps) return
     // const entriesBySortText = groupBy(({ sortText }) => sortText, entries)

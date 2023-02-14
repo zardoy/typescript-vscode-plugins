@@ -20,16 +20,7 @@ export default (
         const typeChecker = languageService.getProgram()!.getTypeChecker()!
         const objType = typeChecker.getContextualType(node)
         if (!objType) return
-        const types = objType.isUnion() ? objType.types : [objType]
-        const properties = types
-            .flatMap(type => {
-                if (isFunctionType(type, typeChecker)) return []
-                if (isObjectCompletion(type, typeChecker)) return typeChecker.getPropertiesOfType(type)
-                return []
-            })
-            .filter((property, i, arr) => {
-                return !arr.find(({ name }, k) => name === property.name && i !== k)
-            })
+        const properties = getAllPropertiesOfType(objType, typeChecker)
         for (const property of properties) {
             const entry = entries.find(({ name }) => name === property.name)
             if (!entry) continue
@@ -135,4 +126,24 @@ const isObjectCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
     }
     if (type.isUnion()) return isEverySubtype(type, type => isObjectCompletion(type, checker))
     return false
+}
+
+export const getAllPropertiesOfType = (type: ts.Type, typeChecker: ts.TypeChecker) => {
+    const types = type.isUnion() ? type.types : [type]
+    let objectCount = 0
+    const properties = types
+        .flatMap(type => {
+            if (isFunctionType(type, typeChecker)) return []
+            if (isObjectCompletion(type, typeChecker)) {
+                objectCount++
+                return typeChecker.getPropertiesOfType(type)
+            }
+            return []
+        })
+        .filter((property, i, arr) => {
+            // perf
+            if (objectCount === 1) return true
+            return !arr.find(({ name }, k) => name === property.name && i !== k)
+        })
+    return properties
 }
