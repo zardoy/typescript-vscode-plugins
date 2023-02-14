@@ -102,9 +102,9 @@ This also makes plugin work in Volar's takeover mode!
 
 ### Web Support
 
-> Note: when you open TS/JS file in the web for the first time you currently need to switch editors to make everything work!
+> Note: when you open TS/JS file in the web for the first time you currently need to switch between editors to make plugin work.
 
-Web-only feature: `import` path resolution
+There is web-only feature: fix clicking on relative `import` paths.
 
 ### `in` Keyword Suggestions
 
@@ -149,9 +149,9 @@ Appends *space* to almost all keywords e.g. `const `, like WebStorm does.
 
 (*enabled by default*)
 
-Patches `toString()` insert function snippet on number types to remove tabStop.
+Patches `toString()` insert function snippet on number types to remove annoying tab stop.
 
-### Enforce Properties Sorting
+### Restore Properties Sorting
 
 (*disabled by default*) enable with `tsEssentialPlugins.fixSuggestionsSorting`
 
@@ -162,11 +162,7 @@ Try to restore [original](https://github.com/microsoft/TypeScript/issues/49012) 
 We extend completion list with extensions from module augmentation (e.g. `.css` files if you have `declare module '*.css'`).
 But for unchecked contexts list of extensions can be extended with `tsEssentialPlugins.additionalIncludeExtensions` setting.
 
-### Switch Exclude Covered Cases
-
-(*enabled by default*)
-
-Exclude already covered strings / enums from suggestions ([TS repo issue](https://github.com/microsoft/TypeScript/issues/13711)).
+<!-- ## Type-Driven Completions -->
 
 ### Mark Code Actions
 
@@ -226,7 +222,58 @@ Some settings examples:
 ```
 
 > Note: changeSorting might not preserve sorting of other existing suggestions which not defined by rules, there is WIP
-> Also I'm thinking of making it learn and syncing of most-used imports automatically
+> Also I'm thinking of making it learn and sync most-used imports automatically
+
+### Namespace Imports
+
+If you always want some modules to be imported automatically as namespace import, you're lucky as there is `autoImport.changeToNamespaceImport` setting for this.
+
+Example:
+
+You're completing following Node.js code in empty file:
+
+```ts
+readFileSync
+```
+
+Default completion and code fix will change it to:
+
+```ts
+import { readFileSync } from 'fs'
+
+readFileSync
+```
+
+But if you setup this setting:
+
+```json
+"tsEssentialPlugins.autoImport.changeToNamespaceImport": {
+    "fs": {},
+},
+```
+
+Completing the same code or accepting import code fix will result:
+
+```ts
+import * as fs from 'fs'
+
+fs.readFileSync
+```
+
+There is also a way to specify different name for namespace or use default import instead.
+
+However there are cases where you have some modules injected globally in your application (e.g. global `React` variable), then you can specify *auto imports feature* to use them instead of adding an import:
+
+```json
+"tsEssentialPlugins.autoImport.changeToNamespaceImport": {
+    "react": {
+        "namespace": "React",
+        "addImport": false
+    },
+},
+```
+
+`useState` -> `React.useState`
 
 ## Rename Features
 

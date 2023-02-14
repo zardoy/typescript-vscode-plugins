@@ -1,16 +1,17 @@
-import _ from 'lodash'
 import { changeSortingOfAutoImport, getIgnoreAutoImportSetting, isAutoImportEntryShouldBeIgnored, shouldChangeSortingOfAutoImport } from '../adjustAutoImports'
-import { GetConfig } from '../types'
 import { sortBy } from 'rambda'
+import { sharedCompletionContext } from './sharedContext'
 
-export default (entries: ts.CompletionEntry[], languageService: ts.LanguageService, c: GetConfig) => {
+export default (entries: ts.CompletionEntry[]) => {
+    const { c } = sharedCompletionContext
+
     const ignoreAutoImportsSetting = getIgnoreAutoImportSetting(c)
 
     const ignoreKinds = [ts.ScriptElementKind.warning, ts.ScriptElementKind.string]
     entries = entries.filter(({ sourceDisplay, name, kind }) => {
         if (!sourceDisplay || ignoreKinds.includes(kind)) return true
-        const targetModule = ts.displayPartsToString(sourceDisplay)
-        const toIgnore = isAutoImportEntryShouldBeIgnored(ignoreAutoImportsSetting, targetModule, name)
+        const importModule = ts.displayPartsToString(sourceDisplay)
+        const toIgnore = isAutoImportEntryShouldBeIgnored(ignoreAutoImportsSetting, importModule, name)
         return !toIgnore
     })
     // todo I'm not sure of incomplete completion (wasnt tested)
@@ -36,5 +37,6 @@ export default (entries: ts.CompletionEntry[], languageService: ts.LanguageServi
         // final one seems to be slow, e.g. it might be slowing down completions
         entries.splice(i, 0, ...sortBy(({ sourceDisplay }) => sortFn(ts.displayPartsToString(sourceDisplay)), entriesToSort))
     }
+
     return entries
 }

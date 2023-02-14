@@ -443,19 +443,21 @@ export type Configuration = {
     /**
      * Advanced. Use `suggestions.ignoreAutoImports` setting if possible.
      *
-     * Packages to ignore in import all fix.
+     * Specify packages to ignore in *add all missing imports* fix, to ensure these packages never get imported automatically.
      *
      * TODO syntaxes /* and module#symbol unsupported (easy)
      * @default []
      */
     'autoImport.alwaysIgnoreInImportAll': string[]
     /**
+     * Specify here modules should be imported as namespace import. But note that imports gets processed first by `suggestions.ignoreAutoImports` anyway.
+     *
      * @default {}
      */
     'autoImport.changeToNamespaceImport': {
         [module: string]: {
             /**
-             * @default module (key)
+             * Defaults to key
              */
             namespace?: string
             /**
@@ -464,6 +466,7 @@ export type Configuration = {
             useDefaultImport?: boolean
             /**
              * Set to `false` if module is acessible from global variable
+             * For now not supported in add all missing imports code action
              * @default true */
             addImport?: boolean
         }

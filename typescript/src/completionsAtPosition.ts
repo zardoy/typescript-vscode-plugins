@@ -21,7 +21,7 @@ import objectLiteralCompletions from './completions/objectLiteralCompletions'
 import filterJsxElements from './completions/filterJsxComponents'
 import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalLibCompletions'
 import { compact, oneOf } from '@zardoy/utils'
-import filterWIthIgnoreAutoImports from './completions/ignoreAutoImports'
+import adjustAutoImports from './completions/adjustAutoImports'
 import escapeStringRegexp from 'escape-string-regexp'
 import addSourceDefinition from './completions/addSourceDefinition'
 import { sharedCompletionContext } from './completions/sharedContext'
@@ -218,7 +218,7 @@ export const getCompletionsAtPosition = (
     if (node) prior.entries = defaultHelpers(prior.entries, node, languageService) ?? prior.entries
     if (exactNode) prior.entries = objectLiteralCompletions(prior.entries, exactNode, languageService, options ?? {}, c) ?? prior.entries
     // 90%
-    prior.entries = filterWIthIgnoreAutoImports(prior.entries, languageService, c)
+    prior.entries = adjustAutoImports(prior.entries)
 
     const inKeywordCompletionsResult = inKeywordCompletions(position, node, sourceFile, program, languageService)
     if (inKeywordCompletionsResult) {
