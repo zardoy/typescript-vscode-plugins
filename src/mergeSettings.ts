@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import lodash from 'lodash'
+import { getExtensionContributionsPrefix } from 'vscode-framework'
 import { Configuration } from './configurationType'
 
 const settingsToIgnore = [] as Array<keyof Configuration>
@@ -14,9 +15,10 @@ export const mergeSettingsFromScopes = (
             configuration: { properties },
         },
     } = packageJson
-    for (const [key, item] of Object.entries(properties)) {
-        const isObject = item.type !== 'object'
-        if ((isObject && item.type !== 'array') || settingsToIgnore.includes(key as keyof Configuration)) {
+    for (const [fullKey, item] of Object.entries(properties)) {
+        const key = fullKey.slice(getExtensionContributionsPrefix().length)
+        const isObject = item.type === 'object'
+        if ((!isObject && item.type !== 'array') || settingsToIgnore.includes(key as keyof Configuration)) {
             continue
         }
 
@@ -28,7 +30,6 @@ export const mergeSettingsFromScopes = (
 const getConfigValueFromAllScopes = <T extends keyof Configuration>(configKey: T, language: string, type: 'array' | 'object'): Configuration[T] => {
     const values = { ...vscode.workspace.getConfiguration(process.env.IDS_PREFIX, { languageId: language }).inspect<any[]>(configKey)! }
     const userValueKeys = Object.keys(values).filter(key => key.endsWith('Value') && !key.startsWith('default'))
-    console.log(userValueKeys)
     for (const key of userValueKeys) {
         if (values[key] !== undefined) {
             continue
