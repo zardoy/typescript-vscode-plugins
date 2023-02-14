@@ -4,7 +4,6 @@ import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
 import { extensionCtx, getExtensionSetting, getExtensionSettingId } from 'vscode-framework'
 import { pickObj } from '@zardoy/utils'
 import { watchExtensionSettings } from '@zardoy/vscode-utils/build/settings'
-import { Configuration } from './configurationType'
 import webImports from './webImports'
 import { sendCommand } from './sendCommand'
 import { registerEmmet } from './emmet'
@@ -15,6 +14,7 @@ import onCompletionAccepted from './onCompletionAccepted'
 import specialCommands from './specialCommands'
 import vueVolarSupport from './vueVolarSupport'
 import moreCompletions from './moreCompletions'
+import { mergeSettingsFromScopes } from './mergeSettings'
 
 let isActivated = false
 // let erroredStatusBarItem: vscode.StatusBarItem | undefined
@@ -27,7 +27,9 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
     const syncConfig = () => {
         if (!tsApi) return
         console.log('sending configure request for typescript-essential-plugins')
-        const config: any = vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!)
+        const config: any = { ...vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!) }
+        // todo implement language-specific settings
+        mergeSettingsFromScopes(config, 'typescript', extensionCtx.extension.packageJSON)
 
         tsApi.configurePlugin('typescript-essential-plugins', config)
 
