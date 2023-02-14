@@ -167,6 +167,30 @@ export function addObjectMethodResultInterceptors<T extends Record<string, any>>
     }
 }
 
+// have absolutely no idea why such useful utility is not publicly available
+export const getChangesTracker = formatOptions => {
+    return new tsFull.textChanges.ChangeTracker(/* will be normalized by vscode anyway */ '\n', tsFull.formatting.getFormatContext(formatOptions, {}))
+}
+
+export const getCancellationToken = (languageServiceHost: ts.LanguageServiceHost) => {
+    let cancellationToken = languageServiceHost.getCancellationToken?.() as ts.CancellationToken | undefined
+    // if (!cancellationToken) {
+    //     debugger
+    // }
+    cancellationToken ??= {
+        isCancellationRequested: () => false,
+        throwIfCancellationRequested: () => {},
+    }
+    if (!cancellationToken.throwIfCancellationRequested) {
+        cancellationToken.throwIfCancellationRequested = () => {
+            if (cancellationToken!.isCancellationRequested()) {
+                throw new ts.OperationCanceledException()
+            }
+        }
+    }
+    return cancellationToken
+}
+
 const wordRangeAtPos = (text: string, position: number) => {
     const isGood = (pos: number) => {
         return /[-\w\d]/i.test(text.at(pos) ?? '')

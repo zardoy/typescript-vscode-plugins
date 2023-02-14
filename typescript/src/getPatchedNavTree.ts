@@ -1,4 +1,4 @@
-import { isTs5, nodeModules } from './utils'
+import { getCancellationToken, isTs5, nodeModules } from './utils'
 import { createLanguageService } from './dummyLanguageService'
 import { getCannotFindCodes } from './utils/cannotFindCodes'
 
@@ -168,9 +168,5 @@ export const getNavTreeItems = (info: ts.server.PluginCreateInfo, fileName: stri
     const sourceFile = program?.getSourceFile(fileName)
     if (!sourceFile) throw new Error('no sourceFile')
 
-    const cancellationToken = info.languageServiceHost.getCompilerHost?.()?.getCancellationToken?.() ?? {
-        isCancellationRequested: () => false,
-        throwIfCancellationRequested: () => {},
-    }
-    return navModule.getNavigationTree(sourceFile, cancellationToken)
+    return navModule.getNavigationTree(sourceFile, getCancellationToken(info.languageServiceHost))
 }

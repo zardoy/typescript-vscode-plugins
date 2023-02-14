@@ -1,4 +1,5 @@
 import { GetConfig } from './types'
+import { getCancellationToken } from './utils'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig, languageServiceHost: ts.LanguageServiceHost) => {
     proxy.getNavigateToItems = (searchValue, maxResultCount, fileName, excludeDtsFiles) => {
@@ -8,10 +9,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         }
 
         const program = languageService.getProgram()!
-        const cancellationToken = languageServiceHost.getCompilerHost?.()?.getCancellationToken?.() ?? {
-            isCancellationRequested: () => false,
-            throwIfCancellationRequested: () => {},
-        }
+
         let sourceFiles = fileName ? [program.getSourceFile(fileName)!] : program.getSourceFiles()
         if (!fileName) {
             const excludes = tsFull.getRegularExpressionForWildcard(workspaceSymbolSearchExcludePatterns, '', 'exclude')?.slice(1)
@@ -23,8 +21,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         return tsFull.NavigateTo.getNavigateToItems(
             sourceFiles as any,
             program.getTypeChecker() as any,
-            // TODO! use real cancellationToken
-            cancellationToken,
+            getCancellationToken(languageServiceHost),
             searchValue,
             maxResultCount,
             excludeDtsFiles ?? false,
