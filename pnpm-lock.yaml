@@ -25,6 +25,7 @@ importers:
       '@zardoy/utils': ^0.0.9
       '@zardoy/vscode-utils': ^0.0.47
       chai: ^4.3.6
+      change-case: ^4.1.2
       chokidar: ^3.5.3
       chokidar-cli: ^3.0.0
       delay: ^5.0.0
@@ -72,6 +73,7 @@ importers:
       '@zardoy/utils': 0.0.9
       '@zardoy/vscode-utils': 0.0.47_ai5wishe5ovkyp5mm2oyhrbtcu
       chai: 4.3.6
+      change-case: 4.1.2
       chokidar: 3.5.3
       chokidar-cli: 3.0.0
       delay: 5.0.0

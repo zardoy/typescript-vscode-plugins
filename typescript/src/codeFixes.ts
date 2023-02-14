@@ -222,6 +222,8 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                                             formatOptions,
                                             diagnostic.start!,
                                             firstFix.symbolName,
+                                            undefined,
+                                            true,
                                         )
                                     if (namespaceImportAction) {
                                         fixes = []

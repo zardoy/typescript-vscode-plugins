@@ -1,6 +1,7 @@
 import { parseIgnoreSpec, findIndexOfAutoImportSpec } from './adjustAutoImports'
 import { GetConfig } from './types'
 import { getChangesTracker } from './utils'
+import { camelCase } from 'change-case'
 
 export default (
     c: GetConfig,
@@ -11,6 +12,7 @@ export default (
     position: number,
     symbolName: string,
     entryDetailsPrior?: ts.CompletionEntryDetails,
+    skipCreatingImport = false,
 ) => {
     const changeToNamespaceImport = Object.entries(c('autoImport.changeToNamespaceImport')).map(([key, value]) => {
         return [parseIgnoreSpec(key), value] as const
@@ -36,7 +38,7 @@ export default (
     }
 
     const { module } = changeToNamespaceImport[indexOfAutoImportSpec]![0]
-    const { namespace = module, addImport = true, useDefaultImport } = changeToNamespaceImport[indexOfAutoImportSpec]![1]
+    const { namespace = camelCase(module), addImport = true, useDefaultImport } = changeToNamespaceImport[indexOfAutoImportSpec]![1]
     const textChanges = [
         {
             newText: `${namespace}.`,
@@ -47,19 +49,22 @@ export default (
         },
     ] as ts.TextChange[]
     if (!addImport) return { textChanges, description: `Change to '${namespace}.${symbolName}'` }
-    const { factory } = ts
-    const namespaceIdentifier = factory.createIdentifier(namespace)
-    const importDeclaration = factory.createImportDeclaration(
-        /*modifiers*/ undefined,
-        useDefaultImport
-            ? factory.createImportClause(false, namespaceIdentifier, undefined)
-            : factory.createImportClause(false, undefined, factory.createNamespaceImport(namespaceIdentifier)),
-        factory.createStringLiteral(importPath, preferences.quotePreference === 'single'),
-    )
-    const changeTracker = getChangesTracker(formatOptions)
-    // todo respect sorting?
-    changeTracker.insertNodeAtTopOfFile(sourceFile as any, importDeclaration as any, true)
-    const changes = changeTracker.getChanges()
-    const { textChanges: importTextChanges } = changes[0]!
-    return { textChanges: [...importTextChanges, ...textChanges], description: `+ ${importTextChanges[0]!.newText}`, namespace, useDefaultImport }
+    if (!skipCreatingImport) {
+        const { factory } = ts
+        const namespaceIdentifier = factory.createIdentifier(namespace)
+        const importDeclaration = factory.createImportDeclaration(
+            /*modifiers*/ undefined,
+            useDefaultImport
+                ? factory.createImportClause(false, namespaceIdentifier, undefined)
+                : factory.createImportClause(false, undefined, factory.createNamespaceImport(namespaceIdentifier)),
+            factory.createStringLiteral(importPath, preferences.quotePreference === 'single'),
+        )
+        const changeTracker = getChangesTracker(formatOptions)
+        // todo respect sorting?
+        changeTracker.insertNodeAtTopOfFile(sourceFile as any, importDeclaration as any, true)
+        const changes = changeTracker.getChanges()
+        const { textChanges: importTextChanges } = changes[0]!
+        textChanges.unshift(...importTextChanges)
+    }
+    return { textChanges, description: `Add namespace import from '${importPath}'`, namespace, useDefaultImport }
 }
