@@ -204,12 +204,9 @@ export type Configuration = {
     /**
      * Patterns to exclude from workspace symbol search
      * Example: `["**\/node_modules/**"]`
-     * Can gradually improve performance, will be set to node_modules by default in future
      * @uniqueItems true
-     * @default []
-     * @defaultTODO ["**\/node_modules/**"]
+     * @default ["**\/node_modules/**"]
      */
-    // TODO enable node_modules default when cancellationToken is properly used
     workspaceSymbolSearchExcludePatterns: string[]
     /**
      * @default ["fixMissingFunctionDeclaration"]
