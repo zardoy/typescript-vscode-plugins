@@ -272,8 +272,8 @@ export type Configuration = {
     /** Diagnostics (if not handled by eslint) & completions */
     // 'dotImportsMap.enable': boolean,
     /**
-     * One of the most powerful setting here. It lets you remove/edit any suggestion that comes from TS. However its' experimental and can conflict with our completion changes.
-     * **Please** try to always specify kind (e.g. variable) of the suggestion to ensure you don't remove word-suggestion or postfix snippet
+     * One of the most powerful setting here. It lets you remove/edit (patch) any completions that comes from TS. However it's experimental and can conflict with our completion changes (rare).
+     * **Please** try to always specify kind (e.g. variable) of the suggestion to ensure you don't remove word-suggestion
      * @default []
      */
     replaceSuggestions: ReplaceRule[]
