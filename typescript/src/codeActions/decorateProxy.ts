@@ -1,10 +1,16 @@
 import { GetConfig } from '../types'
+import { handleFunctionRefactorEdits, processApplicableRefactors } from './functionExtractors'
 import getCodeActions, { REFACTORS_CATEGORY } from './getCodeActions'
 import improveBuiltin from './improveBuiltin'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig) => {
     proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
         let prior = languageService.getApplicableRefactors(fileName, positionOrRange, preferences)
+
+        processApplicableRefactors(
+            prior.find(r => r.description === 'Extract function'),
+            c,
+        )
 
         if (c('markTsCodeActions.enable')) prior = prior.map(item => ({ ...item, description: `🔵 ${item.description}` }))
 
@@ -23,6 +29,10 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             const sourceFile = program!.getSourceFile(fileName)!
             const { edit } = getCodeActions(sourceFile, positionOrRange, actionName)
             return edit
+        }
+        if (refactorName === 'Extract Symbol' && actionName.startsWith('function_scope')) {
+            const handledResult = handleFunctionRefactorEdits(actionName, languageService, fileName, formatOptions, positionOrRange, refactorName, preferences)
+            if (handledResult) return handledResult
         }
         const prior = languageService.getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences)
         if (!prior) return

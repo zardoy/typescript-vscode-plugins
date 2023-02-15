@@ -172,6 +172,20 @@ export const getChangesTracker = formatOptions => {
     return new tsFull.textChanges.ChangeTracker(/* will be normalized by vscode anyway */ '\n', tsFull.formatting.getFormatContext(formatOptions, {}))
 }
 
+export const dedentString = (string: string, addIndent = '', trimFirstLines = false) => {
+    let lines = string.split('\n')
+    if (trimFirstLines) {
+        let hitNonEmpty = false
+        lines = lines.filter(line => {
+            if (!hitNonEmpty && !line) return false
+            hitNonEmpty = true
+            return true
+        })
+    }
+    const minIndent = Math.min(...lines.filter(Boolean).map(line => line.match(/^\s*/)![0].length))
+    return lines.map(line => addIndent + line.slice(minIndent)).join('\n')
+}
+
 export const getCancellationToken = (languageServiceHost: ts.LanguageServiceHost) => {
     let cancellationToken = languageServiceHost.getCancellationToken?.() as ts.CancellationToken | undefined
     // if (!cancellationToken) {

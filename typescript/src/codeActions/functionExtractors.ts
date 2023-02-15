@@ -1,5 +1,5 @@
 import { GetConfig } from '../types'
-import { dedentString, findChildContainingExactPosition, findChildContainingPositionMaxDepth } from '../utils'
+import { dedentString, findChildContainingPositionMaxDepth } from '../utils'
 
 export const processApplicableRefactors = (refactor: ts.ApplicableRefactorInfo | undefined, c: GetConfig) => {
     if (!refactor) return
