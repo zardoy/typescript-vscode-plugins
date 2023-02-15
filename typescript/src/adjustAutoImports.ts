@@ -39,32 +39,34 @@ const initIgnoreAutoImport = () => {
     // })
 }
 
-export const getIgnoreAutoImportSetting = (c: GetConfig) => {
-    return c('suggestions.ignoreAutoImports').map((spec): ParsedIgnoreSetting => {
-        const hashIndex = spec.indexOf('#')
-        let module = hashIndex === -1 ? spec : spec.slice(0, hashIndex)
-        const moduleCompare = module.endsWith('/*') ? 'startsWith' : 'strict'
-        if (moduleCompare === 'startsWith') {
-            module = module.slice(0, -'/*'.length)
-        }
-        if (hashIndex === -1) {
-            return {
-                module,
-                symbols: [],
-                isAnySymbol: true,
-                moduleCompare,
-            }
-        }
-        const symbolsString = spec.slice(hashIndex + 1)
-        // * (glob asterisk) is reserved for future ussage
-        const isAnySymbol = symbolsString === '*'
+export function parseIgnoreSpec(spec: string): ParsedIgnoreSetting {
+    const hashIndex = spec.indexOf('#')
+    let module = hashIndex === -1 ? spec : spec.slice(0, hashIndex)
+    const moduleCompare = module.endsWith('/*') ? 'startsWith' : 'strict'
+    if (moduleCompare === 'startsWith') {
+        module = module.slice(0, -'/*'.length)
+    }
+    if (hashIndex === -1) {
         return {
             module,
-            symbols: isAnySymbol ? [] : symbolsString.split(','),
-            isAnySymbol,
+            symbols: [],
+            isAnySymbol: true,
             moduleCompare,
         }
-    })
+    }
+    const symbolsString = spec.slice(hashIndex + 1)
+    // * (glob asterisk) is reserved for future ussage
+    const isAnySymbol = symbolsString === '*'
+    return {
+        module,
+        symbols: isAnySymbol ? [] : symbolsString.split(','),
+        isAnySymbol,
+        moduleCompare,
+    }
+}
+
+export const getIgnoreAutoImportSetting = (c: GetConfig) => {
+    return c('suggestions.ignoreAutoImports').map(spec => parseIgnoreSpec(spec))
 }
 
 export const isAutoImportEntryShouldBeIgnored = (ignoreAutoImportsSetting: ParsedIgnoreSetting[], targetModule: string, symbol: string) => {
@@ -76,6 +78,17 @@ export const isAutoImportEntryShouldBeIgnored = (ignoreAutoImportsSetting: Parse
         return true
     }
     return false
+}
+
+export const findIndexOfAutoImportSpec = (ignoreAutoImportsSetting: ParsedIgnoreSetting[], targetModule: string, symbol: string) => {
+    for (const [i, { module, moduleCompare, isAnySymbol, symbols }] of ignoreAutoImportsSetting.entries()) {
+        const isIgnoreModule = moduleCompare === 'startsWith' ? targetModule.startsWith(module) : targetModule === module
+        if (!isIgnoreModule) continue
+        if (isAnySymbol) return i
+        if (!symbols.includes(symbol)) continue
+        return i
+    }
+    return
 }
 
 export const shouldChangeSortingOfAutoImport = (symbolName: string, c: GetConfig) => {

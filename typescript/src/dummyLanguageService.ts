@@ -1,11 +1,11 @@
 // only for basic testing, as vscode is actually using server
 import { nodeModules } from './utils'
 
-export const createLanguageService = (files: Record<string, string>, { useLib = true }: { useLib?: boolean } = {}) => {
+export const createLanguageService = (files: Record<string, string>, { useLib = true }: { useLib?: boolean } = {}, entrypoint?: string) => {
     const path = nodeModules!.path
     let dummyVersion = 1
     let defaultLibDir: string | undefined
-    const languageService = ts.createLanguageService({
+    const languageServiceHost: ts.LanguageServiceHost = {
         getProjectVersion: () => dummyVersion.toString(),
         getScriptVersion: () => dummyVersion.toString(),
         getCompilationSettings: () => ({ allowJs: true, jsx: ts.JsxEmit.Preserve, target: ts.ScriptTarget.ESNext }),
@@ -31,11 +31,25 @@ export const createLanguageService = (files: Record<string, string>, { useLib = 
         readFile(path) {
             return files[path]!
         },
-    })
+    }
+    const languageService = ts.createLanguageService(languageServiceHost)
     return {
         languageService,
-        updateProject() {
+        languageServiceHost,
+        updateProject(newFiles?: Record<string, string> | string) {
+            if (newFiles) {
+                if (typeof newFiles === 'string') {
+                    if (!entrypoint) throw new Error('entrypoint not set')
+                    files = { [entrypoint!]: newFiles }
+                } else {
+                    Object.assign(files, newFiles)
+                }
+            }
             dummyVersion++
+        },
+        getCurrentFile() {
+            if (!entrypoint) throw new Error('entrypoint not set')
+            return files[entrypoint!]!
         },
     }
 }

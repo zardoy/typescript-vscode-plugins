@@ -114,6 +114,12 @@ export type Configuration = {
      * @default space
      */
     'suggestions.keywordsInsertText': 'none' | 'space'
+    /**
+     * Will be `format-short` by default in future as super useful!
+     * Requires symbol patch
+     * @default disable
+     */
+    'suggestions.displayImportedInfo': 'disable' | 'short-format' | 'long-format'
     // TODO! corrent watching!
     /**
      * Wether to enable snippets for array methods like `items.map(item => )`
@@ -198,12 +204,9 @@ export type Configuration = {
     /**
      * Patterns to exclude from workspace symbol search
      * Example: `["**\/node_modules/**"]`
-     * Can gradually improve performance, will be set to node_modules by default in future
      * @uniqueItems true
-     * @default []
-     * @defaultTODO ["**\/node_modules/**"]
+     * @default ["**\/node_modules/**"]
      */
-    // TODO enable node_modules default when cancellationToken is properly used
     workspaceSymbolSearchExcludePatterns: string[]
     /**
      * @default ["fixMissingFunctionDeclaration"]
@@ -322,11 +325,16 @@ export type Configuration = {
      * Extend TypeScript outline!
      * Extend outline with:
      * - JSX Elements
-     * more coming soon...
-     * Should be stable enough!
+     * - Type Alias Declarations
+     * Should be stable!
      * @default false
      */
     patchOutline: boolean
+    /**
+     * Recommended to enable if you use `patchOutline`
+     * @default false
+     */
+    'outline.arraysTuplesNumberedItems': boolean
     /**
      * Exclude covered strings/enum cases in switch in completions
      * @default true
@@ -435,19 +443,51 @@ export type Configuration = {
     /**
      * Advanced. Use `suggestions.ignoreAutoImports` setting if possible.
      *
-     * Packages to ignore in import all fix.
+     * Specify packages to ignore in *add all missing imports* fix, to ensure these packages never get imported automatically.
      *
      * TODO syntaxes /* and module#symbol unsupported (easy)
      * @default []
      */
     'autoImport.alwaysIgnoreInImportAll': string[]
     /**
+     * Specify here modules should be imported as namespace import. But note that imports gets processed first by `suggestions.ignoreAutoImports` anyway.
+     *
+     * @default {}
+     */
+    'autoImport.changeToNamespaceImport': {
+        [module: string]: {
+            /**
+             * Defaults to key
+             */
+            namespace?: string
+            /**
+             * @default false
+             */
+            useDefaultImport?: boolean
+            /**
+             * Set to `false` if module is acessible from global variable
+             * For now not supported in add all missing imports code action
+             * @default true */
+            addImport?: boolean
+        }
+    }
+    /**
      * Enable to display additional information about source declaration in completion's documentation
      * For now only displays function's body
-     * Requires symbol patching
+     * Requires symbol patch
      * @default false
      */
     displayAdditionalInfoInCompletions: boolean
+    /**
+     * Wether to try to infer name for extract type / interface code action
+     * e.g. `let foo: { a: number }` -> `type FooType = { a: number }`
+     *
+     * Experimental and *will be enabled by default* once its:
+     * 1. More configurable and rename is called
+     * 2. Logic to avoid name conflicts
+     * @default false
+     */
+    'codeActions.extractTypeInferName': boolean
 }
 
 // scrapped using search editor. config: caseInsesetive, context lines: 0, regex: const fix\w+ = "[^ ]+"

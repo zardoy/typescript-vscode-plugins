@@ -22,8 +22,11 @@ export default (tsApi: { onCompletionAccepted }) => {
             return
         }
 
-        // todo: use cleaner detection
-        if (typeof insertText === 'object' && typeof label === 'object' && label.detail && [': [],', ': {},', ': "",', ": '',"].includes(label.detail)) {
+        const isJsxAttributeStringCompletion = typeof insertText === 'object' && insertText.value.endsWith("='$1'")
+        const isOurObjectLiteralCompletion =
+            typeof insertText === 'object' && typeof label === 'object' && label.detail && [': [],', ': {},', ': "",', ": '',"].includes(label.detail)
+        if (isJsxAttributeStringCompletion || isOurObjectLiteralCompletion) {
+            // todo most probably should be controlled by quickSuggestions setting
             void vscode.commands.executeCommand('editor.action.triggerSuggest')
             return
         }

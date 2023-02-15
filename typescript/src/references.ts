@@ -54,4 +54,11 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         }
         return prior
     }
+
+    // Volar 1.0.25 uses it
+    proxy.getReferencesAtPosition = (fileName, position) => {
+        const references = proxy.findReferences(fileName, position)
+        if (!references) return
+        return references.flatMap(({ references }) => references)
+    }
 }

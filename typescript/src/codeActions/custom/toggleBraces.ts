@@ -1,6 +1,6 @@
 import { Statement } from 'typescript/lib/tsserverlibrary'
-import { findChildContainingPosition, findClosestParent, getIndentFromPos } from '../utils'
-import { ApplyCodeAction, CodeAction } from './getCodeActions'
+import { findChildContainingPosition, findClosestParent, getIndentFromPos } from '../../utils'
+import { ApplyCodeAction, CodeAction } from '../getCodeActions'
 
 const tryToApply: ApplyCodeAction = (sourceFile, pos, range) => {
     const currentNode = findChildContainingPosition(ts, sourceFile, pos)

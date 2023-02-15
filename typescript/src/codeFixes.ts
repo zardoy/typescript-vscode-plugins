@@ -2,7 +2,8 @@ import _ from 'lodash'
 import addMissingProperties from './codeFixes/addMissingProperties'
 import { changeSortingOfAutoImport, getIgnoreAutoImportSetting, isAutoImportEntryShouldBeIgnored } from './adjustAutoImports'
 import { GetConfig } from './types'
-import { findChildContainingPosition, getIndentFromPos, patchMethod } from './utils'
+import { findChildContainingPosition, getCancellationToken, getIndentFromPos, patchMethod } from './utils'
+import namespaceAutoImports from './namespaceAutoImports'
 
 // codeFixes that I managed to put in files
 const externalCodeFixes = [addMissingProperties]
@@ -22,33 +23,61 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             [Diagnostics.Remove_type_from_import_of_0_from_1, 1, 0],
             [Diagnostics.Remove_type_from_import_declaration_from_0, 0],
         ]
-        const oldCreateCodeFixAction = tsFull.codefix.createCodeFixAction
+        const addNamespaceImports = [] as ts.CodeFixAction[]
+
         let prior: readonly ts.CodeFixAction[]
+        let toUnpatch: (() => void)[] = []
         try {
             const { importFixName } = tsFull.codefix
             const ignoreAutoImportsSetting = getIgnoreAutoImportSetting(c)
             const sortFn = changeSortingOfAutoImport(c, (node as ts.Identifier).text)
-            tsFull.codefix.createCodeFixAction = (fixName, changes, description, fixId, fixAllDescription, command) => {
-                if (fixName !== importFixName) return oldCreateCodeFixAction(fixName, changes, description, fixId, fixAllDescription, command)
-                const placeholderIndexesInfo = moduleSymbolDescriptionPlaceholders.find(([diag]) => diag === description[0])
-                let sorting = '-1'
-                if (placeholderIndexesInfo) {
-                    const targetModule = description[placeholderIndexesInfo[1] + 1]
-                    const symbolName = placeholderIndexesInfo[2] !== undefined ? description[placeholderIndexesInfo[2] + 1] : (node as ts.Identifier).text
-                    const toIgnore = isAutoImportEntryShouldBeIgnored(ignoreAutoImportsSetting, targetModule, symbolName)
-                    if (toIgnore) {
-                        return {
-                            fixName: 'IGNORE',
-                            changes: [],
-                            description: '',
+            const unpatch = patchMethod(
+                tsFull.codefix,
+                'createCodeFixAction',
+                oldCreateCodeFixAction => (fixName, changes, description, fixId, fixAllDescription, command) => {
+                    if (fixName !== importFixName) return oldCreateCodeFixAction(fixName, changes, description, fixId, fixAllDescription, command)
+                    const placeholderIndexesInfo = moduleSymbolDescriptionPlaceholders.find(([diag]) => diag === description[0])
+                    let sorting = '-1'
+                    if (placeholderIndexesInfo) {
+                        const targetModule = description[placeholderIndexesInfo[1] + 1]
+                        const symbolName = placeholderIndexesInfo[2] !== undefined ? description[placeholderIndexesInfo[2] + 1] : (node as ts.Identifier).text
+
+                        const toIgnore = isAutoImportEntryShouldBeIgnored(ignoreAutoImportsSetting, targetModule, symbolName)
+
+                        const namespaceImportAction =
+                            !toIgnore && namespaceAutoImports(c, sourceFile, targetModule, preferences, formatOptions, start, symbolName)
+
+                        if (namespaceImportAction) {
+                            const { textChanges, description } = namespaceImportAction
+                            addNamespaceImports.push({
+                                fixName: importFixName,
+                                fixAllDescription: 'Add all missing imports',
+                                fixId: 'fixMissingImport',
+                                description,
+                                changes: [
+                                    {
+                                        fileName,
+                                        textChanges,
+                                    },
+                                ],
+                            })
                         }
+                        if (toIgnore /*  || namespaceImportAction */) {
+                            return {
+                                fixName: 'IGNORE',
+                                changes: [],
+                                description: '',
+                            }
+                        }
+                        sorting = sortFn(targetModule).toString()
+                        // todo this workaround is weird, sort in another way
                     }
-                    sorting = sortFn(targetModule).toString()
-                    // todo this workaround is weird, sort in another way
-                }
-                return oldCreateCodeFixAction(fixName + sorting, changes, description, fixId, fixAllDescription, command)
-            }
+                    return oldCreateCodeFixAction(fixName + sorting, changes, description, fixId, fixAllDescription, command)
+                },
+            )
+            toUnpatch.push(unpatch)
             prior = languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
+            prior = [...addNamespaceImports, ...prior]
             prior = _.sortBy(prior, ({ fixName }) => {
                 if (fixName.startsWith(importFixName)) {
                     return +fixName.slice(importFixName.length)
@@ -63,7 +92,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 throw err
             })
         } finally {
-            tsFull.codefix.createCodeFixAction = oldCreateCodeFixAction
+            toUnpatch.forEach(x => x())
         }
         // todo remove when 5.0 is released after 3 months
         // #region fix builtin codefixes/refactorings
@@ -150,12 +179,8 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 languageServiceHost as any /* cancellationToken */,
             )
             const semanticDiagnostics = languageService.getSemanticDiagnostics(fileName)
-            const cancellationToken = languageServiceHost.getCompilerHost?.()?.getCancellationToken?.() ?? {
-                isCancellationRequested: () => false,
-                throwIfCancellationRequested: () => {},
-            }
             const context: Record<keyof import('typescript-full').CodeFixContextBase, any> = {
-                cancellationToken,
+                cancellationToken: getCancellationToken(languageServiceHost),
                 formatContext: tsFull.formatting.getFormatContext(formatOptions, languageServiceHost),
                 host: languageServiceHost,
                 preferences,
@@ -164,6 +189,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             }
             const errorCodes = getFixAllErrorCodes()
             const ignoreAutoImportsSetting = getIgnoreAutoImportSetting(c)
+            const additionalTextChanges: ts.TextChange[] = []
             for (const diagnostic of semanticDiagnostics) {
                 if (!errorCodes.includes(diagnostic.code)) continue
                 const toUnpatch: (() => any)[] = []
@@ -185,6 +211,41 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                                         }),
                                         ({ fix }) => sortFn(fix.moduleSpecifier),
                                     )
+                                    const firstFix = fixes[0]
+                                    const namespaceImportAction =
+                                        !!firstFix &&
+                                        namespaceAutoImports(
+                                            c,
+                                            sourceFile,
+                                            firstFix.fix.moduleSpecifier,
+                                            preferences,
+                                            formatOptions,
+                                            diagnostic.start!,
+                                            firstFix.symbolName,
+                                            undefined,
+                                            true,
+                                        )
+                                    if (namespaceImportAction) {
+                                        fixes = []
+                                        if (!namespaceImportAction.namespace) {
+                                            additionalTextChanges.push(...namespaceImportAction.textChanges)
+                                        } else {
+                                            const { namespace, useDefaultImport, textChanges } = namespaceImportAction
+                                            additionalTextChanges.push(textChanges[1]!)
+                                            fixes.unshift({
+                                                ...fixes[0]!,
+                                                fix: {
+                                                    kind: ImportFixKind.AddNew,
+                                                    moduleSpecifier: firstFix.fix.moduleSpecifier,
+                                                    importKind: useDefaultImport ? tsFull.ImportKind.Default : tsFull.ImportKind.Namespace,
+                                                    addAsTypeOnly: false,
+                                                    useRequire: false,
+                                                },
+                                                symbolName: namespace,
+                                            } as FixInfo)
+                                        }
+                                    }
+                                    if (!fixes[0]) throw new Error('No fixes')
                                     return fixes[0]
                                 }) as any,
                         ),
@@ -196,14 +257,22 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                             },
                         ),
                     )
-                    importAdder.addImportFromDiagnostic({ ...diagnostic, file: sourceFile as any } as any, context)
+                    try {
+                        importAdder.addImportFromDiagnostic({ ...diagnostic, file: sourceFile as any } as any, context)
+                    } catch (err) {
+                        if (err.message === 'No fixes') continue
+                        throw err
+                    }
                 } finally {
                     for (const unpatch of toUnpatch) {
                         unpatch()
                     }
                 }
             }
-            return tsFull.codefix.createCombinedCodeActions(tsFull.textChanges.ChangeTracker.with(context, importAdder.writeFixes))
+            return tsFull.codefix.createCombinedCodeActions([
+                ...tsFull.textChanges.ChangeTracker.with(context, importAdder.writeFixes),
+                { fileName, textChanges: additionalTextChanges },
+            ])
         }
         return languageService.getCombinedCodeFix(scope, fixId, formatOptions, preferences)
     }

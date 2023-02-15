@@ -3,7 +3,7 @@ import inKeywordCompletions from './inKeywordCompletions'
 // import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './completions/isInBannedPosition'
 import { GetConfig } from './types'
-import { findChildContainingExactPosition, findChildContainingPosition } from './utils'
+import { findChildContainingExactPosition, findChildContainingPosition, isTs5 } from './utils'
 import indexSignatureAccessCompletions from './completions/indexSignatureAccess'
 import fixPropertiesSorting from './completions/fixPropertiesSorting'
 import { isGoodPositionBuiltinMethodCompletion } from './completions/isGoodPositionMethodCompletion'
@@ -21,13 +21,32 @@ import objectLiteralCompletions from './completions/objectLiteralCompletions'
 import filterJsxElements from './completions/filterJsxComponents'
 import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalLibCompletions'
 import { compact, oneOf } from '@zardoy/utils'
-import filterWIthIgnoreAutoImports from './completions/ignoreAutoImports'
+import adjustAutoImports from './completions/adjustAutoImports'
 import escapeStringRegexp from 'escape-string-regexp'
 import addSourceDefinition from './completions/addSourceDefinition'
+import { sharedCompletionContext } from './completions/sharedContext'
+import displayImportedInfo from './completions/displayImportedInfo'
 
-export type PrevCompletionMap = Record<string, { originalName?: string; documentationOverride?: string | ts.SymbolDisplayPart[]; documentationAppend?: string }>
+export type PrevCompletionMap = Record<
+    string,
+    {
+        originalName?: string
+        /** use only if codeactions cant be returned (no source) */
+        documentationOverride?: string | ts.SymbolDisplayPart[]
+        detailPrepend?: string
+        documentationAppend?: string
+        // textChanges?: ts.TextChange[]
+    }
+>
 export type PrevCompletionsAdditionalData = {
     enableMethodCompletion: boolean
+}
+
+type GetCompletionAtPositionReturnType = {
+    completions: ts.CompletionInfo
+    /** Let default getCompletionEntryDetails to know original name or let add documentation from here */
+    prevCompletionsMap: PrevCompletionMap
+    prevCompletionsAdittionalData: PrevCompletionsAdditionalData
 }
 
 export const getCompletionsAtPosition = (
@@ -39,14 +58,7 @@ export const getCompletionsAtPosition = (
     scriptSnapshot: ts.IScriptSnapshot,
     formatOptions: ts.FormatCodeSettings | undefined,
     additionalData: { scriptKind: ts.ScriptKind; compilerOptions: ts.CompilerOptions },
-):
-    | {
-          completions: ts.CompletionInfo
-          /** Let default getCompletionEntryDetails to know original name or let add documentation from here */
-          prevCompletionsMap: PrevCompletionMap
-          prevCompletionsAdittionalData: PrevCompletionsAdditionalData
-      }
-    | undefined => {
+): GetCompletionAtPositionReturnType | undefined => {
     const prevCompletionsMap: PrevCompletionMap = {}
     const program = languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
@@ -55,12 +67,24 @@ export const getCompletionsAtPosition = (
     const exactNode = findChildContainingExactPosition(sourceFile, position)
     const isCheckedFile =
         !tsFull.isSourceFileJS(sourceFile as any) || !!tsFull.isCheckJsEnabledForFile(sourceFile as any, additionalData.compilerOptions as any)
+    Object.assign(sharedCompletionContext, {
+        position,
+        languageService,
+        sourceFile,
+        program,
+        isCheckedFile,
+        node: exactNode,
+        prevCompletionsMap,
+        c,
+        formatOptions: formatOptions || {},
+        preferences: options || {},
+    } satisfies typeof sharedCompletionContext)
     const unpatch = patchBuiltinMethods(c, languageService, isCheckedFile)
     const getPrior = () => {
         try {
             return languageService.getCompletionsAtPosition(fileName, position, options, formatOptions)
         } finally {
-            unpatch()
+            unpatch?.()
         }
     }
     let prior = getPrior()
@@ -96,8 +120,8 @@ export const getCompletionsAtPosition = (
         }
         // #endregion
     }
-    if (leftNode && !hasSuggestions && ensurePrior() && prior) {
-        prior.entries = additionalTypesSuggestions(prior.entries, program, leftNode) ?? prior.entries
+    if (node && !hasSuggestions && ensurePrior() && prior) {
+        prior.entries = additionalTypesSuggestions(prior.entries, program, node) ?? prior.entries
     }
     const addSignatureAccessCompletions = hasSuggestions ? [] : indexSignatureAccessCompletions(position, node, scriptSnapshot, sourceFile, program)
     if (addSignatureAccessCompletions.length && ensurePrior() && prior) {
@@ -145,7 +169,7 @@ export const getCompletionsAtPosition = (
         }
     }
 
-    if (c('fixSuggestionsSorting')) prior.entries = fixPropertiesSorting(prior.entries, leftNode, sourceFile, program) ?? prior.entries
+    prior.entries = fixPropertiesSorting(prior.entries) ?? prior.entries
     if (node) prior.entries = boostKeywordSuggestions(prior.entries, position, node) ?? prior.entries
 
     const entryNames = new Set(prior.entries.map(({ name }) => name))
@@ -194,7 +218,7 @@ export const getCompletionsAtPosition = (
     if (node) prior.entries = defaultHelpers(prior.entries, node, languageService) ?? prior.entries
     if (exactNode) prior.entries = objectLiteralCompletions(prior.entries, exactNode, languageService, options ?? {}, c) ?? prior.entries
     // 90%
-    prior.entries = filterWIthIgnoreAutoImports(prior.entries, languageService, c)
+    prior.entries = adjustAutoImports(prior.entries)
 
     const inKeywordCompletionsResult = inKeywordCompletions(position, node, sourceFile, program, languageService)
     if (inKeywordCompletionsResult) {
@@ -233,6 +257,7 @@ export const getCompletionsAtPosition = (
     // #endregion
 
     prior.entries = addSourceDefinition(prior.entries, prevCompletionsMap, c) ?? prior.entries
+    displayImportedInfo(prior.entries)
 
     if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 
@@ -341,6 +366,8 @@ const arrayMoveItemToFrom = <T>(array: T[], originalItem: ArrayPredicate<T>, ite
 }
 
 const patchBuiltinMethods = (c: GetConfig, languageService: ts.LanguageService, isCheckedFile: boolean) => {
+    if (isTs5() && (isCheckedFile || !c('additionalIncludeExtensions').length)) return
+
     let addFileExtensions: string[] | undefined
     const getAddFileExtensions = () => {
         const typeChecker = languageService.getProgram()!.getTypeChecker()!

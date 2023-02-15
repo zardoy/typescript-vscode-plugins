@@ -1,5 +1,6 @@
 import { GetConfig } from '../types'
 import getCodeActions, { REFACTORS_CATEGORY } from './getCodeActions'
+import improveBuiltin from './improveBuiltin'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig) => {
     proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
@@ -23,6 +24,8 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             const { edit } = getCodeActions(sourceFile, positionOrRange, actionName)
             return edit
         }
-        return languageService.getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences)
+        const prior = languageService.getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences)
+        if (!prior) return
+        return improveBuiltin(fileName, refactorName, actionName, languageService, c, prior) ?? prior
     }
 }

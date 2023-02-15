@@ -13,6 +13,7 @@ import { GetConfig } from './types'
 import lodashGet from 'lodash.get'
 import decorateWorkspaceSymbolSearch from './workspaceSymbolSearch'
 import decorateFormatFeatures from './decorateFormatFeatures'
+import namespaceAutoImports from './namespaceAutoImports'
 
 /** @internal */
 export const thisPluginMarker = '__essentialPluginsMarker__'
@@ -82,7 +83,7 @@ export const decorateLanguageService = (
         const program = languageService.getProgram()
         const sourceFile = program?.getSourceFile(fileName)
         if (!program || !sourceFile) return
-        const { documentationOverride, documentationAppend } = prevCompletionsMap[entryName] ?? {}
+        const { documentationOverride, documentationAppend, detailPrepend } = prevCompletionsMap[entryName] ?? {}
         if (documentationOverride) {
             return {
                 name: entryName,
@@ -101,6 +102,38 @@ export const decorateLanguageService = (
             data,
         )
         if (!prior) return
+        if (source) {
+            const namespaceImport = namespaceAutoImports(
+                c,
+                languageService.getProgram()!.getSourceFile(fileName)!,
+                source,
+                preferences ?? {},
+                formatOptions ?? {},
+                position,
+                entryName,
+                prior,
+            )
+            if (namespaceImport) {
+                const { textChanges, description } = namespaceImport
+                const namespace = textChanges[0]!.newText.slice(0, -1)
+                // todo-low think of cleanin up builtin code actions descriptions
+                prior.codeActions = [
+                    // ...(prior.codeActions ?? []),
+                    {
+                        description: description,
+                        changes: [
+                            {
+                                fileName,
+                                textChanges,
+                            },
+                        ],
+                    },
+                ]
+            }
+        }
+        if (detailPrepend) {
+            prior.displayParts = [{ kind: 'text', text: detailPrepend }, ...prior.displayParts]
+        }
         if (documentationAppend) {
             prior.documentation = [...(prior.documentation ?? []), { kind: 'text', text: documentationAppend }]
         }
@@ -114,7 +147,7 @@ export const decorateLanguageService = (
     decorateReferences(proxy, languageService, c)
     decorateDocumentHighlights(proxy, languageService, c)
     decorateWorkspaceSymbolSearch(proxy, languageService, c, languageServiceHost)
-    decorateFormatFeatures(proxy, languageService, c)
+    decorateFormatFeatures(proxy, languageService, languageServiceHost, c)
     proxy.findRenameLocations = (fileName, position, findInStrings, findInComments, providePrefixAndSuffixTextForRename) => {
         if (overrideRequestPreferences.rename) {
             try {
@@ -139,7 +172,7 @@ export const decorateLanguageService = (
             // so we forced to communicate via fs
             const config = JSON.parse(ts.sys.readFile(require('path').join(__dirname, '../../plugin-config.json'), 'utf8') ?? '{}')
             proxy.getNavigationTree = fileName => {
-                if (c('patchOutline') || config.patchOutline) return getNavTreeItems(info, fileName)
+                if (c('patchOutline') || config.patchOutline) return getNavTreeItems(languageService, languageServiceHost, fileName, config.outline)
                 return languageService.getNavigationTree(fileName)
             }
         }
