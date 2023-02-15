@@ -173,7 +173,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             const program = languageService.getProgram()!
             const sourceFile = program.getSourceFile(fileName)!
             const importAdder = tsFull.codefix.createImportAdder(
-                sourceFile as any,
+                sourceFile as FullSourceFile,
                 program as any,
                 preferences,
                 languageServiceHost as any /* cancellationToken */,
@@ -258,7 +258,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                         ),
                     )
                     try {
-                        importAdder.addImportFromDiagnostic({ ...diagnostic, file: sourceFile as any } as any, context)
+                        importAdder.addImportFromDiagnostic({ ...diagnostic, file: sourceFile as FullSourceFile } as any, context)
                     } catch (err) {
                         if (err.message === 'No fixes') continue
                         throw err

@@ -61,7 +61,7 @@ export default (
         )
         const changeTracker = getChangesTracker(formatOptions)
         // todo respect sorting?
-        changeTracker.insertNodeAtTopOfFile(sourceFile as any, importDeclaration as any, true)
+        changeTracker.insertNodeAtTopOfFile(sourceFile as FullSourceFile, importDeclaration as any, true)
         const changes = changeTracker.getChanges()
         const { textChanges: importTextChanges } = changes[0]!
         textChanges.unshift(...importTextChanges)

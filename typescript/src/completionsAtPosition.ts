@@ -66,7 +66,8 @@ export const getCompletionsAtPosition = (
     if (!scriptSnapshot || isInBannedPosition(position, scriptSnapshot, sourceFile)) return
     const exactNode = findChildContainingExactPosition(sourceFile, position)
     const isCheckedFile =
-        !tsFull.isSourceFileJS(sourceFile as any) || !!tsFull.isCheckJsEnabledForFile(sourceFile as any, additionalData.compilerOptions as any)
+        !tsFull.isSourceFileJS(sourceFile as FullSourceFile) ||
+        !!tsFull.isCheckJsEnabledForFile(sourceFile as FullSourceFile, additionalData.compilerOptions as any)
     Object.assign(sharedCompletionContext, {
         position,
         languageService,
