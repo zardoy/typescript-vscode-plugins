@@ -14,7 +14,9 @@ export const processApplicableRefactors = (refactor: ts.ApplicableRefactorInfo |
                 name: `${blockScopeRefactor.name}_local_arrow`,
             })
         }
-        const globalScopeRefactor = functionExtractors.find(e => e.description === 'Extract to function in global scope')
+        const globalScopeRefactor = functionExtractors.find(e =>
+            ['Extract to function in global scope', 'Extract to function in module scope'].includes(e.description),
+        )
         if (globalScopeRefactor) {
             refactor!.actions.push({
                 description: 'Extract to arrow function in global scope above',
@@ -37,7 +39,7 @@ export const handleFunctionRefactorEdits = (
 ): ts.RefactorEditInfo | undefined => {
     if (!actionName.endsWith('_arrow')) return
     const originalAcitonName = actionName.replace('_local_arrow', '').replace('_arrow', '')
-    const { edits, renameLocation, renameFilename } = languageService.getEditsForRefactor(
+    const { edits: originalEdits, renameFilename } = languageService.getEditsForRefactor(
         fileName,
         formatOptions,
         positionOrRange,
@@ -46,9 +48,11 @@ export const handleFunctionRefactorEdits = (
         preferences,
     )!
     // has random number of edits because imports can be added
-    const { textChanges } = edits[0]!
+    const { textChanges } = originalEdits[0]!
     const functionChange = textChanges.at(-1)!
-    functionChange.newText = functionChange.newText
+    const oldFunctionText = functionChange.newText
+    const functionName = oldFunctionText.slice(oldFunctionText.indexOf('function ') + 'function '.length, oldFunctionText.indexOf('('))
+    functionChange.newText = oldFunctionText
         .replace(/function /, 'const ')
         .replace('(', ' = (')
         .replace(/\{\n/, '=> {\n')
@@ -79,11 +83,15 @@ export const handleFunctionRefactorEdits = (
             functionChange.span.start = pos
         }
     }
+    const fileEdits = [
+        {
+            fileName,
+            textChanges: [...textChanges.slice(0, -2), textChanges.at(-1)!, textChanges.at(-2)!],
+        },
+    ]
     return {
-        edits: [{ fileName, textChanges }],
-        // TODO since ts making edit after current location, it doesn't expect renameLocation to be changed (lets fix it)
-        // renameLocation: renameLocation! + functionChange.newText.length + 1,
-        renameLocation: functionChange.span.start + functionChange.newText.indexOf('const ') + 'const '.length,
+        edits: fileEdits,
+        renameLocation: tsFull.getRenameLocation(fileEdits, fileName, functionName, /*preferLastLocation*/ true),
         renameFilename,
     }
 }
