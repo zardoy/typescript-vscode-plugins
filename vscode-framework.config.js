@@ -1,6 +1,12 @@
 //@ts-check
 const { defineConfig } = require('@zardoy/vscode-utils/build/defineConfig.cjs')
 const { patchPackageJson } = require('@zardoy/vscode-utils/build/patchPackageJson.cjs')
+const { mkdirSync, createWriteStream } = require('fs')
+/** @type {any} */
+const got = require('got-cjs')
+const { promisify } = require('util')
+const stream = require('stream')
+const pipeline = promisify(stream.pipeline)
 
 /**
  * @typedef {Record<keyof import('./src/configurationType').Configuration, any>} Config
@@ -24,6 +30,12 @@ const languageOveridableSettings = [
 // settings that just doesn't make sense to make language-overridable
 const dontMakeLanguageOverridableSettings = ['jsxPseudoEmmet.tags', 'jsxCompletionsMap', 'workspaceSymbolSearchExcludePatterns']
 
+const ICON_URL = process.env.EXTENSION_ICON
+if (ICON_URL) {
+    mkdirSync('resources', { recursive: true })
+    pipeline(got.stream(ICON_URL), createWriteStream('resources/icon.png'))
+}
+
 patchPackageJson({
     patchSettings(/** @type {Config} */ configuration) {
         //prettier-ignore
@@ -41,6 +53,11 @@ patchPackageJson({
         //     }
         // }
         return configuration
+    },
+    rawPatchManifest(manifest) {
+        if (ICON_URL) {
+            manifest.icon = 'resources/icon.png'
+        }
     },
 })
 

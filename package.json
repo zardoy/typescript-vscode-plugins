@@ -116,6 +116,7 @@
         "esbuild": "^0.16.16",
         "fs-extra": "^10.1.0",
         "got": "^12.5.3",
+        "got-cjs": "npm:got@^11.x",
         "type-fest": "^2.13.1",
         "typed-jsonfile": "^0.2.1",
         "typescript": "^4.9.3",

@@ -32,3 +32,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
+          # optional
+          EXTENSION_ICON: ${{ secrets.EXTENSION_ICON }}
