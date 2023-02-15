@@ -32,13 +32,12 @@ export const overrideRequestPreferences = {
 }
 
 export const decorateLanguageService = (
-    info: ts.server.PluginCreateInfo,
+    { languageService, languageServiceHost }: ts.server.PluginCreateInfo,
     existingProxy: ts.LanguageService | undefined,
     config: { config: any },
     { pluginSpecificSyntaxServerConfigCheck = true }: { pluginSpecificSyntaxServerConfigCheck?: boolean } = {},
 ) => {
     const c: GetConfig = key => lodashGet(config.config, key)
-    const { languageService, languageServiceHost } = info
 
     // Set up decorator object
     const proxy = getInitialProxy(languageService, existingProxy)
@@ -54,7 +53,6 @@ export const decorateLanguageService = (
         }
         const specialCommandResult = options?.triggerCharacter
             ? handleSpecialCommand(
-                  info,
                   fileName,
                   position,
                   options.triggerCharacter as TriggerCharacterCommand,
@@ -142,8 +140,8 @@ export const decorateLanguageService = (
 
     decorateCodeActions(proxy, languageService, c)
     decorateCodeFixes(proxy, languageService, c, languageServiceHost)
-    decorateSemanticDiagnostics(proxy, info, c)
-    decorateDefinitions(proxy, info, c)
+    decorateSemanticDiagnostics(proxy, languageService, languageServiceHost, c)
+    decorateDefinitions(proxy, languageService, languageServiceHost, c)
     decorateReferences(proxy, languageService, c)
     decorateDocumentHighlights(proxy, languageService, c)
     decorateWorkspaceSymbolSearch(proxy, languageService, c, languageServiceHost)

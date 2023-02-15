@@ -6,7 +6,6 @@ import getEmmetCompletions from './emmet'
 import objectIntoArrayConverters from './objectIntoArrayConverters'
 
 export default (
-    info: ts.server.PluginCreateInfo,
     fileName: string,
     position: number,
     specialCommand: TriggerCharacterCommand,
@@ -24,13 +23,13 @@ export default (
     if (triggerCharacterCommands.includes(specialCommand) && !configuration) {
         throw new Error('no-ts-essential-plugin-configuration')
     }
-    const sourceFile = info.languageService.getProgram()!.getSourceFile(fileName)!
+    const sourceFile = languageService.getProgram()!.getSourceFile(fileName)!
     if (specialCommand === 'emmet-completions') {
         const leftNode = findChildContainingPosition(ts, sourceFile, position - 1)
         if (!leftNode) return
         return {
             entries: [],
-            typescriptEssentialsResponse: getEmmetCompletions(fileName, leftNode, sourceFile, position, info.languageService),
+            typescriptEssentialsResponse: getEmmetCompletions(fileName, leftNode, sourceFile, position, languageService),
         }
     }
     if (specialCommand === 'turnArrayIntoObject') {

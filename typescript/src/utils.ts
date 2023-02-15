@@ -229,9 +229,9 @@ export function approveCast<T2 extends Array<(node: ts.Node) => node is ts.Node>
 }
 
 export const patchMethod = <T, K extends keyof T>(obj: T, method: K, overriden: (oldMethod: T[K]) => T[K]) => {
-    const oldValue = obj[method]
+    const oldValue = obj[method] as (...args: any) => any
     Object.defineProperty(obj, method, {
-        value: overriden(oldValue),
+        value: overriden(oldValue.bind(obj) as any),
     })
     return () => {
         Object.defineProperty(obj, method, {
