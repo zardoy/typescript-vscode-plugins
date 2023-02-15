@@ -14,6 +14,7 @@ import lodashGet from 'lodash.get'
 import decorateWorkspaceSymbolSearch from './workspaceSymbolSearch'
 import decorateFormatFeatures from './decorateFormatFeatures'
 import namespaceAutoImports from './namespaceAutoImports'
+import libDomPatching from './libDomPatching'
 
 /** @internal */
 export const thisPluginMarker = '__essentialPluginsMarker__'
@@ -163,6 +164,8 @@ export const decorateLanguageService = (
         }
         return languageService.findRenameLocations(fileName, position, findInStrings, findInComments, providePrefixAndSuffixTextForRename)
     }
+
+    libDomPatching(languageServiceHost, c)
 
     if (pluginSpecificSyntaxServerConfigCheck) {
         if (!__WEB__) {

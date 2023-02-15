@@ -253,10 +253,12 @@ export type Configuration = {
      */
     'jsxImproveElementsSuggestions.filterNamespaces': boolean
     /**
-     * Requires TS server restart
+     * Requires TS server restart. Recommended to enable only per project.
+     *
+     * Enables better lib.dom completions (such as input events). For JS projects only (that don't use `tsc`)!
      * @default false
      *  */
-    // 'eventTypePatching.enable': boolean
+    libDomPatching: boolean
     // 'globalTypedQuerySelector.enable': boolean,
     /**
      * For DX in JS projects only!
