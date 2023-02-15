@@ -480,14 +480,21 @@ export type Configuration = {
     displayAdditionalInfoInCompletions: boolean
     /**
      * Wether to try to infer name for extract type / interface code action
-     * e.g. `let foo: { a: number }` -> `type FooType = { a: number }`
-     *
-     * Experimental and *will be enabled by default* once its:
-     * 1. More configurable and rename is called
-     * 2. Logic to avoid name conflicts
-     * @default false
+     * e.g. `let foo: { a: number }` -> `type Foo = { a: number }`
+     * @default true
      */
     'codeActions.extractTypeInferName': boolean
+    /**
+     * Use `{{name}}` as a placeholder to insert inferred name (possibly with _{i} at the end)
+     *
+     * @default "{{name}}"
+     */
+    'codeActions.extractTypeInferNamePattern':
+        | string
+        | {
+              typeAlias: string
+              interface: string
+          }
 }
 
 // scrapped using search editor. config: caseInsesetive, context lines: 0, regex: const fix\w+ = "[^ ]+"
