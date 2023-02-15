@@ -10,6 +10,7 @@ export const mergeSettingsFromScopes = (
     language: string,
     packageJson: { contributes: { configuration: { properties: Record<string, any> } } },
 ) => {
+    const workspaceConfiguration = vscode.workspace.getConfiguration(process.env.IDS_PREFIX, { languageId: language })
     const {
         contributes: {
             configuration: { properties },
@@ -22,13 +23,17 @@ export const mergeSettingsFromScopes = (
             continue
         }
 
-        const value = getConfigValueFromAllScopes(key as keyof Configuration, language, isObject ? 'object' : 'array')
+        const value = getConfigValueFromAllScopes(workspaceConfiguration, key as keyof Configuration, isObject ? 'object' : 'array')
         lodash.set(settings, key, value)
     }
 }
 
-const getConfigValueFromAllScopes = <T extends keyof Configuration>(configKey: T, language: string, type: 'array' | 'object'): Configuration[T] => {
-    const values = { ...vscode.workspace.getConfiguration(process.env.IDS_PREFIX, { languageId: language }).inspect<any[]>(configKey)! }
+const getConfigValueFromAllScopes = <T extends keyof Configuration>(
+    workspaceConfiguration: vscode.WorkspaceConfiguration,
+    configKey: T,
+    type: 'array' | 'object',
+): Configuration[T] => {
+    const values = { ...workspaceConfiguration.inspect<any[]>(configKey)! }
     const userValueKeys = Object.keys(values).filter(key => key.endsWith('Value') && !key.startsWith('default'))
     for (const key of userValueKeys) {
         if (values[key] !== undefined) {
