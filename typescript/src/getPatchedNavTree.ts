@@ -160,13 +160,17 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
 
 let navModule: { getNavigationTree: any }
 
-export const getNavTreeItems = (info: ts.server.PluginCreateInfo, fileName: string, additionalFeatures: AdditionalFeatures) => {
+export const getNavTreeItems = (
+    languageService: ts.LanguageService,
+    languageServiceHost: ts.LanguageServiceHost,
+    fileName: string,
+    additionalFeatures: AdditionalFeatures,
+) => {
     if (!navModule) navModule = getPatchedNavModule(additionalFeatures)
-    const program = info.languageService.getProgram()
-    if (!program) throw new Error('no program')
-    // sourceFile is unreliable to use here, as it's not the same as the one used within original getNavigationTree
-    const sourceFile = program?.getSourceFile(fileName)
+    const sourceFile =
+        (languageService as import('typescript-full').LanguageService).getNonBoundSourceFile?.(fileName) ??
+        languageService.getProgram()!.getSourceFile(fileName)
     if (!sourceFile) throw new Error('no sourceFile')
 
-    return navModule.getNavigationTree(sourceFile, getCancellationToken(info.languageServiceHost))
+    return navModule.getNavigationTree(sourceFile, getCancellationToken(languageServiceHost))
 }

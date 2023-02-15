@@ -172,7 +172,7 @@ export const decorateLanguageService = (
             // so we forced to communicate via fs
             const config = JSON.parse(ts.sys.readFile(require('path').join(__dirname, '../../plugin-config.json'), 'utf8') ?? '{}')
             proxy.getNavigationTree = fileName => {
-                if (c('patchOutline') || config.patchOutline) return getNavTreeItems(info, fileName, config.outline)
+                if (c('patchOutline') || config.patchOutline) return getNavTreeItems(languageService, languageServiceHost, fileName, config.outline)
                 return languageService.getNavigationTree(fileName)
             }
         }

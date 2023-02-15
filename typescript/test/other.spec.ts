@@ -57,7 +57,7 @@ test('Patched navtree (outline)', () => {
             </Notification>
         }
     `)
-    const navTreeItems: ts.NavigationTree = getNavTreeItems({ languageService, languageServiceHost: {} } as any, entrypoint, {
+    const navTreeItems: ts.NavigationTree = getNavTreeItems(languageService, {} as any, entrypoint, {
         arraysTuplesNumberedItems: false,
     })
     const simplify = (items: ts.NavigationTree[]) => {
