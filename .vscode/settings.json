@@ -1,4 +1,13 @@
 {
+    "tsEssentialPlugins.autoImport.changeToNamespaceImport": {
+        "typescript": {
+            "namespace": "ts",
+            "addImport": false
+        }
+    },
+    "tsEssentialPlugins.suggestions.ignoreAutoImports": [
+        "typescript-full"
+    ],
     "betterSnippets.customSnippets": [
         {
             "name": "SyntaxKind",
