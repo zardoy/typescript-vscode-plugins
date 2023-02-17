@@ -116,7 +116,7 @@ export type Configuration = {
     'suggestions.keywordsInsertText': 'none' | 'space'
     /**
      * Will be `format-short` by default in future as super useful!
-     * Requires symbol patch
+     * Requires TypeScript 5.0+
      * @default disable
      */
     'suggestions.displayImportedInfo': 'disable' | 'short-format' | 'long-format'
@@ -439,7 +439,7 @@ export type Configuration = {
     'objectLiteralCompletions.keepOriginal': 'below' | 'above' | 'remove'
     /**
      * Wether to exclude non-JSX components completions in JSX component locations
-     * Requires `completion-symbol` patch
+     * Requires TypeScript 5.0+
      * @default false
      */
     'experiments.excludeNonJsxCompletions': boolean
@@ -487,7 +487,7 @@ export type Configuration = {
     /**
      * Enable to display additional information about source declaration in completion's documentation
      * For now only displays function's body
-     * Requires symbol patch
+     * Requires TypeScript 5.0+
      * @default false
      */
     displayAdditionalInfoInCompletions: boolean

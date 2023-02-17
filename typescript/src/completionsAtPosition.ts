@@ -83,7 +83,16 @@ export const getCompletionsAtPosition = (
     const unpatch = patchBuiltinMethods(c, languageService, isCheckedFile)
     const getPrior = () => {
         try {
-            return languageService.getCompletionsAtPosition(fileName, position, options, formatOptions)
+            return languageService.getCompletionsAtPosition(
+                fileName,
+                position,
+                {
+                    ...options,
+                    //@ts-expect-error remove when updated to ts5.0
+                    includeSymbol: true,
+                },
+                formatOptions,
+            )
         } finally {
             unpatch?.()
         }
