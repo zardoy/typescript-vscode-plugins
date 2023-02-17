@@ -3,11 +3,11 @@ import { findChildContainingExactPosition } from './utils'
 import { join } from 'path-browserify'
 import { ModuleDeclaration } from 'typescript'
 
-export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: GetConfig) => {
+export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
     proxy.getDefinitionAndBoundSpan = (fileName, position) => {
-        const prior = info.languageService.getDefinitionAndBoundSpan(fileName, position)
+        const prior = languageService.getDefinitionAndBoundSpan(fileName, position)
         if (!prior) {
-            const program = info.languageService.getProgram()!
+            const program = languageService.getProgram()!
             const sourceFile = program.getSourceFile(fileName)!
             const node = findChildContainingExactPosition(sourceFile, position)
             if (node && ts.isStringLiteral(node)) {
@@ -18,7 +18,7 @@ export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: 
                 }
                 if (c('enableFileDefinitions') && ['./', '../'].some(str => node.text.startsWith(str))) {
                     const file = join(fileName, '..', node.text)
-                    if (info.languageServiceHost.fileExists?.(file)) {
+                    if (languageServiceHost.fileExists?.(file)) {
                         return {
                             textSpan,
                             definitions: [
@@ -115,7 +115,7 @@ export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: 
             firstDef.fileName.endsWith('.d.ts')
         ) {
             const jsFileName = `${firstDef.fileName.slice(0, -'.d.ts'.length)}.js`
-            const isJsFileExist = info.languageServiceHost.fileExists?.(jsFileName)
+            const isJsFileExist = languageServiceHost.fileExists?.(jsFileName)
             if (isJsFileExist) prior.definitions = [{ ...firstDef, fileName: jsFileName }]
         }
         if (c('miscDefinitionImprovement') && prior.definitions) {
@@ -126,7 +126,7 @@ export default (proxy: ts.LanguageService, info: ts.server.PluginCreateInfo, c: 
                 // filter out css modules index definition
                 if (containerName === 'classes' && containerKind === undefined && rest['isAmbient'] && kind === 'index' && name === '__index') {
                     // ensure we don't filter out something important?
-                    const nodeAtDefinition = findChildContainingExactPosition(info.languageService.getProgram()!.getSourceFile(fileName)!, textSpan.start)
+                    const nodeAtDefinition = findChildContainingExactPosition(languageService.getProgram()!.getSourceFile(fileName)!, textSpan.start)
                     let moduleDeclaration: ModuleDeclaration | undefined
                     ts.findAncestor(nodeAtDefinition, node => {
                         if (ts.isModuleDeclaration(node)) {

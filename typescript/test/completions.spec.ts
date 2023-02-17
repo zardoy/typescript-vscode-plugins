@@ -252,7 +252,7 @@ test('Emmet completion', () => {
         2: -5,
     }
     const getEmmetCompletions = pos => {
-        const result = handleCommand({ languageService } as any, entrypoint, pos, 'emmet-completions', languageService, defaultConfigFunc, {})
+        const result = handleCommand(entrypoint, pos, 'emmet-completions', languageService, defaultConfigFunc, {})
         return result?.typescriptEssentialsResponse?.emmetTextOffset
     }
     for (const [i, pos] of positivePositions.entries()) {
@@ -494,7 +494,7 @@ test('In Keyword Completions', () => {
         if ('/*|*/' in a) {}
     `)
     const completion = pickObj(getCompletionsAtPosition(pos!, { shouldHave: true })!, 'entriesSorted', 'prevCompletionsMap')
-    // TODO this test is bad case of demonstrating how it can be used with string in union (IT SHOULDNT!)
+    // this test is bad case of demonstrating how it can be used with string in union (IT SHOULDNT!)
     // but it is here to ensure this is no previous crash issue, indexes are correct when used only with objects
     expect(completion).toMatchInlineSnapshot(`
       {

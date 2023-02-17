@@ -14,6 +14,8 @@ import lodashGet from 'lodash.get'
 import decorateWorkspaceSymbolSearch from './workspaceSymbolSearch'
 import decorateFormatFeatures from './decorateFormatFeatures'
 import namespaceAutoImports from './namespaceAutoImports'
+import libDomPatching from './libDomPatching'
+import decorateSignatureHelp from './decorateSignatureHelp'
 
 /** @internal */
 export const thisPluginMarker = '__essentialPluginsMarker__'
@@ -32,13 +34,12 @@ export const overrideRequestPreferences = {
 }
 
 export const decorateLanguageService = (
-    info: ts.server.PluginCreateInfo,
+    { languageService, languageServiceHost }: ts.server.PluginCreateInfo,
     existingProxy: ts.LanguageService | undefined,
     config: { config: any },
     { pluginSpecificSyntaxServerConfigCheck = true }: { pluginSpecificSyntaxServerConfigCheck?: boolean } = {},
 ) => {
     const c: GetConfig = key => lodashGet(config.config, key)
-    const { languageService, languageServiceHost } = info
 
     // Set up decorator object
     const proxy = getInitialProxy(languageService, existingProxy)
@@ -54,7 +55,6 @@ export const decorateLanguageService = (
         }
         const specialCommandResult = options?.triggerCharacter
             ? handleSpecialCommand(
-                  info,
                   fileName,
                   position,
                   options.triggerCharacter as TriggerCharacterCommand,
@@ -79,75 +79,17 @@ export const decorateLanguageService = (
         return result.completions
     }
 
-    proxy.getCompletionEntryDetails = (fileName, position, entryName, formatOptions, source, preferences, data) => {
-        const program = languageService.getProgram()
-        const sourceFile = program?.getSourceFile(fileName)
-        if (!program || !sourceFile) return
-        const { documentationOverride, documentationAppend, detailPrepend } = prevCompletionsMap[entryName] ?? {}
-        if (documentationOverride) {
-            return {
-                name: entryName,
-                kind: ts.ScriptElementKind.alias,
-                kindModifiers: '',
-                displayParts: typeof documentationOverride === 'string' ? [{ kind: 'text', text: documentationOverride }] : documentationOverride,
-            }
-        }
-        const prior = languageService.getCompletionEntryDetails(
-            fileName,
-            position,
-            prevCompletionsMap[entryName]?.originalName || entryName,
-            formatOptions,
-            source,
-            preferences,
-            data,
-        )
-        if (!prior) return
-        if (source) {
-            const namespaceImport = namespaceAutoImports(
-                c,
-                languageService.getProgram()!.getSourceFile(fileName)!,
-                source,
-                preferences ?? {},
-                formatOptions ?? {},
-                position,
-                entryName,
-                prior,
-            )
-            if (namespaceImport) {
-                const { textChanges, description } = namespaceImport
-                const namespace = textChanges[0]!.newText.slice(0, -1)
-                // todo-low think of cleanin up builtin code actions descriptions
-                prior.codeActions = [
-                    // ...(prior.codeActions ?? []),
-                    {
-                        description: description,
-                        changes: [
-                            {
-                                fileName,
-                                textChanges,
-                            },
-                        ],
-                    },
-                ]
-            }
-        }
-        if (detailPrepend) {
-            prior.displayParts = [{ kind: 'text', text: detailPrepend }, ...prior.displayParts]
-        }
-        if (documentationAppend) {
-            prior.documentation = [...(prior.documentation ?? []), { kind: 'text', text: documentationAppend }]
-        }
-        return completionEntryDetails(languageService, c, fileName, position, sourceFile, prior, prevCompletionsAdittionalData)
-    }
+    proxy.getCompletionEntryDetails = (...inputArgs) => completionEntryDetails(inputArgs, languageService, prevCompletionsMap, c, prevCompletionsAdittionalData)
 
     decorateCodeActions(proxy, languageService, c)
     decorateCodeFixes(proxy, languageService, c, languageServiceHost)
-    decorateSemanticDiagnostics(proxy, info, c)
-    decorateDefinitions(proxy, info, c)
+    decorateSemanticDiagnostics(proxy, languageService, languageServiceHost, c)
+    decorateDefinitions(proxy, languageService, languageServiceHost, c)
     decorateReferences(proxy, languageService, c)
     decorateDocumentHighlights(proxy, languageService, c)
     decorateWorkspaceSymbolSearch(proxy, languageService, c, languageServiceHost)
     decorateFormatFeatures(proxy, languageService, languageServiceHost, c)
+    decorateSignatureHelp(proxy, languageService, languageServiceHost, c)
     proxy.findRenameLocations = (fileName, position, findInStrings, findInComments, providePrefixAndSuffixTextForRename) => {
         if (overrideRequestPreferences.rename) {
             try {
@@ -165,6 +107,8 @@ export const decorateLanguageService = (
         }
         return languageService.findRenameLocations(fileName, position, findInStrings, findInComments, providePrefixAndSuffixTextForRename)
     }
+
+    libDomPatching(languageServiceHost, c)
 
     if (pluginSpecificSyntaxServerConfigCheck) {
         if (!__WEB__) {

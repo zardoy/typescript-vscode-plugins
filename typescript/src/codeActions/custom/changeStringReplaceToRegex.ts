@@ -9,6 +9,7 @@ const nodeToSpan = (node: ts.Node): ts.TextSpan => {
 export default {
     id: 'changeStringReplaceToRegex',
     name: 'Change to Regex',
+    kind: 'refactor.rewrite.stringToRegex',
     tryToApply(sourceFile, position, _range, node) {
         if (!node || !position) return
         // requires full explicit object selection (be aware of comma) to not be annoying with suggestion
@@ -17,7 +18,12 @@ export default {
         if (!ts.isPropertyAccessExpression(node.parent.expression)) return
         if (node.parent.expression.name.text !== 'replace') return
         // though it does to much escaping and ideally should be simplified
-        const edits: ts.TextChange[] = [{ span: nodeToSpan(node), newText: `/${escapeStringRegexp(node.text)}/` }]
+        const edits: ts.TextChange[] = [
+            {
+                span: nodeToSpan(node),
+                newText: `/${escapeStringRegexp(node.text).replaceAll('\n', '\\n').replaceAll('\t', '\\t').replaceAll('\r', '\\r')}/`,
+            },
+        ]
         return {
             edits: [
                 {

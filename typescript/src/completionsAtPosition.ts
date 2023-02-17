@@ -66,7 +66,8 @@ export const getCompletionsAtPosition = (
     if (!scriptSnapshot || isInBannedPosition(position, scriptSnapshot, sourceFile)) return
     const exactNode = findChildContainingExactPosition(sourceFile, position)
     const isCheckedFile =
-        !tsFull.isSourceFileJS(sourceFile as any) || !!tsFull.isCheckJsEnabledForFile(sourceFile as any, additionalData.compilerOptions as any)
+        !tsFull.isSourceFileJS(sourceFile as FullSourceFile) ||
+        !!tsFull.isCheckJsEnabledForFile(sourceFile as FullSourceFile, additionalData.compilerOptions as any)
     Object.assign(sharedCompletionContext, {
         position,
         languageService,
@@ -82,7 +83,16 @@ export const getCompletionsAtPosition = (
     const unpatch = patchBuiltinMethods(c, languageService, isCheckedFile)
     const getPrior = () => {
         try {
-            return languageService.getCompletionsAtPosition(fileName, position, options, formatOptions)
+            return languageService.getCompletionsAtPosition(
+                fileName,
+                position,
+                {
+                    ...options,
+                    //@ts-expect-error remove when updated to ts5.0
+                    includeSymbol: true,
+                },
+                formatOptions,
+            )
         } finally {
             unpatch?.()
         }

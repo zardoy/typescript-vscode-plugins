@@ -9,6 +9,7 @@ export default (
     c: GetConfig,
     prior: ts.RefactorEditInfo,
 ): ts.RefactorEditInfo | undefined => {
+    if (actionName === 'Extract to typedef') return
     const extractToInterface = actionName === 'Extract to interface'
     if (c('codeActions.extractTypeInferName') && (actionName === 'Extract to type alias' || extractToInterface)) {
         const changeFirstEdit = (oldText: string, newTypeName: string) => {
@@ -25,12 +26,15 @@ export default (
         if (!node) return
         if (ts.isAsExpression(node) || ts.isSatisfiesExpression(node)) node = node.parent
         if (ts.isVariableDeclaration(node) || ts.isParameter(node) || ts.isPropertyAssignment(node) || ts.isPropertySignature(node)) {
-            let isWithinType = ts.isPropertySignature(node)
+            const isWithinType = ts.isPropertySignature(node)
             if (ts.isIdentifier(node.name)) {
                 const identifierName = node.name.text
                 if (!identifierName) return
                 let typeName = identifierName[0]!.toUpperCase() + identifierName.slice(1)
-                if (!isWithinType) typeName += 'Type'
+                const namePatternRaw = c('codeActions.extractTypeInferNamePattern')
+                const namePatternSelected = typeof namePatternRaw === 'object' ? namePatternRaw[extractToInterface ? 'interface' : 'typeAlias'] : namePatternRaw
+                // apply name pattern to type name
+                typeName = tsFull.getUniqueName(namePatternSelected.replaceAll('{{name}}', typeName), sourceFile as FullSourceFile)
                 const newFileEdit: ts.FileTextChanges = {
                     fileName,
                     textChanges: textChanges.map((textChange, i) => {
@@ -40,6 +44,8 @@ export default (
                 }
                 return {
                     edits: [newFileEdit],
+                    renameFilename: fileName,
+                    renameLocation: tsFull.getRenameLocation([newFileEdit], fileName, typeName, /*preferLastLocation*/ false),
                 }
             }
         }

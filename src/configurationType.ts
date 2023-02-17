@@ -116,7 +116,7 @@ export type Configuration = {
     'suggestions.keywordsInsertText': 'none' | 'space'
     /**
      * Will be `format-short` by default in future as super useful!
-     * Requires symbol patch
+     * Requires TypeScript 5.0+
      * @default disable
      */
     'suggestions.displayImportedInfo': 'disable' | 'short-format' | 'long-format'
@@ -253,10 +253,12 @@ export type Configuration = {
      */
     'jsxImproveElementsSuggestions.filterNamespaces': boolean
     /**
-     * Requires TS server restart
+     * Requires TS server restart. Recommended to enable only per project.
+     *
+     * Enables better lib.dom completions (such as input events). For JS projects only (that don't use `tsc`)!
      * @default false
      *  */
-    // 'eventTypePatching.enable': boolean
+    libDomPatching: boolean
     // 'globalTypedQuerySelector.enable': boolean,
     /**
      * For DX in JS projects only!
@@ -270,8 +272,8 @@ export type Configuration = {
     /** Diagnostics (if not handled by eslint) & completions */
     // 'dotImportsMap.enable': boolean,
     /**
-     * One of the most powerful setting here. It lets you remove/edit any suggestion that comes from TS. However its' experimental and can conflict with our completion changes.
-     * **Please** try to always specify kind (e.g. variable) of the suggestion to ensure you don't remove word-suggestion or postfix snippet
+     * One of the most powerful setting here. It lets you remove/edit (patch) any completions that comes from TS. However it's experimental and can conflict with our completion changes (rare).
+     * **Please** try to always specify kind (e.g. variable) of the suggestion to ensure you don't remove word-suggestion
      * @default []
      */
     replaceSuggestions: ReplaceRule[]
@@ -280,6 +282,17 @@ export type Configuration = {
      * @default true
      */
     removeDefinitionFromReferences: boolean
+    /**
+     * Make tsserver think signature help never gets triggered manually to make it not go outside of block eg:
+     * ```ts
+     * declare const a: (a) => void
+     * a(() => {/* no annoying signature help on trigger *\/ })
+     * ```
+     * But it still allow it to be displayed in return statements which is more convenient
+     * @recommended
+     * @default false
+     */
+    'signatureHelp.excludeBlockScope': boolean
     /**
      * @default true
      */
@@ -426,7 +439,7 @@ export type Configuration = {
     'objectLiteralCompletions.keepOriginal': 'below' | 'above' | 'remove'
     /**
      * Wether to exclude non-JSX components completions in JSX component locations
-     * Requires `completion-symbol` patch
+     * Requires TypeScript 5.0+
      * @default false
      */
     'experiments.excludeNonJsxCompletions': boolean
@@ -474,20 +487,27 @@ export type Configuration = {
     /**
      * Enable to display additional information about source declaration in completion's documentation
      * For now only displays function's body
-     * Requires symbol patch
+     * Requires TypeScript 5.0+
      * @default false
      */
     displayAdditionalInfoInCompletions: boolean
     /**
      * Wether to try to infer name for extract type / interface code action
-     * e.g. `let foo: { a: number }` -> `type FooType = { a: number }`
-     *
-     * Experimental and *will be enabled by default* once its:
-     * 1. More configurable and rename is called
-     * 2. Logic to avoid name conflicts
-     * @default false
+     * e.g. `let foo: { a: number }` -> `type Foo = { a: number }`
+     * @default true
      */
     'codeActions.extractTypeInferName': boolean
+    /**
+     * Use `{{name}}` as a placeholder to insert inferred name (possibly with _{i} at the end)
+     *
+     * @default "{{name}}"
+     */
+    'codeActions.extractTypeInferNamePattern':
+        | string
+        | {
+              typeAlias: string
+              interface: string
+          }
 }
 
 // scrapped using search editor. config: caseInsesetive, context lines: 0, regex: const fix\w+ = "[^ ]+"

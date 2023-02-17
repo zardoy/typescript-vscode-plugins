@@ -22,6 +22,8 @@ export type ApplyCodeAction = (
 export type CodeAction = {
     name: string
     id: string
+    /** Base kind https://github.com/microsoft/vscode/blob/main/src/vscode-dts/vscode.d.ts#L2236 */
+    kind: string
     tryToApply: ApplyCodeAction
 }
 
@@ -72,8 +74,9 @@ export default (
     return {
         info:
             (appliableCodeActions.length && {
-                actions: appliableCodeActions.map(({ id, name }) => ({
+                actions: appliableCodeActions.map(({ id, name, kind }) => ({
                     description: name,
+                    kind,
                     name: id,
                 })),
                 // anyway not visible in ui

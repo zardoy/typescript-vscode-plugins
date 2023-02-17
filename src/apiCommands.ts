@@ -6,7 +6,7 @@ import { sendCommand } from './sendCommand'
 export default () => {
     /** @unique */
     const cacheableCommands: Set<(typeof passthroughExposedApiCommands)[number]> = new Set(['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition'])
-    const operationsCache = new Map<string, { key: string; data }>()
+    const operationsCache = new Map<string, { key: string; data; time?: number }>()
     const sharedRequest = async (type: TriggerCharacterCommand, { offset, relativeOffset = 0, document, position }: RequestOptions) => {
         if (position && offset) throw new Error('Only position or offset parameter can be provided')
         if (document && !offset && !position) throw new Error('When custom document is provided, offset or position must be provided')
@@ -18,10 +18,11 @@ export default () => {
         const requestOffset = offset ?? document.offsetAt(position!)
         const requestPos = position ?? document.positionAt(offset!)
         const getData = async () => sendCommand(type, { document: document!, position: requestPos })
+        const CACHE_UNDEFINED_TIMEOUT = 1000
         if (cacheableCommands.has(type as any)) {
             const cacheEntry = operationsCache.get(type)
             const operationKey = `${document.uri.toString()}:${document.version}:${requestOffset}`
-            if (cacheEntry?.key === operationKey) {
+            if (cacheEntry?.key === operationKey && cacheEntry?.time && Date.now() - cacheEntry.time < CACHE_UNDEFINED_TIMEOUT) {
                 return cacheEntry.data
             }
 
@@ -31,9 +32,9 @@ export default () => {
             // at the same time:
             // extension 2 completion provider requests API data at the same document and position
             // and so on
-            operationsCache.set(type, { key: operationKey, data })
+            operationsCache.set(type, { key: operationKey, data, time: data === undefined ? Date.now() : undefined })
             if (type === 'getNodePath') {
-                operationsCache.set('getNodeAtPosition', { key: operationKey, data: data.then((path: any) => path[path.length - 1]) })
+                operationsCache.set('getNodeAtPosition', { key: operationKey, data: data.then((path: any) => path?.[path.length - 1]) })
             }
 
             return data
