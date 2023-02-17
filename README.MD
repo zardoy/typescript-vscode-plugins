@@ -1,8 +1,21 @@
 # TypeScript Essential Plugins
 
+Feature-complete TypeScript plugin that improves every single builtin feature such as completions, definitions, references and so on, and also adds even new TypeScript killer features, so you can work with large codebases faster!
+We make completions more informative. Definitions, references (and sometimes even completions) less noisy.
+
+TOC:
+
+- [Top Features](#top-features)
+- [Minor Useful Features](#minor-useful-features)
+- [Auto Imports](#auto-imports)
+- [Rename Features](#rename-features)
+- [Special Commands List](#special-commands-list)
+- [Contributed Code Actions](#contributed-code-actions)
+- [Even Even More](#even-even-more)
+
 ## Top Features
 
-> Here React experience hits different!
+> Note: With this plugin React experience hits different! (see below)
 
 ### Special Commands & Actions
 
@@ -364,4 +377,4 @@ const a = {
 
 ## Even Even More
 
-Please look at extension settings, as this extension has much more features than described here!
+Also please take a look at extension settings, as this extension has much more features than described here!
