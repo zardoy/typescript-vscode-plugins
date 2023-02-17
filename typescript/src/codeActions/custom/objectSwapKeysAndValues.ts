@@ -23,6 +23,7 @@ export const printNodeForObjectKey = (node: ts.Node) => {
 export default {
     id: 'objectSwapKeysAndValues',
     name: 'Swap Keys and Values in Object',
+    kind: 'refactor.rewrite.object.swapKeysAndValues',
     tryToApply(sourceFile, _position, range, node) {
         if (!range || !node) return
         // requires full explicit object selection (be aware of comma) to not be annoying with suggestion

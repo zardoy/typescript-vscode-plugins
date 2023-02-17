@@ -9,6 +9,7 @@ const nodeToSpan = (node: ts.Node): ts.TextSpan => {
 export default {
     id: 'changeStringReplaceToRegex',
     name: 'Change to Regex',
+    kind: 'refactor.rewrite.stringToRegex',
     tryToApply(sourceFile, position, _range, node) {
         if (!node || !position) return
         // requires full explicit object selection (be aware of comma) to not be annoying with suggestion
