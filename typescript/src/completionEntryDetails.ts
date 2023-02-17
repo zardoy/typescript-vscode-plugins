@@ -1,17 +1,10 @@
 import { oneOf } from '@zardoy/utils'
 import { getParameterListParts } from './completions/snippetForFunctionCall'
-import { PrevCompletionsAdditionalData } from './completionsAtPosition'
+import { PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
+import namespaceAutoImports from './namespaceAutoImports'
 import { GetConfig } from './types'
 
-export default (
-    languageService: ts.LanguageService,
-    c: GetConfig,
-    fileName: string,
-    position: number,
-    sourceFile: ts.SourceFile,
-    prior: ts.CompletionEntryDetails,
-    { enableMethodCompletion }: PrevCompletionsAdditionalData,
-) => {
+const handleMethodSnippets = (prior: ts.CompletionEntryDetails, c: GetConfig, { enableMethodCompletion }: PrevCompletionsAdditionalData) => {
     if (
         c('enableMethodSnippets') &&
         oneOf(
@@ -64,4 +57,73 @@ export default (
         }
     }
     return prior
+}
+
+export default function completionEntryDetails(
+    inputArgs: Parameters<ts.LanguageService['getCompletionEntryDetails']>,
+    languageService: ts.LanguageService,
+    prevCompletionsMap: PrevCompletionMap,
+    c: GetConfig,
+    prevCompletionsAdittionalData: PrevCompletionsAdditionalData,
+): ts.CompletionEntryDetails | undefined {
+    const [fileName, position, entryName, formatOptions, source, preferences, data] = inputArgs
+    const program = languageService.getProgram()
+    const sourceFile = program?.getSourceFile(fileName)
+    if (!program || !sourceFile) return
+
+    const { documentationOverride, documentationAppend, detailPrepend } = prevCompletionsMap[entryName] ?? {}
+    if (documentationOverride) {
+        return {
+            name: entryName,
+            kind: ts.ScriptElementKind.alias,
+            kindModifiers: '',
+            displayParts: typeof documentationOverride === 'string' ? [{ kind: 'text', text: documentationOverride }] : documentationOverride,
+        }
+    }
+    const prior = languageService.getCompletionEntryDetails(
+        fileName,
+        position,
+        prevCompletionsMap[entryName]?.originalName || entryName,
+        formatOptions,
+        source,
+        preferences,
+        data,
+    )
+    if (!prior) return
+    if (source) {
+        const namespaceImport = namespaceAutoImports(
+            c,
+            languageService.getProgram()!.getSourceFile(fileName)!,
+            source,
+            preferences ?? {},
+            formatOptions ?? {},
+            position,
+            entryName,
+            prior,
+        )
+        if (namespaceImport) {
+            const { textChanges, description } = namespaceImport
+            const namespace = textChanges[0]!.newText.slice(0, -1)
+            // todo-low think of cleanin up builtin code actions descriptions
+            prior.codeActions = [
+                // ...(prior.codeActions ?? []),
+                {
+                    description: description,
+                    changes: [
+                        {
+                            fileName,
+                            textChanges,
+                        },
+                    ],
+                },
+            ]
+        }
+    }
+    if (detailPrepend) {
+        prior.displayParts = [{ kind: 'text', text: detailPrepend }, ...prior.displayParts]
+    }
+    if (documentationAppend) {
+        prior.documentation = [...(prior.documentation ?? []), { kind: 'text', text: documentationAppend }]
+    }
+    return handleMethodSnippets(prior, c, prevCompletionsAdittionalData)
 }

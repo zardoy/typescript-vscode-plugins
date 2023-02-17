@@ -78,66 +78,7 @@ export const decorateLanguageService = (
         return result.completions
     }
 
-    proxy.getCompletionEntryDetails = (fileName, position, entryName, formatOptions, source, preferences, data) => {
-        const program = languageService.getProgram()
-        const sourceFile = program?.getSourceFile(fileName)
-        if (!program || !sourceFile) return
-        const { documentationOverride, documentationAppend, detailPrepend } = prevCompletionsMap[entryName] ?? {}
-        if (documentationOverride) {
-            return {
-                name: entryName,
-                kind: ts.ScriptElementKind.alias,
-                kindModifiers: '',
-                displayParts: typeof documentationOverride === 'string' ? [{ kind: 'text', text: documentationOverride }] : documentationOverride,
-            }
-        }
-        const prior = languageService.getCompletionEntryDetails(
-            fileName,
-            position,
-            prevCompletionsMap[entryName]?.originalName || entryName,
-            formatOptions,
-            source,
-            preferences,
-            data,
-        )
-        if (!prior) return
-        if (source) {
-            const namespaceImport = namespaceAutoImports(
-                c,
-                languageService.getProgram()!.getSourceFile(fileName)!,
-                source,
-                preferences ?? {},
-                formatOptions ?? {},
-                position,
-                entryName,
-                prior,
-            )
-            if (namespaceImport) {
-                const { textChanges, description } = namespaceImport
-                const namespace = textChanges[0]!.newText.slice(0, -1)
-                // todo-low think of cleanin up builtin code actions descriptions
-                prior.codeActions = [
-                    // ...(prior.codeActions ?? []),
-                    {
-                        description: description,
-                        changes: [
-                            {
-                                fileName,
-                                textChanges,
-                            },
-                        ],
-                    },
-                ]
-            }
-        }
-        if (detailPrepend) {
-            prior.displayParts = [{ kind: 'text', text: detailPrepend }, ...prior.displayParts]
-        }
-        if (documentationAppend) {
-            prior.documentation = [...(prior.documentation ?? []), { kind: 'text', text: documentationAppend }]
-        }
-        return completionEntryDetails(languageService, c, fileName, position, sourceFile, prior, prevCompletionsAdittionalData)
-    }
+    proxy.getCompletionEntryDetails = (...inputArgs) => completionEntryDetails(inputArgs, languageService, prevCompletionsMap, c, prevCompletionsAdittionalData)
 
     decorateCodeActions(proxy, languageService, c)
     decorateCodeFixes(proxy, languageService, c, languageServiceHost)
