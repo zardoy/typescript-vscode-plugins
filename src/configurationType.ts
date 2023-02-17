@@ -283,6 +283,17 @@ export type Configuration = {
      */
     removeDefinitionFromReferences: boolean
     /**
+     * Make tsserver think signature help never gets triggered manually to make it not go outside of block eg:
+     * ```ts
+     * declare const a: (a) => void
+     * a(() => {/* no annoying signature help on trigger *\/ })
+     * ```
+     * But it still allow it to be displayed in return statements which is more convenient
+     * @recommended
+     * @default false
+     */
+    'signatureHelp.excludeBlockScope': boolean
+    /**
      * @default true
      */
     removeImportsFromReferences: boolean

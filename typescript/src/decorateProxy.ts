@@ -15,6 +15,7 @@ import decorateWorkspaceSymbolSearch from './workspaceSymbolSearch'
 import decorateFormatFeatures from './decorateFormatFeatures'
 import namespaceAutoImports from './namespaceAutoImports'
 import libDomPatching from './libDomPatching'
+import decorateSignatureHelp from './decorateSignatureHelp'
 
 /** @internal */
 export const thisPluginMarker = '__essentialPluginsMarker__'
@@ -88,6 +89,7 @@ export const decorateLanguageService = (
     decorateDocumentHighlights(proxy, languageService, c)
     decorateWorkspaceSymbolSearch(proxy, languageService, c, languageServiceHost)
     decorateFormatFeatures(proxy, languageService, languageServiceHost, c)
+    decorateSignatureHelp(proxy, languageService, languageServiceHost, c)
     proxy.findRenameLocations = (fileName, position, findInStrings, findInComments, providePrefixAndSuffixTextForRename) => {
         if (overrideRequestPreferences.rename) {
             try {
