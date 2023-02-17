@@ -1,7 +1,7 @@
 # TypeScript Essential Plugins
 
 Feature-complete TypeScript plugin that improves every single builtin feature such as completions, definitions, references and so on, and also adds even new TypeScript killer features, so you can work with large codebases faster!
-We make completions more informative. Definitions, references (and sometimes even completions) less noisy.
+We make completions more informative. Definitions, references (and sometimes even completions) less noisy. And finally our main goal is to provide most customizable TypeScript experience for IDE features.
 
 TOC:
 
