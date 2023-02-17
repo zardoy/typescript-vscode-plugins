@@ -33,7 +33,7 @@ export default () => {
             // and so on
             operationsCache.set(type, { key: operationKey, data })
             if (type === 'getNodePath') {
-                operationsCache.set('getNodeAtPosition', { key: operationKey, data: data.then((path: any) => path[path.length - 1]) })
+                operationsCache.set('getNodeAtPosition', { key: operationKey, data: data.then((path: any) => path?.[path.length - 1]) })
             }
 
             return data
