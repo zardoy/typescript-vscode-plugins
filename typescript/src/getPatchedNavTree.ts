@@ -1,6 +1,7 @@
 import { getCancellationToken, isTs5, nodeModules } from './utils'
 import { createLanguageService } from './dummyLanguageService'
 import { getCannotFindCodes } from './utils/cannotFindCodes'
+import { ensureArray } from '@zardoy/utils'
 
 // used at testing only
 declare const __TS_SEVER_PATH__: string | undefined
@@ -20,17 +21,18 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
         returnModuleCode: string
     }
     type PatchLocation = {
-        searchString: string
+        searchString: string | string[]
         linesOffset: number
         addString?: string
         removeLines?: number
         // transform?: (found: string, content: string, position: number) => [string?, string?]
     }
+    const addChildrenRecursivelySwitchFirstCase = ['function addChildrenRecursively(node)', 'switch (node.kind)']
 
     const patchLocations: PatchLocation[] = [
         {
-            searchString: 'function addChildrenRecursively(node)',
-            linesOffset: 7,
+            searchString: addChildrenRecursivelySwitchFirstCase,
+            linesOffset: 1,
             addString: /* js */ `
                 case ts.SyntaxKind.JsxSelfClosingElement:
                     addLeafNode(node)
@@ -58,8 +60,8 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
         },
         // prettier-ignore
         ...additionalFeatures.arraysTuplesNumberedItems ? [{
-            searchString: 'function addChildrenRecursively(node)',
-            linesOffset: 7,
+            searchString: addChildrenRecursivelySwitchFirstCase,
+            linesOffset: 1,
             addString: /* js */ `
                 case ts.SyntaxKind.TupleType:
                 case ts.SyntaxKind.ArrayLiteralExpression:
@@ -106,11 +108,15 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
     const lines = contentAfterModuleStart.slice(0, contentAfterModuleStart.indexOf(markerModuleEnd) + markerModuleEnd.length).split(/\r?\n/)
 
     for (let { addString, linesOffset, searchString, removeLines = 0 } of patches) {
-        const addTypeIndex = lines.findIndex(line => line.includes(searchString))
+        let addTypeIndex = -1
+        for (const search of ensureArray(searchString)) {
+            const newIndexStart = addTypeIndex + 1
+            addTypeIndex = newIndexStart + lines.slice(newIndexStart).findIndex(line => line.includes(search))
+        }
         if (addTypeIndex !== -1) {
             lines.splice(addTypeIndex + linesOffset, removeLines, ...(addString ? [addString] : []))
         } else {
-            console.warn(`TS Essentials: Failed to patch NavBar module (outline): ${searchString}`)
+            console.error(`TS Essentials: Failed to patch NavBar module (outline): ${JSON.stringify(searchString)}`)
         }
     }
     const getModuleString = () => `module.exports = (ts, getNameFromJsxTag) => {\n${lines.join('\n')}\nreturn ${returnModuleCode}}`
