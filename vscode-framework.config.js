@@ -31,10 +31,6 @@ const languageOveridableSettings = [
 const dontMakeLanguageOverridableSettings = ['jsxPseudoEmmet.tags', 'jsxCompletionsMap', 'workspaceSymbolSearchExcludePatterns']
 
 const ICON_URL = process.env.EXTENSION_ICON
-if (ICON_URL) {
-    mkdirSync('resources', { recursive: true })
-    pipeline(got.stream(ICON_URL), createWriteStream('resources/icon.png'))
-}
 
 patchPackageJson({
     patchSettings(/** @type {Config} */ configuration) {
@@ -54,9 +50,11 @@ patchPackageJson({
         // }
         return configuration
     },
-    rawPatchManifest(manifest) {
+    async rawPatchManifest(manifest) {
         if (ICON_URL) {
-            manifest.icon = 'resources/icon.png'
+            mkdirSync('out/resources', { recursive: true })
+            await pipeline(got.stream(ICON_URL), createWriteStream('out/resources/icon.png'))
+            manifest.icon = './resources/icon.png'
         }
     },
 })
