@@ -9,7 +9,7 @@ type SimplifiedRefactorInfo =
           length: number
           newText: string
       }
-    | ts.TextChange[]
+    | ts.TextChange
 
 export type ApplyCodeAction = (
     sourceFile: ts.SourceFile,
@@ -51,7 +51,7 @@ export default (
             return {
                 ...action,
                 edits: Array.isArray(edits)
-                    ? ({
+                    ? {
                           edits: [
                               {
                                   fileName: sourceFile.fileName,
@@ -70,7 +70,7 @@ export default (
                                   }),
                               },
                           ],
-                      } as ts.RefactorEditInfo)
+                      }
                     : edits,
             }
         }),
