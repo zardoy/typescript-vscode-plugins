@@ -167,9 +167,22 @@ export function addObjectMethodResultInterceptors<T extends Record<string, any>>
     }
 }
 
+type OriginalTypeChecker = import('typescript-full').textChanges.ChangeTracker
+
+type ChangeParameters<T extends any[]> = {
+    [K in keyof T]: T[K] extends import('typescript-full').SourceFile ? ts.SourceFile : T[K] extends import('typescript-full').Node ? ts.Node : T[K]
+}
+
+type ChangesTracker = {
+    [K in keyof OriginalTypeChecker]: (...args: ChangeParameters<Parameters<OriginalTypeChecker[K]>> & any[]) => ReturnType<OriginalTypeChecker[K]>
+}
+
 // have absolutely no idea why such useful utility is not publicly available
 export const getChangesTracker = formatOptions => {
-    return new tsFull.textChanges.ChangeTracker(/* will be normalized by vscode anyway */ '\n', tsFull.formatting.getFormatContext(formatOptions, {}))
+    return new tsFull.textChanges.ChangeTracker(
+        /* will be normalized by vscode anyway */ '\n',
+        tsFull.formatting.getFormatContext(formatOptions, {}),
+    ) as unknown as ChangesTracker
 }
 
 export const dedentString = (string: string, addIndent = '', trimFirstLines = false) => {

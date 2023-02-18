@@ -16,10 +16,11 @@ export type ApplyCodeAction = (
     position: number,
     range: ts.TextRange | undefined,
     node: ts.Node | undefined,
-    formatOptions: ts.FormatCodeSettings,
+    /** undefined when no edits is requested */
+    formatOptions: ts.FormatCodeSettings | undefined,
     languageService: ts.LanguageService,
     languageServiceHost: ts.LanguageServiceHost,
-) => ts.RefactorEditInfo | SimplifiedRefactorInfo[] | undefined
+) => ts.RefactorEditInfo | SimplifiedRefactorInfo[] | true | undefined
 
 export type CodeAction = {
     name: string
@@ -46,7 +47,8 @@ export default (
     const node = findChildContainingPosition(ts, sourceFile, pos)
     const appliableCodeActions = compact(
         codeActions.map(action => {
-            const edits = action.tryToApply(sourceFile, pos, range, node, formatOptions ?? {}, languageService, languageServiceHost)
+            const edits = action.tryToApply(sourceFile, pos, range, node, formatOptions, languageService, languageServiceHost)
+            if (edits === true) return action
             if (!edits) return
             return {
                 ...action,
@@ -76,6 +78,7 @@ export default (
         }),
     )
 
+    const requestingEdit: any = requestingEditsId ? appliableCodeActions.find(({ id }) => id === requestingEditsId) : null
     return {
         info:
             (appliableCodeActions.length && {
@@ -89,6 +92,6 @@ export default (
                 name: REFACTORS_CATEGORY,
             }) ||
             undefined,
-        edit: requestingEditsId ? appliableCodeActions.find(({ id }) => id === requestingEditsId)!.edits : null!,
+        edit: requestingEdit?.edits,
     }
 }
