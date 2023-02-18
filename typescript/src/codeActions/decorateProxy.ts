@@ -3,7 +3,7 @@ import { handleFunctionRefactorEdits, processApplicableRefactors } from './funct
 import getCodeActions, { REFACTORS_CATEGORY } from './getCodeActions'
 import improveBuiltin from './improveBuiltin'
 
-export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig) => {
+export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
     proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
         let prior = languageService.getApplicableRefactors(fileName, positionOrRange, preferences)
 
@@ -16,7 +16,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
 
         const program = languageService.getProgram()
         const sourceFile = program!.getSourceFile(fileName)!
-        const { info: refactorInfo } = getCodeActions(sourceFile, positionOrRange)
+        const { info: refactorInfo } = getCodeActions(sourceFile, positionOrRange, languageService, languageServiceHost)
         if (refactorInfo) prior = [...prior, refactorInfo]
 
         return prior
@@ -27,7 +27,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         if (category === REFACTORS_CATEGORY) {
             const program = languageService.getProgram()
             const sourceFile = program!.getSourceFile(fileName)!
-            const { edit } = getCodeActions(sourceFile, positionOrRange, actionName)
+            const { edit } = getCodeActions(sourceFile, positionOrRange, languageService, languageServiceHost, formatOptions, actionName)
             return edit
         }
         if (refactorName === 'Extract Symbol' && actionName.startsWith('function_scope')) {

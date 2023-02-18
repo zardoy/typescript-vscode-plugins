@@ -8,7 +8,7 @@ import namespaceAutoImports from './namespaceAutoImports'
 // codeFixes that I managed to put in files
 const externalCodeFixes = [addMissingProperties]
 
-export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig, languageServiceHost: ts.LanguageServiceHost) => {
+export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
     proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
         const sourceFile = languageService.getProgram()?.getSourceFile(fileName)!
         const node = findChildContainingPosition(ts, sourceFile, start)
