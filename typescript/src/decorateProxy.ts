@@ -48,11 +48,15 @@ export const decorateLanguageService = (
     let prevCompletionsAdittionalData: PrevCompletionsAdditionalData
     // eslint-disable-next-line complexity
     proxy.getCompletionsAtPosition = (fileName, position, options, formatOptions) => {
+        if (options?.triggerCharacter && typeof options.triggerCharacter !== 'string') {
+            return languageService.getCompletionsAtPosition(fileName, position, options)
+        }
         const updateConfigCommand = 'updateConfig'
         if (options?.triggerCharacter?.startsWith(updateConfigCommand)) {
             config.config = JSON.parse(options.triggerCharacter.slice(updateConfigCommand.length))
             return { entries: [] }
         }
+
         const specialCommandResult = options?.triggerCharacter
             ? handleSpecialCommand(
                   fileName,
