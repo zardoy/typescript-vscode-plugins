@@ -54,7 +54,7 @@ patchPackageJson({
         if (ICON_URL) {
             mkdirSync('out/resources', { recursive: true })
             await pipeline(got.stream(ICON_URL), createWriteStream('out/resources/icon.png'))
-            manifest.icon = './resources/icon.png'
+            manifest.icon = 'resources/icon.png'
         }
     },
 })
