@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v2
-      - run: npx prettier --check src/**
+      - run: npx prettier --check "{src,typescript}/**/*.ts" --ignore-path .gitignore
       - name: Cache pnpm modules
         uses: actions/cache@v2
         with:

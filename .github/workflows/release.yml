@@ -13,7 +13,6 @@ jobs:
       - run: npm -v
       - run: node -v
       - uses: actions/checkout@v2
-      - run: npx prettier --check src/**
       - name: Cache pnpm modules
         uses: actions/cache@v2
         with:
@@ -26,7 +25,6 @@ jobs:
           version: latest
           run_install: |
             args: [--frozen-lockfile, --strict-peer-dependencies]
-      - run: pnpm lint
       - run: pnpx zardoy-release vscode-extension
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
