@@ -163,8 +163,6 @@ Try to restore [original](https://github.com/microsoft/TypeScript/issues/49012) 
 We extend completion list with extensions from module augmentation (e.g. `.css` files if you have `declare module '*.css'`).
 But for unchecked contexts list of extensions can be extended with `tsEssentialPlugins.additionalIncludeExtensions` setting.
 
-<!-- ## Type-Driven Completions -->
-
 ### Mark Code Actions
 
 (*enabled by default* with two settings)
@@ -193,7 +191,38 @@ const a = 5
 a = 6
 ```
 
-### Method Snippets
+### Format Ignore Directives
+
+We support [format ignore directives](https://github.com/microsoft/TypeScript/issues/18261)
+
+## Type-Driven Completions
+
+All in this section requires TypeScript nightly extension.
+
+### JSX Elements
+
+To Enable: `"tsEssentialPlugins.experiments.excludeNonJsxCompletions": true`
+
+We can filter out completions so only Function Components stay in your list:
+
+```tsx
+class Foo {}
+const Bar = () => <div />
+
+const elem = </* Bar is suggested, Foo not
+```
+
+Super handy in MUI + Electron projects.
+
+Class components are not supported (no need).
+
+### Change kind to function
+
+Enable with `tsEssentialPlugins.experiments.changeKindToFunction`
+
+![change-icon-kind](media/change-kind.png)
+
+## Method Snippets
 
 (*enabled by default*)
 

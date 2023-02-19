@@ -97,7 +97,9 @@ const fourslashLikeTester = (contents: string, fileName = entrypoint) => {
                 if (includes) {
                     const { names, all } = includes
                     if (names) {
-                        expect(result?.entryNames, message).toContain(names)
+                        for (const name of names) {
+                            expect(result?.entryNames, message).toContain(name)
+                        }
                     }
                     if (all) {
                         for (const entry of result.entries.filter(e => names?.includes(e.name))) {
@@ -332,6 +334,33 @@ test('Case-sensetive completions', () => {
         const { entryNames } = getCompletionsAtPosition(pos) ?? {}
         expect(entryNames, pos.toString()).toEqual(['3t', 'testItem'])
     }
+})
+
+// ts 5
+test.todo('Change to function kind', () => {
+    settingsOverride['experiments.changeKindToFunction'] = true
+    const tester = fourslashLikeTester(/* ts */ `
+        // declare const foo: boolean
+        const foo = () => {}
+        foo/*1*/
+    `)
+    tester.completion(1, {
+        includes: {
+            names: ['foo'],
+            all: {
+                kind: ts.ScriptElementKind.functionElement,
+            },
+        },
+    })
+    settingsOverride['experiments.changeKindToFunction'] = false
+})
+
+// ts 5
+test.todo('Filter JSX Components', () => {
+    const tester = fourslashLikeTester(/* ts */ `
+        const a = () => {}
+        a/*1*/
+    `)
 })
 
 test('Omit<..., ""> suggestions', () => {

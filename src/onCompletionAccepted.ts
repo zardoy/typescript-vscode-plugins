@@ -36,7 +36,7 @@ export default (tsApi: { onCompletionAccepted }) => {
 
         const enableMethodSnippets = vscode.workspace.getConfiguration(process.env.IDS_PREFIX, item.document).get('enableMethodSnippets')
 
-        if (enableMethodSnippets && (typeof insertText !== 'object' || !insertText.value.endsWith(')$0'))) {
+        if (enableMethodSnippets && /* either snippet by vscode or by us to ignore pos */ typeof insertText !== 'object') {
             const editor = getActiveRegularEditor()!
             const startPos = editor.selection.start
             const nextSymbol = editor.document.getText(new vscode.Range(startPos, startPos.translate(0, 1)))
@@ -79,6 +79,9 @@ export default (tsApi: { onCompletionAccepted }) => {
                         snippet.appendPlaceholder(text)
                         if (i !== parameters.length - 1) snippet.appendText(', ')
                     }
+
+                    const allFiltered = data.parameters.length > parameters.length
+                    if (allFiltered) snippet.appendTabstop()
 
                     snippet.appendText(')')
                     void editor.insertSnippet(snippet, undefined, {
