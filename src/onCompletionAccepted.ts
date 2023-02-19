@@ -4,12 +4,15 @@ import { conditionallyRegister } from '@zardoy/vscode-utils/build/settings'
 import { expandPosition } from '@zardoy/vscode-utils/build/position'
 import { getExtensionSetting, registerExtensionCommand } from 'vscode-framework'
 import { oneOf } from '@zardoy/utils'
+import { RequestOptionsTypes, RequestResponseTypes } from '../typescript/src/ipcTypes'
+import { sendCommand } from './sendCommand'
 
 export default (tsApi: { onCompletionAccepted }) => {
     let justAcceptedReturnKeywordSuggestion = false
     let onCompletionAcceptedOverride: ((item: any) => void) | undefined
 
-    tsApi.onCompletionAccepted((item: vscode.CompletionItem & { document: vscode.TextDocument }) => {
+    // eslint-disable-next-line complexity
+    tsApi.onCompletionAccepted(async (item: vscode.CompletionItem & { document: vscode.TextDocument }) => {
         if (onCompletionAcceptedOverride) {
             onCompletionAcceptedOverride(item)
             return
@@ -32,32 +35,59 @@ export default (tsApi: { onCompletionAccepted }) => {
         }
 
         const enableMethodSnippets = vscode.workspace.getConfiguration(process.env.IDS_PREFIX, item.document).get('enableMethodSnippets')
-        const documentationString = documentation instanceof vscode.MarkdownString ? documentation.value : documentation
-        const insertFuncArgs = /<!-- insert-func: (.*)-->/.exec(documentationString)?.[1]
-        console.debug('insertFuncArgs', insertFuncArgs)
-        if (enableMethodSnippets && insertFuncArgs !== undefined) {
+
+        if (enableMethodSnippets && (typeof insertText !== 'object' || !insertText.value.endsWith(')$0'))) {
             const editor = getActiveRegularEditor()!
             const startPos = editor.selection.start
             const nextSymbol = editor.document.getText(new vscode.Range(startPos, startPos.translate(0, 1)))
             if (!['(', '.'].includes(nextSymbol)) {
-                const snippet = new vscode.SnippetString('')
-                snippet.appendText('(')
-                const args = insertFuncArgs.split(',')
-                for (let [i, arg] of args.entries()) {
-                    if (!arg) continue
-                    // skip empty, but add tabstops if we explicitly want it!
-                    if (arg === ' ') arg = ''
-                    snippet.appendPlaceholder(arg)
-                    if (i !== args.length - 1) snippet.appendText(', ')
-                }
-
-                snippet.appendText(')')
-                void editor.insertSnippet(snippet, undefined, {
-                    undoStopAfter: false,
-                    undoStopBefore: false,
+                const insertMode = getExtensionSetting('methodSnippets.insertText')
+                const skipMode = getExtensionSetting('methodSnippets.skip')
+                const data: RequestResponseTypes['getSignatureInfo'] | undefined = await sendCommand('getSignatureInfo', {
+                    inputOptions: {
+                        includeInitializer: insertMode === 'always-declaration',
+                    } satisfies RequestOptionsTypes['getSignatureInfo'],
                 })
-                if (vscode.workspace.getConfiguration('editor.parameterHints').get('enabled')) {
-                    void vscode.commands.executeCommand('editor.action.triggerParameterHints')
+                if (data) {
+                    const parameters = data.parameters.filter(({ insertText, isOptional }) => {
+                        const isRest = insertText.startsWith('...')
+                        if (skipMode === 'only-rest' && isRest) return false
+                        if (skipMode === 'optional-and-rest' && isOptional) return false
+                        return true
+                    })
+
+                    const snippet = new vscode.SnippetString('')
+                    snippet.appendText('(')
+                    // todo maybe when have skipped, add a way to leave trailing , (previous behavior)
+                    for (const [i, { insertText, name }] of parameters.entries()) {
+                        const isRest = insertText.startsWith('...')
+                        let text: string
+                        // eslint-disable-next-line default-case, @typescript-eslint/switch-exhaustiveness-check
+                        switch (insertMode) {
+                            case 'always-name':
+                                text = name
+                                break
+                            case 'prefer-name':
+                                // prefer name, but only if identifier and not binding pattern & rest
+                                text = oneOf(insertText[0], '[', '{') ? insertText : isRest ? insertText : name
+                                break
+                            case 'always-declaration':
+                                text = insertText
+                                break
+                        }
+
+                        snippet.appendPlaceholder(text)
+                        if (i !== parameters.length - 1) snippet.appendText(', ')
+                    }
+
+                    snippet.appendText(')')
+                    void editor.insertSnippet(snippet, undefined, {
+                        undoStopAfter: false,
+                        undoStopBefore: false,
+                    })
+                    if (vscode.workspace.getConfiguration('editor.parameterHints').get('enabled')) {
+                        void vscode.commands.executeCommand('editor.action.triggerParameterHints')
+                    }
                 }
             }
         }

@@ -1,6 +1,13 @@
 import { compact } from '@zardoy/utils'
 import { overrideRequestPreferences } from '../decorateProxy'
-import { NodeAtPositionResponse, RequestOptionsTypes, RequestResponseTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
+import {
+    GetSignatureInfoParameter,
+    NodeAtPositionResponse,
+    RequestOptionsTypes,
+    RequestResponseTypes,
+    TriggerCharacterCommand,
+    triggerCharacterCommands,
+} from '../ipcTypes'
 import { findChildContainingExactPosition, findChildContainingPosition, getNodePath } from '../utils'
 import getEmmetCompletions from './emmet'
 import objectIntoArrayConverters from './objectIntoArrayConverters'
@@ -50,6 +57,46 @@ export default (
         return {
             entries: [],
             typescriptEssentialsResponse: !node ? undefined : nodeToApiResponse(node),
+        }
+    }
+    if (specialCommand === 'getSignatureInfo') {
+        changeType<RequestOptionsTypes['getSignatureInfo']>(specialCommandArg)
+
+        const node = findChildContainingExactPosition(sourceFile, position)
+        if (!node) return
+        const typeChecker = languageService.getProgram()!.getTypeChecker()!
+        const type = typeChecker.getContextualType(node as any) ?? typeChecker.getTypeAtLocation(node)
+        const signatures = typeChecker.getSignaturesOfType(type, ts.SignatureKind.Call)
+        if (signatures.length !== 1) return
+        // Investigate merging signatures
+        const { parameters } = signatures[0]!
+        const printer = ts.createPrinter()
+        const parsedParams = parameters.map((param): GetSignatureInfoParameter => {
+            const valueDeclaration = param.valueDeclaration as ts.ParameterDeclaration | undefined
+            const isOptional =
+                valueDeclaration && (valueDeclaration.questionToken || valueDeclaration.initializer || valueDeclaration.dotDotDotToken) ? true : false
+            return {
+                name: param.name,
+                isOptional,
+                insertText: valueDeclaration
+                    ? printer.printNode(
+                          ts.EmitHint.Unspecified,
+                          ts.factory.createParameterDeclaration(
+                              undefined,
+                              valueDeclaration.dotDotDotToken,
+                              valueDeclaration.name,
+                              valueDeclaration.questionToken,
+                              undefined,
+                              specialCommandArg.includeInitializer ? valueDeclaration.initializer : undefined,
+                          ),
+                          valueDeclaration.getSourceFile(),
+                      )
+                    : param.name,
+            }
+        })
+        return {
+            entries: [],
+            typescriptEssentialsResponse: { parameters: parsedParams } satisfies RequestResponseTypes['getSignatureInfo'],
         }
     }
     if (specialCommand === 'getSpanOfEnclosingComment') {

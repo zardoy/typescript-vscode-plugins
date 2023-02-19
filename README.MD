@@ -7,6 +7,7 @@ TOC:
 
 - [Top Features](#top-features)
 - [Minor Useful Features](#minor-useful-features)
+- [Method Snippets](#method-snippets)
 - [Auto Imports](#auto-imports)
 - [Rename Features](#rename-features)
 - [Special Commands List](#special-commands-list)
@@ -34,19 +35,6 @@ Also is not supported in the web.
 ## **Completions Built Different**
 
 90% work done in this extension highly improves completions experience!
-
-### Method Snippets
-
-(*enabled by default*)
-
-Expands arrow callbacks with signature snippet with adding additional undo stack!
-
-Example:
-
-```ts
-const callback = (arg) => {}
-callback -> callback(arg)
-```
 
 ### Strict Emmet
 
@@ -203,6 +191,47 @@ const syncFunction = () => {
 const a = 5
 // const to let fix
 a = 6
+```
+
+### Method Snippets
+
+(*enabled by default*)
+
+Expands arrow callback completions with signature snippet. Also adds additional undo stack!
+
+Example:
+
+```ts
+const callback = (arg) => {}
+callback -> callback(arg)
+```
+
+#### Configuration
+
+There are value descriptions for two settings:
+
+`tsEssentialPlugins.methodSnippets.insertText`:
+
+```ts
+const example = ({ a }, b?, c = 5, ...d) => { }
+// prefer-name (default)
+example({ a }, b, c, ...d)
+// always-declaration (recommended)
+example({ a }, b?, c = 5, ...d)
+// always-name
+example(__0, b, c, d)
+```
+
+`tsEssentialPlugins.methodSnippets.skip`:
+
+```ts
+const example = ({ a }, b?, c = 5, ...d) => { }
+// only-rest
+example({ a }, b, c)
+// optional-and-rest
+example({ a })
+// no-skip (default)
+example({ a }, b, c, ...d)
 ```
 
 ## Auto Imports

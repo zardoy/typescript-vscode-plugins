@@ -311,10 +311,45 @@ export type Configuration = {
      */
     changeDtsFileDefinitionToJs: boolean
     /**
-     * Experimental. Also includes optional args
+     * Wether to enable method call snippets after completion (suggestion) accept eg:
+     * ```ts
+     * const simple = (foo: boolean) => {}
+     * const complex = ({ a }, b?, c = 5) => { }
+     *
+     * simple(foo)
+     * test({ a }, b, c)
+     * ```
      * @default true
      */
     enableMethodSnippets: boolean
+    /**
+     * ```ts
+     * const example = ({ a }, b?, c = 5, ...d) => { }
+     *
+     * // prefer-name (default)
+     * example({ a }, b, c, ...d)
+     * // always-declaration (popular)
+     * example({ a }, b?, c = 5, ...d)
+     * // always-name
+     * example(__0, b, c, d)
+     * ```
+     * @default prefer-name
+     */
+    'methodSnippets.insertText': 'prefer-name' | 'always-declaration' | 'always-name'
+    /**
+     * ```ts
+     * const example = ({ a }, b?, c = 5, ...d) => { }
+     *
+     * // only-rest
+     * example({ a }, b, c)
+     * // optional-and-rest (popular)
+     * example({ a })
+     * // no-skip (default)
+     * example({ a }, b, c, ...d)
+     * ```
+     * @default no-skip
+     */
+    'methodSnippets.skip': 'only-rest' | 'optional-and-rest' | 'no-skip'
     /**
      * Wether to disable our and builtin method snippets within jsx attributes
      * @default true

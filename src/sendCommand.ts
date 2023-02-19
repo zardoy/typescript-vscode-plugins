@@ -4,8 +4,8 @@ import { getExtensionSetting } from 'vscode-framework'
 import { passthroughExposedApiCommands, TriggerCharacterCommand } from '../typescript/src/ipcTypes'
 
 type SendCommandData<K> = {
-    position: vscode.Position
-    document: vscode.TextDocument
+    position?: vscode.Position
+    document?: vscode.TextDocument
     inputOptions?: K
 }
 export const sendCommand = async <T, K = any>(command: TriggerCharacterCommand, sendCommandDataArg?: SendCommandData<K>): Promise<T | undefined> => {
@@ -27,21 +27,12 @@ export const sendCommand = async <T, K = any>(command: TriggerCharacterCommand, 
         return
     }
 
-    if (sendCommandDataArg?.inputOptions) {
-        command = `${command}?${JSON.stringify(sendCommandDataArg.inputOptions)}` as any
-    }
+    const _editor = getActiveRegularEditor()!
+    const { document: { uri } = _editor.document, position = _editor.selection.active, inputOptions } = sendCommandDataArg ?? {}
 
-    const {
-        document: { uri },
-        position,
-    } = ((): SendCommandData<any> => {
-        if (sendCommandDataArg) return sendCommandDataArg
-        const editor = getActiveRegularEditor()!
-        return {
-            document: editor.document,
-            position: editor.selection.active,
-        }
-    })()
+    if (inputOptions) {
+        command = `${command}?${JSON.stringify(inputOptions)}` as any
+    }
 
     if (process.env.NODE_ENV === 'development') console.time(`request ${command}`)
     let requestFile = uri.fsPath

@@ -1,4 +1,4 @@
-export const passthroughExposedApiCommands = ['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition'] as const
+export const passthroughExposedApiCommands = ['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition', 'getSignatureInfo'] as const
 
 export const triggerCharacterCommands = [
     ...passthroughExposedApiCommands,
@@ -12,7 +12,7 @@ export const triggerCharacterCommands = [
     'acceptRenameWithParams',
 ] as const
 
-export type TriggerCharacterCommand = typeof triggerCharacterCommands[number]
+export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
 
 export type NodeAtPositionResponse = {
     kindName: string
@@ -24,6 +24,13 @@ type TsRange = [number, number]
 
 export type PickFunctionArgsType = [name: string, declaration: TsRange, args: [name: string, type: string][]]
 
+export type GetSignatureInfoParameter = {
+    name: string
+    insertText: string
+    isOptional: boolean
+}
+
+// OUTPUT
 /**
  * @keysSuggestions TriggerCharacterCommand
  */
@@ -47,8 +54,12 @@ export type RequestResponseTypes = {
     }
     turnArrayIntoObjectEdit: ts.TextChange[]
     getFixAllEdits: ts.TextChange[]
+    getSignatureInfo: {
+        parameters: GetSignatureInfoParameter[]
+    }
 }
 
+// INPUT
 export type RequestOptionsTypes = {
     removeFunctionArgumentsTypesInSelection: {
         endSelection: number
@@ -61,6 +72,9 @@ export type RequestOptionsTypes = {
         comments: boolean
         strings: boolean
         alias: boolean
+    }
+    getSignatureInfo: {
+        includeInitializer?: boolean
     }
 }
 
