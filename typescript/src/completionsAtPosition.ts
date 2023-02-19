@@ -26,6 +26,7 @@ import escapeStringRegexp from 'escape-string-regexp'
 import addSourceDefinition from './completions/addSourceDefinition'
 import { sharedCompletionContext } from './completions/sharedContext'
 import displayImportedInfo from './completions/displayImportedInfo'
+import changeKindToFunction from './completions/changeKindToFunction'
 
 export type PrevCompletionMap = Record<
     string,
@@ -345,8 +346,15 @@ export const getCompletionsAtPosition = (
         })
     }
 
-    if (prior.isGlobalCompletion) prior.entries = markOrRemoveGlobalCompletions(prior.entries, position, languageService, c) ?? prior.entries
-    if (exactNode) prior.entries = filterJsxElements(prior.entries, exactNode, position, languageService, c) ?? prior.entries
+    if (prior.isGlobalCompletion) {
+        prior.entries = markOrRemoveGlobalCompletions(prior.entries, position, languageService, c) ?? prior.entries
+    }
+    if (exactNode) {
+        prior.entries = filterJsxElements(prior.entries, exactNode, position, languageService, c) ?? prior.entries
+    }
+    if (c('experiments.changeKindToFunction')) {
+        prior.entries = changeKindToFunction(prior.entries)
+    }
 
     if (c('correctSorting.enable')) {
         prior.entries = prior.entries.map(({ ...entry }, index) => ({

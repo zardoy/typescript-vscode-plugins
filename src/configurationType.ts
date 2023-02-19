@@ -444,6 +444,11 @@ export type Configuration = {
      */
     'experiments.excludeNonJsxCompletions': boolean
     /**
+     * Wether to change funcntion completions to function kind
+     * @default false
+     */
+    'experiments.changeKindToFunction': boolean
+    /**
      * Map *symbol - array of modules* to change sorting of imports - first available takes precedence in auto import code fixes (+ import all action)
      *
      * Examples:
