@@ -235,6 +235,10 @@ const wordRangeAtPos = (text: string, position: number) => {
 
 type GetIs<T> = T extends (elem: any) => elem is infer T ? T : never
 
+export const createDummySourceFile = (code: string) => {
+    return ts.createSourceFile('test.ts', code, ts.ScriptTarget.ESNext, false)
+}
+
 export function approveCast<T2 extends Array<(node: ts.Node) => node is ts.Node>>(node: ts.Node | undefined, ...oneOfTest: T2): node is GetIs<T2[number]> {
     if (node === undefined) return false
     if (!oneOfTest) throw new Error('Tests are not provided')

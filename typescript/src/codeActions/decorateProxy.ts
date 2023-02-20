@@ -7,15 +7,17 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
     proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
         let prior = languageService.getApplicableRefactors(fileName, positionOrRange, preferences)
 
+        const program = languageService.getProgram()!
+        const sourceFile = program.getSourceFile(fileName)!
         processApplicableRefactors(
             prior.find(r => r.description === 'Extract function'),
             c,
+            positionOrRange,
+            sourceFile,
         )
 
         if (c('markTsCodeActions.enable')) prior = prior.map(item => ({ ...item, description: `🔵 ${item.description}` }))
 
-        const program = languageService.getProgram()
-        const sourceFile = program!.getSourceFile(fileName)!
         const { info: refactorInfo } = getCodeActions(sourceFile, positionOrRange, languageService, languageServiceHost)
         if (refactorInfo) prior = [...prior, refactorInfo]
 

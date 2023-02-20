@@ -9,6 +9,7 @@ TOC:
 - [Minor Useful Features](#minor-useful-features)
 - [Method Snippets](#method-snippets)
 - [Auto Imports](#auto-imports)
+- [Type Driven Completions](#type-driven-completions)
 - [Rename Features](#rename-features)
 - [Special Commands List](#special-commands-list)
 - [Contributed Code Actions](#contributed-code-actions)
@@ -378,7 +379,9 @@ Another options that is accepted is
 
 ### Go to / Select Nodes by Kind
 
-Use cases: search excluding comments, search & replace only within strings, find interested JSX attribute node
+Extremely powerful command that allows you to leverage AST knowledge of opened file.
+
+Use cases: select all comments to exclude searching in comments. Or search & replace only within strings / find interested JSX attribute node.
 
 ## Contributed Code Actions
 
