@@ -62,7 +62,7 @@ export default (tsApi: { onCompletionAccepted }) => {
                     for (const [i, { insertText, name }] of parameters.entries()) {
                         const isRest = insertText.startsWith('...')
                         let text: string
-                        // eslint-disable-next-line default-case, @typescript-eslint/switch-exhaustiveness-check
+                        // eslint-disable-next-line default-case
                         switch (insertMode) {
                             case 'always-name':
                                 text = name
@@ -81,7 +81,8 @@ export default (tsApi: { onCompletionAccepted }) => {
                     }
 
                     const allFiltered = data.parameters.length > parameters.length
-                    if (allFiltered) snippet.appendTabstop()
+                    // TODO when many, but at least one not empty
+                    if (allFiltered || data.hasManySignatures) snippet.appendTabstop()
 
                     snippet.appendText(')')
                     void editor.insertSnippet(snippet, undefined, {
