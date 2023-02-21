@@ -67,7 +67,13 @@ export default (
         const typeChecker = languageService.getProgram()!.getTypeChecker()!
         const type = typeChecker.getContextualType(node as any) ?? typeChecker.getTypeAtLocation(node)
         const signatures = typeChecker.getSignaturesOfType(type, ts.SignatureKind.Call)
-        if (signatures.length !== 1) return
+        if (signatures.length === 0) return
+        if (signatures.length > 1) {
+            return {
+                entries: [],
+                typescriptEssentialsResponse: { parameters: [], hasManySignatures: true } satisfies RequestResponseTypes['getSignatureInfo'],
+            }
+        }
         // Investigate merging signatures
         const { parameters } = signatures[0]!
         const printer = ts.createPrinter()
@@ -96,7 +102,7 @@ export default (
         })
         return {
             entries: [],
-            typescriptEssentialsResponse: { parameters: parsedParams } satisfies RequestResponseTypes['getSignatureInfo'],
+            typescriptEssentialsResponse: { parameters: parsedParams, hasManySignatures: false } satisfies RequestResponseTypes['getSignatureInfo'],
         }
     }
     if (specialCommand === 'getSpanOfEnclosingComment') {

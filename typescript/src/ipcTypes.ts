@@ -55,7 +55,10 @@ export type RequestResponseTypes = {
     turnArrayIntoObjectEdit: ts.TextChange[]
     getFixAllEdits: ts.TextChange[]
     getSignatureInfo: {
+        // stable
         parameters: GetSignatureInfoParameter[]
+        // unstable
+        hasManySignatures: boolean
     }
 }
 
