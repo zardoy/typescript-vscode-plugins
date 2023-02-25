@@ -63,7 +63,7 @@ export const decorateLanguageService = (
                   position,
                   options.triggerCharacter as TriggerCharacterCommand,
                   languageService,
-                  config.config,
+                  config.config && c,
                   options,
                   formatOptions,
               )

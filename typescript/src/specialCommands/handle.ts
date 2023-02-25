@@ -1,4 +1,5 @@
 import { compact } from '@zardoy/utils'
+import constructMethodSnippet from '../constructMethodSnippet'
 import { overrideRequestPreferences } from '../decorateProxy'
 import {
     GetSignatureInfoParameter,
@@ -8,6 +9,7 @@ import {
     TriggerCharacterCommand,
     triggerCharacterCommands,
 } from '../ipcTypes'
+import { GetConfig } from '../types'
 import { findChildContainingExactPosition, findChildContainingPosition, getNodePath } from '../utils'
 import getEmmetCompletions from './emmet'
 import objectIntoArrayConverters from './objectIntoArrayConverters'
@@ -17,9 +19,9 @@ export default (
     position: number,
     specialCommand: TriggerCharacterCommand,
     languageService: ts.LanguageService,
-    configuration: any,
+    configuration: GetConfig,
     preferences: ts.UserPreferences,
-    formatOptions?: ts.FormatCodeSettings,
+    formatOptions: ts.FormatCodeSettings | undefined,
 ): void | {
     entries: []
     typescriptEssentialsResponse: any
@@ -59,50 +61,15 @@ export default (
             typescriptEssentialsResponse: !node ? undefined : nodeToApiResponse(node),
         }
     }
-    if (specialCommand === 'getSignatureInfo') {
-        changeType<RequestOptionsTypes['getSignatureInfo']>(specialCommandArg)
-
-        const node = findChildContainingExactPosition(sourceFile, position)
-        if (!node) return
-        const typeChecker = languageService.getProgram()!.getTypeChecker()!
-        const type = typeChecker.getContextualType(node as any) ?? typeChecker.getTypeAtLocation(node)
-        const signatures = typeChecker.getSignaturesOfType(type, ts.SignatureKind.Call)
-        if (signatures.length === 0) return
-        if (signatures.length > 1) {
-            return {
-                entries: [],
-                typescriptEssentialsResponse: { parameters: [], hasManySignatures: true } satisfies RequestResponseTypes['getSignatureInfo'],
-            }
-        }
-        // Investigate merging signatures
-        const { parameters } = signatures[0]!
-        const printer = ts.createPrinter()
-        const parsedParams = parameters.map((param): GetSignatureInfoParameter => {
-            const valueDeclaration = param.valueDeclaration as ts.ParameterDeclaration | undefined
-            const isOptional =
-                valueDeclaration && (valueDeclaration.questionToken || valueDeclaration.initializer || valueDeclaration.dotDotDotToken) ? true : false
-            return {
-                name: param.name,
-                isOptional,
-                insertText: valueDeclaration
-                    ? printer.printNode(
-                          ts.EmitHint.Unspecified,
-                          ts.factory.createParameterDeclaration(
-                              undefined,
-                              valueDeclaration.dotDotDotToken,
-                              valueDeclaration.name,
-                              valueDeclaration.questionToken,
-                              undefined,
-                              specialCommandArg.includeInitializer ? valueDeclaration.initializer : undefined,
-                          ),
-                          valueDeclaration.getSourceFile(),
-                      )
-                    : param.name,
-            }
-        })
+    if (specialCommand === 'getFullMethodSnippet') {
         return {
             entries: [],
-            typescriptEssentialsResponse: { parameters: parsedParams, hasManySignatures: false } satisfies RequestResponseTypes['getSignatureInfo'],
+            typescriptEssentialsResponse: constructMethodSnippet(
+                languageService,
+                sourceFile,
+                position,
+                configuration,
+            ) satisfies RequestResponseTypes['getFullMethodSnippet'],
         }
     }
     if (specialCommand === 'getSpanOfEnclosingComment') {

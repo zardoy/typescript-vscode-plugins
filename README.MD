@@ -244,9 +244,9 @@ There are value descriptions for two settings:
 
 ```ts
 const example = ({ a }, b?, c = 5, ...d) => { }
-// prefer-name (default)
+// binding-name (default)
 example({ a }, b, c, ...d)
-// always-declaration (recommended)
+// always-declaration (also popular)
 example({ a }, b?, c = 5, ...d)
 // always-name
 example(__0, b, c, d)
@@ -262,6 +262,30 @@ example({ a }, b, c)
 example({ a })
 // no-skip (default)
 example({ a }, b, c, ...d)
+```
+
+`tsEssentialPlugins.methodSnippets.multipleSignatures`:
+
+```ts
+// overload 1
+function foo(this: {}, a)
+// overload 2
+function foo(this: {}, b)
+function foo(this: {}) {}
+
+// pick-first (default)
+foo(a)
+// empty
+foo(|)
+```
+
+`disableMethodSnippets.jsxAttributes`:
+
+```tsx
+const callback = (arg) => {}
+function Foo() {
+    return <div onClick={callback/* when true (default) - no expansion here */} />
+}
 ```
 
 ## Auto Imports

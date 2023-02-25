@@ -8,10 +8,10 @@ import { RequestOptionsTypes, RequestResponseTypes } from '../typescript/src/ipc
 import { sendCommand } from './sendCommand'
 
 export default (tsApi: { onCompletionAccepted }) => {
+    let inFlightMethodSnippetOperation: undefined | AbortController
     let justAcceptedReturnKeywordSuggestion = false
     let onCompletionAcceptedOverride: ((item: any) => void) | undefined
 
-    // eslint-disable-next-line complexity
     tsApi.onCompletionAccepted(async (item: vscode.CompletionItem & { document: vscode.TextDocument }) => {
         if (onCompletionAcceptedOverride) {
             onCompletionAcceptedOverride(item)
@@ -41,55 +41,24 @@ export default (tsApi: { onCompletionAccepted }) => {
             const startPos = editor.selection.start
             const nextSymbol = editor.document.getText(new vscode.Range(startPos, startPos.translate(0, 1)))
             if (!['(', '.'].includes(nextSymbol)) {
-                const insertMode = getExtensionSetting('methodSnippets.insertText')
-                const skipMode = getExtensionSetting('methodSnippets.skip')
-                const data: RequestResponseTypes['getSignatureInfo'] | undefined = await sendCommand('getSignatureInfo', {
-                    inputOptions: {
-                        includeInitializer: insertMode === 'always-declaration',
-                    } satisfies RequestOptionsTypes['getSignatureInfo'],
-                })
-                if (data) {
-                    const parameters = data.parameters.filter(({ insertText, isOptional }) => {
-                        const isRest = insertText.startsWith('...')
-                        if (skipMode === 'only-rest' && isRest) return false
-                        if (skipMode === 'optional-and-rest' && isOptional) return false
-                        return true
-                    })
-
+                const controller = new AbortController()
+                inFlightMethodSnippetOperation = controller
+                const params: RequestResponseTypes['getFullMethodSnippet'] | undefined = await sendCommand('getFullMethodSnippet')
+                if (!controller.signal.aborted && params) {
                     const snippet = new vscode.SnippetString('')
                     snippet.appendText('(')
                     // todo maybe when have skipped, add a way to leave trailing , (previous behavior)
-                    for (const [i, { insertText, name }] of parameters.entries()) {
-                        const isRest = insertText.startsWith('...')
-                        let text: string
-                        // eslint-disable-next-line default-case
-                        switch (insertMode) {
-                            case 'always-name':
-                                text = name
-                                break
-                            case 'prefer-name':
-                                // prefer name, but only if identifier and not binding pattern & rest
-                                text = oneOf(insertText[0], '[', '{') ? insertText : isRest ? insertText : name
-                                break
-                            case 'always-declaration':
-                                text = insertText
-                                break
-                        }
-
-                        snippet.appendPlaceholder(text)
-                        if (i !== parameters.length - 1) snippet.appendText(', ')
+                    for (const [i, param] of params.entries()) {
+                        snippet.appendPlaceholder(param)
+                        if (i !== params.length - 1) snippet.appendText(', ')
                     }
-
-                    const allFiltered = data.parameters.length > parameters.length
-                    // TODO when many, but at least one not empty
-                    if (allFiltered || data.hasManySignatures) snippet.appendTabstop()
 
                     snippet.appendText(')')
                     void editor.insertSnippet(snippet, undefined, {
                         undoStopAfter: false,
                         undoStopBefore: false,
                     })
-                    if (vscode.workspace.getConfiguration('editor.parameterHints').get('enabled')) {
+                    if (vscode.workspace.getConfiguration('editor.parameterHints').get('enabled') && params.length > 0) {
                         void vscode.commands.executeCommand('editor.action.triggerParameterHints')
                     }
                 }
@@ -120,40 +89,42 @@ export default (tsApi: { onCompletionAccepted }) => {
         )
     })
 
-    conditionallyRegister(
-        'suggestions.keywordsInsertText',
-        () =>
-            vscode.workspace.onDidChangeTextDocument(({ document, contentChanges, reason }) => {
-                if (!justAcceptedReturnKeywordSuggestion) return
-                if (document !== vscode.window.activeTextEditor?.document) return
-                try {
-                    if (oneOf(reason, vscode.TextDocumentChangeReason.Redo, vscode.TextDocumentChangeReason.Undo)) {
-                        return
-                    }
+    vscode.workspace.onDidChangeTextDocument(({ document, contentChanges, reason }) => {
+        if (document !== vscode.window.activeTextEditor?.document) return
+        // do the same for position change?
+        if (inFlightMethodSnippetOperation) {
+            inFlightMethodSnippetOperation.abort()
+            inFlightMethodSnippetOperation = undefined
+        }
 
-                    const char = contentChanges[0]?.text
-                    if (char?.length !== 1 || contentChanges.some(({ text }) => text !== char)) {
-                        return
-                    }
+        if (!justAcceptedReturnKeywordSuggestion) return
 
-                    if (char === ';' || char === '\n') {
-                        void vscode.window.activeTextEditor.edit(
-                            builder => {
-                                for (const { range } of contentChanges) {
-                                    const pos = range.start
-                                    builder.delete(expandPosition(document, pos, -1))
-                                }
-                            },
-                            {
-                                undoStopAfter: false,
-                                undoStopBefore: false,
-                            },
-                        )
-                    }
-                } finally {
-                    justAcceptedReturnKeywordSuggestion = false
-                }
-            }),
-        () => getExtensionSetting('suggestions.keywordsInsertText') !== 'none',
-    )
+        try {
+            if (oneOf(reason, vscode.TextDocumentChangeReason.Redo, vscode.TextDocumentChangeReason.Undo)) {
+                return
+            }
+
+            const char = contentChanges[0]?.text
+            if (char?.length !== 1 || contentChanges.some(({ text }) => text !== char)) {
+                return
+            }
+
+            if (char === ';' || char === '\n') {
+                void vscode.window.activeTextEditor.edit(
+                    builder => {
+                        for (const { range } of contentChanges) {
+                            const pos = range.start
+                            builder.delete(expandPosition(document, pos, -1))
+                        }
+                    },
+                    {
+                        undoStopAfter: false,
+                        undoStopBefore: false,
+                    },
+                )
+            }
+        } finally {
+            justAcceptedReturnKeywordSuggestion = false
+        }
+    })
 }

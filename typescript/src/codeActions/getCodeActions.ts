@@ -2,6 +2,7 @@ import { compact } from '@zardoy/utils'
 import { findChildContainingPosition } from '../utils'
 import objectSwapKeysAndValues from './custom/objectSwapKeysAndValues'
 import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
+import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
 
 type SimplifiedRefactorInfo =
     | {
@@ -30,7 +31,7 @@ export type CodeAction = {
     tryToApply: ApplyCodeAction
 }
 
-const codeActions: CodeAction[] = [/* toggleBraces */ objectSwapKeysAndValues, changeStringReplaceToRegex]
+const codeActions: CodeAction[] = [/* toggleBraces */ objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
 
 export const REFACTORS_CATEGORY = 'essential-refactors'
 

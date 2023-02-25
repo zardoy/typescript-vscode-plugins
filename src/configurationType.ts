@@ -326,16 +326,16 @@ export type Configuration = {
      * ```ts
      * const example = ({ a }, b?, c = 5, ...d) => { }
      *
-     * // prefer-name (default)
+     * // binding-name (default)
      * example({ a }, b, c, ...d)
-     * // always-declaration (popular)
+     * // always-declaration (also popular)
      * example({ a }, b?, c = 5, ...d)
      * // always-name
      * example(__0, b, c, d)
      * ```
-     * @default prefer-name
+     * @default binding-name
      */
-    'methodSnippets.insertText': 'prefer-name' | 'always-declaration' | 'always-name'
+    'methodSnippets.insertText': 'binding-name' | 'always-declaration' | 'always-name'
     /**
      * ```ts
      * const example = ({ a }, b?, c = 5, ...d) => { }
@@ -350,6 +350,10 @@ export type Configuration = {
      * @default no-skip
      */
     'methodSnippets.skip': 'only-rest' | 'optional-and-rest' | 'no-skip'
+    /**
+     * @default pick-first
+     */
+    'methodSnippets.multipleSignatures': 'pick-first' | 'empty' /* DON'T SEE A NEED TO IMPLEMENT: | 'pick-longest'  | 'pick-shortest' */
     /**
      * Wether to disable our and builtin method snippets within jsx attributes
      * @default true

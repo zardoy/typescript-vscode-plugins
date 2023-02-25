@@ -1,4 +1,4 @@
-export const passthroughExposedApiCommands = ['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition', 'getSignatureInfo'] as const
+export const passthroughExposedApiCommands = ['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition'] as const
 
 export const triggerCharacterCommands = [
     ...passthroughExposedApiCommands,
@@ -10,6 +10,7 @@ export const triggerCharacterCommands = [
     'turnArrayIntoObject',
     'getFixAllEdits',
     'acceptRenameWithParams',
+    'getFullMethodSnippet',
 ] as const
 
 export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
@@ -54,12 +55,7 @@ export type RequestResponseTypes = {
     }
     turnArrayIntoObjectEdit: ts.TextChange[]
     getFixAllEdits: ts.TextChange[]
-    getSignatureInfo: {
-        // stable
-        parameters: GetSignatureInfoParameter[]
-        // unstable
-        hasManySignatures: boolean
-    }
+    getFullMethodSnippet: string[] | undefined
 }
 
 // INPUT
@@ -75,9 +71,6 @@ export type RequestOptionsTypes = {
         comments: boolean
         strings: boolean
         alias: boolean
-    }
-    getSignatureInfo: {
-        includeInitializer?: boolean
     }
 }
 
