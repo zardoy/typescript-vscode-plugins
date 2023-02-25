@@ -7,7 +7,8 @@ export const triggerCharacterCommands = [
     'removeFunctionArgumentsTypesInSelection',
     'pickAndInsertFunctionArguments',
     'getRangeOfSpecialValue',
-    'turnArrayIntoObject',
+    'getTwoStepCodeActions',
+    'twoStepCodeActionSecondStep',
     'getFixAllEdits',
     'acceptRenameWithParams',
     'getFullMethodSnippet',
@@ -48,11 +49,22 @@ export type RequestResponseTypes = {
     filterBySyntaxKind: {
         nodesByKind: Record<string, Array<{ range: TsRange }>>
     }
-    turnArrayIntoObject: {
-        keysCount: Record<string, number>
-        totalCount: number
-        totalObjectCount: number
+    getTwoStepCodeActions: {
+        turnArrayIntoObject?: {
+            keysCount: Record<string, number>
+            totalCount: number
+            totalObjectCount: number
+        }
+        moveToExistingFile?: {}
     }
+    twoStepCodeActionSecondStep:
+        | {
+              edits: ts.TextChange[]
+          }
+        | {
+              fileEdits: ts.FileTextChanges[]
+              fileNames: string[]
+          }
     turnArrayIntoObjectEdit: ts.TextChange[]
     getFixAllEdits: ts.TextChange[]
     getFullMethodSnippet: string[] | undefined
@@ -63,10 +75,21 @@ export type RequestOptionsTypes = {
     removeFunctionArgumentsTypesInSelection: {
         endSelection: number
     }
-    turnArrayIntoObject: {
+    getTwoStepCodeActions: {
         range: [number, number]
-        selectedKeyName?: string
     }
+    twoStepCodeActionSecondStep: {
+        range: [number, number]
+        data:
+            | {
+                  name: 'turnArrayIntoObject'
+                  selectedKeyName?: string
+              }
+            | {
+                  name: 'moveToExistingFile'
+              }
+    }
+
     acceptRenameWithParams: {
         comments: boolean
         strings: boolean

@@ -14,6 +14,10 @@ import { findChildContainingExactPosition, findChildContainingPosition, getNodeP
 import getEmmetCompletions from './emmet'
 import objectIntoArrayConverters from './objectIntoArrayConverters'
 
+export const previousGetCodeActionsResult = {
+    value: undefined as undefined | Record<'description' | 'name', string>[],
+}
+
 export default (
     fileName: string,
     position: number,
@@ -41,16 +45,51 @@ export default (
             typescriptEssentialsResponse: getEmmetCompletions(fileName, leftNode, sourceFile, position, languageService),
         }
     }
-    if (specialCommand === 'turnArrayIntoObject') {
+    if (specialCommand === 'getTwoStepCodeActions') {
+        changeType<RequestOptionsTypes['getTwoStepCodeActions']>(specialCommandArg)
         const node = findChildContainingPosition(ts, sourceFile, position)
-        changeType<RequestOptionsTypes['turnArrayIntoObject']>(specialCommandArg)
+        const posEnd = { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] }
+        const moveToExistingFile = previousGetCodeActionsResult.value?.some(x => x.name === 'Move to a new file')
+
         return {
             entries: [],
-            typescriptEssentialsResponse: objectIntoArrayConverters(
-                { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] },
-                node,
-                specialCommandArg.selectedKeyName,
-            ),
+            typescriptEssentialsResponse: {
+                turnArrayIntoObject: objectIntoArrayConverters(posEnd, node, undefined),
+                moveToExistingFile: moveToExistingFile ? {} : undefined,
+            } satisfies RequestResponseTypes['getTwoStepCodeActions'],
+        }
+    }
+    if (specialCommand === 'twoStepCodeActionSecondStep') {
+        changeType<RequestOptionsTypes['twoStepCodeActionSecondStep']>(specialCommandArg)
+        const node = findChildContainingPosition(ts, sourceFile, position)
+        const posEnd = { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] }
+        let data: RequestResponseTypes['twoStepCodeActionSecondStep'] | undefined
+        switch (specialCommandArg.data.name) {
+            case 'turnArrayIntoObject': {
+                data = {
+                    edits: objectIntoArrayConverters(posEnd, node, specialCommandArg.data.selectedKeyName),
+                }
+                break
+            }
+            case 'moveToExistingFile': {
+                // const refactors = languageService.getApplicableRefactors(fileName, posEnd, preferences, 'invoked')
+                const { edits } =
+                    languageService.getEditsForRefactor(fileName, formatOptions ?? {}, posEnd, 'Move to a new file', 'Move to a new file', preferences) ?? {}
+                if (!edits) return
+                data = {
+                    fileEdits: edits,
+                    fileNames: languageService
+                        .getProgram()!
+                        .getSourceFiles()
+                        .map(f => f.fileName)
+                        .filter(name => !name.includes('/node_modules/')),
+                }
+                break
+            }
+        }
+        return {
+            entries: [],
+            typescriptEssentialsResponse: data,
         }
     }
     if (specialCommand === 'getNodeAtPosition') {
