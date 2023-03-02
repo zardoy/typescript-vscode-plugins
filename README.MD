@@ -7,7 +7,9 @@ TOC:
 
 - [Top Features](#top-features)
 - [Minor Useful Features](#minor-useful-features)
+- [Method Snippets](#method-snippets)
 - [Auto Imports](#auto-imports)
+- [Type Driven Completions](#type-driven-completions)
 - [Rename Features](#rename-features)
 - [Special Commands List](#special-commands-list)
 - [Contributed Code Actions](#contributed-code-actions)
@@ -34,19 +36,6 @@ Also is not supported in the web.
 ## **Completions Built Different**
 
 90% work done in this extension highly improves completions experience!
-
-### Method Snippets
-
-(*enabled by default*)
-
-Expands arrow callbacks with signature snippet with adding additional undo stack!
-
-Example:
-
-```ts
-const callback = (arg) => {}
-callback -> callback(arg)
-```
 
 ### Strict Emmet
 
@@ -127,7 +116,9 @@ There is web-only feature: fix clicking on relative `import` paths.
 
 (*enabled by default*)
 
-Highlights and lifts non-function methods. Also applies for static class methods.
+Highlights non-function methods and properties. Also applies for static class methods.
+
+![non-function-methods](media/non-function-methods.png)
 
 ### Indexed Signature Completions
 
@@ -175,8 +166,6 @@ Try to restore [original](https://github.com/microsoft/TypeScript/issues/49012) 
 We extend completion list with extensions from module augmentation (e.g. `.css` files if you have `declare module '*.css'`).
 But for unchecked contexts list of extensions can be extended with `tsEssentialPlugins.additionalIncludeExtensions` setting.
 
-<!-- ## Type-Driven Completions -->
-
 ### Mark Code Actions
 
 (*enabled by default* with two settings)
@@ -203,6 +192,102 @@ const syncFunction = () => {
 const a = 5
 // const to let fix
 a = 6
+```
+
+### Format Ignore Directives
+
+We support [format ignore directives](https://github.com/microsoft/TypeScript/issues/18261)
+
+## Type-Driven Completions
+
+All in this section requires TypeScript nightly extension.
+
+### JSX Elements
+
+To Enable: `"tsEssentialPlugins.experiments.excludeNonJsxCompletions": true`
+
+We can filter out completions so only Function Components stay in your list:
+
+```tsx
+class Foo {}
+const Bar = () => <div />
+
+const elem = </* Bar is suggested, Foo not
+```
+
+Super handy in MUI + Electron projects.
+
+Class components are not supported (no need).
+
+### Change kind to function
+
+Enable with `tsEssentialPlugins.experiments.changeKindToFunction`
+
+![change-icon-kind](media/change-kind.png)
+
+## Method Snippets
+
+(*enabled by default*)
+
+Expands arrow callback completions with signature snippet. Also adds additional undo stack!
+
+Example:
+
+```ts
+const callback = (arg) => {}
+callback -> callback(arg)
+```
+
+#### Configuration
+
+There are value descriptions for two settings:
+
+`tsEssentialPlugins.methodSnippets.insertText`:
+
+```ts
+const example = ({ a }, b?, c = 5, ...d) => { }
+// binding-name (default)
+example({ a }, b, c, ...d)
+// always-declaration (also popular)
+example({ a }, b?, c = 5, ...d)
+// always-name
+example(__0, b, c, d)
+```
+
+`tsEssentialPlugins.methodSnippets.skip`:
+
+```ts
+const example = ({ a }, b?, c = 5, ...d) => { }
+// only-rest
+example({ a }, b, c)
+// optional-and-rest
+example({ a })
+// no-skip (default)
+example({ a }, b, c, ...d)
+```
+
+`tsEssentialPlugins.methodSnippets.multipleSignatures`:
+
+```ts
+// overload 1
+function foo(this: {}, a)
+// overload 2
+function foo(this: {}, b)
+function foo(this: {}) {}
+
+// pick-first (default)
+foo(a)
+// empty
+foo(|)
+```
+
+`disableMethodSnippets.jsxAttributes`:
+
+```tsx
+const callback = (arg) => {}
+function Foo() {
+    return <div onClick={callback/* when true (default) - no expansion here */} />
+}
 ```
 
 ## Auto Imports
@@ -320,7 +405,9 @@ Another options that is accepted is
 
 ### Go to / Select Nodes by Kind
 
-Use cases: search excluding comments, search & replace only within strings, find interested JSX attribute node
+Extremely powerful command that allows you to leverage AST knowledge of opened file.
+
+Use cases: select all comments to exclude searching in comments. Or search & replace only within strings / find interested JSX attribute node.
 
 ## Contributed Code Actions
 

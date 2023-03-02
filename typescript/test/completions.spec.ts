@@ -1,11 +1,12 @@
 import { pickObj } from '@zardoy/utils'
-import { getCompletionsAtPosition as getCompletionsAtPositionRaw } from '../src/completionsAtPosition'
 import type {} from 'vitest/globals'
 import { isGoodPositionBuiltinMethodCompletion, isGoodPositionMethodCompletion } from '../src/completions/isGoodPositionMethodCompletion'
 import { findChildContainingExactPosition } from '../src/utils'
 import handleCommand from '../src/specialCommands/handle'
 import _ from 'lodash'
 import { defaultConfigFunc, entrypoint, settingsOverride, sharedLanguageService } from './shared'
+import { fileContentsSpecialPositions, fourslashLikeTester, getCompletionsAtPosition } from './testing'
+import constructMethodSnippet from '../src/constructMethodSnippet'
 
 const { languageService, languageServiceHost, updateProject, getCurrentFile } = sharedLanguageService
 
@@ -24,120 +25,6 @@ const newFileContents = (contents: string, fileName = entrypoint) => {
         [fileName]: contents,
     })
     return cursorPositions
-}
-
-const fileContentsSpecialPositions = (contents: string, fileName = entrypoint) => {
-    const cursorPositions: [number[], number[], number[]] = [[], [], []]
-    const cursorPositionsOnly: [number[], number[], number[]] = [[], [], []]
-    const replacement = /\/\*([tf\d]o?)\*\//g
-    let currentMatch: RegExpExecArray | null | undefined
-    while ((currentMatch = replacement.exec(contents))) {
-        const offset = currentMatch.index
-        const matchLength = currentMatch[0]!.length
-        contents = contents.slice(0, offset) + contents.slice(offset + matchLength)
-        const addOnly = currentMatch[1]!.match(/o$/)?.[0]
-        const addArr = addOnly ? cursorPositionsOnly : cursorPositions
-        let mainMatch = currentMatch[1]!
-        if (addOnly) mainMatch = mainMatch.slice(0, -1)
-        const possiblyNum = +mainMatch
-        if (!isNaN(possiblyNum)) {
-            addArr[2][possiblyNum] = offset
-        } else {
-            addArr[mainMatch === 't' ? '0' : '1'].push(offset)
-        }
-        replacement.lastIndex -= matchLength
-    }
-    updateProject({
-        [fileName]: contents,
-    })
-    if (cursorPositionsOnly.some(arr => arr.length)) {
-        if (process.env.CI) throw new Error('Only positions not allowed on CI')
-        return cursorPositionsOnly
-    }
-    return cursorPositions
-}
-
-interface CompletionPartMatcher {
-    names?: string[]
-    all?: Pick<ts.CompletionEntry, 'kind' | 'isSnippet'>
-}
-
-interface CompletionMatcher {
-    exact?: CompletionPartMatcher
-    includes?: CompletionPartMatcher
-    excludes?: string[]
-}
-
-interface CodeActionMatcher {
-    apply?: {
-        name: string
-    }
-}
-
-const fourslashLikeTester = (contents: string, fileName = entrypoint) => {
-    const [positive, _negative, numberedPositions] = fileContentsSpecialPositions(contents, fileName)
-    return {
-        completion: (marker: number | number[], matcher: CompletionMatcher, meta?) => {
-            for (const mark of Array.isArray(marker) ? marker : [marker]) {
-                if (numberedPositions[mark] === undefined) throw new Error(`No marker ${mark} found`)
-                const result = getCompletionsAtPosition(numberedPositions[mark]!, { shouldHave: true })!
-                const message = ` at marker ${mark}`
-                const { exact, includes, excludes } = matcher
-                if (exact) {
-                    const { names, all } = exact
-                    if (names) {
-                        expect(result?.entryNames, message).toEqual(names)
-                    }
-                    if (all) {
-                        for (const entry of result.entries) {
-                            expect(entry, entry.name + message).toContain(all)
-                        }
-                    }
-                }
-                if (includes) {
-                    const { names, all } = includes
-                    if (names) {
-                        expect(result?.entryNames, message).toContain(names)
-                    }
-                    if (all) {
-                        for (const entry of result.entries.filter(e => names?.includes(e.name))) {
-                            expect(entry, entry.name + message).toContain(all)
-                        }
-                    }
-                }
-                if (excludes) {
-                    expect(result?.entryNames, message).not.toContain(excludes)
-                }
-            }
-        },
-        // TODO implement
-        codeAction: (marker: number | number[], matcher: CodeActionMatcher, meta?) => {},
-    }
-}
-
-const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, shouldHave }: { fileName?: string; shouldHave?: boolean } = {}) => {
-    if (pos === undefined) throw new Error('getCompletionsAtPosition: pos is undefined')
-    const result = getCompletionsAtPositionRaw(
-        fileName,
-        pos,
-        {},
-        defaultConfigFunc,
-        languageService,
-        languageServiceHost.getScriptSnapshot(entrypoint)!,
-        undefined,
-        { scriptKind: ts.ScriptKind.TSX, compilerOptions: {} },
-    )
-    if (shouldHave) expect(result).not.toBeUndefined()
-    if (!result) return
-    return {
-        ...result,
-        entries: result.completions.entries,
-        /** Can be used in snapshots */
-        entriesSorted: _.sortBy(result.completions.entries, ({ sortText }) => sortText)
-            .map(({ sortText, ...rest }) => rest)
-            .map(entry => Object.fromEntries(Object.entries(entry).filter(([, value]) => value !== undefined))) as ts.CompletionEntry[],
-        entryNames: result.completions.entries.map(({ name }) => name),
-    }
 }
 
 test('Banned positions', () => {
@@ -219,6 +106,95 @@ test('Function props: cleans & highlights', () => {
     expect(entryNamesHighlighted).includes('☆sync')
 })
 
+const compareMethodSnippetAgainstMarker = (inputMarkers: number[], marker: number, expected: string | null | string[]) => {
+    const obj = Object.fromEntries(inputMarkers.entries())
+    const markerPos = obj[marker]!
+    const methodSnippet = constructMethodSnippet(languageService, getSourceFile(), markerPos, defaultConfigFunc)
+    const snippetToInsert = methodSnippet ? `(${methodSnippet.join(', ')})` : null
+    expect(Array.isArray(expected) ? methodSnippet : snippetToInsert, `At marker ${marker}`).toEqual(expected)
+}
+
+describe('Method snippets', () => {
+    test('Misc', () => {
+        const [, _, markers] = fileContentsSpecialPositions(/* ts */ `
+            type A = () => void
+            // don't complete for types
+            type B = A/*1*/;
+
+            declare const a: A
+            a/*2*/
+
+            // overload
+            function foo(this: {}, a)
+            function foo(this: {}, b)
+            function foo(this: {}) {}
+            foo/*3*/
+
+            // contextual type
+            declare const bar: {
+                b: (a) => {}
+                c
+            } | {
+                b: ($b) => {}
+                d
+            }
+            if ('d' in bar) {
+                bar.b/*4*/
+            }
+
+            // default insert text = binding-name
+            declare const baz: {
+                (a: string = "test", b?, {
+                    d = false,
+                    e: {}
+                } = {}, ...c): void
+            }
+            baz/*5*/
+        `)
+
+        compareMethodSnippetAgainstMarker(markers, 1, null)
+        compareMethodSnippetAgainstMarker(markers, 2, '()')
+        compareMethodSnippetAgainstMarker(markers, 3, '(a)')
+        compareMethodSnippetAgainstMarker(markers, 4, '($b)')
+        compareMethodSnippetAgainstMarker(markers, 5, '(a, b?, { d, e: {} }, ...c)')
+    })
+
+    test('Insert text = always-declaration', () => {
+        settingsOverride['methodSnippets.insertText'] = 'always-declaration'
+        const [, _, markers] = fileContentsSpecialPositions(/* ts */ `
+            declare const baz: {
+                (a: string = "test", b?, {
+                    d = false,
+                    e: {}
+                } = { }, ...c): void
+            }
+            baz/*1*/
+        `)
+
+        compareMethodSnippetAgainstMarker(markers, 1, '(a = "test", b?, { d = false, e: {} } = {}, ...c)')
+        settingsOverride['methodSnippets.insertText'] = 'binding-name'
+    })
+
+    test('methodSnippets.skip = optional-and-rest', () => {
+        settingsOverride['methodSnippets.skip'] = 'optional-and-rest'
+        const [, _, markers] = fileContentsSpecialPositions(/* ts */ `
+            declare const baz: {
+                (a: string = "test", b?, {
+                    d = false,
+                    e: {}
+                } = {}, ...c): void
+            }
+            baz/*1*/
+            declare const foo: (a, b?) => void
+            foo/*2*/
+        `)
+
+        compareMethodSnippetAgainstMarker(markers, 1, [''])
+        compareMethodSnippetAgainstMarker(markers, 2, ['a'])
+        settingsOverride['methodSnippets.skip'] = 'no-skip'
+    })
+})
+
 test('Emmet completion', () => {
     const [positivePositions, negativePositions, numPositions] = fileContentsSpecialPositions(/* tsx */ `
     // is it readable enough?
@@ -252,7 +228,7 @@ test('Emmet completion', () => {
         2: -5,
     }
     const getEmmetCompletions = pos => {
-        const result = handleCommand(entrypoint, pos, 'emmet-completions', languageService, defaultConfigFunc, {})
+        const result = handleCommand(entrypoint, pos, 'emmet-completions', languageService, defaultConfigFunc, {}, {})
         return result?.typescriptEssentialsResponse?.emmetTextOffset
     }
     for (const [i, pos] of positivePositions.entries()) {
@@ -332,6 +308,33 @@ test('Case-sensetive completions', () => {
         const { entryNames } = getCompletionsAtPosition(pos) ?? {}
         expect(entryNames, pos.toString()).toEqual(['3t', 'testItem'])
     }
+})
+
+// ts 5
+test.todo('Change to function kind', () => {
+    settingsOverride['experiments.changeKindToFunction'] = true
+    const tester = fourslashLikeTester(/* ts */ `
+        // declare const foo: boolean
+        const foo = () => {}
+        foo/*1*/
+    `)
+    tester.completion(1, {
+        includes: {
+            names: ['foo'],
+            all: {
+                kind: ts.ScriptElementKind.functionElement,
+            },
+        },
+    })
+    settingsOverride['experiments.changeKindToFunction'] = false
+})
+
+// ts 5
+test.todo('Filter JSX Components', () => {
+    const tester = fourslashLikeTester(/* ts */ `
+        const a = () => {}
+        a/*1*/
+    `)
 })
 
 test('Omit<..., ""> suggestions', () => {

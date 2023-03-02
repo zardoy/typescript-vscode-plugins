@@ -2,7 +2,7 @@ import { compact } from '@zardoy/utils'
 import { findChildContainingPosition } from '../utils'
 import objectSwapKeysAndValues from './custom/objectSwapKeysAndValues'
 import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
-import toggleBraces from './custom/toggleBraces'
+import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
 
 type SimplifiedRefactorInfo =
     | {
@@ -10,14 +10,18 @@ type SimplifiedRefactorInfo =
           length: number
           newText: string
       }
-    | ts.TextChange[]
+    | ts.TextChange
 
 export type ApplyCodeAction = (
     sourceFile: ts.SourceFile,
     position: number,
     range: ts.TextRange | undefined,
     node: ts.Node | undefined,
-) => ts.RefactorEditInfo | SimplifiedRefactorInfo[] | undefined
+    /** undefined when no edits is requested */
+    formatOptions: ts.FormatCodeSettings | undefined,
+    languageService: ts.LanguageService,
+    languageServiceHost: ts.LanguageServiceHost,
+) => ts.RefactorEditInfo | SimplifiedRefactorInfo[] | true | undefined
 
 export type CodeAction = {
     name: string
@@ -27,13 +31,16 @@ export type CodeAction = {
     tryToApply: ApplyCodeAction
 }
 
-const codeActions: CodeAction[] = [/* toggleBraces */ objectSwapKeysAndValues, changeStringReplaceToRegex]
+const codeActions: CodeAction[] = [/* toggleBraces */ objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
 
 export const REFACTORS_CATEGORY = 'essential-refactors'
 
 export default (
     sourceFile: ts.SourceFile,
     positionOrRange: ts.TextRange | number,
+    languageService: ts.LanguageService,
+    languageServiceHost: ts.LanguageServiceHost,
+    formatOptions?: ts.FormatCodeSettings,
     requestingEditsId?: string,
 ): { info?: ts.ApplicableRefactorInfo; edit: ts.RefactorEditInfo } => {
     const range = typeof positionOrRange !== 'number' && positionOrRange.pos !== positionOrRange.end ? positionOrRange : undefined
@@ -41,12 +48,13 @@ export default (
     const node = findChildContainingPosition(ts, sourceFile, pos)
     const appliableCodeActions = compact(
         codeActions.map(action => {
-            const edits = action.tryToApply(sourceFile, pos, range, node)
+            const edits = action.tryToApply(sourceFile, pos, range, node, formatOptions, languageService, languageServiceHost)
+            if (edits === true) return action
             if (!edits) return
             return {
                 ...action,
                 edits: Array.isArray(edits)
-                    ? ({
+                    ? {
                           edits: [
                               {
                                   fileName: sourceFile.fileName,
@@ -65,12 +73,13 @@ export default (
                                   }),
                               },
                           ],
-                      } as ts.RefactorEditInfo)
+                      }
                     : edits,
             }
         }),
     )
 
+    const requestingEdit: any = requestingEditsId ? appliableCodeActions.find(({ id }) => id === requestingEditsId) : null
     return {
         info:
             (appliableCodeActions.length && {
@@ -84,6 +93,6 @@ export default (
                 name: REFACTORS_CATEGORY,
             }) ||
             undefined,
-        edit: requestingEditsId ? appliableCodeActions.find(({ id }) => id === requestingEditsId)!.edits : null!,
+        edit: requestingEdit?.edits,
     }
 }

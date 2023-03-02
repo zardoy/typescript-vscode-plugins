@@ -1,22 +1,34 @@
+import { compact } from '@zardoy/utils'
+import { previousGetCodeActionsResult } from '../specialCommands/handle'
 import { GetConfig } from '../types'
 import { handleFunctionRefactorEdits, processApplicableRefactors } from './functionExtractors'
-import getCodeActions, { REFACTORS_CATEGORY } from './getCodeActions'
+import getCustomCodeActions, { REFACTORS_CATEGORY } from './getCodeActions'
 import improveBuiltin from './improveBuiltin'
 
-export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig) => {
+export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
     proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
         let prior = languageService.getApplicableRefactors(fileName, positionOrRange, preferences)
 
+        previousGetCodeActionsResult.value = compact(
+            prior.flatMap(refactor => {
+                const actions = refactor.actions.filter(action => !action.notApplicableReason).map(action => action.description)
+                if (!actions.length) return
+                return actions.map(action => ({ description: refactor.description, name: action }))
+            }),
+        )
+
+        const program = languageService.getProgram()!
+        const sourceFile = program.getSourceFile(fileName)!
         processApplicableRefactors(
             prior.find(r => r.description === 'Extract function'),
             c,
+            positionOrRange,
+            sourceFile,
         )
 
         if (c('markTsCodeActions.enable')) prior = prior.map(item => ({ ...item, description: `🔵 ${item.description}` }))
 
-        const program = languageService.getProgram()
-        const sourceFile = program!.getSourceFile(fileName)!
-        const { info: refactorInfo } = getCodeActions(sourceFile, positionOrRange)
+        const { info: refactorInfo } = getCustomCodeActions(sourceFile, positionOrRange, languageService, languageServiceHost)
         if (refactorInfo) prior = [...prior, refactorInfo]
 
         return prior
@@ -27,7 +39,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         if (category === REFACTORS_CATEGORY) {
             const program = languageService.getProgram()
             const sourceFile = program!.getSourceFile(fileName)!
-            const { edit } = getCodeActions(sourceFile, positionOrRange, actionName)
+            const { edit } = getCustomCodeActions(sourceFile, positionOrRange, languageService, languageServiceHost, formatOptions, actionName)
             return edit
         }
         if (refactorName === 'Extract Symbol' && actionName.startsWith('function_scope')) {

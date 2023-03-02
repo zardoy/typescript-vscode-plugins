@@ -6,8 +6,10 @@ const nodeToSpan = (node: ts.Node): ts.TextSpan => {
     return { start, length: node.end - start }
 }
 
+type FirstStepData = RequestResponseTypes['getTwoStepCodeActions']['turnArrayIntoObject']
+
 // primarily for working with static data
-export default (range: { pos: number; end: number }, node: ts.Node | undefined, selectedKeyName?: string) => {
+export default <T extends string | undefined>(range: { pos: number; end: number }, node: ts.Node | undefined, selectedKeyName: T): any => {
     if (!range || !node) return
     // requires full explicit array selection (be aware of comma) to not be annoying with suggestion
     if (!approveCast(node, ts.isArrayLiteralExpression) || !(range.pos === node.pos + node.getLeadingTriviaWidth() && range.end === node.end)) return
@@ -48,12 +50,12 @@ export default (range: { pos: number; end: number }, node: ts.Node | undefined, 
             }
         }
     }
-    if (!selectedKeyName) {
+    if (selectedKeyName === undefined) {
         return {
             totalCount: node.elements.length,
             totalObjectCount: objectHits,
             keysCount: objectKeysHits,
-        } satisfies RequestResponseTypes['turnArrayIntoObject']
+        } satisfies FirstStepData
     }
     return [
         {

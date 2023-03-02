@@ -24,10 +24,17 @@ export default {
     id: 'objectSwapKeysAndValues',
     name: 'Swap Keys and Values in Object',
     kind: 'refactor.rewrite.object.swapKeysAndValues',
-    tryToApply(sourceFile, _position, range, node) {
+    tryToApply(sourceFile, _position, range, node, formatOptions) {
         if (!range || !node) return
         // requires full explicit object selection (be aware of comma) to not be annoying with suggestion
-        if (!approveCast(node, ts.isObjectLiteralExpression) || !(range.pos === node.pos + node.getLeadingTriviaWidth() && range.end === node.end)) return
+        if (
+            !approveCast(node, ts.isObjectLiteralExpression) ||
+            !(range.pos === node.pos + node.getLeadingTriviaWidth() && range.end === node.end) ||
+            node.properties.length === 0
+        ) {
+            return
+        }
+        if (!formatOptions) return true
         const edits: ts.TextChange[] = []
         for (const property of node.properties) {
             if (!ts.isPropertyAssignment(property)) continue
@@ -48,7 +55,6 @@ export default {
                 span: nodeToSpan(initializer),
             })
         }
-        if (!edits.length) return undefined
         return {
             edits: [
                 {

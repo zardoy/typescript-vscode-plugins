@@ -1,18 +1,31 @@
 import { compact } from '@zardoy/utils'
+import constructMethodSnippet from '../constructMethodSnippet'
 import { overrideRequestPreferences } from '../decorateProxy'
-import { NodeAtPositionResponse, RequestOptionsTypes, RequestResponseTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
+import {
+    GetSignatureInfoParameter,
+    NodeAtPositionResponse,
+    RequestOptionsTypes,
+    RequestResponseTypes,
+    TriggerCharacterCommand,
+    triggerCharacterCommands,
+} from '../ipcTypes'
+import { GetConfig } from '../types'
 import { findChildContainingExactPosition, findChildContainingPosition, getNodePath } from '../utils'
 import getEmmetCompletions from './emmet'
 import objectIntoArrayConverters from './objectIntoArrayConverters'
+
+export const previousGetCodeActionsResult = {
+    value: undefined as undefined | Record<'description' | 'name', string>[],
+}
 
 export default (
     fileName: string,
     position: number,
     specialCommand: TriggerCharacterCommand,
     languageService: ts.LanguageService,
-    configuration: any,
+    configuration: GetConfig,
     preferences: ts.UserPreferences,
-    formatOptions?: ts.FormatCodeSettings,
+    formatOptions: ts.FormatCodeSettings | undefined,
 ): void | {
     entries: []
     typescriptEssentialsResponse: any
@@ -32,16 +45,51 @@ export default (
             typescriptEssentialsResponse: getEmmetCompletions(fileName, leftNode, sourceFile, position, languageService),
         }
     }
-    if (specialCommand === 'turnArrayIntoObject') {
+    if (specialCommand === 'getTwoStepCodeActions') {
+        changeType<RequestOptionsTypes['getTwoStepCodeActions']>(specialCommandArg)
         const node = findChildContainingPosition(ts, sourceFile, position)
-        changeType<RequestOptionsTypes['turnArrayIntoObject']>(specialCommandArg)
+        const posEnd = { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] }
+        const moveToExistingFile = previousGetCodeActionsResult.value?.some(x => x.name === 'Move to a new file')
+
         return {
             entries: [],
-            typescriptEssentialsResponse: objectIntoArrayConverters(
-                { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] },
-                node,
-                specialCommandArg.selectedKeyName,
-            ),
+            typescriptEssentialsResponse: {
+                turnArrayIntoObject: objectIntoArrayConverters(posEnd, node, undefined),
+                moveToExistingFile: moveToExistingFile ? {} : undefined,
+            } satisfies RequestResponseTypes['getTwoStepCodeActions'],
+        }
+    }
+    if (specialCommand === 'twoStepCodeActionSecondStep') {
+        changeType<RequestOptionsTypes['twoStepCodeActionSecondStep']>(specialCommandArg)
+        const node = findChildContainingPosition(ts, sourceFile, position)
+        const posEnd = { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] }
+        let data: RequestResponseTypes['twoStepCodeActionSecondStep'] | undefined
+        switch (specialCommandArg.data.name) {
+            case 'turnArrayIntoObject': {
+                data = {
+                    edits: objectIntoArrayConverters(posEnd, node, specialCommandArg.data.selectedKeyName),
+                }
+                break
+            }
+            case 'moveToExistingFile': {
+                // const refactors = languageService.getApplicableRefactors(fileName, posEnd, preferences, 'invoked')
+                const { edits } =
+                    languageService.getEditsForRefactor(fileName, formatOptions ?? {}, posEnd, 'Move to a new file', 'Move to a new file', preferences) ?? {}
+                if (!edits) return
+                data = {
+                    fileEdits: edits,
+                    fileNames: languageService
+                        .getProgram()!
+                        .getSourceFiles()
+                        .map(f => f.fileName)
+                        .filter(name => !name.includes('/node_modules/')),
+                }
+                break
+            }
+        }
+        return {
+            entries: [],
+            typescriptEssentialsResponse: data,
         }
     }
     if (specialCommand === 'getNodeAtPosition') {
@@ -50,6 +98,17 @@ export default (
         return {
             entries: [],
             typescriptEssentialsResponse: !node ? undefined : nodeToApiResponse(node),
+        }
+    }
+    if (specialCommand === 'getFullMethodSnippet') {
+        return {
+            entries: [],
+            typescriptEssentialsResponse: constructMethodSnippet(
+                languageService,
+                sourceFile,
+                position,
+                configuration,
+            ) satisfies RequestResponseTypes['getFullMethodSnippet'],
         }
     }
     if (specialCommand === 'getSpanOfEnclosingComment') {

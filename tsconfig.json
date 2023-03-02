@@ -4,7 +4,8 @@
         "lib": [
             "ESNext",
             "WebWorker"
-        ]
+        ],
+        "noFallthroughCasesInSwitch": true
     },
     // type-check sources
     "include": [

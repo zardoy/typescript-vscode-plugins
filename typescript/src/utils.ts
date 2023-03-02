@@ -120,6 +120,18 @@ export const boostExistingSuggestions = (entries: ts.CompletionEntry[], predicat
 // semver: can't use compare as it incorrectly works with build postfix
 export const isTs5 = () => semver.major(ts.version) >= 5
 
+export const isTsPatched = () => {
+    try {
+        const testFunction: any = () => {}
+        const unpatch = patchMethod(ts, 'findAncestor', () => testFunction)
+        const isPatched = ts.findAncestor === testFunction
+        unpatch()
+        return isPatched
+    } catch (err) {
+        return false
+    }
+}
+
 // Workaround esbuild bundle modules
 export const nodeModules = __WEB__
     ? null
@@ -167,9 +179,22 @@ export function addObjectMethodResultInterceptors<T extends Record<string, any>>
     }
 }
 
+type OriginalTypeChecker = import('typescript-full').textChanges.ChangeTracker
+
+type ChangeParameters<T extends any[]> = {
+    [K in keyof T]: T[K] extends import('typescript-full').SourceFile ? ts.SourceFile : T[K] extends import('typescript-full').Node ? ts.Node : T[K]
+}
+
+type ChangesTracker = {
+    [K in keyof OriginalTypeChecker]: (...args: ChangeParameters<Parameters<OriginalTypeChecker[K]>> & any[]) => ReturnType<OriginalTypeChecker[K]>
+}
+
 // have absolutely no idea why such useful utility is not publicly available
 export const getChangesTracker = formatOptions => {
-    return new tsFull.textChanges.ChangeTracker(/* will be normalized by vscode anyway */ '\n', tsFull.formatting.getFormatContext(formatOptions, {}))
+    return new tsFull.textChanges.ChangeTracker(
+        /* will be normalized by vscode anyway */ '\n',
+        tsFull.formatting.getFormatContext(formatOptions, {}),
+    ) as unknown as ChangesTracker
 }
 
 export const dedentString = (string: string, addIndent = '', trimFirstLines = false) => {
@@ -221,6 +246,10 @@ const wordRangeAtPos = (text: string, position: number) => {
 }
 
 type GetIs<T> = T extends (elem: any) => elem is infer T ? T : never
+
+export const createDummySourceFile = (code: string) => {
+    return ts.createSourceFile('test.ts', code, ts.ScriptTarget.ESNext, false)
+}
 
 export function approveCast<T2 extends Array<(node: ts.Node) => node is ts.Node>>(node: ts.Node | undefined, ...oneOfTest: T2): node is GetIs<T2[number]> {
     if (node === undefined) return false

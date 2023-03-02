@@ -143,7 +143,7 @@ export type Configuration = {
      */
     'arrayMethodsSnippets.defaultItemName': string | false
     /**
-     * Highlight and lift non-function methods. Also applies for static class methods. Uses `bind`, `call`, `caller` detection.
+     * Highlights non-function methods. Also applies for static class methods. Activates when `bind`, `call`, `apply`, `arguments` completions detected.
      * @default true
      * */
     'highlightNonFunctionMethods.enable': boolean
@@ -311,10 +311,64 @@ export type Configuration = {
      */
     changeDtsFileDefinitionToJs: boolean
     /**
-     * Experimental. Also includes optional args
+     * Wether to enable method call snippets after completion (suggestion) accept eg:
+     * ```ts
+     * const simple = (foo: boolean) => {}
+     * const complex = ({ a }, b?, c = 5) => { }
+     *
+     * simple(foo)
+     * test({ a }, b, c)
+     * ```
      * @default true
      */
     enableMethodSnippets: boolean
+    /**
+     * ```ts
+     * const example = ({ a }, b?, c = 5, ...d) => { }
+     *
+     * // binding-name (default)
+     * example({ a }, b, c, ...d)
+     * // always-declaration (also popular)
+     * example({ a }, b?, c = 5, ...d)
+     * // always-name
+     * example(__0, b, c, d)
+     * ```
+     * @default binding-name
+     */
+    'methodSnippets.insertText': 'binding-name' | 'always-declaration' | 'always-name'
+    /**
+     * ```ts
+     * const example = ({ a }, b?, c = 5, ...d) => { }
+     *
+     * // only-rest
+     * example({ a }, b, c)
+     * // optional-and-rest (popular)
+     * example({ a })
+     * // no-skip (default)
+     * example({ a }, b, c, ...d)
+     * ```
+     * @default no-skip
+     */
+    'methodSnippets.skip': 'only-rest' | 'optional-and-rest' | 'no-skip'
+    /**
+     * @default pick-first
+     */
+    'methodSnippets.multipleSignatures': 'pick-first' | 'empty' /* DON'T SEE A NEED TO IMPLEMENT: | 'pick-longest'  | 'pick-shortest' */
+    /**
+     * Use empty string for tabstop, `null` to remove argument
+     * In replace string use `$` to insert tabstop and `\$` to insert `$`
+     *
+     * Examples:
+     * ```json
+     * "listener": "() => $",
+     * "eventName": "'$'"
+     * "thisArg": null
+     * ```
+     * @default {}
+     */
+    'methodSnippets.replaceArguments': {
+        [argumentName: string]: string | null
+    }
     /**
      * Wether to disable our and builtin method snippets within jsx attributes
      * @default true
@@ -443,6 +497,11 @@ export type Configuration = {
      * @default false
      */
     'experiments.excludeNonJsxCompletions': boolean
+    /**
+     * Wether to change funcntion completions to function kind
+     * @default false
+     */
+    'experiments.changeKindToFunction': boolean
     /**
      * Map *symbol - array of modules* to change sorting of imports - first available takes precedence in auto import code fixes (+ import all action)
      *

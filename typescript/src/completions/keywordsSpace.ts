@@ -40,7 +40,7 @@ export default (entries: ts.CompletionEntry[], scriptSnapshot: ts.IScriptSnapsho
     })
 }
 
-const isTypeNode = (node: ts.Node) => {
+export const isTypeNode = (node: ts.Node) => {
     if (ts.isTypeNode(node)) {
         // built-in types
         return true
