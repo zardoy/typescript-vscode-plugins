@@ -143,7 +143,7 @@ export type Configuration = {
      */
     'arrayMethodsSnippets.defaultItemName': string | false
     /**
-     * Highlight and lift non-function methods. Also applies for static class methods. Uses `bind`, `call`, `caller` detection.
+     * Highlights non-function methods. Also applies for static class methods. Activates when `bind`, `call`, `caller` completions detected.
      * @default true
      * */
     'highlightNonFunctionMethods.enable': boolean

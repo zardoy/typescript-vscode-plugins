@@ -27,6 +27,7 @@ import addSourceDefinition from './completions/addSourceDefinition'
 import { sharedCompletionContext } from './completions/sharedContext'
 import displayImportedInfo from './completions/displayImportedInfo'
 import changeKindToFunction from './completions/changeKindToFunction'
+import functionPropsAndMethods from './completions/functionPropsAndMethods'
 
 export type PrevCompletionMap = Record<
     string,
@@ -183,32 +184,7 @@ export const getCompletionsAtPosition = (
     prior.entries = fixPropertiesSorting(prior.entries) ?? prior.entries
     if (node) prior.entries = boostKeywordSuggestions(prior.entries, position, node) ?? prior.entries
 
-    const entryNames = new Set(prior.entries.map(({ name }) => name))
-    if (c('removeUselessFunctionProps.enable')) {
-        prior.entries = prior.entries.filter(entry => {
-            if (oneOf(entry.kind, ts.ScriptElementKind.warning)) return true
-            return !['Symbol', 'caller', 'prototype'].includes(entry.name)
-        })
-    }
-    if (['bind', 'call', 'caller'].every(name => entryNames.has(name)) && c('highlightNonFunctionMethods.enable')) {
-        const standardProps = new Set(['Symbol', 'apply', 'arguments', 'bind', 'call', 'caller', 'length', 'name', 'prototype', 'toString'])
-        // TODO lift up!
-        prior.entries = prior.entries.map(entry => {
-            if (!standardProps.has(entry.name) && entry.kind !== ts.ScriptElementKind.warning) {
-                const newName = `☆${entry.name}`
-                prevCompletionsMap[newName] = {
-                    originalName: entry.name,
-                }
-                return {
-                    ...entry,
-                    insertText: entry.insertText ?? entry.name,
-                    name: newName,
-                }
-            }
-
-            return entry
-        })
-    }
+    prior.entries = functionPropsAndMethods(prior.entries)
 
     // if (c('completionHelpers') && node) prior.entries = objectLiteralHelpers(node, prior.entries) ?? prior.entries
 
