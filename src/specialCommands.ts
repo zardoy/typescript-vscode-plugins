@@ -310,10 +310,9 @@ export default () => {
             const selectedFilePath = await pickFileWithQuickPick(fileNames)
             if (!selectedFilePath) return
             const document = await vscode.workspace.openTextDocument(vscode.Uri.file(selectedFilePath))
-            const outline = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', document.uri)
+            // const outline = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', document.uri)
+
             const currentEditorPath = getTsLikePath(vscode.window.activeTextEditor!.document.uri)
-            // currently ignoring other files due to https://github.com/microsoft/TypeScript/issues/32344
-            // TODO-high it ignores any updates in https://github.com/microsoft/TypeScript/blob/20182cf8485ca5cf360d9396ad25d939b848a0ec/src/services/refactors/moveToNewFile.ts#L290
             const currentFileEdits = [...fileEdits.find(fileEdit => fileEdit.fileName === currentEditorPath)!.textChanges]
             const textChangeIndexToPatch = currentFileEdits.findIndex(currentFileEdit => currentFileEdit.newText.trim())
             const { newText: updateImportText } = currentFileEdits[textChangeIndexToPatch]!
@@ -384,11 +383,11 @@ export default () => {
             }
 
             if (moveToExistingFile) {
-                codeActions.push({
-                    title: `Move to existing file`,
-                    command: getCommand({ moveToExistingFile }),
-                    kind: vscode.CodeActionKind.Refactor.append('move'),
-                })
+                // codeActions.push({
+                //     title: `Move to existing file`,
+                //     command: getCommand({ moveToExistingFile }),
+                //     kind: vscode.CodeActionKind.Refactor.append('move'),
+                // })
             }
 
             return codeActions
