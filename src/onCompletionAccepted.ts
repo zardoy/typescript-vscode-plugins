@@ -12,6 +12,7 @@ export default (tsApi: { onCompletionAccepted }) => {
     let justAcceptedReturnKeywordSuggestion = false
     let onCompletionAcceptedOverride: ((item: any) => void) | undefined
 
+    // eslint-disable-next-line complexity
     tsApi.onCompletionAccepted(async (item: vscode.CompletionItem & { document: vscode.TextDocument }) => {
         if (onCompletionAcceptedOverride) {
             onCompletionAcceptedOverride(item)
@@ -45,11 +46,27 @@ export default (tsApi: { onCompletionAccepted }) => {
                 inFlightMethodSnippetOperation = controller
                 const params: RequestResponseTypes['getFullMethodSnippet'] | undefined = await sendCommand('getFullMethodSnippet')
                 if (!controller.signal.aborted && params) {
+                    const replaceArguments = getExtensionSetting('methodSnippets.replaceArguments')
+
                     const snippet = new vscode.SnippetString('')
                     snippet.appendText('(')
-                    // todo maybe when have skipped, add a way to leave trailing , (previous behavior)
+                    // todo maybe when have optional (skipped), add a way to leave trailing , with tabstop (previous behavior)
                     for (const [i, param] of params.entries()) {
-                        snippet.appendPlaceholder(param)
+                        const replacer = replaceArguments[param.replace(/\?$/, '')]
+                        if (replacer === null) continue
+                        if (replacer) {
+                            snippet.appendPlaceholder(inner => {
+                                // eslint-disable-next-line unicorn/no-array-for-each
+                                replacer.split(/(?<!\\)\$/g).forEach((text, i, arr) => {
+                                    // inner.appendText(text.replace(/\\\$/g, '$'))
+                                    inner.value += text
+                                    if (i !== arr.length - 1) inner.appendTabstop()
+                                })
+                            })
+                        } else {
+                            snippet.appendPlaceholder(param)
+                        }
+
                         if (i !== params.length - 1) snippet.appendText(', ')
                     }
 

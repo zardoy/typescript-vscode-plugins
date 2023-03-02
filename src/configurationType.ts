@@ -355,6 +355,21 @@ export type Configuration = {
      */
     'methodSnippets.multipleSignatures': 'pick-first' | 'empty' /* DON'T SEE A NEED TO IMPLEMENT: | 'pick-longest'  | 'pick-shortest' */
     /**
+     * Use empty string for tabstop, `null` to remove argument
+     * In replace string use `$` to insert tabstop and `\$` to insert `$`
+     *
+     * Examples:
+     * ```json
+     * "listener": "() => $",
+     * "eventName": "'$'"
+     * "thisArg": null
+     * ```
+     * @default {}
+     */
+    'methodSnippets.replaceArguments': {
+        [argumentName: string]: string | null
+    }
+    /**
      * Wether to disable our and builtin method snippets within jsx attributes
      * @default true
      */

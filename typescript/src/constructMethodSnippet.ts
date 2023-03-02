@@ -60,6 +60,7 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     const allFiltered = paramsToInsert.length === 0 && parameters.length > paramsToInsert.length
     if (allFiltered) return ['']
 
+    // methodSnippets.replaceArguments is processed with last stage in onCompletionAccepted
     return paramsToInsert
     // return `(${paramsToInsert.map((param, i) => `\${${i + 1}:${param.replaceAll}}`).join(', ')})`
 
