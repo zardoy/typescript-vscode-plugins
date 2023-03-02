@@ -143,7 +143,7 @@ export type Configuration = {
      */
     'arrayMethodsSnippets.defaultItemName': string | false
     /**
-     * Highlights non-function methods. Also applies for static class methods. Activates when `bind`, `call`, `caller` completions detected.
+     * Highlights non-function methods. Also applies for static class methods. Activates when `bind`, `call`, `apply`, `arguments` completions detected.
      * @default true
      * */
     'highlightNonFunctionMethods.enable': boolean

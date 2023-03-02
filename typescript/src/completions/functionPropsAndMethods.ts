@@ -12,7 +12,7 @@ export default (entries: ts.CompletionEntry[]) => {
     }
 
     const entryNames = new Set(entries.map(({ name, kind }) => (kind === ts.ScriptElementKind.warning ? '' : name)))
-    if (['bind', 'call', 'caller'].every(name => entryNames.has(name)) && c('highlightNonFunctionMethods.enable')) {
+    if (['bind', 'call', 'apply', 'arguments'].every(name => entryNames.has(name)) && c('highlightNonFunctionMethods.enable')) {
         const standardProps = new Set(['Symbol', 'apply', 'arguments', 'bind', 'call', 'caller', 'length', 'name', 'prototype', 'toString'])
         entries = entries.map(entry => {
             if (!standardProps.has(entry.name) && entry.kind !== ts.ScriptElementKind.warning) {

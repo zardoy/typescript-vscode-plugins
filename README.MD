@@ -116,7 +116,9 @@ There is web-only feature: fix clicking on relative `import` paths.
 
 (*enabled by default*)
 
-Highlights and lifts non-function methods. Also applies for static class methods.
+Highlights non-function methods and properties. Also applies for static class methods.
+
+![non-function-methods](media/non-function-methods.png)
 
 ### Indexed Signature Completions
 
