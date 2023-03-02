@@ -2,7 +2,7 @@ import _ from 'lodash'
 import addMissingProperties from './codeFixes/addMissingProperties'
 import { changeSortingOfAutoImport, getIgnoreAutoImportSetting, isAutoImportEntryShouldBeIgnored } from './adjustAutoImports'
 import { GetConfig } from './types'
-import { findChildContainingPosition, getCancellationToken, getIndentFromPos, patchMethod } from './utils'
+import { findChildContainingPosition, getCancellationToken, getIndentFromPos, isTsPatched, patchMethod } from './utils'
 import namespaceAutoImports from './namespaceAutoImports'
 
 // codeFixes that I managed to put in files
@@ -169,7 +169,8 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
 
     proxy.getCombinedCodeFix = (scope, fixId, formatOptions, preferences) => {
         const { fileName } = scope
-        if (fixId === 'fixMissingImport') {
+        // todo issue warning (or language status error) when configured but not patched
+        if (fixId === 'fixMissingImport' && isTsPatched()) {
             const program = languageService.getProgram()!
             const sourceFile = program.getSourceFile(fileName)!
             const importAdder = tsFull.codefix.createImportAdder(
