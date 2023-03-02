@@ -13,7 +13,20 @@ export const run = async () => {
         glob('**/**.test.js', { cwd: testsRoot }, (err, files) => {
             if (err) throw err
 
-            for (const file of files) mocha.addFile(join(testsRoot, file))
+            const preFiles = [] as string[]
+            const postFiles = ['outline.test.js'] as string[]
+
+            for (const file of preFiles) {
+                mocha.addFile(join(testsRoot, file))
+            }
+
+            for (const file of files.filter(file => !preFiles.includes(file) && !postFiles.includes(file))) {
+                mocha.addFile(join(testsRoot, file))
+            }
+
+            for (const file of postFiles) {
+                mocha.addFile(join(testsRoot, file))
+            }
 
             mocha.run(failures => {
                 if (failures > 0) {
