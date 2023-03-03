@@ -1,9 +1,9 @@
 import * as vscode from 'vscode'
 import { watchExtensionSettings } from '@zardoy/vscode-utils/build/settings'
 import { extensionCtx, getExtensionSetting } from 'vscode-framework'
-import { join } from 'path-browserify'
 
 export default () => {
+    if (process.env.PLATFORM !== 'node') return
     const handler = () => {
         const config = vscode.workspace.getConfiguration('')
         if (
@@ -27,6 +27,7 @@ const isConfigValueChanged = (id: string) => {
     const userValue = config.get<string>(id)
     if (userValue === config.inspect(id)!.defaultValue) return false
     // means that value was set by us programmatically, let's update it
-    if (userValue?.startsWith(join(extensionCtx.extensionPath, '..'))) return false
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    if (userValue?.startsWith(require('path').join(extensionCtx.extensionPath, '../..'))) return false
     return true
 }
