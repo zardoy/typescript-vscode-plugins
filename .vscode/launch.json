@@ -24,7 +24,18 @@
             "type": "node",
             "request": "attach",
             "restart": true,
-            "port": 9229,
+            "port": 9223,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/out/**/*.js"
+            ],
+        },
+        {
+            "name": "Attach to Vue Semantic Server",
+            "type": "node",
+            "request": "attach",
+            "restart": true,
+            "port": 6009,
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/out/**/*.js"
