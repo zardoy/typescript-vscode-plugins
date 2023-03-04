@@ -8,7 +8,7 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     if (!node || isTypeNode(node)) return
 
     const typeChecker = languageService.getProgram()!.getTypeChecker()!
-    const type = typeChecker.getContextualType(node as any) ?? typeChecker.getTypeAtLocation(node)
+    const type = typeChecker.getTypeAtLocation(node)
     const signatures = typeChecker.getSignaturesOfType(type, ts.SignatureKind.Call)
     if (signatures.length === 0) return
     const signature = signatures[0]
