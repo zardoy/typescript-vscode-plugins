@@ -308,6 +308,35 @@ test('Case-sensetive completions', () => {
         const { entryNames } = getCompletionsAtPosition(pos) ?? {}
         expect(entryNames, pos.toString()).toEqual(['3t', 'testItem'])
     }
+    settingsOverride.caseSensitiveCompletions = false
+})
+
+test('Fix properties sorting', () => {
+    settingsOverride.fixSuggestionsSorting = true
+    const tester = fourslashLikeTester(/* ts */ `
+        let a: {
+            d
+            b(a: {c, a}): {c, a}
+        } | {
+            c
+            b(c: {c, b}): {c, b}
+        }
+        if ('c' in a) {
+            a./*1*/;
+            a.b({/*2*/})./*3*/
+        }
+    `)
+    tester.completion(1, {
+        exact: {
+            names: ['c', 'b'],
+        },
+    })
+    tester.completion([2, 3], {
+        exact: {
+            names: ['c', 'b'],
+        },
+    })
+    settingsOverride.fixSuggestionsSorting = false
 })
 
 // ts 5
