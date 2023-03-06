@@ -28,6 +28,7 @@ import { sharedCompletionContext } from './completions/sharedContext'
 import displayImportedInfo from './completions/displayImportedInfo'
 import changeKindToFunction from './completions/changeKindToFunction'
 import functionPropsAndMethods from './completions/functionPropsAndMethods'
+import { getTupleSignature } from './tupleSignature'
 
 export type PrevCompletionMap = Record<
     string,
@@ -106,6 +107,7 @@ export const getCompletionsAtPosition = (
     }
     const hasSuggestions = prior && prior.entries.filter(({ kind }) => kind !== ts.ScriptElementKind.warning).length !== 0
     const node = findChildContainingPosition(ts, sourceFile, position)
+
     /** node that is one character behind
      * useful as in most cases we work with node that is behind the cursor */
     const leftNode = findChildContainingPosition(ts, sourceFile, position - 1)
@@ -146,6 +148,24 @@ export const getCompletionsAtPosition = (
     }
 
     if (!prior) return
+
+    if (c('tupleHelpSignature') && node) {
+        const tupleSignature = getTupleSignature(node, program.getTypeChecker()!)
+        if (tupleSignature) {
+            const { currentHasLabel, currentMember, tupleMembers } = tupleSignature
+            const tupleCurrentItem = tupleMembers[currentMember]
+            if (currentHasLabel && tupleCurrentItem) {
+                const name = tupleCurrentItem.split(':', 1)[0]!
+                prior.entries.push({
+                    name,
+                    kind: ts.ScriptElementKind.warning,
+                    sortText: '07',
+                })
+                prevCompletionsMap[name] ??= {}
+                prevCompletionsMap[name]!.detailPrepend = `[${currentMember}]: ${tupleCurrentItem.slice(tupleCurrentItem.indexOf(':') + 2)}`
+            }
+        }
+    }
 
     if (c('caseSensitiveCompletions')) {
         const fullText = sourceFile.getFullText()

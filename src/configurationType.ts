@@ -225,6 +225,17 @@ export type Configuration = {
      */
     'jsxEmmet.dotOverride': string | false
     /**
+     * Wether to provide signature help when destructuring tuples e.g.:
+     *
+     * ```ts
+     * declare const foo: [x: number, y: number]
+     * const [] = foo
+     * ```
+     * @recommended
+     * @default false
+     */
+    tupleHelpSignature: boolean
+    /**
      * We already change sorting of suggestions, but enabling this option will also make:
      * - removing `id` from input suggestions
      * - simplify textarea
