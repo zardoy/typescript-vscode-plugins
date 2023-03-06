@@ -24,6 +24,13 @@ export default () => {
                     mustBePrimitive: false,
                 },
             },
+            {
+                rename: {
+                    old: 'removeOrMarkGlobalLibCompletions.action',
+                    new: 'globalLibCompletions.action',
+                    mustBePrimitive: false,
+                },
+            },
         ],
         process.env.IDS_PREFIX!,
     )
