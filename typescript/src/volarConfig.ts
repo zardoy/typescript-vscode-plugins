@@ -3,7 +3,8 @@ const originalPluginFactory = require('typescript-essential-plugins')
 
 const plugin = (context => {
     const typescript = context.typescript
-    const { configurationHost } = context.env
+    let configurationHost = context.configurationHost!
+    configurationHost ??= context['env'].configurationHost
     const patchConfig = config => {
         return {
             ...config,
