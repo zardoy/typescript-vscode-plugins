@@ -498,11 +498,11 @@ export type Configuration = {
      */
     // 'objectLiteralCompletions.deepVariants': 'disable' | 'displayBelow' | 'replaceNotDeep'
     /**
-     * Also affects builtin typescript.suggest.objectLiteralMethodSnippets, even when additional completions disabled
-     * @default below
+     * How to position original suggestion relative to snippet suggestion.
+     * Also affects builtin typescript.suggest.objectLiteralMethodSnippets, even when additional plugin completions disabled
+     * @default before
      */
-    // TODO its a bug, change to after & before with fixed behavior
-    'objectLiteralCompletions.keepOriginal': 'below' | 'above' | 'remove'
+    'objectLiteralCompletions.keepOriginal': 'before' | 'after' | 'remove'
     /**
      * Wether to exclude non-JSX components completions in JSX component locations
      * Requires TypeScript 5.0+
