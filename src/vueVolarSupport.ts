@@ -23,11 +23,15 @@ export default () => {
 }
 
 const isConfigValueChanged = (id: string) => {
-    const config = vscode.workspace.getConfiguration('')
-    const userValue = config.get<string>(id)
-    if (userValue === config.inspect(id)!.defaultValue) return false
-    // means that value was set by us programmatically, let's update it
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    if (userValue?.startsWith(require('path').join(extensionCtx.extensionPath, '../..'))) return false
-    return true
+    if (process.env.PLATFORM !== 'web') {
+        const config = vscode.workspace.getConfiguration('')
+        const userValue = config.get<string>(id)
+        if (userValue === config.inspect(id)!.defaultValue) return false
+        // means that value was set by us programmatically, let's update it
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        if (userValue?.startsWith(require('path').join(extensionCtx.extensionPath, '../..'))) return false
+        return true
+    }
+
+    return undefined
 }
