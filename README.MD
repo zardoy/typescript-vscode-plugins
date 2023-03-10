@@ -8,6 +8,7 @@ TOC:
 - [Top Features](#top-features)
 - [Minor Useful Features](#minor-useful-features)
 - [Method Snippets](#method-snippets)
+- [Volar (Vue) support](#vue-support)
 - [Auto Imports](#auto-imports)
 - [Type Driven Completions](#type-driven-completions)
 - [Rename Features](#rename-features)
@@ -71,6 +72,15 @@ usersList.map // -> usersList.map((user) => )
 (*disabled by default*)
 
 Filter out completions that start with different casing.
+
+### Tuple Type Signatures
+
+(*disabled by default*, but super recommended)
+
+Completions and signature help in tuple literal expressions & destructure.
+
+<img src="media/tuple-signature-1.png" width="380">
+<img src="media/tuple-signature-2.png" width="400">
 
 ### Remove Definition From References
 
