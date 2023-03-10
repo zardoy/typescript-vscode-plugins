@@ -74,9 +74,10 @@ export type Configuration = {
     'removeUselessFunctionProps.enable': boolean
     /**
      * Of course it makes no sense to use `remove`, but `mark` might be really useful
+     * @recommended mark
      * @default disable
      */
-    'removeOrMarkGlobalLibCompletions.action': 'disable' | 'mark' | 'remove'
+    'globalLibCompletions.action': 'disable' | 'mark' | 'remove'
     /**
      * Useful for Number types.
      * Patch `toString()`: Removes arg tabstop
@@ -225,6 +226,17 @@ export type Configuration = {
      */
     'jsxEmmet.dotOverride': string | false
     /**
+     * Wether to provide signature help when destructuring tuples e.g.:
+     *
+     * ```ts
+     * declare const foo: [x: number, y: number]
+     * const [] = foo
+     * ```
+     * @recommended
+     * @default false
+     */
+    tupleHelpSignature: boolean
+    /**
      * We already change sorting of suggestions, but enabling this option will also make:
      * - removing `id` from input suggestions
      * - simplify textarea
@@ -342,14 +354,16 @@ export type Configuration = {
      *
      * // only-rest
      * example({ a }, b, c)
-     * // optional-and-rest (popular)
+     * // optional-and-rest (default)
      * example({ a })
-     * // no-skip (default)
+     * // all
+     * example() // (cursor inside)
+     * // no-skip (popular)
      * example({ a }, b, c, ...d)
      * ```
-     * @default no-skip
+     * @default optional-and-rest
      */
-    'methodSnippets.skip': 'only-rest' | 'optional-and-rest' | 'no-skip'
+    'methodSnippets.skip': 'only-rest' | 'optional-and-rest' | 'all' | 'no-skip'
     /**
      * @default pick-first
      */
@@ -486,11 +500,11 @@ export type Configuration = {
      */
     // 'objectLiteralCompletions.deepVariants': 'disable' | 'displayBelow' | 'replaceNotDeep'
     /**
-     * Also affects builtin typescript.suggest.objectLiteralMethodSnippets, even when additional completions disabled
-     * @default below
+     * How to position original suggestion relative to snippet suggestion.
+     * Also affects builtin typescript.suggest.objectLiteralMethodSnippets, even when additional plugin completions disabled
+     * @default before
      */
-    // TODO its a bug, change to after & before with fixed behavior
-    'objectLiteralCompletions.keepOriginal': 'below' | 'above' | 'remove'
+    'objectLiteralCompletions.keepOriginal': 'before' | 'after' | 'remove'
     /**
      * Wether to exclude non-JSX components completions in JSX component locations
      * Requires TypeScript 5.0+

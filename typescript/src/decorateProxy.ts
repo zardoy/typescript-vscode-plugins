@@ -13,7 +13,6 @@ import { GetConfig } from './types'
 import lodashGet from 'lodash.get'
 import decorateWorkspaceSymbolSearch from './workspaceSymbolSearch'
 import decorateFormatFeatures from './decorateFormatFeatures'
-import namespaceAutoImports from './namespaceAutoImports'
 import libDomPatching from './libDomPatching'
 import decorateSignatureHelp from './decorateSignatureHelp'
 

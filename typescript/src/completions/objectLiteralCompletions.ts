@@ -32,7 +32,7 @@ export default (
                     const methodEntry = entries[methodEntryIndex]
                     if (methodEntry) {
                         entries.splice(methodEntryIndex, 1)
-                        entries.splice(entries.indexOf(entry) + (keepOriginal === 'below' ? 1 : 0), keepOriginal === 'remove' ? 1 : 0, {
+                        entries.splice(entries.indexOf(entry) + (keepOriginal === 'before' ? 1 : 0), keepOriginal === 'remove' ? 1 : 0, {
                             ...methodEntry,
                             // let correctSorting.enable sort it
                             sortText: entry.sortText,
@@ -59,7 +59,7 @@ export default (
             const [insertSnippetText, insertSnippetPreview] = typeof insertSnippetVariant === 'function' ? insertSnippetVariant() : insertSnippetVariant
             const insertText = entry.name + insertSnippetText
             const index = entries.indexOf(entry)
-            entries.splice(index + (keepOriginal === 'below' ? 1 : 0), keepOriginal === 'remove' ? 1 : 0, {
+            entries.splice(index + (keepOriginal === 'before' ? 1 : 0), keepOriginal === 'remove' ? 1 : 0, {
                 ...entry,
                 // todo setting incompatible!!!
                 sortText: entry.sortText,

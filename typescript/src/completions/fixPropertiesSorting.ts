@@ -7,31 +7,38 @@ export default (entries: ts.CompletionEntry[]) => {
     const { node, program, c } = sharedCompletionContext
     if (!c('fixSuggestionsSorting')) return
     if (!node) return
-    // if (ts.isObjectLiteralExpression(node) && ts.isCallExpression(node.parent)) {
-    //     const typeChecker = program.getTypeChecker()
-    //     const type = typeChecker.getTypeAtLocation(node.parent)
-    //     const callSignatures = type.getCallSignatures()
-    // }
-    let rightNode: ts.Node | undefined
-    const upperNode = ts.isIdentifier(node) ? node.parent : node
-    if (ts.isObjectLiteralExpression(node)) rightNode = node
-    if (ts.isPropertyAccessExpression(upperNode)) rightNode = upperNode.expression
+    let targetNode: ts.Node | undefined
+    let upperNode = ts.isIdentifier(node) ? node.parent : node
+    if (ts.isJsxAttributes(upperNode)) upperNode = upperNode.parent
+    if (ts.isObjectLiteralExpression(node)) targetNode = node
+    const isJsxElem = ts.isJsxOpeningElement(upperNode) || ts.isJsxSelfClosingElement(upperNode)
+    if (isJsxElem) {
+        targetNode = upperNode
+    } else if (ts.isPropertyAccessExpression(upperNode)) targetNode = upperNode.expression
     else if (ts.isObjectBindingPattern(node)) {
         if (ts.isVariableDeclaration(node.parent)) {
             const { initializer } = node.parent
             if (initializer) {
-                if (ts.isIdentifier(initializer)) rightNode = initializer
-                if (ts.isPropertyAccessExpression(initializer)) rightNode = initializer.name
+                if (ts.isIdentifier(initializer)) targetNode = initializer
+                if (ts.isPropertyAccessExpression(initializer)) targetNode = initializer.name
             }
         }
-        if (ts.isParameter(node.parent)) rightNode = node.parent.type
+        if (ts.isParameter(node.parent)) targetNode = node.parent.type
     } else if (ts.isObjectLiteralExpression(node) && ts.isReturnStatement(node.parent) && ts.isArrowFunction(node.parent.parent.parent)) {
-        rightNode = node.parent.parent.parent.type
+        targetNode = node.parent.parent.parent.type
     }
-    if (!rightNode) return
+    if (!targetNode) return
     const typeChecker = program.getTypeChecker()
-    const type = typeChecker.getContextualType(rightNode as ts.Expression) ?? typeChecker.getTypeAtLocation(rightNode)
-    const sourceProps = getAllPropertiesOfType(type, typeChecker)?.map(({ name }) => name)
+    let sourceProps: string[]
+    if (isJsxElem) {
+        const type = typeChecker.getContextualType((node as ts.JsxOpeningElement).attributes)
+        if (!type) return
+        // usually component own props defined first like interface Props extends ... {} or type A = Props & ..., but this is not a case with mui...
+        sourceProps = (type.isIntersection() ? type.types.flatMap(type => type.getProperties()) : type.getProperties()).map(symbol => symbol.name)
+    } else {
+        const type = typeChecker.getContextualType(targetNode as ts.Expression) ?? typeChecker.getTypeAtLocation(targetNode)
+        sourceProps = getAllPropertiesOfType(type, typeChecker)?.map(({ name }) => name)
+    }
     // languageService.getSignatureHelpItems(fileName, position, {}))
     if (!sourceProps) return
     // const entriesBySortText = groupBy(({ sortText }) => sortText, entries)
@@ -42,11 +49,17 @@ export default (entries: ts.CompletionEntry[]) => {
     // if sortText first symbol is not a number, than most probably it was highlighted by IntelliCode, keep them high
     const [sortableEntries, notSortableEntries] = partition(entry => !isNaN(parseInt(entry.sortText)), interestedEntries)
     const lowestSortText = Math.min(...sortableEntries.map(({ sortText }) => parseInt(sortText)))
+    const getScore = (completion: ts.CompletionEntry) => {
+        return (
+            sourceProps.indexOf(completion.name) +
+            (isJsxElem && (completion['symbol'] as ts.Symbol | undefined)?.declarations?.[0]?.getSourceFile().fileName.includes('@types/react') ? 10_000 : 0)
+        )
+    }
     // make sorted
     const sortedEntries = sortableEntries
         .sort((a, b) => {
-            return sourceProps.indexOf(a.name) - sourceProps.indexOf(b.name)
+            return getScore(a) - getScore(b)
         })
-        .map((entry, i) => ({ ...entry, sortText: String(lowestSortText + i) }))
+        .map((entry, i) => ({ ...entry /* sortText: String(lowestSortText + i) */ }))
     return [...notSortableEntries, ...sortedEntries, ...notInterestedEntries]
 }

@@ -14,5 +14,6 @@ export const sharedLanguageService = createLanguageService({ [entrypoint]: '' },
 export const settingsOverride: Partial<Configuration> = {
     'arrayMethodsSnippets.enable': true,
     'codeActions.extractTypeInferName': true,
+    'methodSnippets.skip': 'no-skip',
 }
 export const defaultConfigFunc = await getDefaultConfigFunc(settingsOverride)

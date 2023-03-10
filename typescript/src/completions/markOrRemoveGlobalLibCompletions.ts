@@ -10,7 +10,7 @@ const isLibCompletion = (symbol: ts.Symbol) => {
 }
 
 export default (entries: ts.CompletionEntry[], position: number, languageService: ts.LanguageService, c: GetConfig) => {
-    const action = c('removeOrMarkGlobalLibCompletions.action')
+    const action = c('globalLibCompletions.action')
     if (action === 'disable') return
 
     return compact(
@@ -27,7 +27,7 @@ export default (entries: ts.CompletionEntry[], position: number, languageService
                 insertText: entry.name,
                 labelDetails: {
                     ...entry.labelDetails,
-                    description: libCompletionEnding,
+                    description: `🌐${libCompletionEnding}`,
                 },
             }
         }),

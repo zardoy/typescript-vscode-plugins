@@ -23,7 +23,7 @@ export default function completionEntryDetails(
             displayParts: typeof documentationOverride === 'string' ? [{ kind: 'text', text: documentationOverride }] : documentationOverride,
         }
     }
-    const prior = languageService.getCompletionEntryDetails(
+    let prior = languageService.getCompletionEntryDetails(
         fileName,
         position,
         prevCompletionsMap[entryName]?.originalName || entryName,
@@ -32,6 +32,15 @@ export default function completionEntryDetails(
         preferences,
         data,
     )
+    if (detailPrepend) {
+        prior ??= {
+            name: entryName,
+            kind: ts.ScriptElementKind.alias,
+            kindModifiers: '',
+            displayParts: [],
+        }
+        prior.displayParts = [{ kind: 'text', text: detailPrepend }, ...prior.displayParts]
+    }
     if (!prior) return
     if (source) {
         const namespaceImport = namespaceAutoImports(
@@ -61,9 +70,6 @@ export default function completionEntryDetails(
                 },
             ]
         }
-    }
-    if (detailPrepend) {
-        prior.displayParts = [{ kind: 'text', text: detailPrepend }, ...prior.displayParts]
     }
     if (documentationAppend) {
         prior.documentation = [...(prior.documentation ?? []), { kind: 'text', text: documentationAppend }]
