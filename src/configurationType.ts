@@ -354,14 +354,16 @@ export type Configuration = {
      *
      * // only-rest
      * example({ a }, b, c)
-     * // optional-and-rest (popular)
+     * // optional-and-rest (default)
      * example({ a })
-     * // no-skip (default)
+     * // all
+     * example() // (cursor inside)
+     * // no-skip (popular)
      * example({ a }, b, c, ...d)
      * ```
-     * @default no-skip
+     * @default optional-and-rest
      */
-    'methodSnippets.skip': 'only-rest' | 'optional-and-rest' | 'no-skip'
+    'methodSnippets.skip': 'only-rest' | 'optional-and-rest' | 'all' | 'no-skip'
     /**
      * @default pick-first
      */
