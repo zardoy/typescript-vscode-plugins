@@ -313,7 +313,7 @@ test('Case-sensetive completions', () => {
 
 test('Fix properties sorting', () => {
     settingsOverride.fixSuggestionsSorting = true
-    const tester = fourslashLikeTester(/* ts */ `
+    const tester = fourslashLikeTester(/* tsx */ `
         let a: {
             d
             b(a: {c, a}): {c, a}
@@ -325,6 +325,9 @@ test('Fix properties sorting', () => {
             a./*1*/;
             a.b({/*2*/})./*3*/
         }
+
+        declare function MyComponent(props: { b?; c? } & { a? }): JSX.Element
+        <MyComponent /*4*/ />;
     `)
     tester.completion(1, {
         exact: {
@@ -334,6 +337,11 @@ test('Fix properties sorting', () => {
     tester.completion([2, 3], {
         exact: {
             names: ['c', 'b'],
+        },
+    })
+    tester.completion(4, {
+        exact: {
+            names: ['b', 'c', 'a'],
         },
     })
     settingsOverride.fixSuggestionsSorting = false
