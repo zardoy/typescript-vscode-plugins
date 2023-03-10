@@ -47,6 +47,130 @@ export function findChildContainingPositionMaxDepth(sourceFile: ts.SourceFile, p
     return find(sourceFile)
 }
 
+export function findChildContainingKind(sourceNode: ts.Node, kind: ts.SyntaxKind) {
+    function find(node: ts.Node): ts.Node | undefined {
+        if (!node) {
+            return;
+        }
+
+        if (node.kind === kind) {
+            return node;
+        }
+
+        return ts.forEachChild(node, find);
+    }
+
+    return find(sourceNode);
+}
+
+export function deepFindNode(sourceNode: ts.Node, func: ((node: ts.Node) => boolean)) {
+    function find(node: ts.Node): ts.Node | undefined {
+        if (func(node)) {
+           return node; 
+        }
+
+        return ts.forEachChild(node, find);
+    }
+
+    return find(sourceNode);
+}
+
+export function findParrentNode(sourceNode: ts.Node, kind: ts.SyntaxKind) {
+    function find(node: ts.Node): ts.Node | undefined {
+        if (!node) {
+            return undefined;
+        }
+
+        if (node.kind === kind) {
+            return node;
+        }
+
+        return find(node.parent)
+    }
+
+    return find(sourceNode);
+}
+
+export function autoImportPackage(sourceFile: ts.SourceFile, packageName: string, identifierName: string, isDefault?: boolean): ChangesTracker {
+    function find(node: ts.Node): ts.Node | ChangesTracker | undefined {
+        if (ts.isImportDeclaration(node)) {
+            const childrens = node.getChildren();
+            const packageNameDeclaration = childrens.find(ts.isStringLiteral)?.getFullText().trim().slice(1, -1);
+            
+            if (packageNameDeclaration === packageName) {
+                const importClause = childrens.find(ts.isImportClause)
+                const namedImport = importClause?.getChildren().find(ts.isNamedImports);
+
+                const importIdentifier = ts.factory.createIdentifier(identifierName);
+                const newImport = ts.factory.createImportSpecifier(false, undefined, importIdentifier);
+                const changesTracker = getChangesTracker({})
+
+                const isNamespaceImport = importClause?.getChildren().find(ts.isNamespaceImport);
+
+                if (isNamespaceImport) {
+                    // IDK what to do with namespace import
+                    return changesTracker;
+                }
+
+                if (!namedImport) {
+                    const newNamedImport = ts.factory.createNamedImports([newImport]);
+                    changesTracker.insertNodeAfterComma(sourceFile, importClause?.getChildren().at(-1)!, newNamedImport)
+
+                    return changesTracker;
+                }
+
+                if (isDefault) {
+                    const isDefaultImportExists = importClause?.getChildren().find(ts.isIdentifier);
+
+                    if (isDefaultImportExists) {
+                        return changesTracker;
+                    }
+
+                    changesTracker.insertNodeBefore(sourceFile, importClause?.getChildren().at(0)!, importIdentifier);
+
+                    return changesTracker;
+                }
+
+                const existingImports = namedImport.getChildren()[1]!.getChildren()
+
+                if (existingImports.map(existingImport => existingImport.getFullText().trim()).includes(identifierName)) {
+                    return changesTracker;
+                }
+
+                const lastImport = existingImports.at(-1)
+
+                changesTracker.insertNodeInListAfter(sourceFile, lastImport!, newImport)
+
+                return changesTracker;
+            }
+            
+        }
+
+        return ts.forEachChild(node, find);
+    }
+
+    const result =  find(sourceFile);
+
+    // No package import
+    if (!result) {
+        const changesTracker = getChangesTracker({})
+
+        const importIdentifier = ts.factory.createIdentifier(identifierName);
+        const newImport = ts.factory.createImportSpecifier(false, undefined, importIdentifier);
+        const namedImport = ts.factory.createNamedImports([newImport])
+        const importClause = isDefault ? ts.factory.createImportClause(false, importIdentifier, undefined) : ts.factory.createImportClause(false, undefined, namedImport);
+        const packageLiteral = ts.factory.createStringLiteral(packageName);
+
+        const importDeclaration = ts.factory.createImportDeclaration(undefined, importClause, packageLiteral);
+
+        changesTracker.insertNodeAtTopOfFile(sourceFile, importDeclaration, false);
+
+        return changesTracker;
+    }
+
+    return result as ChangesTracker;
+}
+
 export function getNodePath(sourceFile: ts.SourceFile, position: number): ts.Node[] {
     const nodes: ts.Node[] = []
     function find(node: ts.Node): ts.Node | undefined {

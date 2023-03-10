@@ -28,7 +28,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
 
         if (c('markTsCodeActions.enable')) prior = prior.map(item => ({ ...item, description: `🔵 ${item.description}` }))
 
-        const { info: refactorInfo } = getCustomCodeActions(sourceFile, positionOrRange, languageService, languageServiceHost)
+        const { info: refactorInfo } = getCustomCodeActions(sourceFile, positionOrRange, languageService, languageServiceHost, c)
         if (refactorInfo) prior = [...prior, refactorInfo]
 
         return prior
@@ -39,7 +39,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         if (category === REFACTORS_CATEGORY) {
             const program = languageService.getProgram()
             const sourceFile = program!.getSourceFile(fileName)!
-            const { edit } = getCustomCodeActions(sourceFile, positionOrRange, languageService, languageServiceHost, formatOptions, actionName)
+            const { edit } = getCustomCodeActions(sourceFile, positionOrRange, languageService, languageServiceHost, c, formatOptions, actionName)
             return edit
         }
         if (refactorName === 'Extract Symbol' && actionName.startsWith('function_scope')) {

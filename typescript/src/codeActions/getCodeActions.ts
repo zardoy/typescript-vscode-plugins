@@ -3,6 +3,13 @@ import { findChildContainingPosition } from '../utils'
 import objectSwapKeysAndValues from './custom/objectSwapKeysAndValues'
 import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
+import conditionalRendering from "./custom/React/conditionalRendering";
+import conditionalRenderingTernary from "./custom/React/conditionalRenderingTernary";
+import wrapIntoMemo from "./custom/React/wrapIntoMemo";
+import wrapIntoUseCallback from "./custom/React/wrapIntoUseCallback";
+import createPropsInterface from "./custom/React/createPropsInterface";
+import generateJSXMap from "./custom/React/generateJSXMap";
+import { GetConfig } from '../types'
 
 type SimplifiedRefactorInfo =
     | {
@@ -31,7 +38,8 @@ export type CodeAction = {
     tryToApply: ApplyCodeAction
 }
 
-const codeActions: CodeAction[] = [/* toggleBraces */ objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
+const reactCodeActions: CodeAction[] = [conditionalRendering, conditionalRenderingTernary, wrapIntoMemo, wrapIntoUseCallback, createPropsInterface, generateJSXMap]
+const JSCodeActions: CodeAction[] = [/* toggleBraces */ objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
 
 export const REFACTORS_CATEGORY = 'essential-refactors'
 
@@ -40,12 +48,20 @@ export default (
     positionOrRange: ts.TextRange | number,
     languageService: ts.LanguageService,
     languageServiceHost: ts.LanguageServiceHost,
+    config: GetConfig,
     formatOptions?: ts.FormatCodeSettings,
     requestingEditsId?: string,
 ): { info?: ts.ApplicableRefactorInfo; edit: ts.RefactorEditInfo } => {
     const range = typeof positionOrRange !== 'number' && positionOrRange.pos !== positionOrRange.end ? positionOrRange : undefined
     const pos = typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos
     const node = findChildContainingPosition(ts, sourceFile, pos)
+
+    let codeActions = [...JSCodeActions];
+
+    if (config('codeActions.enableReactCodeActions')) {
+        codeActions = [...codeActions, ...reactCodeActions];
+    }
+    
     const appliableCodeActions = compact(
         codeActions.map(action => {
             const edits = action.tryToApply(sourceFile, pos, range, node, formatOptions, languageService, languageServiceHost)
