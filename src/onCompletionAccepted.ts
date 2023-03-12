@@ -1,10 +1,9 @@
 import * as vscode from 'vscode'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
-import { conditionallyRegister } from '@zardoy/vscode-utils/build/settings'
 import { expandPosition } from '@zardoy/vscode-utils/build/position'
 import { getExtensionSetting, registerExtensionCommand } from 'vscode-framework'
 import { oneOf } from '@zardoy/utils'
-import { RequestOptionsTypes, RequestResponseTypes } from '../typescript/src/ipcTypes'
+import { RequestResponseTypes } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
 
 export default (tsApi: { onCompletionAccepted }) => {
@@ -19,7 +18,7 @@ export default (tsApi: { onCompletionAccepted }) => {
             return
         }
 
-        const { label, insertText, documentation = '', kind } = item
+        const { label, insertText, kind } = item
         if (kind === vscode.CompletionItemKind.Keyword) {
             if (insertText === 'return ') justAcceptedReturnKeywordSuggestion = true
             else if (insertText === 'default ') void vscode.commands.executeCommand('editor.action.triggerSuggest')
@@ -37,11 +36,11 @@ export default (tsApi: { onCompletionAccepted }) => {
 
         const enableMethodSnippets = vscode.workspace.getConfiguration(process.env.IDS_PREFIX, item.document).get('enableMethodSnippets')
 
-        if (enableMethodSnippets && /* either snippet by vscode or by us to ignore pos */ typeof insertText !== 'object') {
+        if (enableMethodSnippets && /* snippet by vscode or by us to ignore pos */ typeof insertText !== 'object') {
             const editor = getActiveRegularEditor()!
             const startPos = editor.selection.start
             const nextSymbol = editor.document.getText(new vscode.Range(startPos, startPos.translate(0, 1)))
-            if (!['(', '.'].includes(nextSymbol)) {
+            if (!['(', '.', '`'].includes(nextSymbol)) {
                 const controller = new AbortController()
                 inFlightMethodSnippetOperation = controller
                 const params: RequestResponseTypes['getFullMethodSnippet'] | undefined = await sendCommand('getFullMethodSnippet')
@@ -55,14 +54,7 @@ export default (tsApi: { onCompletionAccepted }) => {
                         const replacer = replaceArguments[param.replace(/\?$/, '')]
                         if (replacer === null) continue
                         if (replacer) {
-                            snippet.appendPlaceholder(inner => {
-                                // eslint-disable-next-line unicorn/no-array-for-each
-                                replacer.split(/(?<!\\)\$/g).forEach((text, i, arr) => {
-                                    // inner.appendText(text.replace(/\\\$/g, '$'))
-                                    inner.value += text
-                                    if (i !== arr.length - 1) inner.appendTabstop()
-                                })
-                            })
+                            useReplacer(snippet, replacer)
                         } else {
                             snippet.appendPlaceholder(param)
                         }
@@ -143,5 +135,16 @@ export default (tsApi: { onCompletionAccepted }) => {
         } finally {
             justAcceptedReturnKeywordSuggestion = false
         }
+    })
+}
+
+function useReplacer(snippet: vscode.SnippetString, replacer: string) {
+    snippet.appendPlaceholder(inner => {
+        // eslint-disable-next-line unicorn/no-array-for-each
+        replacer.split(/(?<!\\)\$/g).forEach((text, i, arr) => {
+            // inner.appendText(text.replace(/\\\$/g, '$'))
+            inner.value += text
+            if (i !== arr.length - 1) inner.appendTabstop()
+        })
     })
 }

@@ -156,7 +156,7 @@ describe('Method snippets', () => {
         compareMethodSnippetAgainstMarker(markers, 2, '()')
         compareMethodSnippetAgainstMarker(markers, 3, '(a)')
         compareMethodSnippetAgainstMarker(markers, 4, '($b)')
-        compareMethodSnippetAgainstMarker(markers, 5, '(a, b?, { d, e: {} }, ...c)')
+        compareMethodSnippetAgainstMarker(markers, 5, '(a, b, { d, e: {} }, ...c)')
     })
 
     test('Insert text = always-declaration', () => {
@@ -175,7 +175,7 @@ describe('Method snippets', () => {
         settingsOverride['methodSnippets.insertText'] = 'binding-name'
     })
 
-    test('methodSnippets.skip = optional-and-rest', () => {
+    test('methodSnippets.skip', () => {
         settingsOverride['methodSnippets.skip'] = 'optional-and-rest'
         const [, _, markers] = fileContentsSpecialPositions(/* ts */ `
             declare const baz: {
@@ -191,6 +191,10 @@ describe('Method snippets', () => {
 
         compareMethodSnippetAgainstMarker(markers, 1, [''])
         compareMethodSnippetAgainstMarker(markers, 2, ['a'])
+        settingsOverride['methodSnippets.skip'] = 'only-rest'
+        compareMethodSnippetAgainstMarker(markers, 1, ['a', 'b', '{ d, e: {} }'])
+        settingsOverride['methodSnippets.skip'] = 'all'
+        compareMethodSnippetAgainstMarker(markers, 2, [''])
         settingsOverride['methodSnippets.skip'] = 'no-skip'
     })
 })
@@ -313,7 +317,7 @@ test('Case-sensetive completions', () => {
 
 test('Fix properties sorting', () => {
     settingsOverride.fixSuggestionsSorting = true
-    const tester = fourslashLikeTester(/* ts */ `
+    const tester = fourslashLikeTester(/* tsx */ `
         let a: {
             d
             b(a: {c, a}): {c, a}
@@ -325,6 +329,9 @@ test('Fix properties sorting', () => {
             a./*1*/;
             a.b({/*2*/})./*3*/
         }
+
+        declare function MyComponent(props: { b?; c? } & { a? }): JSX.Element
+        <MyComponent /*4*/ />;
     `)
     tester.completion(1, {
         exact: {
@@ -334,6 +341,11 @@ test('Fix properties sorting', () => {
     tester.completion([2, 3], {
         exact: {
             names: ['c', 'b'],
+        },
+    })
+    tester.completion(4, {
+        exact: {
+            names: ['b', 'c', 'a'],
         },
     })
     settingsOverride.fixSuggestionsSorting = false

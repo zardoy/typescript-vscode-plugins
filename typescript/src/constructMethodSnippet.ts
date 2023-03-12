@@ -24,7 +24,7 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     const { parameters } = signatures[0]!
     const printer = ts.createPrinter()
     const paramsToInsert = compact(
-        parameters.map(param => {
+        (skipMode === 'all' ? [] : parameters).map(param => {
             const valueDeclaration = param.valueDeclaration as ts.ParameterDeclaration | undefined
             const isOptional =
                 valueDeclaration && (valueDeclaration.questionToken || valueDeclaration.initializer || valueDeclaration.dotDotDotToken) ? true : false
@@ -47,7 +47,7 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
                           !ts.isIdentifier(valueDeclaration.name) && insertMode !== 'always-declaration'
                               ? cloneBindingName(valueDeclaration.name)
                               : valueDeclaration.name,
-                          valueDeclaration.questionToken,
+                          insertMode === 'always-declaration' ? valueDeclaration.questionToken : undefined,
                           undefined,
                           insertMode === 'always-declaration' ? valueDeclaration.initializer : undefined,
                       ),

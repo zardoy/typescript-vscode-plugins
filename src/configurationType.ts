@@ -354,14 +354,16 @@ export type Configuration = {
      *
      * // only-rest
      * example({ a }, b, c)
-     * // optional-and-rest (popular)
+     * // optional-and-rest (default)
      * example({ a })
-     * // no-skip (default)
+     * // all
+     * example() // (cursor inside)
+     * // no-skip (popular)
      * example({ a }, b, c, ...d)
      * ```
-     * @default no-skip
+     * @default optional-and-rest
      */
-    'methodSnippets.skip': 'only-rest' | 'optional-and-rest' | 'no-skip'
+    'methodSnippets.skip': 'only-rest' | 'optional-and-rest' | 'all' | 'no-skip'
     /**
      * @default pick-first
      */
@@ -498,11 +500,11 @@ export type Configuration = {
      */
     // 'objectLiteralCompletions.deepVariants': 'disable' | 'displayBelow' | 'replaceNotDeep'
     /**
-     * Also affects builtin typescript.suggest.objectLiteralMethodSnippets, even when additional completions disabled
-     * @default below
+     * How to position original suggestion relative to snippet suggestion.
+     * Also affects builtin typescript.suggest.objectLiteralMethodSnippets, even when additional plugin completions disabled
+     * @default before
      */
-    // TODO its a bug, change to after & before with fixed behavior
-    'objectLiteralCompletions.keepOriginal': 'below' | 'above' | 'remove'
+    'objectLiteralCompletions.keepOriginal': 'before' | 'after' | 'remove'
     /**
      * Wether to exclude non-JSX components completions in JSX component locations
      * Requires TypeScript 5.0+

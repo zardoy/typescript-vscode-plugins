@@ -69,4 +69,4 @@ module.exports = {
             }
         },
     ],
-} satisfies import('@volar/language-server/out/common/utils/serverConfig').ServerConfig
+}
