@@ -8,7 +8,6 @@ import conditionalRenderingTernary from "./custom/React/conditionalRenderingTern
 import wrapIntoMemo from "./custom/React/wrapIntoMemo";
 import wrapIntoUseCallback from "./custom/React/wrapIntoUseCallback";
 import createPropsInterface from "./custom/React/createPropsInterface";
-import generateJSXMap from "./custom/React/generateJSXMap";
 import { GetConfig } from '../types'
 
 type SimplifiedRefactorInfo =
@@ -38,7 +37,7 @@ export type CodeAction = {
     tryToApply: ApplyCodeAction
 }
 
-const reactCodeActions: CodeAction[] = [conditionalRendering, conditionalRenderingTernary, wrapIntoMemo, wrapIntoUseCallback, createPropsInterface, generateJSXMap]
+const reactCodeActions: CodeAction[] = [conditionalRendering, conditionalRenderingTernary, wrapIntoMemo, wrapIntoUseCallback, createPropsInterface]
 const JSCodeActions: CodeAction[] = [/* toggleBraces */ objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
 
 export const REFACTORS_CATEGORY = 'essential-refactors'
