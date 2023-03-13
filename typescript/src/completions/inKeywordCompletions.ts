@@ -1,10 +1,13 @@
-export default (position: number, node: ts.Node | undefined, sourceFile: ts.SourceFile, program: ts.Program, languageService: ts.LanguageService) => {
+import { sharedCompletionContext } from './sharedContext'
+import { buildStringCompletion } from '../utils'
+
+export default () => {
+    const { node, program } = sharedCompletionContext
     if (!node) return
     function isBinaryExpression(node: ts.Node): node is ts.BinaryExpression {
         return node.kind === ts.SyntaxKind.BinaryExpression
     }
     const typeChecker = program.getTypeChecker()
-    // TODO info diagnostic if used that doesn't exist
     if (
         ts.isStringLiteralLike(node) &&
         isBinaryExpression(node.parent) &&
@@ -48,14 +51,15 @@ export default (position: number, node: ts.Node | undefined, sourceFile: ts.Sour
             .map(([originaName, { insertText, usingDisplayIndexes, documentations }], i) => {
                 const name = types.length > 1 && usingDisplayIndexes.length === 1 ? `☆${originaName}` : originaName
                 docPerCompletion[name] = documentations.join('\n\n')
-                return {
+                return buildStringCompletion(node, {
                     // ⚀ ⚁ ⚂ ⚃ ⚄ ⚅
                     name,
-                    kind: ts.ScriptElementKind.string,
+                    labelDetails: {
+                        description: usingDisplayIndexes.join(', '),
+                    },
                     insertText,
-                    sourceDisplay: [{ kind: 'text', text: usingDisplayIndexes.join(', ') }],
                     sortText: `${maxUsingDisplayIndex - usingDisplayIndexes.length}_${i}`,
-                }
+                })
             })
             .sort((a, b) => a.sortText.localeCompare(b.sortText))
         return {
