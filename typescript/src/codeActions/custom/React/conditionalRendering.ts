@@ -6,7 +6,7 @@ import { CodeAction } from '../../getCodeActions'
 */
 export default {
     id: 'conditionalRendering',
-    name: 'Wrap into Condition',
+    name: 'Render Conditionally (&&)',
     kind: 'refactor.surround.conditionalRendering',
     tryToApply(sourceFile, position, _range, node, formatOptions) {
         if (!node || !position) return

@@ -6,7 +6,7 @@ import { CodeAction } from '../../getCodeActions'
 */
 export default {
     id: 'conditionalRenderingTernary',
-    name: 'Wrap into Condition (ternary)',
+    name: 'Render Conditionally (ternary)',
     kind: 'refactor.surround.conditionalRenderingTernary',
     tryToApply(sourceFile, position, _range, node, formatOptions) {
         if (!node || !position) return
