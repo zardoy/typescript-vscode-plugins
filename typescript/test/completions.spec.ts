@@ -258,6 +258,38 @@ test('Array Method Snippets', () => {
     }
 })
 
+test('String template type completions', () => {
+    const tester = fourslashLikeTester(/* ts */ `
+        const a: \`v\${'b' | 'c'}.\${number}.\${number}\` = '/*1*/';
+
+        const b: {
+            [a: \`foo_\${string}\`]: string
+        } = {
+            'foo_': '/*2*/'
+        }
+
+        const c = (p: typeof b) => { }
+
+        c({
+            '/*3*/'
+        })
+
+        b['/*4*/']
+    `)
+
+    tester.completion(1, {
+        exact: {
+            names: ['vb.|.|', 'vc.|.|'],
+        },
+    })
+
+    tester.completion([2, 3, 4], {
+        exact: {
+            names: ['foo_|'],
+        },
+    })
+})
+
 test('Switch Case Exclude Covered', () => {
     const [, _, numPositions] = fileContentsSpecialPositions(/*ts*/ `
         let test: 'foo' | 'bar'

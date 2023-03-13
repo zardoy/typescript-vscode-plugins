@@ -29,6 +29,7 @@ import displayImportedInfo from './completions/displayImportedInfo'
 import changeKindToFunction from './completions/changeKindToFunction'
 import functionPropsAndMethods from './completions/functionPropsAndMethods'
 import { getTupleSignature } from './tupleSignature'
+import stringTemplateTypeCompletions from './completions/stringTemplateType'
 
 export type PrevCompletionMap = Record<
     string,
@@ -145,6 +146,13 @@ export const getCompletionsAtPosition = (
     if (leftNode) {
         const newEntries = boostTextSuggestions(prior?.entries ?? [], position, sourceFile, leftNode, languageService)
         if (newEntries?.length && ensurePrior() && prior) prior.entries = newEntries
+    }
+
+    if (!prior?.entries.length) {
+        const addStringTemplateTypeCompletions = stringTemplateTypeCompletions()
+        if (addStringTemplateTypeCompletions && ensurePrior() && prior) {
+            prior.entries = [...prior.entries, ...addStringTemplateTypeCompletions]
+        }
     }
 
     if (!prior) return
