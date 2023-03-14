@@ -5,7 +5,7 @@ import { findChildContainingExactPosition } from '../src/utils'
 import handleCommand from '../src/specialCommands/handle'
 import _ from 'lodash'
 import { defaultConfigFunc, entrypoint, settingsOverride, sharedLanguageService } from './shared'
-import { fileContentsSpecialPositions, fourslashLikeTester, getCompletionsAtPosition } from './testing'
+import { fileContentsSpecialPositions, fourslashLikeTester, getCompletionsAtPosition, overrideSettings } from './testing'
 import constructMethodSnippet from '../src/constructMethodSnippet'
 
 const { languageService, languageServiceHost, updateProject, getCurrentFile } = sharedLanguageService
@@ -150,6 +150,17 @@ describe('Method snippets', () => {
                 } = {}, ...c): void
             }
             baz/*5*/
+
+            // should ignores comments
+            declare const withComments = (
+                a: boolean,
+                // comment
+                b: boolean,
+                /* jsdoc */
+                c: boolean
+            ) => void
+
+            withComments/*6*/
         `)
 
         compareMethodSnippetAgainstMarker(markers, 1, null)
@@ -157,26 +168,36 @@ describe('Method snippets', () => {
         compareMethodSnippetAgainstMarker(markers, 3, '(a)')
         compareMethodSnippetAgainstMarker(markers, 4, '($b)')
         compareMethodSnippetAgainstMarker(markers, 5, '(a, b, { d, e: {} }, ...c)')
+        compareMethodSnippetAgainstMarker(markers, 6, '(a, b, c)')
     })
 
     test('Insert text = always-declaration', () => {
-        settingsOverride['methodSnippets.insertText'] = 'always-declaration'
+        overrideSettings({
+            'methodSnippets.insertText': 'always-declaration',
+        })
         const [, _, markers] = fileContentsSpecialPositions(/* ts */ `
             declare const baz: {
-                (a: string = "test", b?, {
-                    d = false,
-                    e: {}
-                } = { }, ...c): void
+                (
+                    a: string =
+                        "super" +
+                        "test",
+                    b?, {
+                        d = false,
+                        e: {}
+                    } = { },
+                    ...c
+                ): void
             }
             baz/*1*/
         `)
 
-        compareMethodSnippetAgainstMarker(markers, 1, '(a = "test", b?, { d = false, e: {} } = {}, ...c)')
-        settingsOverride['methodSnippets.insertText'] = 'binding-name'
+        compareMethodSnippetAgainstMarker(markers, 1, '(a = "super" + "test", b?, { d = false, e: {} } = {}, ...c)')
     })
 
     test('methodSnippets.skip', () => {
-        settingsOverride['methodSnippets.skip'] = 'optional-and-rest'
+        overrideSettings({
+            'methodSnippets.skip': 'optional-and-rest',
+        })
         const [, _, markers] = fileContentsSpecialPositions(/* ts */ `
             declare const baz: {
                 (a: string = "test", b?, {
@@ -327,7 +348,9 @@ test('Switch Case Exclude Covered', () => {
 })
 
 test('Case-sensetive completions', () => {
-    settingsOverride.caseSensitiveCompletions = true
+    overrideSettings({
+        caseSensitiveCompletions: true,
+    })
     const [_positivePositions, _negativePositions, numPositions] = fileContentsSpecialPositions(/* ts */ `
         const a = {
             TestItem: 5,
@@ -348,7 +371,9 @@ test('Case-sensetive completions', () => {
 })
 
 test('Fix properties sorting', () => {
-    settingsOverride.fixSuggestionsSorting = true
+    overrideSettings({
+        fixSuggestionsSorting: true,
+    })
     const tester = fourslashLikeTester(/* tsx */ `
         let a: {
             d
@@ -386,6 +411,9 @@ test('Fix properties sorting', () => {
 // ts 5
 test.todo('Change to function kind', () => {
     settingsOverride['experiments.changeKindToFunction'] = true
+    overrideSettings({
+        'experiments.changeKindToFunction': true,
+    })
     const tester = fourslashLikeTester(/* ts */ `
         // declare const foo: boolean
         const foo = () => {}
@@ -579,37 +607,40 @@ test('In Keyword Completions', () => {
             "insertText": "a",
             "isSnippet": true,
             "kind": "string",
+            "labelDetails": {
+              "description": "2, 3",
+            },
             "name": "a",
-            "sourceDisplay": [
-              {
-                "kind": "text",
-                "text": "2, 3",
-              },
-            ],
+            "replacementSpan": {
+              "length": 0,
+              "start": 101,
+            },
           },
           {
             "insertText": "b",
             "isSnippet": true,
             "kind": "string",
+            "labelDetails": {
+              "description": "2",
+            },
             "name": "☆b",
-            "sourceDisplay": [
-              {
-                "kind": "text",
-                "text": "2",
-              },
-            ],
+            "replacementSpan": {
+              "length": 0,
+              "start": 101,
+            },
           },
           {
             "insertText": "c",
             "isSnippet": true,
             "kind": "string",
+            "labelDetails": {
+              "description": "3",
+            },
             "name": "☆c",
-            "sourceDisplay": [
-              {
-                "kind": "text",
-                "text": "3",
-              },
-            ],
+            "replacementSpan": {
+              "length": 0,
+              "start": 101,
+            },
           },
         ],
         "prevCompletionsMap": {

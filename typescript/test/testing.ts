@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { getCompletionsAtPosition as getCompletionsAtPositionRaw } from '../src/completionsAtPosition'
-import { defaultConfigFunc, entrypoint, sharedLanguageService } from './shared'
+import { Configuration } from '../src/types'
+import { defaultConfigFunc, entrypoint, sharedLanguageService, settingsOverride } from './shared'
 
 interface CompletionPartMatcher {
     names?: string[]
@@ -46,6 +47,18 @@ export const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, s
             .map(entry => Object.fromEntries(Object.entries(entry).filter(([, value]) => value !== undefined))) as ts.CompletionEntry[],
         entryNames: result.completions.entries.map(({ name }) => name),
     }
+}
+
+// shouldn't be used twice in the same test
+export const overrideSettings = (newOverrides: Partial<Configuration>) => {
+    const oldOverrides = { ...settingsOverride, ...Object.fromEntries(Object.entries(newOverrides).map(([key]) => [key, undefined])) }
+    Object.assign(settingsOverride, newOverrides)
+    let cleaned = false
+    afterEach(() => {
+        if (cleaned) return
+        cleaned = true
+        Object.assign(settingsOverride, oldOverrides)
+    })
 }
 
 export const fourslashLikeTester = (contents: string, fileName = entrypoint) => {
