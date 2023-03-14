@@ -14,7 +14,7 @@ import wrapIntoUseCallback from './custom/React/wrapIntoUseCallback'
 import createPropsInterface from './custom/React/createPropsInterface'
 import { GetConfig } from '../types'
 
-const codeActions: CodeAction[] = [objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
+const codeActions: CodeAction[] = [objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization, wrapIntoMemo]
 const reactExtendedCodeActions: CodeAction[] = [conditionalRendering, conditionalRenderingTernary, wrapIntoMemo, wrapIntoUseCallback, createPropsInterface]
 const extendedCodeActions: ExtendedCodeAction[] = [addMissingProperties]
 
