@@ -1,8 +1,12 @@
 import { compact } from '@zardoy/utils'
-import { findChildContainingPosition } from '../utils'
+import { findChildContainingExactPosition, findChildContainingPosition } from '../utils'
 import objectSwapKeysAndValues from './custom/objectSwapKeysAndValues'
 import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
+import addMissingProperties from './extended/addMissingProperties'
+
+const codeActions: CodeAction[] = [objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
+const extendedCodeActions: ExtendedCodeAction[] = [addMissingProperties]
 
 type SimplifiedRefactorInfo =
     | {
@@ -23,6 +27,11 @@ export type ApplyCodeAction = (
     languageServiceHost: ts.LanguageServiceHost,
 ) => ts.RefactorEditInfo | SimplifiedRefactorInfo[] | true | undefined
 
+export type ApplyExtendedCodeActionResult = {
+    edits: ts.TextChange[]
+    snippetEdits: ts.TextChange[]
+}
+
 export type CodeAction = {
     name: string
     id: string
@@ -31,10 +40,61 @@ export type CodeAction = {
     tryToApply: ApplyCodeAction
 }
 
-const codeActions: CodeAction[] = [/* toggleBraces */ objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
+export type ApplyExtendedCodeAction = (options: {
+    sourceFile: ts.SourceFile
+    position: number
+    range: ts.TextRange | undefined
+    node: ts.Node | undefined
+    /** undefined when no edits is requested */
+    formatOptions: ts.FormatCodeSettings | undefined
+    languageService: ts.LanguageService
+    // languageServiceHost: ts.LanguageServiceHost
+}) => ApplyExtendedCodeActionResult | boolean | undefined
+
+// extended code actions support snippets and diagnostic codes (so they can be quickfixes)
+export type ExtendedCodeAction = {
+    title: string
+    // id: string
+    kind: string
+    tryToApply: ApplyExtendedCodeAction
+    codes?: number[]
+}
+
+export const getExtendedCodeActions = <T extends string | undefined>(
+    sourceFile: ts.SourceFile,
+    positionOrRange: ts.TextRange | number,
+    languageService: ts.LanguageService,
+    // languageServiceHost: ts.LanguageServiceHost,
+    formatOptions: ts.FormatCodeSettings | undefined,
+    applyCodeActionTitle: T,
+): T extends undefined ? ExtendedCodeAction[] : ApplyExtendedCodeActionResult => {
+    const range = typeof positionOrRange !== 'number' && positionOrRange.pos !== positionOrRange.end ? positionOrRange : undefined
+    const position = typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos
+    const node = findChildContainingExactPosition(sourceFile, position)
+    const tryToApplyOptions = {
+        formatOptions,
+        languageService,
+        // languageServiceHost,
+        node,
+        position,
+        range,
+        sourceFile,
+    }
+    if (applyCodeActionTitle) {
+        const codeAction = extendedCodeActions.find(codeAction => codeAction.title === applyCodeActionTitle) as ExtendedCodeAction | undefined
+        return codeAction!.tryToApply(tryToApplyOptions) as T extends undefined ? never : ApplyExtendedCodeActionResult
+    }
+    return compact(
+        extendedCodeActions.map(codeAction => {
+            if (!codeAction.codes && !codeAction.tryToApply(tryToApplyOptions)) return
+            return codeAction
+        }),
+    ) as T extends undefined ? ExtendedCodeAction[] : never
+}
 
 export const REFACTORS_CATEGORY = 'essential-refactors'
 
+// main function to get regular TS refactoring code actions
 export default (
     sourceFile: ts.SourceFile,
     positionOrRange: ts.TextRange | number,
@@ -88,7 +148,7 @@ export default (
                     kind,
                     name: id,
                 })),
-                // anyway not visible in ui
+                // not visible in ui anyway
                 description: 'Essential Refactors',
                 name: REFACTORS_CATEGORY,
             }) ||

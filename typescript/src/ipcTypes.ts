@@ -1,3 +1,5 @@
+import { ApplyExtendedCodeActionResult, ExtendedCodeAction } from './codeActions/getCodeActions'
+
 export const passthroughExposedApiCommands = ['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition'] as const
 
 export const triggerCharacterCommands = [
@@ -12,6 +14,7 @@ export const triggerCharacterCommands = [
     'getFixAllEdits',
     'acceptRenameWithParams',
     'getFullMethodSnippet',
+    'getExtendedCodeActionEdits',
 ] as const
 
 export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
@@ -56,6 +59,7 @@ export type RequestResponseTypes = {
             totalObjectCount: number
         }
         moveToExistingFile?: {}
+        extendedCodeActions: ExtendedCodeAction[]
     }
     twoStepCodeActionSecondStep:
         | {
@@ -68,6 +72,7 @@ export type RequestResponseTypes = {
     turnArrayIntoObjectEdit: ts.TextChange[]
     getFixAllEdits: ts.TextChange[]
     getFullMethodSnippet: string[] | undefined
+    getExtendedCodeActionEdits: ApplyExtendedCodeActionResult
 }
 
 // INPUT
@@ -94,6 +99,10 @@ export type RequestOptionsTypes = {
         comments: boolean
         strings: boolean
         alias: boolean
+    }
+    getExtendedCodeActionEdits: {
+        range: [number, number]
+        applyCodeActionTitle: string
     }
 }
 
