@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/consistent-destructuring */
 import * as vscode from 'vscode'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 import { getExtensionCommandId, getExtensionSetting, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'
@@ -9,7 +10,15 @@ import { offsetPosition } from '@zardoy/vscode-utils/build/position'
 import { relative, join } from 'path-browserify'
 import { RequestOptionsTypes, RequestResponseTypes } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
-import { getTsLikePath, pickFileWithQuickPick, tsRangeToVscode, tsRangeToVscodeSelection, tsTextChangesToVcodeTextEdits } from './util'
+import {
+    getTsLikePath,
+    pickFileWithQuickPick,
+    tsRangeToVscode,
+    tsRangeToVscodeSelection,
+    tsTextChangesToVscodeSnippetTextEdits,
+    tsTextChangesToVscodeTextEdits,
+    vscodeRangeToTs,
+} from './util'
 
 export default () => {
     registerExtensionCommand('removeFunctionArgumentsTypesInSelection', async () => {
@@ -227,7 +236,7 @@ export default () => {
             document,
             position: range.start,
             inputOptions: {
-                range: [document.offsetAt(range.start), document.offsetAt(range.end)] as [number, number],
+                range: vscodeRangeToTs(document, range),
             },
         })
     }
@@ -239,7 +248,7 @@ export default () => {
                 document,
                 position: range.start,
                 inputOptions: {
-                    range: [document.offsetAt(range.start), document.offsetAt(range.end)] as [number, number],
+                    range: vscodeRangeToTs(document, range),
                     data: secondStepData,
                 },
             },
@@ -343,9 +352,11 @@ export default () => {
         }
 
         if (!mainChanges) return
-        edit.set(editor.document.uri, tsTextChangesToVcodeTextEdits(editor.document, mainChanges))
+        edit.set(editor.document.uri, tsTextChangesToVscodeTextEdits(editor.document, mainChanges))
         await vscode.workspace.applyEdit(edit)
     })
+
+    type ExtendedCodeAction = vscode.CodeAction & { document: vscode.TextDocument; requestRange: vscode.Range }
 
     // most probably will be moved to ts-code-actions extension
     vscode.languages.registerCodeActionsProvider(defaultJsSupersetLangsWithVue, {
@@ -355,10 +366,12 @@ export default () => {
             }
 
             if (context.only?.contains(vscode.CodeActionKind.SourceFixAll)) {
-                const fixAllEdits = await sendCommand<RequestResponseTypes['getFixAllEdits']>('getFixAllEdits')
-                if (!fixAllEdits) return
+                const fixAllEdits = await sendCommand<RequestResponseTypes['getFixAllEdits']>('getFixAllEdits', {
+                    document,
+                })
+                if (!fixAllEdits || token.isCancellationRequested) return
                 const edit = new vscode.WorkspaceEdit()
-                edit.set(document.uri, tsTextChangesToVcodeTextEdits(document, fixAllEdits))
+                edit.set(document.uri, tsTextChangesToVscodeTextEdits(document, fixAllEdits))
                 await vscode.workspace.applyEdit(edit)
                 return
             }
@@ -366,7 +379,7 @@ export default () => {
             if (context.triggerKind !== vscode.CodeActionTriggerKind.Invoke) return
             const result = await getPossibleTwoStepRefactorings(range)
             if (!result) return
-            const { turnArrayIntoObject, moveToExistingFile } = result
+            const { turnArrayIntoObject, moveToExistingFile, extendedCodeActions } = result
             const codeActions: vscode.CodeAction[] = []
             const getCommand = (arg): vscode.Command | undefined => ({
                 title: '',
@@ -390,7 +403,54 @@ export default () => {
                 // })
             }
 
+            codeActions.push(
+                ...compact(
+                    extendedCodeActions.map(({ title, kind, codes }): ExtendedCodeAction | undefined => {
+                        let diagnostics: vscode.Diagnostic[] | undefined
+                        if (codes) {
+                            diagnostics = context.diagnostics.filter(({ source, code }) => {
+                                if (source !== 'ts' || !code) return
+                                const codeNumber = +(typeof code === 'object' ? code.value : code)
+                                return codes.includes(codeNumber)
+                            })
+                            if (diagnostics.length === 0) return
+                        }
+
+                        return {
+                            title,
+                            diagnostics,
+                            kind: vscode.CodeActionKind.Empty.append(kind),
+                            requestRange: range,
+                            document,
+                        }
+                    }),
+                ),
+            )
+
             return codeActions
+        },
+        async resolveCodeAction(codeAction: ExtendedCodeAction, token) {
+            const { document } = codeAction
+            if (!document) throw new Error('Unresolved code action without document')
+            const result = await sendCommand<RequestResponseTypes['getExtendedCodeActionEdits'], RequestOptionsTypes['getExtendedCodeActionEdits']>(
+                'getExtendedCodeActionEdits',
+                {
+                    document,
+                    inputOptions: {
+                        applyCodeActionTitle: codeAction.title,
+                        range: vscodeRangeToTs(document, codeAction.diagnostics?.length ? codeAction.diagnostics[0]!.range : codeAction.requestRange),
+                    },
+                },
+            )
+            if (!result) throw new Error('No code action edits. Try debug.')
+            const { edits = [], snippetEdits = [] } = result
+            const workspaceEdit = new vscode.WorkspaceEdit()
+            workspaceEdit.set(document.uri, [
+                ...tsTextChangesToVscodeTextEdits(document, edits),
+                ...tsTextChangesToVscodeSnippetTextEdits(document, snippetEdits),
+            ])
+            codeAction.edit = workspaceEdit
+            return codeAction
         },
     })
     // #endregion

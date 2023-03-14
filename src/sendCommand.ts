@@ -8,7 +8,10 @@ type SendCommandData<K> = {
     document?: vscode.TextDocument
     inputOptions?: K
 }
-export const sendCommand = async <T, K = any>(command: TriggerCharacterCommand, sendCommandDataArg?: SendCommandData<K>): Promise<T | undefined> => {
+export const sendCommand = async <Response, K = any>(
+    command: TriggerCharacterCommand,
+    sendCommandDataArg?: SendCommandData<K>,
+): Promise<Response | undefined> => {
     // plugin id disabled, languageService would not understand the special trigger character
     if (!getExtensionSetting('enablePlugin')) {
         console.warn('Ignoring request because plugin is disabled')

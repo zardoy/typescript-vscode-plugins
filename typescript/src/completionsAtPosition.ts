@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import inKeywordCompletions from './inKeywordCompletions'
+import inKeywordCompletions from './completions/inKeywordCompletions'
 // import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './completions/isInBannedPosition'
 import { GetConfig } from './types'
@@ -29,6 +29,7 @@ import displayImportedInfo from './completions/displayImportedInfo'
 import changeKindToFunction from './completions/changeKindToFunction'
 import functionPropsAndMethods from './completions/functionPropsAndMethods'
 import { getTupleSignature } from './tupleSignature'
+import stringTemplateTypeCompletions from './completions/stringTemplateType'
 
 export type PrevCompletionMap = Record<
     string,
@@ -137,7 +138,7 @@ export const getCompletionsAtPosition = (
     if (node && !hasSuggestions && ensurePrior() && prior) {
         prior.entries = additionalTypesSuggestions(prior.entries, program, node) ?? prior.entries
     }
-    const addSignatureAccessCompletions = hasSuggestions ? [] : indexSignatureAccessCompletions(position, node, scriptSnapshot, sourceFile, program)
+    const addSignatureAccessCompletions = hasSuggestions ? [] : indexSignatureAccessCompletions()
     if (addSignatureAccessCompletions.length && ensurePrior() && prior) {
         prior.entries = [...prior.entries, ...addSignatureAccessCompletions]
     }
@@ -145,6 +146,13 @@ export const getCompletionsAtPosition = (
     if (leftNode) {
         const newEntries = boostTextSuggestions(prior?.entries ?? [], position, sourceFile, leftNode, languageService)
         if (newEntries?.length && ensurePrior() && prior) prior.entries = newEntries
+    }
+
+    if (!prior?.entries.length) {
+        const addStringTemplateTypeCompletions = stringTemplateTypeCompletions()
+        if (addStringTemplateTypeCompletions && ensurePrior() && prior) {
+            prior.entries = [...prior.entries, ...addStringTemplateTypeCompletions]
+        }
     }
 
     if (!prior) return
@@ -227,7 +235,7 @@ export const getCompletionsAtPosition = (
     // 90%
     prior.entries = adjustAutoImports(prior.entries)
 
-    const inKeywordCompletionsResult = inKeywordCompletions(position, node, sourceFile, program, languageService)
+    const inKeywordCompletionsResult = inKeywordCompletions()
     if (inKeywordCompletionsResult) {
         prior.entries.push(...inKeywordCompletionsResult.completions)
         Object.assign(

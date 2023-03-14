@@ -1,14 +1,22 @@
 import { compact } from '@zardoy/utils'
-import { findChildContainingPosition } from '../utils'
+import { findChildContainingExactPosition, findChildContainingPosition } from '../utils'
 import objectSwapKeysAndValues from './custom/objectSwapKeysAndValues'
 import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
-import conditionalRendering from "./custom/React/conditionalRendering";
-import conditionalRenderingTernary from "./custom/React/conditionalRenderingTernary";
-import wrapIntoMemo from "./custom/React/wrapIntoMemo";
-import wrapIntoUseCallback from "./custom/React/wrapIntoUseCallback";
-import createPropsInterface from "./custom/React/createPropsInterface";
+import addMissingProperties from './extended/addMissingProperties'
+import { ApplyExtendedCodeActionResult, IpcExtendedCodeAction } from '../ipcTypes'
+import { Except } from 'type-fest'
+
+import conditionalRendering from './custom/React/conditionalRendering'
+import conditionalRenderingTernary from './custom/React/conditionalRenderingTernary'
+import wrapIntoMemo from './custom/React/wrapIntoMemo'
+import wrapIntoUseCallback from './custom/React/wrapIntoUseCallback'
+import createPropsInterface from './custom/React/createPropsInterface'
 import { GetConfig } from '../types'
+
+const codeActions: CodeAction[] = [objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
+const reactExtendedCodeActions: CodeAction[] = [conditionalRendering, conditionalRenderingTernary, wrapIntoMemo, wrapIntoUseCallback, createPropsInterface]
+const extendedCodeActions: ExtendedCodeAction[] = [addMissingProperties]
 
 type SimplifiedRefactorInfo =
     | {
@@ -37,11 +45,66 @@ export type CodeAction = {
     tryToApply: ApplyCodeAction
 }
 
-const reactCodeActions: CodeAction[] = [conditionalRendering, conditionalRenderingTernary, wrapIntoMemo, wrapIntoUseCallback, createPropsInterface]
-const JSCodeActions: CodeAction[] = [/* toggleBraces */ objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
+export type ApplyExtendedCodeAction = (options: {
+    sourceFile: ts.SourceFile
+    position: number
+    range: ts.TextRange | undefined
+    node: ts.Node | undefined
+    /** undefined when no edits is requested */
+    formatOptions: ts.FormatCodeSettings | undefined
+    languageService: ts.LanguageService
+    // languageServiceHost: ts.LanguageServiceHost
+}) => ApplyExtendedCodeActionResult | boolean | undefined
+
+// extended code actions support snippets and diagnostic codes (so they can be quickfixes)
+export type ExtendedCodeAction = {
+    title: string
+    // id: string
+    kind: string
+    tryToApply: ApplyExtendedCodeAction
+    codes?: number[]
+}
+
+type Satisfies<T, U extends T> = any
+
+// ensure props are in sync
+type CheckCodeAction = Satisfies<Except<ExtendedCodeAction, 'tryToApply'>, IpcExtendedCodeAction>
+
+export const getExtendedCodeActions = <T extends string | undefined>(
+    sourceFile: ts.SourceFile,
+    positionOrRange: ts.TextRange | number,
+    languageService: ts.LanguageService,
+    // languageServiceHost: ts.LanguageServiceHost,
+    formatOptions: ts.FormatCodeSettings | undefined,
+    applyCodeActionTitle: T,
+): T extends undefined ? ExtendedCodeAction[] : ApplyExtendedCodeActionResult => {
+    const range = typeof positionOrRange !== 'number' && positionOrRange.pos !== positionOrRange.end ? positionOrRange : undefined
+    const position = typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos
+    const node = findChildContainingExactPosition(sourceFile, position)
+    const tryToApplyOptions = {
+        formatOptions,
+        languageService,
+        // languageServiceHost,
+        node,
+        position,
+        range,
+        sourceFile,
+    }
+    if (applyCodeActionTitle) {
+        const codeAction = extendedCodeActions.find(codeAction => codeAction.title === applyCodeActionTitle) as ExtendedCodeAction | undefined
+        return codeAction!.tryToApply(tryToApplyOptions) as T extends undefined ? never : ApplyExtendedCodeActionResult
+    }
+    return compact(
+        extendedCodeActions.map(codeAction => {
+            if (!codeAction.codes && !codeAction.tryToApply(tryToApplyOptions)) return
+            return codeAction
+        }),
+    ) as T extends undefined ? ExtendedCodeAction[] : never
+}
 
 export const REFACTORS_CATEGORY = 'essential-refactors'
 
+// main function to get regular TS refactoring code actions
 export default (
     sourceFile: ts.SourceFile,
     positionOrRange: ts.TextRange | number,
@@ -55,12 +118,6 @@ export default (
     const pos = typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos
     const node = findChildContainingPosition(ts, sourceFile, pos)
 
-    let codeActions = [...JSCodeActions];
-
-    if (config('codeActions.enableReactCodeActions')) {
-        codeActions = [...codeActions, ...reactCodeActions];
-    }
-    
     const appliableCodeActions = compact(
         codeActions.map(action => {
             const edits = action.tryToApply(sourceFile, pos, range, node, formatOptions, languageService, languageServiceHost)
@@ -103,7 +160,7 @@ export default (
                     kind,
                     name: id,
                 })),
-                // anyway not visible in ui
+                // not visible in ui anyway
                 description: 'Essential Refactors',
                 name: REFACTORS_CATEGORY,
             }) ||

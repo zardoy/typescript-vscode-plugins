@@ -1,4 +1,5 @@
 import { compact } from '@zardoy/utils'
+import { getExtendedCodeActions } from '../codeActions/getCodeActions'
 import constructMethodSnippet from '../constructMethodSnippet'
 import { overrideRequestPreferences } from '../decorateProxy'
 import {
@@ -45,18 +46,36 @@ export default (
             typescriptEssentialsResponse: getEmmetCompletions(fileName, leftNode, sourceFile, position, languageService),
         }
     }
+    // todo rename from getTwoStepCodeActions to additionalCodeActions
     if (specialCommand === 'getTwoStepCodeActions') {
         changeType<RequestOptionsTypes['getTwoStepCodeActions']>(specialCommandArg)
         const node = findChildContainingPosition(ts, sourceFile, position)
         const posEnd = { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] }
         const moveToExistingFile = previousGetCodeActionsResult.value?.some(x => x.name === 'Move to a new file')
 
+        const extendedCodeActions = getExtendedCodeActions(sourceFile, posEnd, languageService, undefined, undefined)
         return {
             entries: [],
             typescriptEssentialsResponse: {
                 turnArrayIntoObject: objectIntoArrayConverters(posEnd, node, undefined),
                 moveToExistingFile: moveToExistingFile ? {} : undefined,
+                extendedCodeActions: extendedCodeActions,
             } satisfies RequestResponseTypes['getTwoStepCodeActions'],
+        }
+    }
+    if (specialCommand === 'getExtendedCodeActionEdits') {
+        changeType<RequestOptionsTypes['getExtendedCodeActionEdits']>(specialCommandArg)
+        const { range, applyCodeActionTitle } = specialCommandArg
+        const posEnd = { pos: range[0], end: range[1] }
+        return {
+            entries: [],
+            typescriptEssentialsResponse: getExtendedCodeActions(
+                sourceFile,
+                posEnd,
+                languageService,
+                formatOptions,
+                applyCodeActionTitle,
+            ) satisfies RequestResponseTypes['getExtendedCodeActionEdits'],
         }
     }
     if (specialCommand === 'twoStepCodeActionSecondStep') {
@@ -72,7 +91,6 @@ export default (
                 break
             }
             case 'moveToExistingFile': {
-                // const refactors = languageService.getApplicableRefactors(fileName, posEnd, preferences, 'invoked')
                 const { edits } =
                     languageService.getEditsForRefactor(fileName, formatOptions ?? {}, posEnd, 'Move to a new file', 'Move to a new file', preferences) ?? {}
                 if (!edits) return

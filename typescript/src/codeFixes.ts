@@ -1,12 +1,8 @@
 import _ from 'lodash'
-import addMissingProperties from './codeFixes/addMissingProperties'
 import { changeSortingOfAutoImport, getIgnoreAutoImportSetting, isAutoImportEntryShouldBeIgnored } from './adjustAutoImports'
 import { GetConfig } from './types'
 import { findChildContainingPosition, getCancellationToken, getIndentFromPos, isTsPatched, patchMethod } from './utils'
 import namespaceAutoImports from './namespaceAutoImports'
-
-// codeFixes that I managed to put in files
-const externalCodeFixes = [addMissingProperties]
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
     proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
@@ -141,6 +137,8 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             ]
         }
 
+        // don't remove for now, as might be used in future
+        const externalCodeFixes = [] as any[]
         for (const codeFix of externalCodeFixes) {
             const diagnostic = findDiagnosticByCode(codeFix.codes)
             if (!diagnostic || !node) continue

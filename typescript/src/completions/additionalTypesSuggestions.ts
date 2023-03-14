@@ -1,5 +1,8 @@
+import { buildStringCompletion } from '../utils'
+
 export default (entries: ts.CompletionEntry[], program: ts.Program, node: ts.Node) => {
     if (!ts.isStringLiteral(node)) return
+    const stringNode = node
     const typeChecker = program.getTypeChecker()
     if (ts.isLiteralTypeNode(node.parent)) {
         node = node.parent
@@ -17,11 +20,12 @@ export default (entries: ts.CompletionEntry[], program: ts.Program, node: ts.Nod
             const type = typeChecker.getTypeFromTypeNode(node.parent.typeArguments[0]!)
             type.getProperties().forEach(({ name }) => {
                 if (previousValues.includes(name)) return
-                entries.push({
-                    name,
-                    kind: ts.ScriptElementKind.string,
-                    sortText: '',
-                })
+                entries.push(
+                    buildStringCompletion(stringNode, {
+                        name,
+                        sortText: '',
+                    }),
+                )
             })
             return
         }
@@ -34,10 +38,10 @@ export default (entries: ts.CompletionEntry[], program: ts.Program, node: ts.Nod
     const { types } = (type as any) ?? {}
     const values: string[] = types.map(({ value }) => (typeof value === 'string' ? value : undefined)).filter(Boolean)
     return values.map(
-        (value): ts.CompletionEntry => ({
-            name: value,
-            kind: ts.ScriptElementKind.string,
-            sortText: '',
-        }),
+        (value): ts.CompletionEntry =>
+            buildStringCompletion(stringNode, {
+                name: value,
+                sortText: '',
+            }),
     )
 }

@@ -108,7 +108,7 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
         const entryType = typeChecker.getTypeOfSymbolAtLocation(symbol, node)
         typeAtLocLog[entry.name] = nowGetter.now() - mark
         addMark('getTypeAtLocation')
-        // todo setting to allow any!
+        // todo setting to allow any?
         if (entryType.flags & ts.TypeFlags.Any) return false
         // startMark()
         const signatures = typeChecker.getSignaturesOfType(entryType, ts.SignatureKind.Call)
@@ -123,10 +123,10 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
     const newEntries = entries.filter(entry => {
         // if (!entry.name[0] || entry.name[0].toLowerCase() === entry.name[0]) return false
         if (entry.kind === ts.ScriptElementKind.keyword) return false
-        // todo
+        // todo?
         if (c('jsxImproveElementsSuggestions.filterNamespaces') && entry.kind === ts.ScriptElementKind.moduleElement) return false
         if (!c('experiments.excludeNonJsxCompletions')) return true
-        // todo!!!
+        // I'm not inrested personally
         if (entry.kind === ts.ScriptElementKind.classElement) return false
         if (entry.kind === ts.ScriptElementKind.localClassElement) return false
         if (!interestedKinds.includes(entry.kind)) return true

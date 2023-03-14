@@ -1,4 +1,4 @@
-import { SetOptional } from 'type-fest'
+import { Except, SetOptional } from 'type-fest'
 import * as semver from 'semver'
 
 export function findChildContainingPosition(typescript: typeof ts, sourceFile: ts.SourceFile, position: number): ts.Node | undefined {
@@ -239,6 +239,15 @@ export const boostExistingSuggestions = (entries: ts.CompletionEntry[], predicat
             })
             .reduce((a, b) => a - b)
     })
+}
+
+export const buildStringCompletion = (node: ts.StringLiteralLike, completion: Except<ts.CompletionEntry, 'kind'>): ts.CompletionEntry => {
+    const start = node.pos + node.getLeadingTriviaWidth() + 1
+    return {
+        ...completion,
+        kind: ts.ScriptElementKind.string,
+        replacementSpan: ts.createTextSpanFromBounds(start, node.end - 1),
+    }
 }
 
 // semver: can't use compare as it incorrectly works with build postfix

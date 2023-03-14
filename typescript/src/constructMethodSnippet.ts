@@ -44,12 +44,15 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
                       ts.factory.createParameterDeclaration(
                           undefined,
                           valueDeclaration.dotDotDotToken,
-                          !ts.isIdentifier(valueDeclaration.name) && insertMode !== 'always-declaration'
-                              ? cloneBindingName(valueDeclaration.name)
-                              : valueDeclaration.name,
+                          insertMode === 'always-declaration' ? valueDeclaration.name : cloneBindingName(valueDeclaration.name),
                           insertMode === 'always-declaration' ? valueDeclaration.questionToken : undefined,
                           undefined,
-                          insertMode === 'always-declaration' ? valueDeclaration.initializer : undefined,
+                          insertMode === 'always-declaration' && valueDeclaration.initializer
+                              ? ts.setEmitFlags(
+                                    tsFull.factory.cloneNode(valueDeclaration.initializer as any),
+                                    ts.EmitFlags.SingleLine | ts.EmitFlags.NoAsciiEscaping,
+                                )
+                              : undefined,
                       ),
                       valueDeclaration.getSourceFile(),
                   )
@@ -65,6 +68,7 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     // return `(${paramsToInsert.map((param, i) => `\${${i + 1}:${param.replaceAll}}`).join(', ')})`
 
     function cloneBindingName(node: ts.BindingName): ts.BindingName {
+        if (ts.isIdentifier(node)) return ts.factory.createIdentifier(node.text)
         return elideInitializerAndSetEmitFlags(node) as ts.BindingName
         function elideInitializerAndSetEmitFlags(node: ts.Node): ts.Node {
             let visited = ts.visitEachChild(
