@@ -4,6 +4,8 @@ import objectSwapKeysAndValues from './custom/objectSwapKeysAndValues'
 import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
 import addMissingProperties from './extended/addMissingProperties'
+import { ApplyExtendedCodeActionResult, IpcExtendedCodeAction } from '../ipcTypes'
+import { Except } from 'type-fest'
 
 const codeActions: CodeAction[] = [objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
 const extendedCodeActions: ExtendedCodeAction[] = [addMissingProperties]
@@ -26,11 +28,6 @@ export type ApplyCodeAction = (
     languageService: ts.LanguageService,
     languageServiceHost: ts.LanguageServiceHost,
 ) => ts.RefactorEditInfo | SimplifiedRefactorInfo[] | true | undefined
-
-export type ApplyExtendedCodeActionResult = {
-    edits: ts.TextChange[]
-    snippetEdits: ts.TextChange[]
-}
 
 export type CodeAction = {
     name: string
@@ -59,6 +56,11 @@ export type ExtendedCodeAction = {
     tryToApply: ApplyExtendedCodeAction
     codes?: number[]
 }
+
+type Satisfies<T, U extends T> = any
+
+// ensure props are in sync
+type CheckCodeAction = Satisfies<Except<ExtendedCodeAction, 'tryToApply'>, IpcExtendedCodeAction>
 
 export const getExtendedCodeActions = <T extends string | undefined>(
     sourceFile: ts.SourceFile,

@@ -1,4 +1,4 @@
-import { ApplyExtendedCodeActionResult, ExtendedCodeAction } from './codeActions/getCodeActions'
+// should-not contain other typescript/* imports that use globals as is imported in extension code (src/)
 
 export const passthroughExposedApiCommands = ['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition'] as const
 
@@ -35,6 +35,12 @@ export type GetSignatureInfoParameter = {
     isOptional: boolean
 }
 
+export type IpcExtendedCodeAction = {
+    title: string
+    kind: string
+    codes?: number[]
+}
+
 // OUTPUT
 /**
  * @keysSuggestions TriggerCharacterCommand
@@ -59,7 +65,7 @@ export type RequestResponseTypes = {
             totalObjectCount: number
         }
         moveToExistingFile?: {}
-        extendedCodeActions: ExtendedCodeAction[]
+        extendedCodeActions: IpcExtendedCodeAction[]
     }
     twoStepCodeActionSecondStep:
         | {
@@ -119,9 +125,7 @@ export type EmmetResult = {
     emmetTextOffset: number
 }
 
-export type PostfixCompletion = {
-    label: string
-    // replacement: [startOffset: number, endOffset?: number]
-    insertText: string
-    // sortText?: number,
+export type ApplyExtendedCodeActionResult = {
+    edits: ts.TextChange[]
+    snippetEdits: ts.TextChange[]
 }
