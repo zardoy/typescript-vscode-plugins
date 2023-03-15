@@ -1,4 +1,5 @@
 import { GetConfig } from '../types'
+import { sharedCompletionContext } from './sharedContext'
 
 export default (
     entries: ts.CompletionEntry[],
@@ -7,6 +8,8 @@ export default (
     preferences: ts.UserPreferences,
     c: GetConfig,
 ): ts.CompletionEntry[] | void => {
+    const { position } = sharedCompletionContext
+
     if (entries.length && node) {
         const enableMoreVariants = c('objectLiteralCompletions.moreVariants')
         const keepOriginal = c('objectLiteralCompletions.keepOriginal')
@@ -14,7 +17,8 @@ export default (
         // plans to make it hihgly configurable! e.g. if user wants to make some subtype leading (e.g. from [] | {})
         if (ts.isIdentifier(node)) node = node.parent
         if (ts.isShorthandPropertyAssignment(node)) node = node.parent
-        if (!ts.isObjectLiteralExpression(node)) return
+        const nextChar = node.getSourceFile().getFullText()[position]
+        if (!ts.isObjectLiteralExpression(node) || nextChar === ':') return
 
         entries = [...entries]
         const typeChecker = languageService.getProgram()!.getTypeChecker()!
