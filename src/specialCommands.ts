@@ -372,8 +372,13 @@ export default () => {
                 if (!fixAllEdits || token.isCancellationRequested) return
                 const edit = new vscode.WorkspaceEdit()
                 edit.set(document.uri, tsTextChangesToVscodeTextEdits(document, fixAllEdits))
-                await vscode.workspace.applyEdit(edit)
-                return
+                return [
+                    {
+                        title: '[essentials] Fix all TypeScript',
+                        kind: vscode.CodeActionKind.SourceFixAll,
+                        edit,
+                    },
+                ]
             }
 
             if (context.triggerKind !== vscode.CodeActionTriggerKind.Invoke) return
