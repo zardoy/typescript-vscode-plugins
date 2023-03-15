@@ -68,7 +68,13 @@ export const decorateLanguageService = (
               )
             : undefined
         // handled specialCommand request
-        if (specialCommandResult !== undefined) return specialCommandResult as any
+        if (specialCommandResult !== null) {
+            return {
+                entries: [],
+                typescriptEssentialsResponse: specialCommandResult,
+            } as any
+        }
+
         prevCompletionsMap = {}
         const scriptSnapshot = languageServiceHost.getScriptSnapshot(fileName)
         const scriptKind = languageServiceHost.getScriptKind!(fileName)
