@@ -141,6 +141,9 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 return true
             })
         }
+        if (c('removeVueComponentsOptionDefinition') && prior.definitions) {
+            prior.definitions = prior.definitions.filter(definition => definition.containerName !== '__VLS_componentsOption')
+        }
 
         if (c('removeModuleFileDefinitions')) {
             prior.definitions = prior.definitions?.filter(def => {
