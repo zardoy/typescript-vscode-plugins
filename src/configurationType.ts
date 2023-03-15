@@ -121,6 +121,11 @@ export type Configuration = {
      * @default disable
      */
     'suggestions.displayImportedInfo': 'disable' | 'short-format' | 'long-format'
+    /**
+     * @recommended
+     * @default false
+     */
+    'suggestions.localityBonus': boolean
     // TODO! corrent watching!
     /**
      * Wether to enable snippets for array methods like `items.map(item => )`

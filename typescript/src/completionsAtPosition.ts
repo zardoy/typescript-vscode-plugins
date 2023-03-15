@@ -3,7 +3,7 @@ import inKeywordCompletions from './completions/inKeywordCompletions'
 // import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './completions/isInBannedPosition'
 import { GetConfig } from './types'
-import { findChildContainingExactPosition, findChildContainingPosition, isTs5 } from './utils'
+import { findChildContainingExactPosition, findChildContainingPosition, isTs5, patchMethod } from './utils'
 import indexSignatureAccessCompletions from './completions/indexSignatureAccess'
 import fixPropertiesSorting from './completions/fixPropertiesSorting'
 import { isGoodPositionBuiltinMethodCompletion } from './completions/isGoodPositionMethodCompletion'
@@ -20,7 +20,7 @@ import defaultHelpers from './completions/defaultHelpers'
 import objectLiteralCompletions from './completions/objectLiteralCompletions'
 import filterJsxElements from './completions/filterJsxComponents'
 import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalLibCompletions'
-import { compact, oneOf } from '@zardoy/utils'
+import { compact } from '@zardoy/utils'
 import adjustAutoImports from './completions/adjustAutoImports'
 import escapeStringRegexp from 'escape-string-regexp'
 import addSourceDefinition from './completions/addSourceDefinition'
@@ -30,6 +30,7 @@ import changeKindToFunction from './completions/changeKindToFunction'
 import functionPropsAndMethods from './completions/functionPropsAndMethods'
 import { getTupleSignature } from './tupleSignature'
 import stringTemplateTypeCompletions from './completions/stringTemplateType'
+import localityBonus from './completions/localityBonus'
 
 export type PrevCompletionMap = Record<
     string,
@@ -271,10 +272,12 @@ export const getCompletionsAtPosition = (
     }
     // #endregion
 
-    prior.entries = addSourceDefinition(prior.entries, prevCompletionsMap, c) ?? prior.entries
+    addSourceDefinition(prior.entries)
     displayImportedInfo(prior.entries)
 
     if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
+
+    prior.entries = localityBonus(prior.entries) ?? prior.entries
 
     const processedEntries = new Set<ts.CompletionEntry>()
     for (const rule of c('replaceSuggestions')) {
@@ -376,17 +379,6 @@ export const getCompletionsAtPosition = (
     }
 }
 
-type ArrayPredicate<T> = (value: T, index: number) => boolean
-const arrayMoveItemToFrom = <T>(array: T[], originalItem: ArrayPredicate<T>, itemToMove: ArrayPredicate<T>) => {
-    const originalItemIndex = array.findIndex(originalItem)
-    if (originalItemIndex === -1) return undefined
-    const itemToMoveIndex = array.findIndex(itemToMove)
-    if (itemToMoveIndex === -1) return undefined
-    array.splice(originalItemIndex, 0, array[itemToMoveIndex]!)
-    array.splice(itemToMoveIndex + 1, 1)
-    return originalItemIndex
-}
-
 const patchBuiltinMethods = (c: GetConfig, languageService: ts.LanguageService, isCheckedFile: boolean) => {
     if (isTs5() && (isCheckedFile || !c('additionalIncludeExtensions').length)) return
 
@@ -408,24 +400,21 @@ const patchBuiltinMethods = (c: GetConfig, languageService: ts.LanguageService, 
     // Its known that fuzzy completion don't work within import completions
     // TODO! when file name without with half-ending is typed it doesn't these completions! (seems ts bug, but probably can be fixed here)
     // e.g. /styles.css import './styles.c|' - no completions
-    const oldGetSupportedExtensions = tsFull.getSupportedExtensions
-    Object.defineProperty(tsFull, 'getSupportedExtensions', {
-        value: (options, extraFileExtensions) => {
-            addFileExtensions ??= getAddFileExtensions()
-            // though I extensions could be just inlined as is
-            return oldGetSupportedExtensions(
-                options,
-                extraFileExtensions?.length
-                    ? extraFileExtensions
-                    : addFileExtensions.map(ext => ({
-                          extension: ext,
-                          isMixedContent: true,
-                          scriptKind: ts.ScriptKind.Deferred,
-                      })),
-            )
-        },
+    const unpatch = patchMethod(tsFull, 'getSupportedExtensions', (oldGetSupportedExtensions): any => (options, extraFileExtensions) => {
+        addFileExtensions ??= getAddFileExtensions()
+        // though extensions could be just inlined as is
+        return oldGetSupportedExtensions(
+            options,
+            extraFileExtensions?.length
+                ? extraFileExtensions
+                : addFileExtensions.map(ext => ({
+                      extension: ext,
+                      isMixedContent: true,
+                      scriptKind: ts.ScriptKind.Deferred,
+                  })),
+        )
     })
     return () => {
-        Object.defineProperty(tsFull, 'getSupportedExtensions', { value: oldGetSupportedExtensions })
+        unpatch()
     }
 }
