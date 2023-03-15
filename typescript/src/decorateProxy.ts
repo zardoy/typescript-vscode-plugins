@@ -66,7 +66,7 @@ export const decorateLanguageService = (
                   options,
                   formatOptions,
               )
-            : undefined
+            : null
         // handled specialCommand request
         if (specialCommandResult !== null) {
             return {
