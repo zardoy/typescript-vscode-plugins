@@ -91,6 +91,22 @@ export function findParrentNode(sourceNode: ts.Node, kind: ts.SyntaxKind) {
     return find(sourceNode);
 }
 
+export function deepFindParrentNode(sourceNode: ts.Node, func: ((node: ts.Node) => boolean)) {
+    function find(node: ts.Node): ts.Node | undefined {
+        if (!node) {
+            return undefined;
+        }
+
+        if (func(node)) {
+           return node; 
+        }
+
+        return find(node.parent)
+    }
+
+    return find(sourceNode);
+}
+
 export function autoImportPackage(sourceFile: ts.SourceFile, packageName: string, identifierName: string, isDefault?: boolean): ChangesTracker {
     function find(node: ts.Node): ts.Node | ChangesTracker | undefined {
         if (ts.isImportDeclaration(node)) {

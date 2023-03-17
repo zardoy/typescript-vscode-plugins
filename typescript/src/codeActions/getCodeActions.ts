@@ -7,16 +7,16 @@ import addMissingProperties from './extended/addMissingProperties'
 import { ApplyExtendedCodeActionResult, IpcExtendedCodeAction } from '../ipcTypes'
 import { Except } from 'type-fest'
 
-import conditionalRendering from './custom/React/conditionalRendering'
-import conditionalRenderingTernary from './custom/React/conditionalRenderingTernary'
-import wrapIntoMemo from './custom/React/wrapIntoMemo'
-import wrapIntoUseCallback from './custom/React/wrapIntoUseCallback'
-import createPropsInterface from './custom/React/createPropsInterface'
+import conditionalRenderingTernary from './extended/conditionalRenderingTernary'
+import wrapIntoMemo from './custom/react/wrapIntoMemo'
+import wrapIntoUseCallback from './custom/react/wrapIntoUseCallback'
+import createPropsInterface from './extended/createPropsInterface'
+import conditionalRendering from './extended/conditionalRendering'
 import { GetConfig } from '../types'
 
 const codeActions: CodeAction[] = [objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization, wrapIntoMemo]
-const reactExtendedCodeActions: CodeAction[] = [conditionalRendering, conditionalRenderingTernary, wrapIntoMemo, wrapIntoUseCallback, createPropsInterface]
-const extendedCodeActions: ExtendedCodeAction[] = [addMissingProperties]
+const reactExtendedCodeActions: CodeAction[] = [wrapIntoMemo, wrapIntoUseCallback]
+const extendedCodeActions: ExtendedCodeAction[] = [addMissingProperties, createPropsInterface, conditionalRendering, conditionalRenderingTernary]
 
 type SimplifiedRefactorInfo =
     | {
