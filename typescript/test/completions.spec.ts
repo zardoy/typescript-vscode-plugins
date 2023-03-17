@@ -171,6 +171,23 @@ describe('Method snippets', () => {
         compareMethodSnippetAgainstMarker(markers, 6, '(a, b, c)')
     })
 
+    test('Skip trailing void', () => {
+        const [, _, markers] = fileContentsSpecialPositions(/* ts */ `
+            new Promise<void>((resolve) => {
+                resolve/*1*/
+            })
+            declare const foo: (a: void, b: boolean, c: void, d: void) => void
+            type Bar<T> = (a: T) => void
+            declare const bar: Bar<void>
+            foo/*2*/
+            bar/*3*/
+        `)
+
+        compareMethodSnippetAgainstMarker(markers, 1, [])
+        compareMethodSnippetAgainstMarker(markers, 2, ['a', 'b'])
+        compareMethodSnippetAgainstMarker(markers, 3, [])
+    })
+
     test('Insert text = always-declaration', () => {
         overrideSettings({
             'methodSnippets.insertText': 'always-declaration',

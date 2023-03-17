@@ -7,9 +7,9 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     const node = findChildContainingExactPosition(sourceFile, position)
     if (!node || isTypeNode(node)) return
 
-    const typeChecker = languageService.getProgram()!.getTypeChecker()!
-    const type = typeChecker.getTypeAtLocation(node)
-    const signatures = typeChecker.getSignaturesOfType(type, ts.SignatureKind.Call)
+    const checker = languageService.getProgram()!.getTypeChecker()!
+    const type = checker.getTypeAtLocation(node)
+    const signatures = checker.getSignaturesOfType(type, ts.SignatureKind.Call)
     if (signatures.length === 0) return
     const signature = signatures[0]
     if (signatures.length > 1 && c('methodSnippets.multipleSignatures') === 'empty') {
@@ -23,6 +23,7 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     // Investigate merging signatures
     const { parameters } = signatures[0]!
     const printer = ts.createPrinter()
+    let isVoidOrNotMap: boolean[] = []
     const paramsToInsert = compact(
         (skipMode === 'all' ? [] : parameters).map(param => {
             const valueDeclaration = param.valueDeclaration as ts.ParameterDeclaration | undefined
@@ -36,6 +37,18 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
                     if (isOptional) return undefined
                     break
             }
+            const voidType = (checker as unknown as FullChecker).getVoidType()
+            const parameterType = valueDeclaration && checker.getTypeOfSymbolAtLocation(param, valueDeclaration)
+            isVoidOrNotMap.push(
+                !!(
+                    parameterType &&
+                    (parameterType === voidType ||
+                        // new Promise<void> resolve type
+                        (parameterType.isUnion() &&
+                            parameterType.types[0] === voidType &&
+                            getPromiseLikeTypeArgument(parameterType.types[1], checker) === voidType))
+                ),
+            )
             const insertName = insertMode === 'always-name' || !valueDeclaration
             const insertText = insertName
                 ? param.name
@@ -63,8 +76,15 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     const allFiltered = paramsToInsert.length === 0 && parameters.length > paramsToInsert.length
     if (allFiltered) return ['']
 
+    const lastNonVoidIndex = isVoidOrNotMap.lastIndexOf(false)
+    if (lastNonVoidIndex !== -1) {
+        isVoidOrNotMap = [...repeatItems(false, lastNonVoidIndex + 1), .../* true */ isVoidOrNotMap.slice(lastNonVoidIndex + 1)]
+    }
+
     // methodSnippets.replaceArguments is processed with last stage in onCompletionAccepted
-    return paramsToInsert
+
+    // do natural, final filtering
+    return paramsToInsert.filter((_x, i) => !isVoidOrNotMap[i])
     // return `(${paramsToInsert.map((param, i) => `\${${i + 1}:${param.replaceAll}}`).join(', ')})`
 
     function cloneBindingName(node: ts.BindingName): ts.BindingName {
@@ -87,4 +107,17 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
             return ts.setEmitFlags(visited, ts.EmitFlags.SingleLine | ts.EmitFlags.NoAsciiEscaping)
         }
     }
+
+    function repeatItems<T>(item: T, count: number): T[] {
+        return Array.from({ length: count }).map(() => item)
+    }
+}
+
+function getPromiseLikeTypeArgument(type: ts.Type | undefined, checker: ts.TypeChecker) {
+    if (!type) return
+    if (!(type.flags & ts.TypeFlags.Object) || !((type as ts.ObjectType).objectFlags & ts.ObjectFlags.Reference)) return
+    if (type.symbol.name !== 'PromiseLike') return
+    const typeArgs = checker.getTypeArguments(type as ts.TypeReference)
+    if (typeArgs.length !== 1) return
+    return typeArgs[0]!
 }
