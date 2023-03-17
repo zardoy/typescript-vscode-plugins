@@ -5,7 +5,7 @@ import { findChildContainingExactPosition } from './utils'
 
 export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, position: number, c: GetConfig) => {
     const node = findChildContainingExactPosition(sourceFile, position)
-    if (!node || isTypeNode(node) || tsFull.isPartOfTypeQuery(node as any)) return
+    if (!node || isTypeNode(node)) return
 
     const checker = languageService.getProgram()!.getTypeChecker()!
     const type = checker.getTypeAtLocation(node)

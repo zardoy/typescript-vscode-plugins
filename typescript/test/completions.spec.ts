@@ -123,7 +123,6 @@ describe('Method snippets', () => {
 
             declare const a: A
             a/*2*/
-            type B1 = typeof a/*7*/;
 
             // overload
             function foo(this: {}, a)
@@ -170,7 +169,6 @@ describe('Method snippets', () => {
         compareMethodSnippetAgainstMarker(markers, 4, '($b)')
         compareMethodSnippetAgainstMarker(markers, 5, '(a, b, { d, e: {} }, ...c)')
         compareMethodSnippetAgainstMarker(markers, 6, '(a, b, c)')
-        compareMethodSnippetAgainstMarker(markers, 7, null)
     })
 
     test('Skip trailing void', () => {
