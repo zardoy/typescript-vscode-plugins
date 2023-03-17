@@ -15,6 +15,7 @@ import specialCommands from './specialCommands'
 import vueVolarSupport from './vueVolarSupport'
 import moreCompletions from './moreCompletions'
 import { mergeSettingsFromScopes } from './mergeSettings'
+import codeActionProvider from './codeActionProvider'
 
 let isActivated = false
 // let erroredStatusBarItem: vscode.StatusBarItem | undefined
@@ -82,6 +83,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
     webImports()
     apiCommands()
     specialCommands()
+    codeActionProvider()
 
     figIntegration()
     vueVolarSupport()
