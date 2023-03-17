@@ -1,9 +1,8 @@
 {
     "name": "ts-essential-plugins",
     "displayName": "TypeScript Essential Plugins",
-    "version": "0.0.1",
+    "version": "0.0.0-dev",
     "license": "MIT",
-    "preview": true,
     "web": true,
     "contributes": {
         "commands": [
