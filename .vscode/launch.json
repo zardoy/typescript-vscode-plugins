@@ -15,8 +15,8 @@
             ],
             "sourceMaps": true,
             "env": {
-                "TSS_DEBUG": "9229",
-                "TSS_REMOTE_DEBUG": "9229"
+                "TSS_DEBUG": "9223",
+                "TSS_REMOTE_DEBUG": "9223"
             }
         },
         {
