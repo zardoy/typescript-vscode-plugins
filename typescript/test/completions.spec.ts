@@ -171,6 +171,25 @@ describe('Method snippets', () => {
         compareMethodSnippetAgainstMarker(markers, 6, '(a, b, c)')
     })
 
+    test('Class', () => {
+        const [, _, markers] = fileContentsSpecialPositions(/* ts */ `
+            class A {
+                constructor(a) {}
+            }
+
+            class B {
+                protected constructor(a) {}
+            }
+
+            new A/*1*/
+            // not sure...
+            new B/*2*/
+        `)
+
+        compareMethodSnippetAgainstMarker(markers, 1, ['a'])
+        compareMethodSnippetAgainstMarker(markers, 2, null)
+    })
+
     test('Skip trailing void', () => {
         const [, _, markers] = fileContentsSpecialPositions(/* ts */ `
             new Promise<void>((resolve) => {

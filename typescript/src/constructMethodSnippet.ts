@@ -1,17 +1,25 @@
-import { compact } from '@zardoy/utils'
+import { compact, oneOf } from '@zardoy/utils'
 import { isTypeNode } from './completions/keywordsSpace'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
 
 export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, position: number, c: GetConfig) => {
-    const node = findChildContainingExactPosition(sourceFile, position)
+    let node = findChildContainingExactPosition(sourceFile, position)
     if (!node || isTypeNode(node)) return
 
     const checker = languageService.getProgram()!.getTypeChecker()!
     const type = checker.getTypeAtLocation(node)
-    const signatures = checker.getSignaturesOfType(type, ts.SignatureKind.Call)
+
+    if (ts.isIdentifier(node)) node = node.parent
+    if (ts.isPropertyAccessExpression(node)) node = node.parent
+
+    const isNewExpression = ts.isNewExpression(node)
+    const signatures = checker.getSignaturesOfType(type, isNewExpression ? ts.SignatureKind.Construct : ts.SignatureKind.Call)
+    // ensure node is not used below
     if (signatures.length === 0) return
-    const signature = signatures[0]
+    const signature = signatures[0]!
+    // probably need to remove check as class can be instantiated inside another class, and don't really see a reason for this check
+    if (isNewExpression && hasPrivateOrProtectedModifier(signature.getDeclaration().modifiers)) return
     if (signatures.length > 1 && c('methodSnippets.multipleSignatures') === 'empty') {
         return ['']
     }
@@ -120,4 +128,8 @@ function getPromiseLikeTypeArgument(type: ts.Type | undefined, checker: ts.TypeC
     const typeArgs = checker.getTypeArguments(type as ts.TypeReference)
     if (typeArgs.length !== 1) return
     return typeArgs[0]!
+}
+
+function hasPrivateOrProtectedModifier(modifiers: ts.NodeArray<ts.ModifierLike> | ts.NodeArray<ts.Modifier> | undefined) {
+    return modifiers?.some(modifier => oneOf(modifier.kind, ts.SyntaxKind.PrivateKeyword, ts.SyntaxKind.ProtectedKeyword))
 }
