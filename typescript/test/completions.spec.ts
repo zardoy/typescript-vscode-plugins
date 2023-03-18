@@ -109,7 +109,11 @@ test('Function props: cleans & highlights', () => {
 const compareMethodSnippetAgainstMarker = (inputMarkers: number[], marker: number, expected: string | null | string[]) => {
     const obj = Object.fromEntries(inputMarkers.entries())
     const markerPos = obj[marker]!
-    const methodSnippet = constructMethodSnippet(languageService, getSourceFile(), markerPos, defaultConfigFunc)
+    const methodSnippet = constructMethodSnippet(languageService, getSourceFile(), markerPos, defaultConfigFunc, false)
+    if (methodSnippet === 'ambiguous') {
+        expect(methodSnippet).toEqual(expected)
+        return
+    }
     const snippetToInsert = methodSnippet ? `(${methodSnippet.join(', ')})` : null
     expect(Array.isArray(expected) ? methodSnippet : snippetToInsert, `At marker ${marker}`).toEqual(expected)
 }
@@ -253,6 +257,20 @@ describe('Method snippets', () => {
         settingsOverride['methodSnippets.skip'] = 'all'
         compareMethodSnippetAgainstMarker(markers, 2, [''])
         settingsOverride['methodSnippets.skip'] = 'no-skip'
+    })
+
+    test('Ambiguous', () => {
+        const [, _, markers] = fileContentsSpecialPositions(/* ts */ `
+            declare const a: {
+                (): void
+                [a: string]: 5
+            }
+            a/*1*/
+            Object/*2*/
+        `)
+
+        compareMethodSnippetAgainstMarker(markers, 1, 'ambiguous')
+        compareMethodSnippetAgainstMarker(markers, 2, 'ambiguous')
     })
 })
 

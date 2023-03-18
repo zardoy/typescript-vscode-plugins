@@ -3,12 +3,13 @@ import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 import { expandPosition } from '@zardoy/vscode-utils/build/position'
 import { getExtensionSetting, registerExtensionCommand } from 'vscode-framework'
 import { oneOf } from '@zardoy/utils'
-import { RequestResponseTypes } from '../typescript/src/ipcTypes'
+import { RequestOptionsTypes, RequestResponseTypes } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
 
 export default (tsApi: { onCompletionAccepted }) => {
     let inFlightMethodSnippetOperation: undefined | AbortController
     let justAcceptedReturnKeywordSuggestion = false
+    let lastAcceptedAmbiguousMethodSnippetSuggestion: string | undefined
     let onCompletionAcceptedOverride: ((item: any) => void) | undefined
 
     // eslint-disable-next-line complexity
@@ -19,6 +20,7 @@ export default (tsApi: { onCompletionAccepted }) => {
         }
 
         const { label, insertText, kind } = item
+        const suggestionName = typeof label === 'object' ? label.label : label
         if (kind === vscode.CompletionItemKind.Keyword) {
             if (insertText === 'return ') justAcceptedReturnKeywordSuggestion = true
             else if (insertText === 'default ') void vscode.commands.executeCommand('editor.action.triggerSuggest')
@@ -41,35 +43,49 @@ export default (tsApi: { onCompletionAccepted }) => {
             const startPos = editor.selection.start
             const nextSymbol = editor.document.getText(new vscode.Range(startPos, startPos.translate(0, 1)))
             if (!['(', '.', '`'].includes(nextSymbol)) {
+                // all-in handling
                 const controller = new AbortController()
                 inFlightMethodSnippetOperation = controller
-                const params: RequestResponseTypes['getFullMethodSnippet'] | undefined = await sendCommand('getFullMethodSnippet')
-                if (!controller.signal.aborted && params) {
-                    const replaceArguments = getExtensionSetting('methodSnippets.replaceArguments')
+                const params: RequestResponseTypes['getFullMethodSnippet'] | undefined = await sendCommand('getFullMethodSnippet', {
+                    inputOptions: {
+                        acceptAmbiguous: lastAcceptedAmbiguousMethodSnippetSuggestion === suggestionName,
+                    } satisfies RequestOptionsTypes['getFullMethodSnippet'],
+                })
 
-                    const snippet = new vscode.SnippetString('')
-                    snippet.appendText('(')
-                    // todo maybe when have optional (skipped), add a way to leave trailing , with tabstop (previous behavior)
-                    for (const [i, param] of params.entries()) {
-                        const replacer = replaceArguments[param.replace(/\?$/, '')]
-                        if (replacer === null) continue
-                        if (replacer) {
-                            useReplacer(snippet, replacer)
-                        } else {
-                            snippet.appendPlaceholder(param)
-                        }
+                if (controller.signal.aborted) return
+                if (params === 'ambiguous') {
+                    lastAcceptedAmbiguousMethodSnippetSuggestion = suggestionName
+                    return
+                }
 
-                        if (i !== params.length - 1) snippet.appendText(', ')
+                if (!params) {
+                    return
+                }
+
+                const replaceArguments = getExtensionSetting('methodSnippets.replaceArguments')
+
+                const snippet = new vscode.SnippetString('')
+                snippet.appendText('(')
+                // todo maybe when have optional (skipped), add a way to leave trailing , with tabstop (previous behavior)
+                for (const [i, param] of params.entries()) {
+                    const replacer = replaceArguments[param.replace(/\?$/, '')]
+                    if (replacer === null) continue
+                    if (replacer) {
+                        useReplacer(snippet, replacer)
+                    } else {
+                        snippet.appendPlaceholder(param)
                     }
 
-                    snippet.appendText(')')
-                    void editor.insertSnippet(snippet, undefined, {
-                        undoStopAfter: false,
-                        undoStopBefore: false,
-                    })
-                    if (vscode.workspace.getConfiguration('editor.parameterHints').get('enabled') && params.length > 0) {
-                        void vscode.commands.executeCommand('editor.action.triggerParameterHints')
-                    }
+                    if (i !== params.length - 1) snippet.appendText(', ')
+                }
+
+                snippet.appendText(')')
+                void editor.insertSnippet(snippet, undefined, {
+                    undoStopAfter: false,
+                    undoStopBefore: false,
+                })
+                if (vscode.workspace.getConfiguration('editor.parameterHints').get('enabled') && params.length > 0) {
+                    void vscode.commands.executeCommand('editor.action.triggerParameterHints')
                 }
             }
         }
@@ -135,6 +151,12 @@ export default (tsApi: { onCompletionAccepted }) => {
         } finally {
             justAcceptedReturnKeywordSuggestion = false
         }
+    })
+
+    vscode.window.onDidChangeTextEditorSelection(({ textEditor }) => {
+        if (textEditor !== vscode.window.activeTextEditor) return
+        // cursor position changed
+        lastAcceptedAmbiguousMethodSnippetSuggestion = undefined
     })
 }
 

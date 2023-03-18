@@ -101,7 +101,14 @@ export default (
         return !node ? undefined : nodeToApiResponse(node)
     }
     if (specialCommand === 'getFullMethodSnippet') {
-        return constructMethodSnippet(languageService, sourceFile, position, configuration) satisfies RequestResponseTypes['getFullMethodSnippet']
+        changeType<RequestOptionsTypes['getFullMethodSnippet']>(specialCommandArg)
+        return constructMethodSnippet(
+            languageService,
+            sourceFile,
+            position,
+            configuration,
+            specialCommandArg.acceptAmbiguous,
+        ) satisfies RequestResponseTypes['getFullMethodSnippet']
     }
     if (specialCommand === 'getSpanOfEnclosingComment') {
         return languageService.getSpanOfEnclosingComment(fileName, position, false)

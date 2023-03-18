@@ -77,7 +77,7 @@ export type RequestResponseTypes = {
           }
     turnArrayIntoObjectEdit: ts.TextChange[]
     getFixAllEdits: ts.TextChange[]
-    getFullMethodSnippet: string[] | undefined
+    getFullMethodSnippet: string[] | 'ambiguous' | undefined
     getExtendedCodeActionEdits: ApplyExtendedCodeActionResult
 }
 
@@ -109,6 +109,9 @@ export type RequestOptionsTypes = {
     getExtendedCodeActionEdits: {
         range: [number, number]
         applyCodeActionTitle: string
+    }
+    getFullMethodSnippet: {
+        acceptAmbiguous: boolean
     }
 }
 

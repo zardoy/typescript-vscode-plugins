@@ -3,7 +3,8 @@ import { isTypeNode } from './completions/keywordsSpace'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
 
-export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, position: number, c: GetConfig) => {
+// todo-low-ee inspect any last arg infer
+export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, position: number, c: GetConfig, acceptAmbiguous: boolean) => {
     let node = findChildContainingExactPosition(sourceFile, position)
     if (!node || isTypeNode(node)) return
 
@@ -14,6 +15,8 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     if (ts.isPropertyAccessExpression(node)) node = node.parent
 
     const isNewExpression = ts.isNewExpression(node)
+    if (!isNewExpression && !acceptAmbiguous && (type.getProperties().length || type.getStringIndexType() || type.getNumberIndexType())) return 'ambiguous'
+
     const signatures = checker.getSignaturesOfType(type, isNewExpression ? ts.SignatureKind.Construct : ts.SignatureKind.Call)
     // ensure node is not used below
     if (signatures.length === 0) return

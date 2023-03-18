@@ -315,6 +315,22 @@ function Foo() {
 }
 ```
 
+### Ambiguous Suggestions
+
+Some variables like `Object` or `lodash` are common to access properties as well as call directly:
+
+```ts
+Object.assign(...)
+Object()
+// or
+lodash.version
+lodash(...)
+```
+
+To not be annoying, we don't insert a method snippet on such suggestion accept.
+
+Instead, for these *ambiguous* suggestions we require you to accept the same suggestion twice to ensure you actually want a method snippet.
+
 ## Auto Imports
 
 With this plugin you have total (almost) control over auto imports that appear in completions, quick fixes and import all quick fix. Some examples of what you can do:
