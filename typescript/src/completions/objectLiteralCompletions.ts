@@ -103,11 +103,30 @@ const isStringCompletion = (type: ts.Type) => {
     return false
 }
 
-const isBooleanCompletion = (type: ts.Type) => {
+const isBooleanCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
     if (type.flags & ts.TypeFlags.Undefined) return false
     // todo support boolean literals (boolean like)
     if (type.flags & ts.TypeFlags.Boolean) return true
-    if (type.isUnion()) return isEverySubtype(type, type => isBooleanCompletion(type))
+    const trueType = (checker as unknown as FullChecker).getTrueType()
+    const falseType = (checker as unknown as FullChecker).getFalseType()
+    let seenTrueType = false
+    let seenFalseType = false
+    if (type.isUnion()) {
+        const match = isEverySubtype(type, type => {
+            if (!!(type.flags & ts.TypeFlags.Boolean)) return true
+            if (type === trueType) {
+                seenTrueType = true
+                return true
+            }
+            if (type === falseType) {
+                seenFalseType = true
+                return true
+            }
+            return false
+        })
+        if (seenFalseType !== seenTrueType) return false
+        return match
+    }
     return false
 }
 
