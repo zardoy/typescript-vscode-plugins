@@ -67,6 +67,17 @@ const usersList = []
 usersList.map // -> usersList.map((user) => )
 ```
 
+### Locality Bonus
+
+(*disabled by default*, SUPER recommended, enable with `suggestions.localityBonus`)
+
+Suggestions closer to cursor will appear higher, useful for local variables (eg callback parameters), requires TS >=5.0
+
+Why not enable built-in *Locality Bonus* setting:
+
+- Sometimes it just doesn't work
+- In other cases it might lead to misleading suggestions (as it's text-based and not smart)
+
 ### Case-sensitive Completions
 
 (*disabled by default*)
@@ -256,6 +267,7 @@ There are value descriptions for two settings:
 
 ```ts
 const example = ({ a }, b?, c = 5, ...d) => { }
+
 // binding-name (default)
 example({ a }, b, c, ...d)
 // always-declaration (also popular)
@@ -268,11 +280,14 @@ example(__0, b, c, d)
 
 ```ts
 const example = ({ a }, b?, c = 5, ...d) => { }
+
 // only-rest
 example({ a }, b, c)
-// optional-and-rest
+// optional-and-rest (default)
 example({ a })
-// no-skip (default)
+// all
+example() // (cursor inside)
+// no-skip (popular)
 example({ a }, b, c, ...d)
 ```
 
@@ -299,6 +314,22 @@ function Foo() {
     return <div onClick={callback/* when true (default) - no expansion here */} />
 }
 ```
+
+### Ambiguous Suggestions
+
+Some variables like `Object` or `lodash` are common to access properties as well as call directly:
+
+```ts
+Object.assign(...)
+Object()
+// or
+lodash.version
+lodash(...)
+```
+
+To not be annoying, we don't insert a method snippet on such suggestion accept.
+
+Instead, for these *ambiguous* suggestions we require you to accept the same suggestion twice to ensure you actually want a method snippet.
 
 ## Auto Imports
 

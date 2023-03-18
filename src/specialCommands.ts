@@ -1,15 +1,13 @@
+/* eslint-disable unicorn/consistent-destructuring */
 import * as vscode from 'vscode'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
-import { getExtensionCommandId, getExtensionSetting, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'
+import { getExtensionCommandId, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'
 import { showQuickPick } from '@zardoy/vscode-utils/build/quickPick'
-import _, { partition } from 'lodash'
+import _ from 'lodash'
 import { compact } from '@zardoy/utils'
-import { defaultJsSupersetLangsWithVue } from '@zardoy/vscode-utils/build/langs'
-import { offsetPosition } from '@zardoy/vscode-utils/build/position'
-import { relative, join } from 'path-browserify'
 import { RequestOptionsTypes, RequestResponseTypes } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
-import { getTsLikePath, pickFileWithQuickPick, tsRangeToVscode, tsRangeToVscodeSelection, tsTextChangesToVcodeTextEdits } from './util'
+import { tsRangeToVscode, tsRangeToVscodeSelection } from './util'
 
 export default () => {
     registerExtensionCommand('removeFunctionArgumentsTypesInSelection', async () => {
@@ -222,30 +220,6 @@ export default () => {
         await vscode.commands.executeCommand(getExtensionCommandId('goToNodeBySyntaxKind'), { filterWithSelection: true })
     })
 
-    async function getPossibleTwoStepRefactorings(range: vscode.Range, document = vscode.window.activeTextEditor!.document) {
-        return sendCommand<RequestResponseTypes['getTwoStepCodeActions'], RequestOptionsTypes['getTwoStepCodeActions']>('getTwoStepCodeActions', {
-            document,
-            position: range.start,
-            inputOptions: {
-                range: [document.offsetAt(range.start), document.offsetAt(range.end)] as [number, number],
-            },
-        })
-    }
-
-    async function getSecondStepRefactoringData(range: vscode.Range, secondStepData?: any, document = vscode.window.activeTextEditor!.document) {
-        return sendCommand<RequestResponseTypes['twoStepCodeActionSecondStep'], RequestOptionsTypes['twoStepCodeActionSecondStep']>(
-            'twoStepCodeActionSecondStep',
-            {
-                document,
-                position: range.start,
-                inputOptions: {
-                    range: [document.offsetAt(range.start), document.offsetAt(range.end)] as [number, number],
-                    data: secondStepData,
-                },
-            },
-        )
-    }
-
     registerExtensionCommand('acceptRenameWithParams' as any, async (_, { preview = false, comments = null, strings = null, alias = null } = {}) => {
         const editor = vscode.window.activeTextEditor
         if (!editor) return
@@ -264,134 +238,4 @@ export default () => {
         })
         await vscode.commands.executeCommand(preview ? 'acceptRenameInputWithPreview' : 'acceptRenameInput')
     })
-
-    // #region two-steps code actions
-    registerExtensionCommand('applyRefactor' as any, async (_, arg?: RequestResponseTypes['getTwoStepCodeActions']) => {
-        if (!arg) return
-        let sendNextData: RequestOptionsTypes['twoStepCodeActionSecondStep']['data'] | undefined
-        const { turnArrayIntoObject, moveToExistingFile } = arg
-        if (turnArrayIntoObject) {
-            const { keysCount, totalCount, totalObjectCount } = turnArrayIntoObject
-            const selectedKey = await showQuickPick(
-                Object.entries(keysCount).map(([key, count]) => {
-                    const isAllowed = count === totalObjectCount
-                    return { label: `${isAllowed ? '$(check)' : '$(close)'}${key}`, value: isAllowed ? key : false, description: `${count} hits` }
-                }),
-                {
-                    title: `Selected available key from ${totalObjectCount} objects (${totalCount} elements)`,
-                },
-            )
-            if (selectedKey === undefined || selectedKey === '') return
-            if (selectedKey === false) {
-                void vscode.window.showWarningMessage("Can't use selected key as its not used in object of every element")
-                return
-            }
-
-            sendNextData = {
-                name: 'turnArrayIntoObject',
-                selectedKeyName: selectedKey as string,
-            }
-        }
-
-        if (moveToExistingFile) {
-            sendNextData = {
-                name: 'moveToExistingFile',
-            }
-        }
-
-        if (!sendNextData) return
-        const editor = vscode.window.activeTextEditor!
-        const nextResponse = await getSecondStepRefactoringData(editor.selection, sendNextData)
-        if (!nextResponse) throw new Error('No code action data. Try debug.')
-        const edit = new vscode.WorkspaceEdit()
-        let mainChanges = 'edits' in nextResponse && nextResponse.edits
-        if (moveToExistingFile && 'fileNames' in nextResponse) {
-            const { fileNames, fileEdits } = nextResponse
-            const selectedFilePath = await pickFileWithQuickPick(fileNames)
-            if (!selectedFilePath) return
-            const document = await vscode.workspace.openTextDocument(vscode.Uri.file(selectedFilePath))
-            // const outline = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', document.uri)
-
-            const currentEditorPath = getTsLikePath(vscode.window.activeTextEditor!.document.uri)
-            const currentFileEdits = [...fileEdits.find(fileEdit => fileEdit.fileName === currentEditorPath)!.textChanges]
-            const textChangeIndexToPatch = currentFileEdits.findIndex(currentFileEdit => currentFileEdit.newText.trim())
-            const { newText: updateImportText } = currentFileEdits[textChangeIndexToPatch]!
-            // TODO-mid use native path resolver (ext, index, alias)
-            let newRelativePath = relative(join(currentEditorPath, '..'), selectedFilePath)
-            if (!newRelativePath.startsWith('./') && !newRelativePath.startsWith('../')) newRelativePath = `./${newRelativePath}`
-            currentFileEdits[textChangeIndexToPatch]!.newText = updateImportText.replace(/(['"]).+(['"])/, (_m, g1) => `${g1}${newRelativePath}${g1}`)
-            mainChanges = currentFileEdits
-            const newFileText = fileEdits.find(fileEdit => fileEdit.isNewFile)!.textChanges[0]!.newText
-            const [importLines, otherLines] = partition(newFileText.split('\n'), line => line.startsWith('import '))
-            const startPos = new vscode.Position(0, 0)
-            const newFileNodes = await sendCommand<RequestResponseTypes['filterBySyntaxKind']>('filterBySyntaxKind', {
-                position: startPos,
-                document,
-            })
-            const lastImportDeclaration = newFileNodes?.nodesByKind.ImportDeclaration?.at(-1)
-            const lastImportEnd = lastImportDeclaration ? tsRangeToVscode(document, lastImportDeclaration.range).end : startPos
-            edit.set(vscode.Uri.file(selectedFilePath), [
-                {
-                    range: new vscode.Range(startPos, startPos),
-                    newText: [...importLines, '\n'].join('\n'),
-                },
-                {
-                    range: new vscode.Range(lastImportEnd, lastImportEnd),
-                    newText: ['\n', ...otherLines].join('\n'),
-                },
-            ])
-        }
-
-        if (!mainChanges) return
-        edit.set(editor.document.uri, tsTextChangesToVcodeTextEdits(editor.document, mainChanges))
-        await vscode.workspace.applyEdit(edit)
-    })
-
-    // most probably will be moved to ts-code-actions extension
-    vscode.languages.registerCodeActionsProvider(defaultJsSupersetLangsWithVue, {
-        async provideCodeActions(document, range, context, token) {
-            if (document !== vscode.window.activeTextEditor?.document || !getExtensionSetting('enablePlugin')) {
-                return
-            }
-
-            if (context.only?.contains(vscode.CodeActionKind.SourceFixAll)) {
-                const fixAllEdits = await sendCommand<RequestResponseTypes['getFixAllEdits']>('getFixAllEdits')
-                if (!fixAllEdits) return
-                const edit = new vscode.WorkspaceEdit()
-                edit.set(document.uri, tsTextChangesToVcodeTextEdits(document, fixAllEdits))
-                await vscode.workspace.applyEdit(edit)
-                return
-            }
-
-            if (context.triggerKind !== vscode.CodeActionTriggerKind.Invoke) return
-            const result = await getPossibleTwoStepRefactorings(range)
-            if (!result) return
-            const { turnArrayIntoObject, moveToExistingFile } = result
-            const codeActions: vscode.CodeAction[] = []
-            const getCommand = (arg): vscode.Command | undefined => ({
-                title: '',
-                command: getExtensionCommandId('applyRefactor' as any),
-                arguments: [arg],
-            })
-
-            if (turnArrayIntoObject) {
-                codeActions.push({
-                    title: `Turn array into object (${turnArrayIntoObject.totalCount} elements)`,
-                    command: getCommand({ turnArrayIntoObject }),
-                    kind: vscode.CodeActionKind.RefactorRewrite,
-                })
-            }
-
-            if (moveToExistingFile) {
-                // codeActions.push({
-                //     title: `Move to existing file`,
-                //     command: getCommand({ moveToExistingFile }),
-                //     kind: vscode.CodeActionKind.Refactor.append('move'),
-                // })
-            }
-
-            return codeActions
-        },
-    })
-    // #endregion
 }

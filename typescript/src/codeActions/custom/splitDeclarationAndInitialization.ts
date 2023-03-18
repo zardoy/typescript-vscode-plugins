@@ -5,7 +5,7 @@ export default {
     name: 'Split Declaration and Initialization',
     id: 'splitDeclarationAndInitialization',
     kind: 'refactor.rewrite.split-declaration-and-initialization',
-    tryToApply(sourceFile, position, range, node, formatOptions, languageService, languageServiceHost) {
+    tryToApply(sourceFile, position, range, node, formatOptions, languageService) {
         if (range || !node) return
         if (!ts.isVariableDeclarationList(node) || node.declarations.length !== 1) return
         const declaration = node.declarations[0]!

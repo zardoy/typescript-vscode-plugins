@@ -1,10 +1,8 @@
-export default (
-    position: number,
-    node: ts.Node | undefined,
-    scriptSnapshot: ts.IScriptSnapshot,
-    sourceFile: ts.SourceFile,
-    program: ts.Program,
-): ts.CompletionEntry[] => {
+import { buildStringCompletion } from '../utils'
+import { sharedCompletionContext } from './sharedContext'
+
+export default (): ts.CompletionEntry[] => {
+    const { node, program } = sharedCompletionContext
     if (!node || !ts.isStringLiteralLike(node)) return []
     const isConditionalExpression = ts.isConditionalExpression(node.parent)
     // optimize?
@@ -24,11 +22,10 @@ export default (
         }
     }
     return (type.getProperties?.() ?? []).map((prop, i) => {
-        return {
-            kind: ts.ScriptElementKind.string,
+        return buildStringCompletion(node, {
             name: prop.name,
             // derang completions used on other side
             sortText: prop.name === usedProp ? '9999' : '',
-        }
+        })
     })
 }

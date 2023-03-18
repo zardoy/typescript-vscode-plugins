@@ -1,4 +1,5 @@
 import { GetConfig } from '../types'
+import { sharedCompletionContext } from './sharedContext'
 
 export default (
     entries: ts.CompletionEntry[],
@@ -7,6 +8,8 @@ export default (
     preferences: ts.UserPreferences,
     c: GetConfig,
 ): ts.CompletionEntry[] | void => {
+    const { position } = sharedCompletionContext
+
     if (entries.length && node) {
         const enableMoreVariants = c('objectLiteralCompletions.moreVariants')
         const keepOriginal = c('objectLiteralCompletions.keepOriginal')
@@ -14,7 +17,8 @@ export default (
         // plans to make it hihgly configurable! e.g. if user wants to make some subtype leading (e.g. from [] | {})
         if (ts.isIdentifier(node)) node = node.parent
         if (ts.isShorthandPropertyAssignment(node)) node = node.parent
-        if (!ts.isObjectLiteralExpression(node)) return
+        const nextChar = node.getSourceFile().getFullText()[position]
+        if (!ts.isObjectLiteralExpression(node) || nextChar === ':') return
 
         entries = [...entries]
         const typeChecker = languageService.getProgram()!.getTypeChecker()!
@@ -99,11 +103,30 @@ const isStringCompletion = (type: ts.Type) => {
     return false
 }
 
-const isBooleanCompletion = (type: ts.Type) => {
+const isBooleanCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
     if (type.flags & ts.TypeFlags.Undefined) return false
     // todo support boolean literals (boolean like)
     if (type.flags & ts.TypeFlags.Boolean) return true
-    if (type.isUnion()) return isEverySubtype(type, type => isBooleanCompletion(type))
+    const trueType = (checker as unknown as FullChecker).getTrueType()
+    const falseType = (checker as unknown as FullChecker).getFalseType()
+    let seenTrueType = false
+    let seenFalseType = false
+    if (type.isUnion()) {
+        const match = isEverySubtype(type, type => {
+            if (!!(type.flags & ts.TypeFlags.Boolean)) return true
+            if (type === trueType) {
+                seenTrueType = true
+                return true
+            }
+            if (type === falseType) {
+                seenFalseType = true
+                return true
+            }
+            return false
+        })
+        if (seenFalseType !== seenTrueType) return false
+        return match
+    }
     return false
 }
 

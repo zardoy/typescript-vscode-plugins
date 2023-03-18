@@ -1,12 +1,12 @@
-import { PrevCompletionMap } from '../completionsAtPosition'
-import { GetConfig } from '../types'
 import stringDedent from 'string-dedent'
+import { sharedCompletionContext } from './sharedContext'
 
-export default (entries: ts.CompletionEntry[], prevCompletionsMap: PrevCompletionMap, c: GetConfig): ts.CompletionEntry[] | undefined => {
-    if (!c('displayAdditionalInfoInCompletions')) return entries
-    return entries.map(entry => {
+export default (entries: ts.CompletionEntry[]) => {
+    const { prevCompletionsMap, c } = sharedCompletionContext
+    if (!c('displayAdditionalInfoInCompletions')) return
+    for (const entry of entries) {
         const symbol = entry['symbol'] as ts.Symbol | undefined
-        if (!symbol) return entry
+        if (!symbol) continue
         const addNodeText = (node: ts.Node) => {
             let text = node.getText().trim()
             if (ts.isBlock(node)) text = text.slice(1, -1)
@@ -20,9 +20,9 @@ export default (entries: ts.CompletionEntry[], prevCompletionsMap: PrevCompletio
             }
         }
         let node: ts.Node = symbol.valueDeclaration!
-        if (!node) return entry
+        if (!node) continue
         if (ts.isVariableDeclaration(node)) node = node.initializer!
-        if (!node) return entry
+        if (!node) continue
         if ((ts.isMethodDeclaration(node) || ts.isArrowFunction(node)) && node.body) {
             const { body } = node
             if (ts.isBlock(body) && body.statements.length === 1 && ts.isReturnStatement(body.statements[0]!)) {
@@ -31,6 +31,5 @@ export default (entries: ts.CompletionEntry[], prevCompletionsMap: PrevCompletio
                 addNodeText(body)
             }
         }
-        return entry
-    })
+    }
 }

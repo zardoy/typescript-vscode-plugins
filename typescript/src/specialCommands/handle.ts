@@ -1,4 +1,5 @@
 import { compact } from '@zardoy/utils'
+import { getExtendedCodeActions } from '../codeActions/getCodeActions'
 import constructMethodSnippet from '../constructMethodSnippet'
 import { overrideRequestPreferences } from '../decorateProxy'
 import {
@@ -26,10 +27,7 @@ export default (
     configuration: GetConfig,
     preferences: ts.UserPreferences,
     formatOptions: ts.FormatCodeSettings | undefined,
-): void | {
-    entries: []
-    typescriptEssentialsResponse: any
-} => {
+): any => {
     const _specialCommandsParts = specialCommand.split('?')
     specialCommand = _specialCommandsParts[0]! as TriggerCharacterCommand
     const specialCommandArg = _specialCommandsParts[1] && JSON.parse(_specialCommandsParts[1])
@@ -40,24 +38,33 @@ export default (
     if (specialCommand === 'emmet-completions') {
         const leftNode = findChildContainingPosition(ts, sourceFile, position - 1)
         if (!leftNode) return
-        return {
-            entries: [],
-            typescriptEssentialsResponse: getEmmetCompletions(fileName, leftNode, sourceFile, position, languageService),
-        }
+        return getEmmetCompletions(fileName, leftNode, sourceFile, position, languageService)
     }
+    // todo rename from getTwoStepCodeActions to additionalCodeActions
     if (specialCommand === 'getTwoStepCodeActions') {
         changeType<RequestOptionsTypes['getTwoStepCodeActions']>(specialCommandArg)
         const node = findChildContainingPosition(ts, sourceFile, position)
         const posEnd = { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] }
         const moveToExistingFile = previousGetCodeActionsResult.value?.some(x => x.name === 'Move to a new file')
 
+        const extendedCodeActions = getExtendedCodeActions(sourceFile, posEnd, languageService, undefined, undefined)
         return {
-            entries: [],
-            typescriptEssentialsResponse: {
-                turnArrayIntoObject: objectIntoArrayConverters(posEnd, node, undefined),
-                moveToExistingFile: moveToExistingFile ? {} : undefined,
-            } satisfies RequestResponseTypes['getTwoStepCodeActions'],
+            turnArrayIntoObject: objectIntoArrayConverters(posEnd, node, undefined),
+            moveToExistingFile: moveToExistingFile ? {} : undefined,
+            extendedCodeActions: extendedCodeActions,
         }
+    }
+    if (specialCommand === 'getExtendedCodeActionEdits') {
+        changeType<RequestOptionsTypes['getExtendedCodeActionEdits']>(specialCommandArg)
+        const { range, applyCodeActionTitle } = specialCommandArg
+        const posEnd = { pos: range[0], end: range[1] }
+        return getExtendedCodeActions(
+            sourceFile,
+            posEnd,
+            languageService,
+            formatOptions,
+            applyCodeActionTitle,
+        ) satisfies RequestResponseTypes['getExtendedCodeActionEdits']
     }
     if (specialCommand === 'twoStepCodeActionSecondStep') {
         changeType<RequestOptionsTypes['twoStepCodeActionSecondStep']>(specialCommandArg)
@@ -72,7 +79,6 @@ export default (
                 break
             }
             case 'moveToExistingFile': {
-                // const refactors = languageService.getApplicableRefactors(fileName, posEnd, preferences, 'invoked')
                 const { edits } =
                     languageService.getEditsForRefactor(fileName, formatOptions ?? {}, posEnd, 'Move to a new file', 'Move to a new file', preferences) ?? {}
                 if (!edits) return
@@ -87,42 +93,29 @@ export default (
                 break
             }
         }
-        return {
-            entries: [],
-            typescriptEssentialsResponse: data,
-        }
+        return data
     }
     if (specialCommand === 'getNodeAtPosition') {
         // ensure return data is the same as for node in getNodePath
         const node = findChildContainingPosition(ts, sourceFile, position)
-        return {
-            entries: [],
-            typescriptEssentialsResponse: !node ? undefined : nodeToApiResponse(node),
-        }
+        return !node ? undefined : nodeToApiResponse(node)
     }
     if (specialCommand === 'getFullMethodSnippet') {
-        return {
-            entries: [],
-            typescriptEssentialsResponse: constructMethodSnippet(
-                languageService,
-                sourceFile,
-                position,
-                configuration,
-            ) satisfies RequestResponseTypes['getFullMethodSnippet'],
-        }
+        changeType<RequestOptionsTypes['getFullMethodSnippet']>(specialCommandArg)
+        return constructMethodSnippet(
+            languageService,
+            sourceFile,
+            position,
+            configuration,
+            specialCommandArg.acceptAmbiguous,
+        ) satisfies RequestResponseTypes['getFullMethodSnippet']
     }
     if (specialCommand === 'getSpanOfEnclosingComment') {
-        return {
-            entries: [],
-            typescriptEssentialsResponse: languageService.getSpanOfEnclosingComment(fileName, position, false),
-        }
+        return languageService.getSpanOfEnclosingComment(fileName, position, false)
     }
     if (specialCommand === 'getNodePath') {
         const nodes = getNodePath(sourceFile, position)
-        return {
-            entries: [],
-            typescriptEssentialsResponse: nodes.map(node => nodeToApiResponse(node)),
-        }
+        return nodes.map(node => nodeToApiResponse(node))
     }
     if (specialCommand === 'getFixAllEdits') {
         // code adopted is for asyncInSync fix for now
@@ -145,10 +138,7 @@ export default (
                 }
             }
         }
-        return {
-            entries: [],
-            typescriptEssentialsResponse: edits,
-        } as any
+        return edits
     }
     if (specialCommand === 'removeFunctionArgumentsTypesInSelection') {
         changeType<RequestOptionsTypes['removeFunctionArgumentsTypesInSelection']>(specialCommandArg)
@@ -160,15 +150,12 @@ export default (
         }
         const allParams = node.parent.parent.parameters
         return {
-            entries: [],
-            typescriptEssentialsResponse: {
-                ranges: allParams
-                    .map(param => {
-                        if (!param.type || param.name.pos > specialCommandArg.endSelection) return
-                        return [param.name.end, param.type.end]
-                    })
-                    .filter(Boolean),
-            },
+            ranges: allParams
+                .map(param => {
+                    if (!param.type || param.name.pos > specialCommandArg.endSelection) return
+                    return [param.name.end, param.type.end]
+                })
+                .filter(Boolean),
         }
     }
     if (specialCommand === 'getRangeOfSpecialValue') {
@@ -222,11 +209,8 @@ export default (
         }
         if (targetNode) {
             return {
-                entries: [],
-                typescriptEssentialsResponse: {
-                    range: Array.isArray(targetNode) ? targetNode : [targetNode.pos, targetNode.end],
-                } satisfies RequestResponseTypes['getRangeOfSpecialValue'],
-            }
+                range: Array.isArray(targetNode) ? targetNode : [targetNode.pos, targetNode.end],
+            } satisfies RequestResponseTypes['getRangeOfSpecialValue']
         } else {
             return
         }
@@ -234,10 +218,7 @@ export default (
     if (specialCommand === 'acceptRenameWithParams') {
         changeType<RequestOptionsTypes['acceptRenameWithParams']>(specialCommandArg)
         overrideRequestPreferences.rename = specialCommandArg
-        return {
-            entries: [],
-            typescriptEssentialsResponse: undefined,
-        }
+        return undefined
     }
     if (specialCommand === 'pickAndInsertFunctionArguments') {
         // const sourceFile = (info.languageService as ReturnType<typeof tsFull['createLanguageService']>).getProgram()!.getSourceFile(fileName)!
@@ -252,23 +233,20 @@ export default (
         }
         sourceFile.forEachChild(collectNodes)
         return {
-            entries: [],
-            typescriptEssentialsResponse: {
-                functions: collectedNodes.map(arr => {
-                    return [
-                        arr[0],
-                        [arr[1].pos, arr[1].end],
-                        compact(
-                            arr[2].map(({ name, type }) => {
-                                // or maybe allow?
-                                if (!ts.isIdentifier(name)) return
-                                return [name.text, type?.getText() ?? '']
-                            }),
-                        ),
-                    ]
-                }),
-            } satisfies RequestResponseTypes['pickAndInsertFunctionArguments'],
-        }
+            functions: collectedNodes.map(arr => {
+                return [
+                    arr[0],
+                    [arr[1].pos, arr[1].end],
+                    compact(
+                        arr[2].map(({ name, type }) => {
+                            // or maybe allow?
+                            if (!ts.isIdentifier(name)) return
+                            return [name.text, type?.getText() ?? '']
+                        }),
+                    ),
+                ]
+            }),
+        } satisfies RequestResponseTypes['pickAndInsertFunctionArguments']
     }
     if (specialCommand === 'filterBySyntaxKind') {
         const collectedNodes: RequestResponseTypes['filterBySyntaxKind']['nodesByKind'] = {}
@@ -287,12 +265,11 @@ export default (
         }
         sourceFile.forEachChild(collectNodes)
         return {
-            entries: [],
-            typescriptEssentialsResponse: {
-                nodesByKind: collectedNodes,
-            } satisfies RequestResponseTypes['filterBySyntaxKind'],
-        }
+            nodesByKind: collectedNodes,
+        } satisfies RequestResponseTypes['filterBySyntaxKind']
     }
+
+    return null
 }
 
 function changeType<T>(arg): asserts arg is T {}

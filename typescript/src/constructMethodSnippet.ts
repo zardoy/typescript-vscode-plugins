@@ -1,17 +1,28 @@
-import { compact } from '@zardoy/utils'
+import { compact, oneOf } from '@zardoy/utils'
 import { isTypeNode } from './completions/keywordsSpace'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
 
-export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, position: number, c: GetConfig) => {
-    const node = findChildContainingExactPosition(sourceFile, position)
+// todo-low-ee inspect any last arg infer
+export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, position: number, c: GetConfig, acceptAmbiguous: boolean) => {
+    let node = findChildContainingExactPosition(sourceFile, position)
     if (!node || isTypeNode(node)) return
 
-    const typeChecker = languageService.getProgram()!.getTypeChecker()!
-    const type = typeChecker.getTypeAtLocation(node)
-    const signatures = typeChecker.getSignaturesOfType(type, ts.SignatureKind.Call)
+    const checker = languageService.getProgram()!.getTypeChecker()!
+    const type = checker.getTypeAtLocation(node)
+
+    if (ts.isIdentifier(node)) node = node.parent
+    if (ts.isPropertyAccessExpression(node)) node = node.parent
+
+    const isNewExpression = ts.isNewExpression(node)
+    if (!isNewExpression && !acceptAmbiguous && (type.getProperties().length || type.getStringIndexType() || type.getNumberIndexType())) return 'ambiguous'
+
+    const signatures = checker.getSignaturesOfType(type, isNewExpression ? ts.SignatureKind.Construct : ts.SignatureKind.Call)
+    // ensure node is not used below
     if (signatures.length === 0) return
-    const signature = signatures[0]
+    const signature = signatures[0]!
+    // probably need to remove check as class can be instantiated inside another class, and don't really see a reason for this check
+    if (isNewExpression && hasPrivateOrProtectedModifier(signature.getDeclaration().modifiers)) return
     if (signatures.length > 1 && c('methodSnippets.multipleSignatures') === 'empty') {
         return ['']
     }
@@ -23,6 +34,7 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     // Investigate merging signatures
     const { parameters } = signatures[0]!
     const printer = ts.createPrinter()
+    let isVoidOrNotMap: boolean[] = []
     const paramsToInsert = compact(
         (skipMode === 'all' ? [] : parameters).map(param => {
             const valueDeclaration = param.valueDeclaration as ts.ParameterDeclaration | undefined
@@ -36,6 +48,18 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
                     if (isOptional) return undefined
                     break
             }
+            const voidType = (checker as unknown as FullChecker).getVoidType()
+            const parameterType = valueDeclaration && checker.getTypeOfSymbolAtLocation(param, valueDeclaration)
+            isVoidOrNotMap.push(
+                !!(
+                    parameterType &&
+                    (parameterType === voidType ||
+                        // new Promise<void> resolve type
+                        (parameterType.isUnion() &&
+                            parameterType.types[0] === voidType &&
+                            getPromiseLikeTypeArgument(parameterType.types[1], checker) === voidType))
+                ),
+            )
             const insertName = insertMode === 'always-name' || !valueDeclaration
             const insertText = insertName
                 ? param.name
@@ -44,12 +68,15 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
                       ts.factory.createParameterDeclaration(
                           undefined,
                           valueDeclaration.dotDotDotToken,
-                          !ts.isIdentifier(valueDeclaration.name) && insertMode !== 'always-declaration'
-                              ? cloneBindingName(valueDeclaration.name)
-                              : valueDeclaration.name,
+                          insertMode === 'always-declaration' ? valueDeclaration.name : cloneBindingName(valueDeclaration.name),
                           insertMode === 'always-declaration' ? valueDeclaration.questionToken : undefined,
                           undefined,
-                          insertMode === 'always-declaration' ? valueDeclaration.initializer : undefined,
+                          insertMode === 'always-declaration' && valueDeclaration.initializer
+                              ? ts.setEmitFlags(
+                                    tsFull.factory.cloneNode(valueDeclaration.initializer as any),
+                                    ts.EmitFlags.SingleLine | ts.EmitFlags.NoAsciiEscaping,
+                                )
+                              : undefined,
                       ),
                       valueDeclaration.getSourceFile(),
                   )
@@ -60,11 +87,19 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     const allFiltered = paramsToInsert.length === 0 && parameters.length > paramsToInsert.length
     if (allFiltered) return ['']
 
+    const lastNonVoidIndex = isVoidOrNotMap.lastIndexOf(false)
+    if (lastNonVoidIndex !== -1) {
+        isVoidOrNotMap = [...repeatItems(false, lastNonVoidIndex + 1), .../* true */ isVoidOrNotMap.slice(lastNonVoidIndex + 1)]
+    }
+
     // methodSnippets.replaceArguments is processed with last stage in onCompletionAccepted
-    return paramsToInsert
+
+    // do natural, final filtering
+    return paramsToInsert.filter((_x, i) => !isVoidOrNotMap[i])
     // return `(${paramsToInsert.map((param, i) => `\${${i + 1}:${param.replaceAll}}`).join(', ')})`
 
     function cloneBindingName(node: ts.BindingName): ts.BindingName {
+        if (ts.isIdentifier(node)) return ts.factory.createIdentifier(node.text)
         return elideInitializerAndSetEmitFlags(node) as ts.BindingName
         function elideInitializerAndSetEmitFlags(node: ts.Node): ts.Node {
             let visited = ts.visitEachChild(
@@ -83,4 +118,21 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
             return ts.setEmitFlags(visited, ts.EmitFlags.SingleLine | ts.EmitFlags.NoAsciiEscaping)
         }
     }
+
+    function repeatItems<T>(item: T, count: number): T[] {
+        return Array.from({ length: count }).map(() => item)
+    }
+}
+
+function getPromiseLikeTypeArgument(type: ts.Type | undefined, checker: ts.TypeChecker) {
+    if (!type) return
+    if (!(type.flags & ts.TypeFlags.Object) || !((type as ts.ObjectType).objectFlags & ts.ObjectFlags.Reference)) return
+    if (type.symbol.name !== 'PromiseLike') return
+    const typeArgs = checker.getTypeArguments(type as ts.TypeReference)
+    if (typeArgs.length !== 1) return
+    return typeArgs[0]!
+}
+
+function hasPrivateOrProtectedModifier(modifiers: ts.NodeArray<ts.ModifierLike> | ts.NodeArray<ts.Modifier> | undefined) {
+    return modifiers?.some(modifier => oneOf(modifier.kind, ts.SyntaxKind.PrivateKeyword, ts.SyntaxKind.ProtectedKeyword))
 }

@@ -121,6 +121,11 @@ export type Configuration = {
      * @default disable
      */
     'suggestions.displayImportedInfo': 'disable' | 'short-format' | 'long-format'
+    /**
+     * @recommended
+     * @default false
+     */
+    'suggestions.localityBonus': boolean
     // TODO! corrent watching!
     /**
      * Wether to enable snippets for array methods like `items.map(item => )`
@@ -316,6 +321,12 @@ export type Configuration = {
      * @default true
      */
     miscDefinitionImprovement: boolean
+    /**
+     * Removes definiion suggestion from vue `components` options.
+     * Might be useful with [Vetur-extended goToDefinition](https://github.com/zardoy/vetur-extended/blob/main/src/gotoDefinition.ts) for components as a replacement for (https://github.com/vuejs/language-tools/issues/1245)
+     * @default false
+     */
+    removeVueComponentsOptionDefinition: boolean
     /**
      * Experimental, feedback welcome
      * If default, namespace import or import path click resolves to .d.ts file, try to resolve .js file instead with the same name

@@ -12,7 +12,7 @@ export const tsRangeToVscode = (document: vscode.TextDocument, [start, end]: [nu
 export const tsRangeToVscodeSelection = (document: vscode.TextDocument, [start, end]: [number, number]) =>
     new vscode.Selection(document.positionAt(start), document.positionAt(end))
 
-export const tsTextChangesToVcodeTextEdits = (document: vscode.TextDocument, edits: Array<import('typescript').TextChange>): vscode.TextEdit[] =>
+export const tsTextChangesToVscodeTextEdits = (document: vscode.TextDocument, edits: Array<import('typescript').TextChange>): vscode.TextEdit[] =>
     edits.map(({ span, newText }) => {
         const start = document.positionAt(span.start)
         return {
@@ -20,6 +20,18 @@ export const tsTextChangesToVcodeTextEdits = (document: vscode.TextDocument, edi
             newText,
         }
     })
+
+export const tsTextChangesToVscodeSnippetTextEdits = (document: vscode.TextDocument, edits: Array<import('typescript').TextChange>): vscode.SnippetTextEdit[] =>
+    edits.map(({ span, newText }) => {
+        const start = document.positionAt(span.start)
+        return {
+            range: new vscode.Range(start, offsetPosition(document, start, span.length)),
+            snippet: new vscode.SnippetString(newText),
+        }
+    })
+
+export const vscodeRangeToTs = (document: vscode.TextDocument, range: vscode.Range) =>
+    [document.offsetAt(range.start), document.offsetAt(range.end)] as [number, number]
 
 export const getTsLikePath = <T extends vscode.Uri | undefined>(uri: T): T extends undefined ? undefined : string =>
     uri && (normalizeWindowPath(uri.fsPath) as any)

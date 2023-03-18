@@ -1,3 +1,5 @@
+// should-not contain other typescript/* imports that use globals as is imported in extension code (src/)
+
 export const passthroughExposedApiCommands = ['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition'] as const
 
 export const triggerCharacterCommands = [
@@ -12,6 +14,7 @@ export const triggerCharacterCommands = [
     'getFixAllEdits',
     'acceptRenameWithParams',
     'getFullMethodSnippet',
+    'getExtendedCodeActionEdits',
 ] as const
 
 export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
@@ -30,6 +33,12 @@ export type GetSignatureInfoParameter = {
     name: string
     insertText: string
     isOptional: boolean
+}
+
+export type IpcExtendedCodeAction = {
+    title: string
+    kind: string
+    codes?: number[]
 }
 
 // OUTPUT
@@ -56,6 +65,7 @@ export type RequestResponseTypes = {
             totalObjectCount: number
         }
         moveToExistingFile?: {}
+        extendedCodeActions: IpcExtendedCodeAction[]
     }
     twoStepCodeActionSecondStep:
         | {
@@ -67,7 +77,8 @@ export type RequestResponseTypes = {
           }
     turnArrayIntoObjectEdit: ts.TextChange[]
     getFixAllEdits: ts.TextChange[]
-    getFullMethodSnippet: string[] | undefined
+    getFullMethodSnippet: string[] | 'ambiguous' | undefined
+    getExtendedCodeActionEdits: ApplyExtendedCodeActionResult
 }
 
 // INPUT
@@ -95,6 +106,13 @@ export type RequestOptionsTypes = {
         strings: boolean
         alias: boolean
     }
+    getExtendedCodeActionEdits: {
+        range: [number, number]
+        applyCodeActionTitle: string
+    }
+    getFullMethodSnippet: {
+        acceptAmbiguous: boolean
+    }
 }
 
 // export type EmmetResult = {
@@ -110,9 +128,7 @@ export type EmmetResult = {
     emmetTextOffset: number
 }
 
-export type PostfixCompletion = {
-    label: string
-    // replacement: [startOffset: number, endOffset?: number]
-    insertText: string
-    // sortText?: number,
+export type ApplyExtendedCodeActionResult = {
+    edits: ts.TextChange[]
+    snippetEdits: ts.TextChange[]
 }
