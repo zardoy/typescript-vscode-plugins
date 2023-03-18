@@ -116,7 +116,7 @@ export default (
 ): { info?: ts.ApplicableRefactorInfo; edit: ts.RefactorEditInfo } => {
     const range = typeof positionOrRange !== 'number' && positionOrRange.pos !== positionOrRange.end ? positionOrRange : undefined
     const pos = typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos
-    const node = findChildContainingPosition(ts, sourceFile, pos)
+    const node = findChildContainingExactPosition(sourceFile, pos)
 
     const appliableCodeActions = compact(
         codeActions.map(action => {

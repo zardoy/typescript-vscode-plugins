@@ -27,10 +27,22 @@ export default {
     name: 'Wrap into React Memo',
     kind: 'refactor.rewrite.wrapIntoMemo',
     tryToApply(sourceFile, position, range, node, formatOptions, languageService, languageServiceHost) {
-        if (!node || !range) return
-
-        // todo also need to patch position to range in valid positions
-        const info = getReactRefactoring(languageService, languageServiceHost, sourceFile.fileName, range, !!formatOptions)
+        if (!node) return
+        
+        function getPatchedRange(position: number): ts.TextRange | undefined {
+            // allow this activation range: [|const a|] = b + c
+            if (!node) return
+            if (ts.isIdentifier(node) && ts.isVariableDeclaration(node.parent)) node = node.parent.parent
+            if (!ts.isVariableDeclarationList(node)) return
+            const declarationName = node.declarations[0]?.name
+            if (!declarationName) return
+            if (position > declarationName.end) return
+            return node
+        }
+        
+        const patchedRange = position ? getPatchedRange(position) : range
+        if (!patchedRange) return
+        const info = getReactRefactoring(languageService, languageServiceHost, sourceFile.fileName, patchedRange, !!formatOptions)
         // good position or range
         if (info?.kind === RefactorKind.useMemo) {
             if (!formatOptions) return true
@@ -43,12 +55,15 @@ export default {
                 host: languageServiceHost,
                 preferences: {} // pass only if string factory is used
             };
-            return service.getEditsForConvertUseMemo(info, sourceFile, textChangesContext)
+            const {edits: [edit]} = service.getEditsForConvertUseMemo(info, sourceFile, textChangesContext)
+            const hasReact = (sourceFile as FullSourceFile).identifiers.has('React')
+            // TODO patch output
+            return {edits: [edit!]}
         }
         
-        const typeChecker = languageService.getProgram()!.getTypeChecker()
-        const type = typeChecker.getTypeAtLocation(node)
-        const typeName = typeChecker.typeToString(type)
+        const checker = languageService.getProgram()!.getTypeChecker()
+        const type = checker.getTypeAtLocation(node)
+        const typeName = checker.typeToString(type)
         
         if (!/(FC<{}>|\) => Element|ReactElement<)/.test(typeName)) {
             return undefined;

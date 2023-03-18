@@ -51,7 +51,7 @@ importers:
       semver: ^7.3.8
       string-dedent: ^3.0.1
       ts-expose-internals: ^4.9.3
-      ts-react-hooks-tools: ^0.1.17
+      ts-react-hooks-tools: 0.1.17
       ts-simple-type: ^1.0.7
       tsm: ^2.3.0
       type-fest: ^2.13.1
