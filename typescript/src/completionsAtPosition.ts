@@ -72,7 +72,6 @@ export const getCompletionsAtPosition = (
     const exactNode = findChildContainingExactPosition(sourceFile, position)
     const isCheckedFile =
         !tsFull.isSourceFileJS(sourceFile as any) || !!tsFull.isCheckJsEnabledForFile(sourceFile as any, additionalData.compilerOptions as any)
-    // throw new Error('Test')
     Object.assign(sharedCompletionContext, {
         position,
         languageService,
@@ -102,7 +101,6 @@ export const getCompletionsAtPosition = (
         }
     }
     let prior = getPrior()
-    console.log('prior', prior)
     const ensurePrior = () => {
         if (!prior) prior = { entries: [], isGlobalCompletion: false, isMemberCompletion: false, isNewIdentifierLocation: false }
         return true

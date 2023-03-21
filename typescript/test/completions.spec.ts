@@ -2,7 +2,7 @@ import { pickObj } from '@zardoy/utils'
 import type {} from 'vitest/globals'
 import _ from 'lodash'
 import { isGoodPositionMethodCompletion } from '../src/completions/isGoodPositionMethodCompletion'
-import { findChildContainingExactPosition } from '../src/utils'
+import { findChildContainingExactPosition, isTs5 } from '../src/utils'
 import handleCommand from '../src/specialCommands/handle'
 import constructMethodSnippet from '../src/constructMethodSnippet'
 import { defaultConfigFunc, entrypoint, settingsOverride, sharedLanguageService } from './shared'
@@ -462,8 +462,9 @@ test('Fix properties sorting', () => {
     settingsOverride.fixSuggestionsSorting = false
 })
 
-// ts 5
-test.todo('Change to function kind', () => {
+const testTs5 = isTs5() ? test : test.todo
+
+testTs5('Change to function kind', () => {
     settingsOverride['experiments.changeKindToFunction'] = true
     overrideSettings({
         'experiments.changeKindToFunction': true,
@@ -484,12 +485,12 @@ test.todo('Change to function kind', () => {
     settingsOverride['experiments.changeKindToFunction'] = false
 })
 
-// ts 5
-test.todo('Filter JSX Components', () => {
+testTs5('Filter JSX Components', () => {
     const tester = fourslashLikeTester(/* ts */ `
         const a = () => {}
         a/*1*/
     `)
+    // TODO
 })
 
 test('Omit<..., ""> suggestions', () => {
