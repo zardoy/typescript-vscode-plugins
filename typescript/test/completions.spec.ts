@@ -1,12 +1,12 @@
 import { pickObj } from '@zardoy/utils'
 import type {} from 'vitest/globals'
-import { isGoodPositionBuiltinMethodCompletion, isGoodPositionMethodCompletion } from '../src/completions/isGoodPositionMethodCompletion'
+import _ from 'lodash'
+import { isGoodPositionMethodCompletion } from '../src/completions/isGoodPositionMethodCompletion'
 import { findChildContainingExactPosition } from '../src/utils'
 import handleCommand from '../src/specialCommands/handle'
-import _ from 'lodash'
+import constructMethodSnippet from '../src/constructMethodSnippet'
 import { defaultConfigFunc, entrypoint, settingsOverride, sharedLanguageService } from './shared'
 import { fileContentsSpecialPositions, fourslashLikeTester, getCompletionsAtPosition, overrideSettings } from './testing'
-import constructMethodSnippet from '../src/constructMethodSnippet'
 
 const { languageService, languageServiceHost, updateProject, getCurrentFile } = sharedLanguageService
 
@@ -18,7 +18,7 @@ const newFileContents = (contents: string, fileName = entrypoint) => {
     const replacement = '/*|*/'
     let cursorIndex
     while ((cursorIndex = contents.indexOf(replacement)) !== -1) {
-        contents = contents.slice(0, cursorIndex) + contents.slice(cursorIndex + replacement.length)
+        contents = contents.slice(0, cursorIndex) + contents.slice((cursorIndex as number) + replacement.length)
         cursorPositions.push(cursorIndex)
     }
     updateProject({
@@ -65,10 +65,10 @@ test('Banned positions for all method snippets', () => {
         ;<Test a/*|*/ />
     `)
     for (const [i, pos] of cursorPositions.entries()) {
-        const result = isGoodPositionBuiltinMethodCompletion(ts, getSourceFile(), pos - 1, defaultConfigFunc)
+        const result = isGoodPositionMethodCompletion(getSourceFile(), pos - 1, defaultConfigFunc)
         expect(result, i.toString()).toBeFalsy()
     }
-    const insertTextEscaping = getCompletionsAtPosition(cursorPositions[1]!)!.entries[1]?.insertText!
+    const insertTextEscaping = getCompletionsAtPosition(cursorPositions[1]!)!.entries[1]?.insertText
     expect(insertTextEscaping).toEqual('m\\$1e\\$2thod')
 })
 
@@ -85,7 +85,7 @@ test('Not banned positions for method snippets', () => {
         test2/*|*/
     `)
     for (const [i, pos] of cursorPositions.entries()) {
-        const result = isGoodPositionMethodCompletion(ts, entrypoint, getSourceFile(), pos - 1, languageService, defaultConfigFunc)
+        const result = isGoodPositionMethodCompletion(getSourceFile(), pos - 1, defaultConfigFunc)
         expect(result, i.toString()).toBeTruthy()
     }
 })

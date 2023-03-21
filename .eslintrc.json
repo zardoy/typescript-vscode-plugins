@@ -11,7 +11,25 @@
         "@typescript-eslint/naming-convention": "off",
         "no-empty-function": "off",
         "no-useless-return": "off",
-        "no-template-curly-in-string": "off"
+        "no-template-curly-in-string": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        // better to fix rule
+        "unicorn/consistent-destructuring": "off",
+        "@typescript-eslint/no-restricted-imports": [
+            "error",
+            {
+                "patterns": [
+                    {
+                        "group": [
+                            "typescript*",
+                            "!../*"
+                        ],
+                        "message": "Use global ts type and variable instead"
+                        // "allowTypeImports": true
+                    }
+                ]
+            }
+        ]
     },
     "overrides": [
         {
@@ -32,10 +50,8 @@
                 "max-depth": "off",
                 "@typescript-eslint/dot-notation": "off",
                 "no-bitwise": "off",
-                "@typescript-eslint/no-explicit-any": "off",
                 // todo just not sure
                 "@typescript-eslint/prefer-regexp-exec": "off",
-                "unicorn/consistent-destructuring": "off",
                 "no-negated-condition": "off",
                 "@typescript-eslint/prefer-nullish-coalescing": "off",
                 "unicorn/prefer-set-has": "off"

@@ -1,4 +1,5 @@
 import { GetConfig } from '../types'
+import { getFullTypeChecker } from '../utils'
 import { sharedCompletionContext } from './sharedContext'
 
 export default (
@@ -107,8 +108,8 @@ const isBooleanCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
     if (type.flags & ts.TypeFlags.Undefined) return false
     // todo support boolean literals (boolean like)
     if (type.flags & ts.TypeFlags.Boolean) return true
-    const trueType = (checker as unknown as FullChecker).getTrueType()
-    const falseType = (checker as unknown as FullChecker).getFalseType()
+    const trueType = getFullTypeChecker(checker).getTrueType() as any
+    const falseType = getFullTypeChecker(checker).getFalseType() as any
     let seenTrueType = false
     let seenFalseType = false
     if (type.isUnion()) {

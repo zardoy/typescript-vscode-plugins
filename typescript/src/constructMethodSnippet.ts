@@ -22,7 +22,7 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     if (signatures.length === 0) return
     const signature = signatures[0]!
     // probably need to remove check as class can be instantiated inside another class, and don't really see a reason for this check
-    if (isNewExpression && hasPrivateOrProtectedModifier(signature.getDeclaration().modifiers)) return
+    if (isNewExpression && hasPrivateOrProtectedModifier((signature.getDeclaration() as ts.ConstructorDeclaration).modifiers)) return
     if (signatures.length > 1 && c('methodSnippets.multipleSignatures') === 'empty') {
         return ['']
     }
@@ -49,7 +49,7 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
                 case 'all':
                 case 'no-skip':
             }
-            const voidType = (checker as unknown as FullChecker).getVoidType()
+            const voidType = (checker as unknown as FullChecker).getVoidType() as any
             const parameterType = valueDeclaration && checker.getTypeOfSymbolAtLocation(param, valueDeclaration)
             isVoidOrNotMap.push(
                 !!(

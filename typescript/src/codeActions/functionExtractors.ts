@@ -100,7 +100,7 @@ export const handleFunctionRefactorEdits = (
     if (actionName.endsWith('_jsx')) {
         const lines = oldFunctionText.trimStart().split('\n')
         const oldFunctionSignature = lines[0]!
-        const componentName = tsFull.getUniqueName('ExtractedComponent', sourceFile as FullSourceFile)
+        const componentName = tsFull.getUniqueName('ExtractedComponent', sourceFile as unknown as FullSourceFile)
         const newFunctionSignature = changeArgumentsToDestructured(oldFunctionSignature, formatOptions, sourceFile, componentName)
 
         const insertChange = textChanges.at(-2)!

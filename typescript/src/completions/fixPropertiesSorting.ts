@@ -52,7 +52,7 @@ export default (entries: ts.CompletionEntry[]) => {
     const getScore = (completion: ts.CompletionEntry) => {
         return (
             sourceProps.indexOf(completion.name) +
-            (isJsxElem && (completion['symbol'] as ts.Symbol | undefined)?.declarations?.[0]?.getSourceFile().fileName.includes('@types/react') ? 10_000 : 0)
+            (isJsxElem && completion.symbol?.declarations?.[0]?.getSourceFile().fileName.includes('@types/react') ? 10_000 : 0)
         )
     }
     // make sorted

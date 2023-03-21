@@ -6,12 +6,11 @@ import { watchExtensionSettings } from '@zardoy/vscode-utils/build/settings'
 let integrationActivated = false
 const possiblyActivateFigIntegration = async () => {
     if (integrationActivated) return
-    // eslint-disable-next-line sonarjs/no-duplicate-string
     if (getExtensionSetting('figIntegration.enableWhenStartsWith').length === 0) return
     integrationActivated = true
 
     // todo I think would be good to support zx package $ but not sure if needed
-    const figExtension = vscode.extensions.getExtension('undefined_publisher.fig-unreleased')
+    const figExtension = vscode.extensions.all.find(({ id }) => id.endsWith('.fig-unreleased'))
     if (!figExtension) return
     const api = await figExtension.activate()
 

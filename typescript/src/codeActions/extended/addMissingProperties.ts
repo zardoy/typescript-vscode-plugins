@@ -44,5 +44,6 @@ export default {
                 }
             }
         }
+        return
     },
 } as ExtendedCodeAction

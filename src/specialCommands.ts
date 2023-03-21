@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/consistent-destructuring */
 import * as vscode from 'vscode'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 import { getExtensionCommandId, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'

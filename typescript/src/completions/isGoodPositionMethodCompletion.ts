@@ -1,8 +1,7 @@
-import type tslib from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from '../types'
 import { findChildContainingPosition, findChildContainingPositionMaxDepth } from '../utils'
 
-export const isGoodPositionBuiltinMethodCompletion = (ts: typeof tslib, sourceFile: ts.SourceFile, position: number, c: GetConfig) => {
+export const isGoodPositionMethodCompletion = (sourceFile: ts.SourceFile, position: number, c: GetConfig) => {
     const importClauseCandidate = findChildContainingPositionMaxDepth(sourceFile, position, 3)
     if (importClauseCandidate && ts.isImportClause(importClauseCandidate)) return false
     const textBeforePos = sourceFile.getFullText().slice(position - 1, position)
@@ -20,27 +19,5 @@ export const isGoodPositionBuiltinMethodCompletion = (ts: typeof tslib, sourceFi
         if (ts.isJsxAttributes(currentNode) || ts.isJsxAttribute(currentNode)) return false
         if (c('disableMethodSnippets.jsxAttributes') && ts.isJsxExpression(currentNode)) return false
     }
-    return true
-}
-
-export const isGoodPositionMethodCompletion = (
-    ts: typeof tslib,
-    fileName: string,
-    sourceFile: ts.SourceFile,
-    position: number,
-    languageService: ts.LanguageService,
-    c: GetConfig,
-) => {
-    if (!isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position, c)) return false
-    // const { kind, displayParts } = languageService.getQuickInfoAtPosition(fileName, position) ?? {}
-    // console.log('kind', kind, displayParts?.map(({ text }) => text).join(''))
-    // switch (kind) {
-    //     case 'var':
-    //     case 'let':
-    //     case 'const':
-    //     case 'alias':
-    //         return false
-    // }
-    // TODO check for brace here
     return true
 }

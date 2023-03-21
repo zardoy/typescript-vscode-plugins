@@ -5,7 +5,7 @@ export default (entries: ts.CompletionEntry[]) => {
     const { prevCompletionsMap, c } = sharedCompletionContext
     if (!c('displayAdditionalInfoInCompletions')) return
     for (const entry of entries) {
-        const symbol = entry['symbol'] as ts.Symbol | undefined
+        const { symbol } = entry
         if (!symbol) continue
         const addNodeText = (node: ts.Node) => {
             let text = node.getText().trim()

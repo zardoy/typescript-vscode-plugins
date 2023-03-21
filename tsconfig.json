@@ -10,5 +10,6 @@
     // type-check sources
     "include": [
         "src",
+        "typescript/src/ts.d.ts"
     ]
 }

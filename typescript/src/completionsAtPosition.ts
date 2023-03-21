@@ -8,7 +8,7 @@ import { GetConfig } from './types'
 import { findChildContainingExactPosition, findChildContainingPosition, isTs5, patchMethod } from './utils'
 import indexSignatureAccessCompletions from './completions/indexSignatureAccess'
 import fixPropertiesSorting from './completions/fixPropertiesSorting'
-import { isGoodPositionBuiltinMethodCompletion } from './completions/isGoodPositionMethodCompletion'
+import { isGoodPositionMethodCompletion } from './completions/isGoodPositionMethodCompletion'
 import improveJsxCompletions from './completions/jsxAttributes'
 import arrayMethods from './completions/arrayMethods'
 import prepareTextForEmmet from './specialCommands/prepareTextForEmmet'
@@ -71,8 +71,7 @@ export const getCompletionsAtPosition = (
     if (!scriptSnapshot || isInBannedPosition(position, scriptSnapshot, sourceFile)) return
     const exactNode = findChildContainingExactPosition(sourceFile, position)
     const isCheckedFile =
-        !tsFull.isSourceFileJS(sourceFile as FullSourceFile) ||
-        !!tsFull.isCheckJsEnabledForFile(sourceFile as FullSourceFile, additionalData.compilerOptions as any)
+        !tsFull.isSourceFileJS(sourceFile as any) || !!tsFull.isCheckJsEnabledForFile(sourceFile as any, additionalData.compilerOptions as any)
     // throw new Error('Test')
     Object.assign(sharedCompletionContext, {
         position,
@@ -94,7 +93,6 @@ export const getCompletionsAtPosition = (
                 position,
                 {
                     ...options,
-                    //@ts-expect-error remove when updated to ts5.0
                     includeSymbol: true,
                 },
                 formatOptions,
@@ -345,7 +343,7 @@ export const getCompletionsAtPosition = (
     }
 
     // prevent vscode-builtin wrong insertText with methods snippets enabled
-    const goodPositionForMethodCompletions = isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position - 1, c)
+    const goodPositionForMethodCompletions = isGoodPositionMethodCompletion(sourceFile, position - 1, c)
     if (!goodPositionForMethodCompletions) {
         prior.entries = prior.entries.map(item => {
             if (item.isSnippet) return item

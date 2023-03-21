@@ -16,7 +16,7 @@ export default (entries: ts.CompletionEntry[], position: number, languageService
     return compact(
         entries.map(entry => {
             if (entry.sourceDisplay) return entry
-            const symbol = entry['symbol'] as ts.Symbol | undefined
+            const { symbol } = entry
             if (!symbol) return entry
             const libCompletionEnding = isLibCompletion(symbol)
             if (!libCompletionEnding) return entry

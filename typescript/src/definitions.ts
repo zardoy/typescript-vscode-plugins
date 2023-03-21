@@ -1,5 +1,4 @@
 import { join } from 'path-browserify'
-import { ModuleDeclaration } from 'typescript'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
 
@@ -127,7 +126,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 if (containerName === 'classes' && containerKind === undefined && rest['isAmbient'] && kind === 'index' && name === '__index') {
                     // ensure we don't filter out something important?
                     const nodeAtDefinition = findChildContainingExactPosition(languageService.getProgram()!.getSourceFile(fileName)!, textSpan.start)
-                    let moduleDeclaration: ModuleDeclaration | undefined
+                    let moduleDeclaration: ts.ModuleDeclaration | undefined
                     ts.findAncestor(nodeAtDefinition, node => {
                         if (ts.isModuleDeclaration(node)) {
                             moduleDeclaration = node

@@ -7,7 +7,7 @@ export default (entries: ts.CompletionEntry[]) => {
     if (displayImportedInfo === 'disable') return
 
     for (const entry of entries) {
-        const symbol = entry['symbol'] as ts.Symbol
+        const { symbol } = entry
         if (!symbol) continue
         const [node] = symbol.getDeclarations() ?? []
         if (!node) continue

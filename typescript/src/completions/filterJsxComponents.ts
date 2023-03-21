@@ -74,9 +74,8 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
     const getIsEntryReactComponent = (entry: ts.CompletionEntry) => {
         // todo add more checks from ref https://github.com/microsoft/TypeScript/blob/e4816ed44cf9bcfe7cebb997b1f44cdb5564dac4/src/compiler/checker.ts#L30030
         // todo support classes
-        const symbol = entry['symbol'] as ts.Symbol
+        const { symbol } = entry
         // tsFull.isCheckJsEnabledForFile(sourceFile, compilerOptions)
-        // symbol.declarations
         if (!symbol) return true
         // performance: symbol coming from lib cannot be JSX element, so let's skip checking them
         // todo other decl

@@ -34,7 +34,7 @@ export default (
                 const namePatternRaw = c('codeActions.extractTypeInferNamePattern')
                 const namePatternSelected = typeof namePatternRaw === 'object' ? namePatternRaw[extractToInterface ? 'interface' : 'typeAlias'] : namePatternRaw
                 // apply name pattern to type name
-                typeName = tsFull.getUniqueName(namePatternSelected.replaceAll('{{name}}', typeName), sourceFile as FullSourceFile)
+                typeName = tsFull.getUniqueName(namePatternSelected.replaceAll('{{name}}', typeName), sourceFile as any)
                 const newFileEdit: ts.FileTextChanges = {
                     fileName,
                     textChanges: textChanges.map((textChange, i) => {
@@ -51,4 +51,5 @@ export default (
         }
         return prior
     }
+    return
 }

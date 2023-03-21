@@ -207,6 +207,8 @@ export const getChangesTracker = formatOptions => {
     ) as unknown as ChangesTracker
 }
 
+export const getFullTypeChecker = (typeChecker: ts.TypeChecker) => typeChecker as unknown as FullChecker
+
 export const dedentString = (string: string, addIndent = '', trimFirstLines = false) => {
     let lines = string.split('\n')
     if (trimFirstLines) {
