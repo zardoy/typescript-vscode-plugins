@@ -7,8 +7,16 @@ import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
 import addMissingProperties from './extended/addMissingProperties'
 
-const codeActions: CodeAction[] = [objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
-const extendedCodeActions: ExtendedCodeAction[] = [addMissingProperties]
+import conditionalRenderingTernary from './extended/conditionalRenderingTernary'
+import wrapIntoMemo from './custom/react/wrapIntoMemo'
+import wrapIntoUseCallback from './custom/react/wrapIntoUseCallback'
+import createPropsInterface from './extended/createPropsInterface'
+import conditionalRendering from './extended/conditionalRendering'
+import { GetConfig } from '../types'
+
+const codeActions: CodeAction[] = [objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization, wrapIntoMemo]
+const reactExtendedCodeActions: CodeAction[] = [wrapIntoMemo, wrapIntoUseCallback]
+const extendedCodeActions: ExtendedCodeAction[] = [addMissingProperties, createPropsInterface, conditionalRendering, conditionalRenderingTernary]
 
 type SimplifiedRefactorInfo =
     | {
@@ -102,12 +110,14 @@ export default (
     positionOrRange: ts.TextRange | number,
     languageService: ts.LanguageService,
     languageServiceHost: ts.LanguageServiceHost,
+    config: GetConfig,
     formatOptions?: ts.FormatCodeSettings,
     requestingEditsId?: string,
 ): { info?: ts.ApplicableRefactorInfo; edit: ts.RefactorEditInfo } => {
     const range = typeof positionOrRange !== 'number' && positionOrRange.pos !== positionOrRange.end ? positionOrRange : undefined
     const pos = typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos
-    const node = findChildContainingPosition(ts, sourceFile, pos)
+    const node = findChildContainingExactPosition(sourceFile, pos)
+
     const appliableCodeActions = compact(
         codeActions.map(action => {
             const edits = action.tryToApply(sourceFile, pos, range, node, formatOptions, languageService, languageServiceHost)

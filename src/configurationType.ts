@@ -592,6 +592,12 @@ export type Configuration = {
               typeAlias: string
               interface: string
           }
+    /**
+     * Enable code actions for React
+     *
+     * @default true
+     */
+    'codeActions.enableReactCodeActions': boolean
 }
 
 // scrapped using search editor. config: caseInsesetive, context lines: 0, regex: const fix\w+ = "[^ ]+"
