@@ -50,7 +50,7 @@ export default (
     const notFoundIdentifiers = semanticDiagnostics
         .filter(({ code }) => cannotFindCodes.includes(code))
         .filter(({ start, length }) => {
-            if ([start, length].some(x => x === undefined)) return false
+            if ([start, length].includes(undefined)) return false
             if (filterBlock === false) return true
             const diagnosticEnd = start! + length!
             const { pos, end } = filterBlock!
@@ -58,7 +58,7 @@ export default (
             if (diagnosticEnd > end) return false
             return true
         })
-    const generalNotFoundNames = [...new Set(notFoundIdentifiers.map(({ start, length }) => fileText.slice(start!, start! + length!)))]
+    const generalNotFoundNames = [...new Set(notFoundIdentifiers.map(({ start, length }) => fileText.slice(start, start! + length!)))]
     return boostOrAddSuggestions(
         entries,
         generalNotFoundNames.map(name => ({ name, kind: ts.ScriptElementKind.warning })),

@@ -31,7 +31,6 @@ const tryToApply: ApplyCodeAction = (sourceFile, pos, range) => {
             { start: wrapNode.getEnd(), length: 0, newText: `\n${startIndent}}` },
         ]
     }
-    return
 }
 
 export default {

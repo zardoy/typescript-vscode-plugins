@@ -1,5 +1,5 @@
-import { sharedCompletionContext } from './sharedContext'
 import { buildStringCompletion } from '../utils'
+import { sharedCompletionContext } from './sharedContext'
 
 export default () => {
     const { node, program } = sharedCompletionContext
@@ -25,7 +25,7 @@ export default () => {
             }
         >()
         const types = type.isUnion() ? type.types : [type]
-        for (let [typeIndex, typeEntry] of types.entries()) {
+        for (const [typeIndex, typeEntry] of types.entries()) {
             // improved DX: not breaking other completions as TS would display error anyway
             if (!(typeEntry.flags & ts.TypeFlags.Object)) continue
             for (const prop of typeEntry.getProperties()) {
@@ -40,6 +40,7 @@ export default () => {
                 suggestionsData.get(name)!.usingDisplayIndexes.push(typeIndex + 1)
                 // const doc = prop.getDocumentationComment(typeChecker)
                 const declaration = prop.getDeclarations()?.[0]
+                if (!declaration) continue
                 suggestionsData
                     .get(name)!
                     .documentations.push(`${typeIndex + 1}: ${declaration && typeChecker.typeToString(typeChecker.getTypeAtLocation(declaration))}`)
@@ -67,5 +68,5 @@ export default () => {
             docPerCompletion,
         }
     }
-    return
+    return undefined
 }

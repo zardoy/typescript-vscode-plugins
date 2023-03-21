@@ -8,11 +8,12 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         if (prior.length !== 1) return prior
         const node = findChildContainingPosition(ts, languageService.getProgram()!.getSourceFile(fileName)!, position)
         if (!node) return prior
-        if (c('disableUselessHighlighting') !== 'disable') {
-            if (ts.isStringLiteralLike(node)) {
-                if (c('disableUselessHighlighting') === 'inAllStrings') return
-                else if (ts.isJsxAttribute(node.parent)) return
-            }
+        if (
+            c('disableUselessHighlighting') !== 'disable' &&
+            ts.isStringLiteralLike(node) &&
+            (c('disableUselessHighlighting') === 'inAllStrings' || ts.isJsxAttribute(node.parent))
+        ) {
+            return
         }
         return prior
     }

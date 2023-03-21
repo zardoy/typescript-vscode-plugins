@@ -1,5 +1,5 @@
-import { CodeAction } from '../getCodeActions'
 import escapeStringRegexp from 'escape-string-regexp'
+import { CodeAction } from '../getCodeActions'
 import { getChangesTracker } from '../../utils'
 
 export default {

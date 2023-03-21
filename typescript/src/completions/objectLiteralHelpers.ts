@@ -14,5 +14,5 @@ export default (node: ts.Node, entries: ts.CompletionEntry[]): ts.CompletionEntr
             ...entries,
         ]
     }
-    return
+    return undefined
 }

@@ -1,11 +1,11 @@
 import { compact } from '@zardoy/utils'
+import { Except } from 'type-fest'
 import { findChildContainingExactPosition, findChildContainingPosition } from '../utils'
+import { ApplyExtendedCodeActionResult, IpcExtendedCodeAction } from '../ipcTypes'
 import objectSwapKeysAndValues from './custom/objectSwapKeysAndValues'
 import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
 import addMissingProperties from './extended/addMissingProperties'
-import { ApplyExtendedCodeActionResult, IpcExtendedCodeAction } from '../ipcTypes'
-import { Except } from 'type-fest'
 
 const codeActions: CodeAction[] = [objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
 const extendedCodeActions: ExtendedCodeAction[] = [addMissingProperties]
@@ -83,7 +83,7 @@ export const getExtendedCodeActions = <T extends string | undefined>(
         sourceFile,
     }
     if (applyCodeActionTitle) {
-        const codeAction = extendedCodeActions.find(codeAction => codeAction.title === applyCodeActionTitle) as ExtendedCodeAction | undefined
+        const codeAction = extendedCodeActions.find(codeAction => codeAction.title === applyCodeActionTitle)
         return codeAction!.tryToApply(tryToApplyOptions) as T extends undefined ? never : ApplyExtendedCodeActionResult
     }
     return compact(
@@ -144,7 +144,7 @@ export default (
     const requestingEdit: any = requestingEditsId ? appliableCodeActions.find(({ id }) => id === requestingEditsId) : null
     return {
         info:
-            (appliableCodeActions.length && {
+            (appliableCodeActions.length > 0 && {
                 actions: appliableCodeActions.map(({ id, name, kind }) => ({
                     description: name,
                     kind,

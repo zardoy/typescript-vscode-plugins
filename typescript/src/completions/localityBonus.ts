@@ -1,10 +1,12 @@
 import { sharedCompletionContext } from './sharedContext'
 
 export default (entries: ts.CompletionEntry[]) => {
-    let { node, sourceFile, c } = sharedCompletionContext
+    const { node, sourceFile, c } = sharedCompletionContext
     if (!c('suggestions.localityBonus')) return
 
     const getScore = entry => {
+        // TODO once TS is updated resolve
+        // eslint-disable-next-line prefer-destructuring
         const symbol: ts.Symbol | undefined = entry['symbol']
         if (!symbol) return
         const { valueDeclaration } = symbol

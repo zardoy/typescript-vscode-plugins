@@ -1,7 +1,7 @@
+import { ensureArray } from '@zardoy/utils'
 import { getCancellationToken, isTs5, nodeModules } from './utils'
 import { createLanguageService } from './dummyLanguageService'
 import { getCannotFindCodes } from './utils/cannotFindCodes'
-import { ensureArray } from '@zardoy/utils'
 
 // used at testing only
 declare const __TS_SEVER_PATH__: string | undefined
@@ -12,7 +12,7 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
     // what is happening here: grabbing & patching NavigationBar module contents from actual running JS
     const tsServerPath = typeof __TS_SEVER_PATH__ !== 'undefined' ? __TS_SEVER_PATH__ : require.main!.filename
     // current lib/tsserver.js
-    const mainScript = nodeModules!.fs.readFileSync(tsServerPath, 'utf8') as string
+    const mainScript = nodeModules!.fs.readFileSync(tsServerPath, 'utf8')
     type PatchData = {
         markerModuleStart: string
         skipStartMarker?: boolean
@@ -107,7 +107,7 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
     const contentAfterModuleStart = mainScript.slice(mainScript.indexOf(markerModuleStart) + (skipStartMarker ? markerModuleStart.length : 0))
     const lines = contentAfterModuleStart.slice(0, contentAfterModuleStart.indexOf(markerModuleEnd) + markerModuleEnd.length).split(/\r?\n/)
 
-    for (let { addString, linesOffset, searchString, removeLines = 0 } of patches) {
+    for (const { addString, linesOffset, searchString, removeLines = 0 } of patches) {
         let addTypeIndex = -1
         for (const search of ensureArray(searchString)) {
             const newIndexStart = addTypeIndex + 1
@@ -146,19 +146,19 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
         // TODO refactor to arr
         let idAdd = ''
         let classNameAdd = ''
-        properties.forEach(attr => {
-            if (!ts.isJsxAttribute(attr) || !attr.initializer) return
+        for (const attr of properties) {
+            if (!ts.isJsxAttribute(attr) || !attr.initializer) continue
             const attrName = attr.name?.getText()
-            if (!attrName) return
+            if (!attrName) continue
             if (addDotAttrs.includes(attrName)) {
                 const textAdd = ts.isStringLiteral(attr.initializer) ? attr.initializer.text : ''
-                for (let char of textAdd.split(' ')) {
+                for (const char of textAdd.split(' ')) {
                     if (char) classNameAdd += `.${char}`
                 }
             } else if (attrName === 'id' && ts.isStringLiteral(attr.initializer)) {
                 idAdd = `#${attr.initializer.text}`
             }
-        })
+        }
         return tagName + classNameAdd + idAdd
     }
     return getModule(ts, getNameFromJsxTag)

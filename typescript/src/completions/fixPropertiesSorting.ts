@@ -47,8 +47,8 @@ export default (entries: ts.CompletionEntry[]) => {
         entries,
     )
     // if sortText first symbol is not a number, than most probably it was highlighted by IntelliCode, keep them high
-    const [sortableEntries, notSortableEntries] = partition(entry => !isNaN(parseInt(entry.sortText)), interestedEntries)
-    const lowestSortText = Math.min(...sortableEntries.map(({ sortText }) => parseInt(sortText)))
+    const [sortableEntries, notSortableEntries] = partition(entry => !Number.isNaN(Number.parseInt(entry.sortText, 10)), interestedEntries)
+    const lowestSortText = Math.min(...sortableEntries.map(({ sortText }) => Number.parseInt(sortText, 10)))
     const getScore = (completion: ts.CompletionEntry) => {
         return (
             sourceProps.indexOf(completion.name) +

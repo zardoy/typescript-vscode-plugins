@@ -12,11 +12,11 @@ export default (entries: ts.CompletionEntry[], position: number, node: ts.Node):
             if (!leftNode.parent.constraint) extendsKeyword = true
         } else if (leftNode) {
             if (ts.isBlock(leftNode)) {
-                if (ts.isTryStatement(leftNode.parent) && leftNode.parent.tryBlock === leftNode) addOrBoostKeywords.push(...['catch', 'finally'])
+                if (ts.isTryStatement(leftNode.parent) && leftNode.parent.tryBlock === leftNode) addOrBoostKeywords.push('catch', 'finally')
                 else if (ts.isCatchClause(leftNode.parent) && leftNode.parent.block === leftNode) addOrBoostKeywords.push('finally')
             }
             if (leftNode.kind === ts.SyntaxKind.ExportKeyword) {
-                addOrBoostKeywords.push(...['const', 'function', 'default', 'from', 'let'])
+                addOrBoostKeywords.push('const', 'function', 'default', 'from', 'let')
             }
         }
     }

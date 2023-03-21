@@ -31,11 +31,9 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         return isInsideIgnoredRegion
     }
 
-    for (const method of [
-        'getFormattingEditsForDocument',
-        'getFormattingEditsForRange',
-        'getFormattingEditsAfterKeystroke',
-    ] satisfies (keyof ts.LanguageService)[]) {
+    for (const method of ['getFormattingEditsForDocument', 'getFormattingEditsForRange', 'getFormattingEditsAfterKeystroke'] satisfies Array<
+        keyof ts.LanguageService
+    >) {
         proxy[method] = (...args) => {
             const textChanges: ts.TextChange[] = (languageService[method] as any)(...args)
             const fileName = args[0]

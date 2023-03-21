@@ -15,7 +15,7 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     if (ts.isPropertyAccessExpression(node)) node = node.parent
 
     const isNewExpression = ts.isNewExpression(node)
-    if (!isNewExpression && !acceptAmbiguous && (type.getProperties().length || type.getStringIndexType() || type.getNumberIndexType())) return 'ambiguous'
+    if (!isNewExpression && !acceptAmbiguous && (type.getProperties().length > 0 || type.getStringIndexType() || type.getNumberIndexType())) return 'ambiguous'
 
     const signatures = checker.getSignaturesOfType(type, isNewExpression ? ts.SignatureKind.Construct : ts.SignatureKind.Call)
     // ensure node is not used below
@@ -38,8 +38,7 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     const paramsToInsert = compact(
         (skipMode === 'all' ? [] : parameters).map(param => {
             const valueDeclaration = param.valueDeclaration as ts.ParameterDeclaration | undefined
-            const isOptional =
-                valueDeclaration && (valueDeclaration.questionToken || valueDeclaration.initializer || valueDeclaration.dotDotDotToken) ? true : false
+            const isOptional = !!(valueDeclaration && (valueDeclaration.questionToken || valueDeclaration.initializer || valueDeclaration.dotDotDotToken))
             switch (skipMode) {
                 case 'only-rest':
                     if (valueDeclaration?.dotDotDotToken) return undefined
@@ -47,6 +46,8 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
                 case 'optional-and-rest':
                     if (isOptional) return undefined
                     break
+                case 'all':
+                case 'no-skip':
             }
             const voidType = (checker as unknown as FullChecker).getVoidType()
             const parameterType = valueDeclaration && checker.getTypeOfSymbolAtLocation(param, valueDeclaration)

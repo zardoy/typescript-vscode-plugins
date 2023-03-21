@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { Except, SetOptional } from 'type-fest'
 import * as semver from 'semver'
 
@@ -7,7 +8,7 @@ export function findChildContainingPosition(typescript: typeof ts, sourceFile: t
             return typescript.forEachChild(node, find) || node
         }
 
-        return
+        return undefined
     }
     return find(sourceFile)
 }
@@ -18,7 +19,7 @@ export function findChildContainingPositionIncludingStartTrivia(typescript: type
             return typescript.forEachChild(node, find) || node
         }
 
-        return
+        return undefined
     }
     return find(sourceFile)
 }
@@ -29,7 +30,7 @@ export function findChildContainingExactPosition(sourceFile: ts.SourceFile, posi
             return ts.forEachChild(node, find) || node
         }
 
-        return
+        return undefined
     }
     return find(sourceFile)
 }
@@ -42,7 +43,7 @@ export function findChildContainingPositionMaxDepth(sourceFile: ts.SourceFile, p
             return ts.forEachChild(node, find) || node
         }
 
-        return
+        return undefined
     }
     return find(sourceFile)
 }
@@ -55,7 +56,7 @@ export function getNodePath(sourceFile: ts.SourceFile, position: number): ts.Nod
             return ts.forEachChild(node, find) || node
         }
 
-        return
+        return undefined
     }
     find(sourceFile)
     return nodes
@@ -98,7 +99,7 @@ export const cleanupEntryName = ({ name }: Pick<ts.CompletionEntry, 'name'>) => 
     return name.replace(/^★ /, '')
 }
 
-export const boostOrAddSuggestions = (existingEntries: ts.CompletionEntry[], topEntries: SetOptional<ts.CompletionEntry, 'sortText'>[]) => {
+export const boostOrAddSuggestions = (existingEntries: ts.CompletionEntry[], topEntries: Array<SetOptional<ts.CompletionEntry, 'sortText'>>) => {
     const topEntryNames = topEntries.map(({ name }) => name)
     return [
         ...topEntries.map(entry => ({ ...entry, sortText: entry.sortText ?? `07` })),
@@ -136,7 +137,7 @@ export const isTsPatched = () => {
         const isPatched = ts.findAncestor === testFunction
         unpatch()
         return isPatched
-    } catch (err) {
+    } catch {
         return false
     }
 }
@@ -180,7 +181,7 @@ export function addObjectMethodResultInterceptors<T extends Record<string, any>>
         const x = object[key]!
         const callback = interceptors[key]!
         if (typeof x !== 'function') continue
-        //@ts-ignore
+        //@ts-expect-error
         object[key] = (...args: any) => {
             const result = x.apply(object, args)
             return callback(result, ...args)
@@ -232,6 +233,7 @@ export const getCancellationToken = (languageServiceHost: ts.LanguageServiceHost
     if (!cancellationToken.throwIfCancellationRequested) {
         cancellationToken.throwIfCancellationRequested = () => {
             if (cancellationToken!.isCancellationRequested()) {
+                // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw new ts.OperationCanceledException()
             }
         }

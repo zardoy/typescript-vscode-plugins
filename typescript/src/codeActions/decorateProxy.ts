@@ -12,7 +12,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         previousGetCodeActionsResult.value = compact(
             prior.flatMap(refactor => {
                 const actions = refactor.actions.filter(action => !action.notApplicableReason).map(action => action.description)
-                if (!actions.length) return
+                if (actions.length === 0) return
                 return actions.map(action => ({ description: refactor.description, name: action }))
             }),
         )

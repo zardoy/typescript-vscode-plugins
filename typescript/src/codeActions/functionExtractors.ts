@@ -120,7 +120,7 @@ export const handleFunctionRefactorEdits = (
                     },
                     {
                         span: functionChange.span,
-                        newText: oldFunctionText.match(/\s*/)![0] + newFunctionSignature.slice(0, -2) + '\n' + lines.slice(1).join('\n'),
+                        newText: `${oldFunctionText.match(/\s*/)![0] + newFunctionSignature.slice(0, -2)}\n${lines.slice(1).join('\n')}`,
                     },
                 ],
             },
@@ -137,7 +137,7 @@ export const handleFunctionRefactorEdits = (
     functionChange.newText = oldFunctionText
         .replace(/function /, 'const ')
         .replace('(', ' = (')
-        .replace(/\{\n/, '=> {\n')
+        .replace(/{\n/, '=> {\n')
 
     const isLocal = actionName.endsWith('_local_arrow')
     // to think: maybe reuse ts getNodeToInsertPropertyBefore instead?
@@ -150,7 +150,7 @@ export const handleFunctionRefactorEdits = (
         functionChange.span.start = constantAdd.span.start
         const indent = constantAdd.newText.match(/^\s*/)![0]
         // fix indent
-        functionChange.newText = dedentString(functionChange.newText, indent, true) + '\n'
+        functionChange.newText = `${dedentString(functionChange.newText, indent, true)}\n`
     }
 
     // global scope

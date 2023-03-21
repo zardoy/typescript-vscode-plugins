@@ -51,5 +51,4 @@ export default (
         }
         return prior
     }
-    return
 }

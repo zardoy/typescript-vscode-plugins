@@ -12,7 +12,7 @@ export default (entries: ts.CompletionEntry[]) => {
             if (ts.isBlock(node)) text = text.slice(1, -1)
             try {
                 text = stringDedent(text)
-            } catch (e) {
+            } catch {
                 // ignore
             }
             prevCompletionsMap[entry.name] = {

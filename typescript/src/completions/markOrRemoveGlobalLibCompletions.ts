@@ -1,6 +1,6 @@
 import { compact } from '@zardoy/utils'
-import { GetConfig } from '../types'
 import { basename } from 'path-browserify'
+import { GetConfig } from '../types'
 
 const isLibCompletion = (symbol: ts.Symbol) => {
     const fileName = symbol.declarations?.[0]?.getSourceFile().fileName

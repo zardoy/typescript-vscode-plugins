@@ -60,7 +60,7 @@ export default function completionEntryDetails(
             prior.codeActions = [
                 // ...(prior.codeActions ?? []),
                 {
-                    description: description,
+                    description,
                     changes: [
                         {
                             fileName,

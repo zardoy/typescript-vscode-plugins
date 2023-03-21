@@ -16,7 +16,7 @@ export default {
             }
             // general patterns
             if (param.type && ts.isTypeLiteralNode(param.type) && param.type.members) {
-                const hasMembers = param.type.members.length !== 0
+                const hasMembers = param.type.members.length > 0
                 const insertPos = param.type.members.at(-1)?.end ?? param.type.end - 1
                 const insertComma = hasMembers && sourceFile.getFullText().slice(insertPos - 1, insertPos) !== ','
                 let insertText = node.text
@@ -44,6 +44,5 @@ export default {
                 }
             }
         }
-        return
     },
 } as ExtendedCodeAction

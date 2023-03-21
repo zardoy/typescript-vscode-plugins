@@ -42,18 +42,20 @@ export default {
             if (!name || ts.isPrivateIdentifier(name)) continue
             const initializerText = printNodeForObjectKey(initializer)
             if (!initializerText) continue
-            edits.push({
-                newText: initializerText,
-                span: nodeToSpan(name),
-            })
-            edits.push({
-                newText: ts.isComputedPropertyName(name)
-                    ? name.expression.getText()
-                    : ts.isIdentifier(name)
-                    ? /* TODO quote preference */ `'${name.text}'`
-                    : name.getText(),
-                span: nodeToSpan(initializer),
-            })
+            edits.push(
+                {
+                    newText: initializerText,
+                    span: nodeToSpan(name),
+                },
+                {
+                    newText: ts.isComputedPropertyName(name)
+                        ? name.expression.getText()
+                        : ts.isIdentifier(name)
+                        ? /* TODO quote preference */ `'${name.text}'`
+                        : name.getText(),
+                    span: nodeToSpan(initializer),
+                },
+            )
         }
         return {
             edits: [

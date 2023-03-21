@@ -1,3 +1,4 @@
+import lodashGet from 'lodash.get'
 import { getCompletionsAtPosition, PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
 import { RequestOptionsTypes, TriggerCharacterCommand } from './ipcTypes'
 import { getNavTreeItems } from './getPatchedNavTree'
@@ -10,7 +11,6 @@ import decorateDefinitions from './definitions'
 import decorateDocumentHighlights from './documentHighlights'
 import completionEntryDetails from './completionEntryDetails'
 import { GetConfig } from './types'
-import lodashGet from 'lodash.get'
 import decorateWorkspaceSymbolSearch from './workspaceSymbolSearch'
 import decorateFormatFeatures from './decorateFormatFeatures'
 import libDomPatching from './libDomPatching'
@@ -45,7 +45,7 @@ export const decorateLanguageService = (
 
     let prevCompletionsMap: PrevCompletionMap
     let prevCompletionsAdittionalData: PrevCompletionsAdditionalData
-    // eslint-disable-next-line complexity
+
     proxy.getCompletionsAtPosition = (fileName, position, options, formatOptions) => {
         if (options?.triggerCharacter && typeof options.triggerCharacter !== 'string') {
             return languageService.getCompletionsAtPosition(fileName, position, options)
@@ -119,15 +119,14 @@ export const decorateLanguageService = (
 
     libDomPatching(languageServiceHost, c)
 
-    if (pluginSpecificSyntaxServerConfigCheck) {
-        if (!__WEB__) {
-            // dedicated syntax server (which is enabled by default), which fires navtree doesn't seem to receive onConfigurationChanged
-            // so we forced to communicate via fs
-            const config = JSON.parse(ts.sys.readFile(require('path').join(__dirname, '../../plugin-config.json'), 'utf8') ?? '{}')
-            proxy.getNavigationTree = fileName => {
-                if (c('patchOutline') || config.patchOutline) return getNavTreeItems(languageService, languageServiceHost, fileName, config.outline)
-                return languageService.getNavigationTree(fileName)
-            }
+    if (pluginSpecificSyntaxServerConfigCheck && !__WEB__) {
+        // dedicated syntax server (which is enabled by default), which fires navtree doesn't seem to receive onConfigurationChanged
+        // so we forced to communicate via fs
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const config = JSON.parse(ts.sys.readFile(require('path').join(__dirname, '../../plugin-config.json'), 'utf8') ?? '{}')
+        proxy.getNavigationTree = fileName => {
+            if (c('patchOutline') || config.patchOutline) return getNavTreeItems(languageService, languageServiceHost, fileName, config.outline)
+            return languageService.getNavigationTree(fileName)
         }
     }
 

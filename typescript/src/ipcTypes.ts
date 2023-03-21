@@ -27,7 +27,7 @@ export type NodeAtPositionResponse = {
 
 type TsRange = [number, number]
 
-export type PickFunctionArgsType = [name: string, declaration: TsRange, args: [name: string, type: string][]]
+export type PickFunctionArgsType = [name: string, declaration: TsRange, args: Array<[name: string, type: string]>]
 
 export type GetSignatureInfoParameter = {
     name: string
@@ -64,7 +64,7 @@ export type RequestResponseTypes = {
             totalCount: number
             totalObjectCount: number
         }
-        moveToExistingFile?: {}
+        moveToExistingFile?: Record<string, unknown>
         extendedCodeActions: IpcExtendedCodeAction[]
     }
     twoStepCodeActionSecondStep:

@@ -10,7 +10,7 @@ export default (
 ): ts.CompletionEntry[] | void => {
     const { position } = sharedCompletionContext
 
-    if (entries.length && node) {
+    if (entries.length > 0 && node) {
         const enableMoreVariants = c('objectLiteralCompletions.moreVariants')
         const keepOriginal = c('objectLiteralCompletions.keepOriginal')
         if (!preferences.includeCompletionsWithObjectLiteralMethodSnippets && !enableMoreVariants) return
@@ -113,7 +113,7 @@ const isBooleanCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
     let seenFalseType = false
     if (type.isUnion()) {
         const match = isEverySubtype(type, type => {
-            if (!!(type.flags & ts.TypeFlags.Boolean)) return true
+            if (type.flags & ts.TypeFlags.Boolean) return true
             if (type === trueType) {
                 seenTrueType = true
                 return true
@@ -166,7 +166,7 @@ export const getAllPropertiesOfType = (type: ts.Type, typeChecker: ts.TypeChecke
         .filter((property, i, arr) => {
             // perf
             if (objectCount === 1) return true
-            return !arr.find(({ name }, k) => name === property.name && i !== k)
+            return !arr.some(({ name }, k) => name === property.name && i !== k)
         })
     return properties
 }

@@ -6,11 +6,11 @@ import namespaceAutoImports from './namespaceAutoImports'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
     proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
-        const sourceFile = languageService.getProgram()?.getSourceFile(fileName)!
+        const sourceFile = languageService.getProgram()!.getSourceFile(fileName)!
         const node = findChildContainingPosition(ts, sourceFile, start)
 
         const { Diagnostics } = tsFull
-        const moduleSymbolDescriptionPlaceholders: [d: any /* Diagnostic */, modulePlaceholderIndex: number, symbolNamePlaceholderIndex?: number][] = [
+        const moduleSymbolDescriptionPlaceholders: Array<[d: any /* Diagnostic */, modulePlaceholderIndex: number, symbolNamePlaceholderIndex?: number]> = [
             [Diagnostics.Import_0_from_1, 1, 0],
             [Diagnostics.Update_import_from_0, 0],
             [Diagnostics.Update_import_from_0, 0],
@@ -22,7 +22,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         const addNamespaceImports = [] as ts.CodeFixAction[]
 
         let prior: readonly ts.CodeFixAction[]
-        let toUnpatch: (() => void)[] = []
+        const toUnpatch: Array<() => void> = []
         try {
             const { importFixName } = tsFull.codefix
             const ignoreAutoImportsSetting = getIgnoreAutoImportSetting(c)
@@ -88,19 +88,18 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 throw err
             })
         } finally {
-            toUnpatch.forEach(x => x())
+            for (const x of toUnpatch) x()
         }
         // todo remove when 5.0 is released after 3 months
         // #region fix builtin codefixes/refactorings
-        prior.forEach(fix => {
+        for (const fix of prior) {
             if (fix.fixName === 'fixConvertConstToLet') {
                 const { start, length } = fix.changes[0]!.textChanges[0]!.span
                 const fixedLength = 'const'.length as 5
                 fix.changes[0]!.textChanges[0]!.span.start = start + length - fixedLength
                 fix.changes[0]!.textChanges[0]!.span.length = fixedLength
             }
-            return fix
-        })
+        }
         // #endregion
 
         const semanticDiagnostics = languageService.getSemanticDiagnostics(fileName)
@@ -155,12 +154,12 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
 
         if (c('markTsCodeFixes.character')) prior = prior.map(item => ({ ...item, description: `${c('markTsCodeFixes.character')} ${item.description}` }))
 
-        prior.forEach(fix => {
+        for (const fix of prior) {
             // don't let it trigger on ctrl+s https://github.com/microsoft/vscode/blob/e8a3071ea4344d9d48ef8a4df2c097372b0c5161/extensions/typescript-language-features/src/languageFeatures/fixAll.ts#L142
             if (fix.fixName === 'fixAwaitInSyncFunction') {
                 fix.fixName = 'ignoreFixAwaitInSyncFunction'
             }
-        })
+        }
 
         return prior
     }
@@ -191,7 +190,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             const additionalTextChanges: ts.TextChange[] = []
             for (const diagnostic of semanticDiagnostics) {
                 if (!errorCodes.includes(diagnostic.code)) continue
-                const toUnpatch: (() => any)[] = []
+                const toUnpatch: Array<() => any> = []
                 try {
                     toUnpatch.push(
                         patchMethod(
@@ -252,6 +251,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                             tsFull,
                             'forEachExternalModuleToImportFrom',
                             oldForEachExternalModuleToImportFrom => (program, host, preferences, _useAutoImportProvider, cb) => {
+                                // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
                                 return oldForEachExternalModuleToImportFrom(program, host, preferences, true, cb)
                             },
                         ),
