@@ -22,7 +22,7 @@ export const sendCommand = async <Response, K = any>(
         const message = 'Special commands are not supported in Volar takeover mode'
         if (passthroughExposedApiCommands.includes(command as any)) {
             // don't spam in case of api command
-            console.error(message)
+            console.error(`[${command}] ${message}`)
         } else {
             throw new Error(message)
         }

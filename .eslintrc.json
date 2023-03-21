@@ -1,6 +1,0 @@
-{
-    "extends": "zardoy",
-    "rules": {
-        "curly": "off"
-    }
-}
