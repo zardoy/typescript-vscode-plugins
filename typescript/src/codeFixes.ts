@@ -85,7 +85,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             prior = languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
             setTimeout(() => {
                 // make sure we still get code fixes, but error is still getting reported
-                throw err
+                console.error(err)
             })
         } finally {
             for (const x of toUnpatch) x()
