@@ -1,4 +1,3 @@
-import { Statement } from 'typescript/lib/tsserverlibrary'
 import { findChildContainingPosition, findClosestParent, getIndentFromPos } from '../../utils'
 import { ApplyCodeAction, CodeAction } from '../getCodeActions'
 
@@ -18,7 +17,7 @@ const tryToApply: ApplyCodeAction = (sourceFile, pos, range) => {
         [],
     )
     if (!closestBlock) return
-    let wrapNode: Statement | undefined
+    let wrapNode: ts.Statement | undefined
     if (ts.isForStatement(closestBlock) || ts.isForOfStatement(closestBlock) || ts.isForInStatement(closestBlock) || ts.isWhileStatement(closestBlock)) {
         wrapNode = closestBlock.statement
     } else if (ts.isIfStatement(closestBlock)) {

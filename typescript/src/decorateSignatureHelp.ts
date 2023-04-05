@@ -47,7 +47,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         const returnStatement =
             ts.findAncestor(node, node => {
                 return ts.isBlock(node) ? 'quit' : ts.isReturnStatement(node)
-            }) ?? tsFull.findPrecedingToken?.(position, sourceFile as FullSourceFile)?.kind === ts.SyntaxKind.ReturnKeyword
+            }) ?? (tsFull.findPrecedingToken?.(position, sourceFile as any)?.kind as any) === ts.SyntaxKind.ReturnKeyword
 
         return languageService.getSignatureHelpItems(
             fileName,

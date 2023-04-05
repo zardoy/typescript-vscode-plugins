@@ -22,7 +22,7 @@ export default (entries: ts.CompletionEntry[]) => {
             ) {
                 return
             }
-            const symbol = entry['symbol'] as ts.Symbol | undefined
+            const { symbol } = entry
             if (!symbol) return
             const { valueDeclaration } = symbol
             if (!valueDeclaration) return

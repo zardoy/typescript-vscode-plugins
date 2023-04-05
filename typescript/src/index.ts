@@ -1,15 +1,14 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-ignore
-import type { Configuration } from '../../src/configurationType'
 import { decorateLanguageService, getInitialProxy, thisPluginMarker } from './decorateProxy'
+import { Configuration } from './types'
 
-let _configObj = {
+const _configObj = {
     config: undefined! as Configuration,
 }
 
 const updateConfigListeners: Array<() => void> = []
 
 const plugin: ts.server.PluginModuleFactory = ({ typescript }) => {
+    // eslint-disable-next-line no-multi-assign
     ts = tsFull = typescript as any
     return {
         create(info) {
@@ -51,5 +50,5 @@ const plugin: ts.server.PluginModuleFactory = ({ typescript }) => {
     }
 }
 
-//@ts-ignore
+//@ts-expect-error
 export = plugin

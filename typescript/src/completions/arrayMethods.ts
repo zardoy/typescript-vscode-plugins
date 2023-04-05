@@ -1,6 +1,6 @@
+import pluralize from 'pluralize'
 import { GetConfig } from '../types'
 import { findChildContainingPosition, getLineTextBeforePos } from '../utils'
-import pluralize from 'pluralize'
 
 const arrayMethodsToPatch = [
     'forEach',
@@ -17,7 +17,6 @@ const arrayMethodsToPatch = [
 
 export default (entries: ts.CompletionEntry[], position: number, sourceFile: ts.SourceFile, c: GetConfig): ts.CompletionEntry[] | undefined => {
     if (!c('arrayMethodsSnippets.enable')) return
-    /** Methods to patch */
 
     const fullText = sourceFile.getFullText()
     if (fullText.slice(position, position + 1) === '(') return
@@ -31,7 +30,8 @@ export default (entries: ts.CompletionEntry[], position: number, sourceFile: ts.
     if (!nodeBeforeDot) return
 
     const cleanSourceText = getItemNameFromNode(nodeBeforeDot)?.replace(/^(?:all)?(.+?)(?:List)?$/, '$1')
-    let inferredName = cleanSourceText && pluralize.singular(cleanSourceText)
+    if (!cleanSourceText) return
+    let inferredName = pluralize.singular(cleanSourceText)
     const defaultItemName = c('arrayMethodsSnippets.defaultItemName')
     // both can be undefined
     if (inferredName === cleanSourceText) {
@@ -55,6 +55,7 @@ export default (entries: ts.CompletionEntry[], position: number, sourceFile: ts.
 
     return entries.map(entry => {
         if (!arrayMethodsToPatch.includes(entry.name.replace(/^★ /, ''))) {
+            // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
             if (resetRangeKinds && resetRangeKinds.includes(entry.kind) && !entry.replacementSpan) {
                 return {
                     ...entry,

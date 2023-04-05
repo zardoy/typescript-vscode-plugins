@@ -1,4 +1,5 @@
 import { GetConfig } from '../types'
+import { getFullTypeChecker, isTs5 } from '../utils'
 import { sharedCompletionContext } from './sharedContext'
 
 export default (
@@ -10,7 +11,7 @@ export default (
 ): ts.CompletionEntry[] | void => {
     const { position } = sharedCompletionContext
 
-    if (entries.length && node) {
+    if (entries.length > 0 && node) {
         const enableMoreVariants = c('objectLiteralCompletions.moreVariants')
         const keepOriginal = c('objectLiteralCompletions.keepOriginal')
         if (!preferences.includeCompletionsWithObjectLiteralMethodSnippets && !enableMoreVariants) return
@@ -23,12 +24,20 @@ export default (
         entries = [...entries]
         const typeChecker = languageService.getProgram()!.getTypeChecker()!
         const objType = typeChecker.getContextualType(node)
-        if (!objType) return
-        const properties = getAllPropertiesOfType(objType, typeChecker)
-        for (const property of properties) {
-            const entry = entries.find(({ name }) => name === property.name)
-            if (!entry) continue
-            const type = typeChecker.getTypeOfSymbolAtLocation(property, node)
+        let oldProperties: ts.Symbol[] | undefined
+        if (!isTs5()) {
+            if (!objType) return
+            oldProperties = getAllPropertiesOfType(objType, typeChecker)
+        }
+        for (const entry of entries) {
+            let type: ts.Type | undefined
+            if (!isTs5()) {
+                const property = oldProperties!.find(property => property.name === entry.name)
+                if (!property) continue
+                type = typeChecker.getTypeOfSymbolAtLocation(property, node)
+            } else if (entry.symbol) {
+                type = typeChecker.getTypeOfSymbol(entry.symbol)
+            }
             if (!type) continue
             if (isFunctionType(type, typeChecker)) {
                 if (['above', 'remove'].includes(keepOriginal) && preferences.includeCompletionsWithObjectLiteralMethodSnippets) {
@@ -51,14 +60,16 @@ export default (
                 return [`: ${quote}$1${quote},$0`, `: ${quote}${quote},`]
             }
             const insertObjectArrayInnerText = c('objectLiteralCompletions.insertNewLine') ? '\n\t$1\n' : '$1'
+            const booleanCompletion = getBooleanCompletion(type, typeChecker)
             const completingStyleMap = [
                 [getQuotedSnippet, isStringCompletion],
-                [[': ${1|true,false|},$0', `: true/false,`], isBooleanCompletion],
+                [[`: ${booleanCompletion?.[0] ?? ''},`, `: ${booleanCompletion?.[0] ?? ''}`], () => booleanCompletion?.length === 1],
+                [[': ${1|true,false|},$0', `: true/false,`], () => booleanCompletion?.length === 2],
                 [[`: [${insertObjectArrayInnerText}],$0`, `: [],`], isArrayCompletion],
                 [[`: {${insertObjectArrayInnerText}},$0`, `: {},`], isObjectCompletion],
             ] as const
             const fallbackSnippet = c('objectLiteralCompletions.fallbackVariant') ? ([': $0,', ': ,'] as const) : undefined
-            const insertSnippetVariant = completingStyleMap.find(([, detector]) => detector(type, typeChecker))?.[0] ?? fallbackSnippet
+            const insertSnippetVariant = completingStyleMap.find(([, detector]) => detector(type!, typeChecker))?.[0] ?? fallbackSnippet
             if (!insertSnippetVariant) continue
             const [insertSnippetText, insertSnippetPreview] = typeof insertSnippetVariant === 'function' ? insertSnippetVariant() : insertSnippetVariant
             const insertText = entry.name + insertSnippetText
@@ -103,31 +114,36 @@ const isStringCompletion = (type: ts.Type) => {
     return false
 }
 
-const isBooleanCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
-    if (type.flags & ts.TypeFlags.Undefined) return false
+const getBooleanCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
+    if (type.flags & ts.TypeFlags.Undefined) return
     // todo support boolean literals (boolean like)
-    if (type.flags & ts.TypeFlags.Boolean) return true
-    const trueType = (checker as unknown as FullChecker).getTrueType()
-    const falseType = (checker as unknown as FullChecker).getFalseType()
-    let seenTrueType = false
-    let seenFalseType = false
-    if (type.isUnion()) {
-        const match = isEverySubtype(type, type => {
-            if (!!(type.flags & ts.TypeFlags.Boolean)) return true
-            if (type === trueType) {
-                seenTrueType = true
-                return true
-            }
-            if (type === falseType) {
-                seenFalseType = true
-                return true
-            }
-            return false
-        })
-        if (seenFalseType !== seenTrueType) return false
-        return match
+    const trueType = getFullTypeChecker(checker).getTrueType() as any
+    const falseType = getFullTypeChecker(checker).getFalseType() as any
+    const seenTypes = new Set<string>()
+    if (type.flags & ts.TypeFlags.Boolean) {
+        seenTypes.add('true')
+        seenTypes.add('false')
     }
-    return false
+    const match = isEverySubtype({ types: type.isUnion() ? type.types : [type] } as any, type => {
+        if (type.flags & ts.TypeFlags.Boolean) {
+            seenTypes.add('true')
+            seenTypes.add('false')
+            return true
+        }
+        if (type === trueType) {
+            seenTypes.add('true')
+            return true
+        }
+        if (type === falseType) {
+            seenTypes.add('false')
+            return true
+        }
+        return false
+    })
+    if (!match) return
+
+    if (seenTypes.size === 0) return
+    return [...seenTypes.keys()]
 }
 
 const isArrayCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
@@ -166,7 +182,7 @@ export const getAllPropertiesOfType = (type: ts.Type, typeChecker: ts.TypeChecke
         .filter((property, i, arr) => {
             // perf
             if (objectCount === 1) return true
-            return !arr.find(({ name }, k) => name === property.name && i !== k)
+            return !arr.some(({ name }, k) => name === property.name && i !== k)
         })
     return properties
 }

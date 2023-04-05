@@ -1,5 +1,5 @@
-import { changeSortingOfAutoImport, getIgnoreAutoImportSetting, isAutoImportEntryShouldBeIgnored, shouldChangeSortingOfAutoImport } from '../adjustAutoImports'
 import { sortBy } from 'rambda'
+import { changeSortingOfAutoImport, getIgnoreAutoImportSetting, isAutoImportEntryShouldBeIgnored, shouldChangeSortingOfAutoImport } from '../adjustAutoImports'
 import { sharedCompletionContext } from './sharedContext'
 
 export default (entries: ts.CompletionEntry[]) => {

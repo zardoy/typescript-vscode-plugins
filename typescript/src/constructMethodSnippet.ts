@@ -4,25 +4,37 @@ import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
 
 // todo-low-ee inspect any last arg infer
-export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, position: number, c: GetConfig, acceptAmbiguous: boolean) => {
-    let node = findChildContainingExactPosition(sourceFile, position)
-    if (!node || isTypeNode(node)) return
+export default (
+    languageService: ts.LanguageService,
+    sourceFile: ts.SourceFile,
+    position: number,
+    symbol: ts.Symbol | /*for easier testing*/ undefined,
+    c: GetConfig,
+    // acceptAmbiguous: boolean,
+    resolveData: {
+        isAmbiguous: boolean
+    },
+) => {
+    let containerNode = findChildContainingExactPosition(sourceFile, position)
+    if (!containerNode || isTypeNode(containerNode)) return
 
     const checker = languageService.getProgram()!.getTypeChecker()!
-    const type = checker.getTypeAtLocation(node)
+    const type = symbol ? checker.getTypeOfSymbol(symbol) : checker.getTypeAtLocation(containerNode)
 
-    if (ts.isIdentifier(node)) node = node.parent
-    if (ts.isPropertyAccessExpression(node)) node = node.parent
+    if (ts.isIdentifier(containerNode)) containerNode = containerNode.parent
+    if (ts.isPropertyAccessExpression(containerNode)) containerNode = containerNode.parent
 
-    const isNewExpression = ts.isNewExpression(node)
-    if (!isNewExpression && !acceptAmbiguous && (type.getProperties().length || type.getStringIndexType() || type.getNumberIndexType())) return 'ambiguous'
+    const isNewExpression = ts.isNewExpression(containerNode)
+    if (!isNewExpression && (type.getProperties().length > 0 || type.getStringIndexType() || type.getNumberIndexType())) {
+        resolveData.isAmbiguous = true
+    }
 
     const signatures = checker.getSignaturesOfType(type, isNewExpression ? ts.SignatureKind.Construct : ts.SignatureKind.Call)
     // ensure node is not used below
     if (signatures.length === 0) return
     const signature = signatures[0]!
     // probably need to remove check as class can be instantiated inside another class, and don't really see a reason for this check
-    if (isNewExpression && hasPrivateOrProtectedModifier(signature.getDeclaration().modifiers)) return
+    if (isNewExpression && hasPrivateOrProtectedModifier((signature.getDeclaration() as ts.ConstructorDeclaration).modifiers)) return
     if (signatures.length > 1 && c('methodSnippets.multipleSignatures') === 'empty') {
         return ['']
     }
@@ -38,8 +50,7 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
     const paramsToInsert = compact(
         (skipMode === 'all' ? [] : parameters).map(param => {
             const valueDeclaration = param.valueDeclaration as ts.ParameterDeclaration | undefined
-            const isOptional =
-                valueDeclaration && (valueDeclaration.questionToken || valueDeclaration.initializer || valueDeclaration.dotDotDotToken) ? true : false
+            const isOptional = !!(valueDeclaration && (valueDeclaration.questionToken || valueDeclaration.initializer || valueDeclaration.dotDotDotToken))
             switch (skipMode) {
                 case 'only-rest':
                     if (valueDeclaration?.dotDotDotToken) return undefined
@@ -47,8 +58,10 @@ export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, 
                 case 'optional-and-rest':
                     if (isOptional) return undefined
                     break
+                case 'all':
+                case 'no-skip':
             }
-            const voidType = (checker as unknown as FullChecker).getVoidType()
+            const voidType = (checker as unknown as FullChecker).getVoidType() as any
             const parameterType = valueDeclaration && checker.getTypeOfSymbolAtLocation(param, valueDeclaration)
             isVoidOrNotMap.push(
                 !!(

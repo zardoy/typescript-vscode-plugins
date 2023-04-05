@@ -2,21 +2,15 @@ import { compact } from '@zardoy/utils'
 import { getExtendedCodeActions } from '../codeActions/getCodeActions'
 import constructMethodSnippet from '../constructMethodSnippet'
 import { overrideRequestPreferences } from '../decorateProxy'
-import {
-    GetSignatureInfoParameter,
-    NodeAtPositionResponse,
-    RequestOptionsTypes,
-    RequestResponseTypes,
-    TriggerCharacterCommand,
-    triggerCharacterCommands,
-} from '../ipcTypes'
+import { NodeAtPositionResponse, RequestOptionsTypes, RequestResponseTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
 import { GetConfig } from '../types'
 import { findChildContainingExactPosition, findChildContainingPosition, getNodePath } from '../utils'
+import { lastResolvedCompletion } from '../completionEntryDetails'
 import getEmmetCompletions from './emmet'
 import objectIntoArrayConverters from './objectIntoArrayConverters'
 
 export const previousGetCodeActionsResult = {
-    value: undefined as undefined | Record<'description' | 'name', string>[],
+    value: undefined as undefined | Array<Record<'description' | 'name', string>>,
 }
 
 export default (
@@ -51,7 +45,7 @@ export default (
         return {
             turnArrayIntoObject: objectIntoArrayConverters(posEnd, node, undefined),
             moveToExistingFile: moveToExistingFile ? {} : undefined,
-            extendedCodeActions: extendedCodeActions,
+            extendedCodeActions,
         }
     }
     if (specialCommand === 'getExtendedCodeActionEdits') {
@@ -99,16 +93,6 @@ export default (
         // ensure return data is the same as for node in getNodePath
         const node = findChildContainingPosition(ts, sourceFile, position)
         return !node ? undefined : nodeToApiResponse(node)
-    }
-    if (specialCommand === 'getFullMethodSnippet') {
-        changeType<RequestOptionsTypes['getFullMethodSnippet']>(specialCommandArg)
-        return constructMethodSnippet(
-            languageService,
-            sourceFile,
-            position,
-            configuration,
-            specialCommandArg.acceptAmbiguous,
-        ) satisfies RequestResponseTypes['getFullMethodSnippet']
     }
     if (specialCommand === 'getSpanOfEnclosingComment') {
         return languageService.getSpanOfEnclosingComment(fileName, position, false)
@@ -211,9 +195,8 @@ export default (
             return {
                 range: Array.isArray(targetNode) ? targetNode : [targetNode.pos, targetNode.end],
             } satisfies RequestResponseTypes['getRangeOfSpecialValue']
-        } else {
-            return
         }
+        return
     }
     if (specialCommand === 'acceptRenameWithParams') {
         changeType<RequestOptionsTypes['acceptRenameWithParams']>(specialCommandArg)
@@ -258,7 +241,7 @@ export default (
                 ...(tsFull.getLeadingCommentRangesOfNode(node as any, sourceFile as any) ?? []),
                 ...(tsFull.getTrailingCommentRanges(node as any, sourceFile as any) ?? []),
             ]
-            collectedNodes.comment!.push(...comments?.map(comment => ({ range: [comment.pos, comment.end] as [number, number] })))
+            collectedNodes.comment!.push(...comments.map(comment => ({ range: [comment.pos, comment.end] as [number, number] })))
             collectedNodes[kind] ??= []
             collectedNodes[kind]!.push({ range: [node.pos + leadingTrivia, node.end] })
             node.forEachChild(collectNodes)
@@ -267,6 +250,9 @@ export default (
         return {
             nodesByKind: collectedNodes,
         } satisfies RequestResponseTypes['filterBySyntaxKind']
+    }
+    if (specialCommand === 'getLastResolvedCompletion') {
+        return lastResolvedCompletion.value
     }
 
     return null

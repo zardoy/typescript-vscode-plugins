@@ -21,13 +21,13 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 }
             > = {}
             const allReferences = prior.flatMap(({ references }) => references)
-            allReferences.forEach(({ fileName }) => {
+            for (const { fileName } of allReferences) {
                 importsCountPerFileName[fileName] ??= {
                     all: 0,
                     cur: 0,
                 }
                 importsCountPerFileName[fileName]!.all++
-            })
+            }
             prior = prior.map(({ references, ...other }) => {
                 return {
                     ...other,
@@ -51,6 +51,15 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                     }),
                 }
             })
+        }
+        if (c('skipNodeModulesReferences') && !fileName.includes('node_modules')) {
+            prior = prior.map(({ references, ...other }) => ({
+                ...other,
+                references: references.filter(({ fileName }) => {
+                    const nodeModulesFile = fileName.includes('/node_modules/')
+                    return !nodeModulesFile
+                }),
+            }))
         }
         return prior
     }

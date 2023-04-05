@@ -1,7 +1,7 @@
+import { camelCase } from 'change-case'
 import { parseIgnoreSpec, findIndexOfAutoImportSpec } from './adjustAutoImports'
 import { GetConfig } from './types'
 import { getChangesTracker } from './utils'
-import { camelCase } from 'change-case'
 
 export default (
     c: GetConfig,
@@ -18,7 +18,7 @@ export default (
         return [parseIgnoreSpec(key), value] as const
     })
     const changeToNamespaceImportSpecs = changeToNamespaceImport.map(([spec]) => spec)
-    if (!changeToNamespaceImport.length) {
+    if (changeToNamespaceImport.length === 0) {
         return
     }
 

@@ -20,14 +20,14 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
     if (c('jsxImproveElementsSuggestions.enabled')) {
         let lastPart = nodeText.split('.').at(-1)!
         if (lastPart.startsWith('<')) lastPart = lastPart.slice(1)
-        const isStartingWithUpperCase = (str: string) => str[0] && str[0] === str[0].toUpperCase()
+        const isStartingWithUpperCase = (str: string) => str[0] && str.startsWith(str[0].toUpperCase())
         // check if starts with lowercase
         if (isStartingWithUpperCase(lastPart)) {
             entries = entries.filter(entry => isStartingWithUpperCase(entry.name) && ![ts.ScriptElementKind.enumElement].includes(entry.kind))
         }
     }
 
-    const fileName = node.getSourceFile().fileName
+    const { fileName } = node.getSourceFile()
     const interestedKinds: ts.ScriptElementKind[] = [
         ts.ScriptElementKind.variableElement,
         ts.ScriptElementKind.functionElement,
@@ -50,8 +50,8 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
     const addMark = (name: string) => {
         timings[name] ??= 0
         timings[name] += nowGetter.now() - mark
-        timings[name + 'Count'] ??= 0
-        timings[name + 'Count']++
+        timings[`${name}Count`] ??= 0
+        timings[`${name}Count`]++
     }
     const getIsJsxComponentSignature = (signature: ts.Signature) => {
         let returnType: ts.Type | undefined = signature.getReturnType()
@@ -74,9 +74,8 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
     const getIsEntryReactComponent = (entry: ts.CompletionEntry) => {
         // todo add more checks from ref https://github.com/microsoft/TypeScript/blob/e4816ed44cf9bcfe7cebb997b1f44cdb5564dac4/src/compiler/checker.ts#L30030
         // todo support classes
-        const symbol = entry['symbol'] as ts.Symbol
+        const { symbol } = entry
         // tsFull.isCheckJsEnabledForFile(sourceFile, compilerOptions)
-        // symbol.declarations
         if (!symbol) return true
         // performance: symbol coming from lib cannot be JSX element, so let's skip checking them
         // todo other decl
@@ -171,7 +170,7 @@ const getReactElementType = (program: ts.Program) => {
         if (ts.isInterfaceDeclaration(node) && node.name.text === 'ReactElement') {
             return node
         }
-        return
+        return undefined
     })
 }
 

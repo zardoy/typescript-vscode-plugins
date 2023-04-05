@@ -4,7 +4,7 @@ import { getCancellationToken } from './utils'
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig, languageServiceHost: ts.LanguageServiceHost) => {
     proxy.getNavigateToItems = (searchValue, maxResultCount, fileName, excludeDtsFiles) => {
         const workspaceSymbolSearchExcludePatterns = c('workspaceSymbolSearchExcludePatterns')
-        if (!workspaceSymbolSearchExcludePatterns.length) {
+        if (workspaceSymbolSearchExcludePatterns.length === 0) {
             return languageService.getNavigateToItems(searchValue, maxResultCount, fileName, excludeDtsFiles)
         }
 

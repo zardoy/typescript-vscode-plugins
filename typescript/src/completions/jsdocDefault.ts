@@ -14,11 +14,13 @@ export const getJsdocDefaultTypes = (position: number, sourceFile: ts.SourceFile
     try {
         const type = typeChecker.getTypeAtLocation(node)
         if (!type.isUnion()) return
-        const suggestions: [name: string, type: ts.Type, isLiteral: boolean][] = []
+        const suggestions: Array<[name: string, type: ts.Type, isLiteral: boolean]> = []
         for (const nextType of type.types) {
             const addSuggestions = (isLiteral: boolean, ...addSuggestions: string[]) => {
                 suggestions.push(...addSuggestions.map(suggestion => [suggestion, nextType, isLiteral] as [string, ts.Type, boolean]))
             }
+            // TODO handle bigint
+            // eslint-disable-next-line @typescript-eslint/no-base-to-string
             if (nextType.isLiteral()) addSuggestions(true, nextType.value.toString())
             else if (nextType.flags & ts.TypeFlags.BooleanLiteral) addSuggestions(true, nextType['intrinsicName'])
             else if (nextType.flags & ts.TypeFlags.Boolean) addSuggestions(false, 'true', 'false')
@@ -31,11 +33,9 @@ export const getJsdocDefaultTypes = (position: number, sourceFile: ts.SourceFile
         }
         suggestions.sort(([nameA], [nameB]) => (sortScores[nameA] ?? 0) - (sortScores[nameB] ?? 0))
         return suggestions
-    } catch (err) {
-        return
-    }
+    } catch {}
 
-    return
+    return undefined
 }
 
 export default (

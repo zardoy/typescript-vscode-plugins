@@ -1,15 +1,22 @@
 import { PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
+import constructMethodSnippet from './constructMethodSnippet'
+import { RequestResponseTypes } from './ipcTypes'
 import namespaceAutoImports from './namespaceAutoImports'
 import { GetConfig } from './types'
+
+export const lastResolvedCompletion = {
+    value: undefined as undefined | RequestResponseTypes['getLastResolvedCompletion'],
+}
 
 export default function completionEntryDetails(
     inputArgs: Parameters<ts.LanguageService['getCompletionEntryDetails']>,
     languageService: ts.LanguageService,
     prevCompletionsMap: PrevCompletionMap,
     c: GetConfig,
-    prevCompletionsAdittionalData: PrevCompletionsAdditionalData,
+    { enableMethodCompletion, completionsSymbolMap }: PrevCompletionsAdditionalData,
 ): ts.CompletionEntryDetails | undefined {
     const [fileName, position, entryName, formatOptions, source, preferences, data] = inputArgs
+    lastResolvedCompletion.value = { name: entryName }
     const program = languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
     if (!program || !sourceFile) return
@@ -42,6 +49,21 @@ export default function completionEntryDetails(
         prior.displayParts = [{ kind: 'text', text: detailPrepend }, ...prior.displayParts]
     }
     if (!prior) return
+    const nextChar = sourceFile.getFullText().slice(position, position + 1)
+
+    if (enableMethodCompletion && c('enableMethodSnippets') && !['(', '.', '`'].includes(nextChar)) {
+        const symbol = completionsSymbolMap.get(entryName)?.find(c => c.source === source)?.symbol
+        if (symbol) {
+            const resolveData = {
+                isAmbiguous: false,
+            }
+            const methodSnippet = constructMethodSnippet(languageService, sourceFile, position, symbol, c, resolveData)
+            if (methodSnippet) {
+                const data = JSON.stringify({ methodSnippet, isAmbiguous: resolveData.isAmbiguous })
+                prior.documentation = [{ kind: 'text', text: `<!--tep ${data} e-->` }, ...(prior.documentation ?? [])]
+            }
+        }
+    }
     if (source) {
         const namespaceImport = namespaceAutoImports(
             c,
@@ -60,7 +82,7 @@ export default function completionEntryDetails(
             prior.codeActions = [
                 // ...(prior.codeActions ?? []),
                 {
-                    description: description,
+                    description,
                     changes: [
                         {
                             fileName,

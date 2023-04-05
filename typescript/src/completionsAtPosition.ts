@@ -1,4 +1,6 @@
 import _ from 'lodash'
+import { compact } from '@zardoy/utils'
+import escapeStringRegexp from 'escape-string-regexp'
 import inKeywordCompletions from './completions/inKeywordCompletions'
 // import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './completions/isInBannedPosition'
@@ -6,7 +8,7 @@ import { GetConfig } from './types'
 import { findChildContainingExactPosition, findChildContainingPosition, isTs5, patchMethod } from './utils'
 import indexSignatureAccessCompletions from './completions/indexSignatureAccess'
 import fixPropertiesSorting from './completions/fixPropertiesSorting'
-import { isGoodPositionBuiltinMethodCompletion } from './completions/isGoodPositionMethodCompletion'
+import { isGoodPositionMethodCompletion } from './completions/isGoodPositionMethodCompletion'
 import improveJsxCompletions from './completions/jsxAttributes'
 import arrayMethods from './completions/arrayMethods'
 import prepareTextForEmmet from './specialCommands/prepareTextForEmmet'
@@ -20,9 +22,7 @@ import defaultHelpers from './completions/defaultHelpers'
 import objectLiteralCompletions from './completions/objectLiteralCompletions'
 import filterJsxElements from './completions/filterJsxComponents'
 import markOrRemoveGlobalCompletions from './completions/markOrRemoveGlobalLibCompletions'
-import { compact } from '@zardoy/utils'
 import adjustAutoImports from './completions/adjustAutoImports'
-import escapeStringRegexp from 'escape-string-regexp'
 import addSourceDefinition from './completions/addSourceDefinition'
 import { sharedCompletionContext } from './completions/sharedContext'
 import displayImportedInfo from './completions/displayImportedInfo'
@@ -45,6 +45,7 @@ export type PrevCompletionMap = Record<
 >
 export type PrevCompletionsAdditionalData = {
     enableMethodCompletion: boolean
+    completionsSymbolMap: Map</*entryName*/ string, Array<{ symbol: ts.Symbol; source?: string }>>
 }
 
 type GetCompletionAtPositionReturnType = {
@@ -71,8 +72,7 @@ export const getCompletionsAtPosition = (
     if (!scriptSnapshot || isInBannedPosition(position, scriptSnapshot, sourceFile)) return
     const exactNode = findChildContainingExactPosition(sourceFile, position)
     const isCheckedFile =
-        !tsFull.isSourceFileJS(sourceFile as FullSourceFile) ||
-        !!tsFull.isCheckJsEnabledForFile(sourceFile as FullSourceFile, additionalData.compilerOptions as any)
+        !tsFull.isSourceFileJS(sourceFile as any) || !!tsFull.isCheckJsEnabledForFile(sourceFile as any, additionalData.compilerOptions as any)
     Object.assign(sharedCompletionContext, {
         position,
         languageService,
@@ -93,7 +93,6 @@ export const getCompletionsAtPosition = (
                 position,
                 {
                     ...options,
-                    //@ts-expect-error remove when updated to ts5.0
                     includeSymbol: true,
                 },
                 formatOptions,
@@ -107,40 +106,38 @@ export const getCompletionsAtPosition = (
         if (!prior) prior = { entries: [], isGlobalCompletion: false, isMemberCompletion: false, isNewIdentifierLocation: false }
         return true
     }
-    const hasSuggestions = prior && prior.entries.filter(({ kind }) => kind !== ts.ScriptElementKind.warning).length !== 0
+    const hasSuggestions = prior?.entries.some(({ kind }) => kind !== ts.ScriptElementKind.warning)
     const node = findChildContainingPosition(ts, sourceFile, position)
 
     /** node that is one character behind
      * useful as in most cases we work with node that is behind the cursor */
     const leftNode = findChildContainingPosition(ts, sourceFile, position - 1)
-    if (node) {
-        // #region Fake emmet
-        if (
-            c('jsxPseudoEmmet.enable') &&
-            leftNode &&
-            prepareTextForEmmet(fileName, leftNode, sourceFile, position, languageService) !== false &&
-            ensurePrior() &&
-            prior
-        ) {
-            const tags = c('jsxPseudoEmmet.tags')
-            for (let [tag, value] of Object.entries(tags)) {
-                if (value === true) value = `<${tag}>$1</${tag}>`
-                prior.entries.push({
-                    kind: ts.ScriptElementKind.label,
-                    name: tag,
-                    sortText: '!5',
-                    insertText: value,
-                    isSnippet: true,
-                })
-            }
+    if (
+        node && // #region Fake emmet
+        c('jsxPseudoEmmet.enable') &&
+        leftNode &&
+        prepareTextForEmmet(fileName, leftNode, sourceFile, position, languageService) !== false &&
+        ensurePrior() &&
+        prior
+    ) {
+        const tags = c('jsxPseudoEmmet.tags')
+        for (let [tag, value] of Object.entries(tags)) {
+            if (value === true) value = `<${tag}>$1</${tag}>`
+            prior.entries.push({
+                kind: ts.ScriptElementKind.label,
+                name: tag,
+                sortText: '!5',
+                insertText: value,
+                isSnippet: true,
+            })
         }
-        // #endregion
     }
+    // #endregion
     if (node && !hasSuggestions && ensurePrior() && prior) {
         prior.entries = additionalTypesSuggestions(prior.entries, program, node) ?? prior.entries
     }
     const addSignatureAccessCompletions = hasSuggestions ? [] : indexSignatureAccessCompletions()
-    if (addSignatureAccessCompletions.length && ensurePrior() && prior) {
+    if (addSignatureAccessCompletions.length > 0 && ensurePrior() && prior) {
         prior.entries = [...prior.entries, ...addSignatureAccessCompletions]
     }
 
@@ -326,7 +323,7 @@ export const getCompletionsAtPosition = (
             processedEntries.add(entry)
         }
 
-        entry: for (const [i, entry] of prior!.entries.entries()) {
+        entry: for (const [i, entry] of prior.entries.entries()) {
             if (processedEntries.has(entry)) continue
             const { name } = entry
             if (!nameComparator(name)) continue
@@ -345,7 +342,7 @@ export const getCompletionsAtPosition = (
     }
 
     // prevent vscode-builtin wrong insertText with methods snippets enabled
-    const goodPositionForMethodCompletions = isGoodPositionBuiltinMethodCompletion(ts, sourceFile, position - 1, c)
+    const goodPositionForMethodCompletions = isGoodPositionMethodCompletion(sourceFile, position - 1, c)
     if (!goodPositionForMethodCompletions) {
         prior.entries = prior.entries.map(item => {
             if (item.isSnippet) return item
@@ -367,20 +364,42 @@ export const getCompletionsAtPosition = (
         prior.entries = prior.entries.map(({ ...entry }, index) => ({
             ...entry,
             sortText: `${entry.sortText ?? ''}${index.toString().padStart(4, '0')}`,
-            symbol: undefined,
         }))
     }
+
+    const needsCompletionsSymbolMap = c('enableMethodSnippets')
+    const completionsSymbolMap: PrevCompletionsAdditionalData['completionsSymbolMap'] = new Map()
+    if (needsCompletionsSymbolMap) {
+        for (const { name, source, symbol } of prior.entries) {
+            if (!symbol) continue
+            completionsSymbolMap.set(name, [
+                ...(completionsSymbolMap.get(name) ?? []),
+                {
+                    symbol,
+                    source,
+                },
+            ])
+        }
+    }
+
+    // Otherwise may crash Volar
+    prior.entries = prior.entries.map(entry => ({
+        ...entry,
+        symbol: undefined,
+    }))
+
     return {
         completions: prior,
         prevCompletionsMap,
         prevCompletionsAdittionalData: {
             enableMethodCompletion: goodPositionForMethodCompletions,
+            completionsSymbolMap,
         },
     }
 }
 
 const patchBuiltinMethods = (c: GetConfig, languageService: ts.LanguageService, isCheckedFile: boolean) => {
-    if (isTs5() && (isCheckedFile || !c('additionalIncludeExtensions').length)) return
+    if (isTs5() && (isCheckedFile || c('additionalIncludeExtensions').length === 0)) return
 
     let addFileExtensions: string[] | undefined
     const getAddFileExtensions = () => {

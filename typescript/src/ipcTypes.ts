@@ -13,8 +13,8 @@ export const triggerCharacterCommands = [
     'twoStepCodeActionSecondStep',
     'getFixAllEdits',
     'acceptRenameWithParams',
-    'getFullMethodSnippet',
     'getExtendedCodeActionEdits',
+    'getLastResolvedCompletion',
 ] as const
 
 export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
@@ -27,7 +27,7 @@ export type NodeAtPositionResponse = {
 
 type TsRange = [number, number]
 
-export type PickFunctionArgsType = [name: string, declaration: TsRange, args: [name: string, type: string][]]
+export type PickFunctionArgsType = [name: string, declaration: TsRange, args: Array<[name: string, type: string]>]
 
 export type GetSignatureInfoParameter = {
     name: string
@@ -64,7 +64,7 @@ export type RequestResponseTypes = {
             totalCount: number
             totalObjectCount: number
         }
-        moveToExistingFile?: {}
+        moveToExistingFile?: Record<string, unknown>
         extendedCodeActions: IpcExtendedCodeAction[]
     }
     twoStepCodeActionSecondStep:
@@ -77,8 +77,10 @@ export type RequestResponseTypes = {
           }
     turnArrayIntoObjectEdit: ts.TextChange[]
     getFixAllEdits: ts.TextChange[]
-    getFullMethodSnippet: string[] | 'ambiguous' | undefined
     getExtendedCodeActionEdits: ApplyExtendedCodeActionResult
+    getLastResolvedCompletion: {
+        name: string
+    }
 }
 
 // INPUT
@@ -109,9 +111,6 @@ export type RequestOptionsTypes = {
     getExtendedCodeActionEdits: {
         range: [number, number]
         applyCodeActionTitle: string
-    }
-    getFullMethodSnippet: {
-        acceptAmbiguous: boolean
     }
 }
 

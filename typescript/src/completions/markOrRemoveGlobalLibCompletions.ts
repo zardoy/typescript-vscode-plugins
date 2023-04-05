@@ -1,6 +1,6 @@
 import { compact } from '@zardoy/utils'
-import { GetConfig } from '../types'
 import { basename } from 'path-browserify'
+import { GetConfig } from '../types'
 
 const isLibCompletion = (symbol: ts.Symbol) => {
     const fileName = symbol.declarations?.[0]?.getSourceFile().fileName
@@ -16,7 +16,7 @@ export default (entries: ts.CompletionEntry[], position: number, languageService
     return compact(
         entries.map(entry => {
             if (entry.sourceDisplay) return entry
-            const symbol = entry['symbol'] as ts.Symbol | undefined
+            const { symbol } = entry
             if (!symbol) return entry
             const libCompletionEnding = isLibCompletion(symbol)
             if (!libCompletionEnding) return entry

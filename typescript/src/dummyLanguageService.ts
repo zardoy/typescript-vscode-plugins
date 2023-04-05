@@ -2,7 +2,7 @@
 import { nodeModules } from './utils'
 
 export const createLanguageService = (files: Record<string, string>, { useLib = true }: { useLib?: boolean } = {}, entrypoint?: string) => {
-    const path = nodeModules!.path
+    const { path } = nodeModules!
     let dummyVersion = 1
     let defaultLibDir: string | undefined
     const languageServiceHost: ts.LanguageServiceHost = {
@@ -40,7 +40,7 @@ export const createLanguageService = (files: Record<string, string>, { useLib = 
             if (newFiles) {
                 if (typeof newFiles === 'string') {
                     if (!entrypoint) throw new Error('entrypoint not set')
-                    files = { [entrypoint!]: newFiles }
+                    files = { [entrypoint]: newFiles }
                 } else {
                     Object.assign(files, newFiles)
                 }
@@ -49,7 +49,7 @@ export const createLanguageService = (files: Record<string, string>, { useLib = 
         },
         getCurrentFile() {
             if (!entrypoint) throw new Error('entrypoint not set')
-            return files[entrypoint!]!
+            return files[entrypoint]!
         },
     }
 }

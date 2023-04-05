@@ -31,11 +31,9 @@ export const getTupleSignature = (node: ts.Node, typeChecker: ts.TypeChecker) =>
         //         targetNode = node.parent
         //         setIndex((node.parent.name as ts.ArrayBindingPattern).elements)
         //     }
-    } else if (ts.isArrayLiteralExpression(node)) {
-        if (ts.isBinaryExpression(node.parent) && node.parent.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
-            targetNode = node.parent.left
-            setIndex(node.elements)
-        }
+    } else if (ts.isArrayLiteralExpression(node) && ts.isBinaryExpression(node.parent) && node.parent.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
+        targetNode = node.parent.left
+        setIndex(node.elements)
     }
 
     if (!targetNode) return
@@ -48,7 +46,7 @@ export const getTupleSignature = (node: ts.Node, typeChecker: ts.TypeChecker) =>
     let currentHasLabel = false
     const tupleMembers = compact(
         properties.map((property, i) => {
-            if (!property.name.match(/^\d+$/)) return
+            if (!/^\d+$/.test(property.name)) return
             const type = typeChecker.getTypeOfSymbolAtLocation(property, targetNode!)
             let displayString = typeChecker.typeToString(type)
             const tupleLabelDeclaration: ts.NamedTupleMember | undefined = property['target']?.['tupleLabelDeclaration']

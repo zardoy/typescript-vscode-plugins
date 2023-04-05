@@ -1,7 +1,6 @@
+import { join } from 'path-browserify'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
-import { join } from 'path-browserify'
-import { ModuleDeclaration } from 'typescript'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
     proxy.getDefinitionAndBoundSpan = (fileName, position) => {
@@ -52,7 +51,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                             const interestedMember = properties?.find(property => property.name === node.text)
                             if (interestedMember) {
                                 const definitions = (interestedMember.getDeclarations() ?? []).map((declaration: ts.Node) => {
-                                    const fileName = declaration.getSourceFile().fileName
+                                    const { fileName } = declaration.getSourceFile()
                                     if (ts.isPropertySignature(declaration)) declaration = declaration.name
                                     const start = declaration.pos + declaration.getLeadingTriviaWidth()
                                     return {
@@ -60,7 +59,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                                         containerName: '',
                                         name: '',
                                         fileName,
-                                        textSpan: { start: start, length: declaration.end - start },
+                                        textSpan: { start, length: declaration.end - start },
                                         kind: ts.ScriptElementKind.memberVariableElement,
                                         contextSpan: { start: 0, length: 0 },
                                     }
@@ -127,7 +126,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 if (containerName === 'classes' && containerKind === undefined && rest['isAmbient'] && kind === 'index' && name === '__index') {
                     // ensure we don't filter out something important?
                     const nodeAtDefinition = findChildContainingExactPosition(languageService.getProgram()!.getSourceFile(fileName)!, textSpan.start)
-                    let moduleDeclaration: ModuleDeclaration | undefined
+                    let moduleDeclaration: ts.ModuleDeclaration | undefined
                     ts.findAncestor(nodeAtDefinition, node => {
                         if (ts.isModuleDeclaration(node)) {
                             moduleDeclaration = node

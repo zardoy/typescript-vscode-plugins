@@ -6,23 +6,8 @@
         }
     },
     "tsEssentialPlugins.suggestions.ignoreAutoImports": [
-        "typescript-full"
-    ],
-    "betterSnippets.customSnippets": [
-        {
-            "name": "SyntaxKind",
-            "body": "ts.SyntaxKind",
-            "when": {}
-        },
-        {
-            "name": "logKind",
-            "body": "console.log(ts.SyntaxKind[${1:node}!.kind])",
-            "when": {
-                "locations": [
-                    "lineStart"
-                ],
-            }
-        }
+        "typescript-full",
+        "@volar/language-service/*"
     ],
     "githubPullRequests.ignoredPullRequestBranches": [
         "develop"

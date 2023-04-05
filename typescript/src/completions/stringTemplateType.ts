@@ -1,10 +1,9 @@
 import { compact } from '@zardoy/utils'
-import { sharedCompletionContext } from './sharedContext'
 import { buildStringCompletion } from '../utils'
+import { sharedCompletionContext } from './sharedContext'
 
 export default (): ts.CompletionEntry[] | void => {
-    const { program } = sharedCompletionContext
-    let { node } = sharedCompletionContext
+    const { program, node } = sharedCompletionContext
     if (!node || !ts.isStringLiteralLike(node)) return
     const stringNode = node
     const checker = program.getTypeChecker()!
@@ -43,5 +42,5 @@ export default (): ts.CompletionEntry[] | void => {
         )
     }
 
-    return
+    return undefined
 }

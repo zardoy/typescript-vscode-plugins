@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/consistent-destructuring */
 import * as vscode from 'vscode'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 import { getExtensionCommandId, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'
@@ -237,5 +236,13 @@ export default () => {
             } satisfies RequestOptionsTypes['acceptRenameWithParams'],
         })
         await vscode.commands.executeCommand(preview ? 'acceptRenameInputWithPreview' : 'acceptRenameInput')
+    })
+
+    registerExtensionCommand('insertNameOfCompletion', async () => {
+        const editor = vscode.window.activeTextEditor
+        if (!editor) return
+        const result = await sendCommand<RequestResponseTypes['getLastResolvedCompletion']>('getLastResolvedCompletion')
+        if (!result) return
+        await editor.insertSnippet(new vscode.SnippetString().appendText(result.name))
     })
 }

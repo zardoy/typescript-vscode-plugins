@@ -1,6 +1,61 @@
 {
     "extends": "zardoy",
     "rules": {
-        "curly": "off"
-    }
+        "curly": "off",
+        "import/no-deprecated": "off",
+        // investigate why it is soooo slow...
+        "import/no-named-as-default": "off",
+        "import/no-named-as-default-member": "off",
+        "default-case": "off",
+        "sonarjs/no-duplicate-string": "off",
+        "@typescript-eslint/naming-convention": "off",
+        "no-empty-function": "off",
+        "no-useless-return": "off",
+        "no-template-curly-in-string": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        // better to fix rule
+        "unicorn/consistent-destructuring": "off",
+        "@typescript-eslint/no-restricted-imports": [
+            "error",
+            {
+                "patterns": [
+                    {
+                        "group": [
+                            "typescript*",
+                            "!../*"
+                        ],
+                        "message": "Use global ts type and variable instead"
+                        // "allowTypeImports": true
+                    }
+                ]
+            }
+        ]
+    },
+    "overrides": [
+        {
+            "files": "typescript/**",
+            "parserOptions": {
+                "project": "typescript/tsconfig.json"
+            },
+            "rules": {
+                "@typescript-eslint/padding-line-between-statements": "off",
+                "arrow-body-style": "off",
+                "import/no-extraneous-dependencies": "off",
+                "@typescript-eslint/no-loop-func": "off",
+                // always used intentionally as workaround for possibly undefined types (to not declare super complex types - cases)
+                "@typescript-eslint/no-unnecessary-boolean-literal-compare": "off",
+                // todo configure instead
+                "complexity": "off",
+                "max-params": "off",
+                "max-depth": "off",
+                "@typescript-eslint/dot-notation": "off",
+                "no-bitwise": "off",
+                // todo just not sure
+                "@typescript-eslint/prefer-regexp-exec": "off",
+                "no-negated-condition": "off",
+                "@typescript-eslint/prefer-nullish-coalescing": "off",
+                "unicorn/prefer-set-has": "off"
+            }
+        }
+    ]
 }

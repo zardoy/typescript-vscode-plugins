@@ -13,21 +13,18 @@ export default (entries: ts.CompletionEntry[], position: number, sourceFile: ts.
         if (!ts.isCaseClause(nodeComp.parent)) nodeComp = leftNode.parent
     }
     if (enumAccessExpr === undefined) return
-    let currentClause: ts.CaseClause
     // just for type inferrence
     const clauses = ts.isCaseClause(nodeComp.parent) && ts.isCaseBlock(nodeComp.parent.parent) ? nodeComp.parent.parent?.clauses : undefined
     if (!clauses) return
-    currentClause = nodeComp.parent as ts.CaseClause
+    const currentClause = nodeComp.parent as ts.CaseClause
     const coveredValues: string[] = []
     for (const clause of clauses) {
         if (ts.isDefaultClause(clause) || clause === currentClause) continue
         const { expression } = clause
         if (enumAccessExpr === null) {
             if (ts.isStringLiteralLike(expression)) coveredValues.push(expression.text)
-        } else {
-            if (getPropAccessExprRestText(expression) === enumAccessExpr) {
-                coveredValues.push((expression as ts.PropertyAccessExpression).name.text)
-            }
+        } else if (getPropAccessExprRestText(expression) === enumAccessExpr) {
+            coveredValues.push((expression as ts.PropertyAccessExpression).name.text)
         }
     }
     return entries.filter(

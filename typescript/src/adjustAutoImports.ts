@@ -88,7 +88,7 @@ export const findIndexOfAutoImportSpec = (ignoreAutoImportsSetting: ParsedIgnore
         if (!symbols.includes(symbol)) continue
         return i
     }
-    return
+    return undefined
 }
 
 export const shouldChangeSortingOfAutoImport = (symbolName: string, c: GetConfig) => {
@@ -98,7 +98,7 @@ export const shouldChangeSortingOfAutoImport = (symbolName: string, c: GetConfig
 
 export const changeSortingOfAutoImport = (c: GetConfig, symbolName: string): ((module: string) => number) => {
     const arr = c('autoImport.changeSorting')[symbolName]
-    if (!arr || !arr.length) return () => 0
+    if (!arr || arr.length === 0) return () => 0
     const maxIndex = arr.length
     return module => {
         let actualIndex = arr.findIndex(x => {

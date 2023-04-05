@@ -196,9 +196,22 @@ export type Configuration = {
      */
     enableFileDefinitions: boolean
     /**
+     * When not in node_modules, show skip showing references from node_modules
+     * @default false
+     * @recommended
+     */
+    skipNodeModulesReferences: boolean
+    /**
      * @default true
      * */
     'removeCodeFixes.enable': boolean
+    /**
+     * Also rename name of default or namespace import on refactor caused by file move / rename
+     * Probably will be enabled by default in future
+     * @default false
+     * @recommended
+     */
+    renameImportNameOfFileRename: boolean
     /**
      * Additional file extension to include in completions (suggestions)
      *

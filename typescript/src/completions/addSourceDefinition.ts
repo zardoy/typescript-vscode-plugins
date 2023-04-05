@@ -5,14 +5,14 @@ export default (entries: ts.CompletionEntry[]) => {
     const { prevCompletionsMap, c } = sharedCompletionContext
     if (!c('displayAdditionalInfoInCompletions')) return
     for (const entry of entries) {
-        const symbol = entry['symbol'] as ts.Symbol | undefined
+        const { symbol } = entry
         if (!symbol) continue
         const addNodeText = (node: ts.Node) => {
             let text = node.getText().trim()
             if (ts.isBlock(node)) text = text.slice(1, -1)
             try {
                 text = stringDedent(text)
-            } catch (e) {
+            } catch {
                 // ignore
             }
             prevCompletionsMap[entry.name] = {

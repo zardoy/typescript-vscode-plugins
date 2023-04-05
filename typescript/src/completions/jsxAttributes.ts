@@ -1,6 +1,6 @@
 import { compact } from '@zardoy/utils'
-import { Configuration } from '../../../src/configurationType'
 import escapeStringRegexp from 'escape-string-regexp'
+import { Configuration } from '../../../src/configurationType'
 
 export default (
     entries: ts.CompletionEntry[],
@@ -35,11 +35,11 @@ export default (
         jsxAttributeCandidate = true
         node = node.parent
     }
-    if (jsxAttributeCandidate && Object.keys(jsxCompletionsMap).length && (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node))) {
+    if (jsxAttributeCandidate && Object.keys(jsxCompletionsMap).length > 0 && (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node))) {
         const tagName = node.tagName.getText()
         // TODO use the same perf optimization for replaceSuggestions
         const patchEntries: Record<number, Configuration['jsxCompletionsMap'][string]> = {}
-        for (let [key, patchMethod] of Object.entries(jsxCompletionsMap)) {
+        for (const [key, patchMethod] of Object.entries(jsxCompletionsMap)) {
             const splitTagNameIdx = key.indexOf('#')
             if (splitTagNameIdx === -1) continue
             const comparingTagName = key.slice(0, splitTagNameIdx)
@@ -47,11 +47,11 @@ export default (
             const comparingName = key.slice(splitTagNameIdx + 1)
             if (comparingName.includes('*')) {
                 const regexMatch = new RegExp(`^${escapeStringRegexp(comparingName).replaceAll('\\*', '.*')}$`)
-                entries.forEach(({ name, kind }, index) => {
+                for (const [index, { name, kind }] of entries.entries()) {
                     if (kind === ts.ScriptElementKind.memberVariableElement && regexMatch.test(name)) {
                         patchEntries[index] = patchMethod
                     }
-                })
+                }
             } else {
                 // I think it needs some sort of optimization by using wordRange
                 const indexToPatch = entries.findIndex(({ name, kind }) => kind === ts.ScriptElementKind.memberVariableElement && name === comparingName)
