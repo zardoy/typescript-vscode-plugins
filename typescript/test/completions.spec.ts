@@ -109,9 +109,12 @@ test('Function props: cleans & highlights', () => {
 const compareMethodSnippetAgainstMarker = (inputMarkers: number[], marker: number, expected: string | null | string[]) => {
     const obj = Object.fromEntries(inputMarkers.entries())
     const markerPos = obj[marker]!
-    const methodSnippet = constructMethodSnippet(languageService, getSourceFile(), markerPos, defaultConfigFunc, false)
-    if (methodSnippet === 'ambiguous') {
-        expect(methodSnippet).toEqual(expected)
+    const resolvedData = {
+        isAmbiguous: false,
+    }
+    const methodSnippet = constructMethodSnippet(languageService, getSourceFile(), markerPos, undefined, defaultConfigFunc, resolvedData)
+    if (resolvedData.isAmbiguous) {
+        expect('ambiguous').toEqual(expected)
         return
     }
     const snippetToInsert = methodSnippet ? `(${methodSnippet.join(', ')})` : null
@@ -531,13 +534,15 @@ test('Additional types suggestions', () => {
     })
 })
 
-test('Object Literal Completions', () => {
+test.only('Object Literal Completions', () => {
     const [_positivePositions, _negativePositions, numPositions] = fileContentsSpecialPositions(/* ts */ `
     interface Options {
         usedOption
         mood?: 'happy' | 'sad'
         callback?()
         additionalOptions?: {
+            bar: boolean
+            bar2: false
             foo?: boolean
         }
         plugins: Array<{ name: string, setup(build) }>
@@ -551,11 +556,18 @@ test('Object Literal Completions', () => {
     })
 
     const somethingWithUntions: { a: string } | { a: any[], b: string } = {/*2*/}
+
+    makeDay({
+        additionalOptions: {
+            /*3*/
+        }
+    })
     `)
     const { entriesSorted: pos1 } = getCompletionsAtPosition(numPositions[1]!)!
     const { entriesSorted: pos2 } = getCompletionsAtPosition(numPositions[2]!)!
+    const { entriesSorted: pos3 } = getCompletionsAtPosition(numPositions[3]!)!
     // todo resolve sorting problem + add tests with other keepOriginal (it was tested manually)
-    for (const entry of [...pos1, ...pos2]) {
+    for (const entry of [...pos1, ...pos2, ...pos3]) {
         entry.insertText = entry.insertText?.replaceAll('\n', '\\n')
     }
     expect(pos1).toMatchInlineSnapshot(/* json */ `
@@ -632,6 +644,16 @@ test('Object Literal Completions', () => {
         "a",
         "b",
         "b: \\"$1\\",$0",
+      ]
+    `)
+    expect(pos3.map(x => x.insertText)).toMatchInlineSnapshot(`
+      [
+        "bar",
+        "bar: \${1|true,false|},$0",
+        "bar2",
+        "bar2: false,",
+        "foo",
+        "foo: \${1|true,false|},$0",
       ]
     `)
 })

@@ -8,7 +8,7 @@ export default (
     languageService: ts.LanguageService,
     sourceFile: ts.SourceFile,
     position: number,
-    symbol: ts.Symbol,
+    symbol: ts.Symbol | /*for easier testing*/ undefined,
     c: GetConfig,
     // acceptAmbiguous: boolean,
     resolveData: {
@@ -19,7 +19,7 @@ export default (
     if (!containerNode || isTypeNode(containerNode)) return
 
     const checker = languageService.getProgram()!.getTypeChecker()!
-    const type = checker.getTypeOfSymbol(symbol)
+    const type = symbol ? checker.getTypeOfSymbol(symbol) : checker.getTypeAtLocation(containerNode)
 
     if (ts.isIdentifier(containerNode)) containerNode = containerNode.parent
     if (ts.isPropertyAccessExpression(containerNode)) containerNode = containerNode.parent
