@@ -17,7 +17,7 @@ export const triggerCharacterCommands = [
     'getLastResolvedCompletion',
 ] as const
 
-export type TriggerCharacterCommand = typeof triggerCharacterCommands[number]
+export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
 
 export type NodeAtPositionResponse = {
     kindName: string
