@@ -206,6 +206,13 @@ export type Configuration = {
      * */
     'removeCodeFixes.enable': boolean
     /**
+     * Also rename name of default or namespace import on refactor caused by file move / rename
+     * Probably will be enabled by default in future
+     * @default false
+     * @recommended
+     */
+    renameImportNameOfFileRename: boolean
+    /**
      * Additional file extension to include in completions (suggestions)
      *
      * **For unchecked files only**, for checked files use module augmentation.

@@ -1,4 +1,6 @@
 import lodashGet from 'lodash.get'
+import { camelCase } from 'change-case'
+import _ from 'lodash'
 import { getCompletionsAtPosition, PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
 import { RequestOptionsTypes, TriggerCharacterCommand } from './ipcTypes'
 import { getNavTreeItems } from './getPatchedNavTree'
@@ -15,6 +17,7 @@ import decorateWorkspaceSymbolSearch from './workspaceSymbolSearch'
 import decorateFormatFeatures from './decorateFormatFeatures'
 import libDomPatching from './libDomPatching'
 import decorateSignatureHelp from './decorateSignatureHelp'
+import { approveCast, findChildContainingExactPosition } from './utils'
 
 /** @internal */
 export const thisPluginMarker = '__essentialPluginsMarker__'
@@ -45,6 +48,49 @@ export const decorateLanguageService = (
 
     let prevCompletionsMap: PrevCompletionMap
     let prevCompletionsAdittionalData: PrevCompletionsAdditionalData
+
+    proxy.getEditsForFileRename = (oldFilePath, newFilePath, formatOptions, preferences) => {
+        let edits = languageService.getEditsForFileRename(oldFilePath, newFilePath, formatOptions, preferences)
+        if (c('renameImportNameOfFileRename')) {
+            const predictedNameFromPath = (p: string) => camelCase(p.split(/[/\\]/g).pop()!.replace(/\..+/, ''))
+            const oldPredictedName = predictedNameFromPath(oldFilePath)
+            const newPredictedName = predictedNameFromPath(newFilePath)
+            for (const edit of edits) {
+                const possiblyAddRename = (identifier: ts.Identifier | undefined) => {
+                    if (identifier?.text !== oldPredictedName) return
+                    const sourceFile = languageService.getProgram()!.getSourceFile(edit.fileName)!
+                    const newRenameEdits = proxy.findRenameLocations(edit.fileName, identifier.pos, false, false) ?? []
+                    if (!newRenameEdits) return
+                    // maybe cancel symbol rename on collision instead?
+                    const newInsertName = tsFull.getUniqueName(newPredictedName, sourceFile as any)
+                    const addEdits = Object.entries(_.groupBy(newRenameEdits, ({ fileName }) => fileName)).map(
+                        ([fileName, changes]): ts.FileTextChanges => ({
+                            fileName,
+                            textChanges: changes.map(
+                                ({ prefixText = '', suffixText = '', textSpan }): ts.TextChange => ({
+                                    newText: prefixText + newInsertName + suffixText,
+                                    span: textSpan,
+                                }),
+                            ),
+                        }),
+                    )
+                    edits = [...edits, ...addEdits]
+                }
+                for (const textChange of edit.textChanges) {
+                    const node = findChildContainingExactPosition(languageService.getProgram()!.getSourceFile(edit.fileName)!, textChange.span.start)
+                    if (!node) continue
+                    if (node && ts.isStringLiteral(node) && ts.isImportDeclaration(node.parent) && node.parent.importClause) {
+                        const { importClause } = node.parent
+                        possiblyAddRename(importClause?.name)
+                        if (approveCast(importClause.namedBindings, ts.isNamespaceImport)) {
+                            possiblyAddRename(importClause.namedBindings.name)
+                        }
+                    }
+                }
+            }
+        }
+        return edits
+    }
 
     proxy.getCompletionsAtPosition = (fileName, position, options, formatOptions) => {
         if (options?.triggerCharacter && typeof options.triggerCharacter !== 'string') {
