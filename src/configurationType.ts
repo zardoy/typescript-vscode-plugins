@@ -196,6 +196,12 @@ export type Configuration = {
      */
     enableFileDefinitions: boolean
     /**
+     * When not in node_modules, show skip showing references from node_modules
+     * @default false
+     * @recommended
+     */
+    skipNodeModulesReferences: boolean
+    /**
      * @default true
      * */
     'removeCodeFixes.enable': boolean

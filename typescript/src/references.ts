@@ -52,6 +52,15 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 }
             })
         }
+        if (c('skipNodeModulesReferences') && !fileName.includes('node_modules')) {
+            prior = prior.map(({ references, ...other }) => ({
+                ...other,
+                references: references.filter(({ fileName }) => {
+                    const nodeModulesFile = fileName.includes('/node_modules/')
+                    return !nodeModulesFile
+                }),
+            }))
+        }
         return prior
     }
 
