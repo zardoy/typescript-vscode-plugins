@@ -50,6 +50,11 @@
                 "command": "goToNodeBySyntaxKindWithinSelection",
                 "title": "Go to Node by Syntax Kind Within Selection",
                 "category": "TS Essentials"
+            },
+            {
+                "command": "insertNameOfCompletion",
+                "title": "Insert Name of Completion",
+                "category": "TS Essentials"
             }
         ],
         "keybindings": [

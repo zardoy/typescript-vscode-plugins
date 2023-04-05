@@ -15,7 +15,7 @@ const pipeline = promisify(stream.pipeline)
 /** @type {(keyof Config)[]} */
 const languageOveridableSettings = [
     'removeUselessFunctionProps.enable',
-    'removeOrMarkGlobalLibCompletions.action',
+    'globalLibCompletions.action',
     'disableUselessHighlighting',
     'suggestions.keywordsInsertText',
     'caseSensitiveCompletions',

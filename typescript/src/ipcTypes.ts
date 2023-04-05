@@ -15,9 +15,10 @@ export const triggerCharacterCommands = [
     'acceptRenameWithParams',
     'getFullMethodSnippet',
     'getExtendedCodeActionEdits',
+    'getLastResolvedCompletion',
 ] as const
 
-export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
+export type TriggerCharacterCommand = typeof triggerCharacterCommands[number]
 
 export type NodeAtPositionResponse = {
     kindName: string
@@ -79,6 +80,9 @@ export type RequestResponseTypes = {
     getFixAllEdits: ts.TextChange[]
     getFullMethodSnippet: string[] | 'ambiguous' | undefined
     getExtendedCodeActionEdits: ApplyExtendedCodeActionResult
+    getLastResolvedCompletion: {
+        name: string
+    }
 }
 
 // INPUT

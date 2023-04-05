@@ -5,6 +5,7 @@ import { overrideRequestPreferences } from '../decorateProxy'
 import { NodeAtPositionResponse, RequestOptionsTypes, RequestResponseTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
 import { GetConfig } from '../types'
 import { findChildContainingExactPosition, findChildContainingPosition, getNodePath } from '../utils'
+import { lastResolvedCompletion } from '../completionEntryDetails'
 import getEmmetCompletions from './emmet'
 import objectIntoArrayConverters from './objectIntoArrayConverters'
 
@@ -259,6 +260,9 @@ export default (
         return {
             nodesByKind: collectedNodes,
         } satisfies RequestResponseTypes['filterBySyntaxKind']
+    }
+    if (specialCommand === 'getLastResolvedCompletion') {
+        return lastResolvedCompletion.value
     }
 
     return null

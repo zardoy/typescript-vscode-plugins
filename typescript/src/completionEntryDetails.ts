@@ -1,6 +1,11 @@
 import { PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
+import { RequestResponseTypes } from './ipcTypes'
 import namespaceAutoImports from './namespaceAutoImports'
 import { GetConfig } from './types'
+
+export const lastResolvedCompletion = {
+    value: undefined as undefined | RequestResponseTypes['getLastResolvedCompletion'],
+}
 
 export default function completionEntryDetails(
     inputArgs: Parameters<ts.LanguageService['getCompletionEntryDetails']>,
@@ -10,6 +15,7 @@ export default function completionEntryDetails(
     prevCompletionsAdittionalData: PrevCompletionsAdditionalData,
 ): ts.CompletionEntryDetails | undefined {
     const [fileName, position, entryName, formatOptions, source, preferences, data] = inputArgs
+    lastResolvedCompletion.value = { name: entryName }
     const program = languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
     if (!program || !sourceFile) return
