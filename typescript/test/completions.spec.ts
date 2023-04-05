@@ -534,7 +534,7 @@ test('Additional types suggestions', () => {
     })
 })
 
-test.only('Object Literal Completions', () => {
+test('Object Literal Completions', () => {
     const [_positivePositions, _negativePositions, numPositions] = fileContentsSpecialPositions(/* ts */ `
     interface Options {
         usedOption
