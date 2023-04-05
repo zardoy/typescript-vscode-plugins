@@ -45,6 +45,7 @@ export type PrevCompletionMap = Record<
 >
 export type PrevCompletionsAdditionalData = {
     enableMethodCompletion: boolean
+    completionsSymbolMap: Map</*entryName*/ string, Array<{ symbol: ts.Symbol; source?: string }>>
 }
 
 type GetCompletionAtPositionReturnType = {
@@ -363,14 +364,28 @@ export const getCompletionsAtPosition = (
         prior.entries = prior.entries.map(({ ...entry }, index) => ({
             ...entry,
             sortText: `${entry.sortText ?? ''}${index.toString().padStart(4, '0')}`,
-            symbol: undefined,
         }))
+    }
+    const needsCompletionsSymbolMap = c('enableMethodSnippets')
+    const completionsSymbolMap: PrevCompletionsAdditionalData['completionsSymbolMap'] = new Map()
+    if (needsCompletionsSymbolMap) {
+        for (const { name, source, symbol } of prior.entries) {
+            if (!symbol) continue
+            completionsSymbolMap.set(name, [
+                ...(completionsSymbolMap.get(name) ?? []),
+                {
+                    symbol,
+                    source,
+                },
+            ])
+        }
     }
     return {
         completions: prior,
         prevCompletionsMap,
         prevCompletionsAdittionalData: {
             enableMethodCompletion: goodPositionForMethodCompletions,
+            completionsSymbolMap,
         },
     }
 }

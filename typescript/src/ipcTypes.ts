@@ -13,7 +13,6 @@ export const triggerCharacterCommands = [
     'twoStepCodeActionSecondStep',
     'getFixAllEdits',
     'acceptRenameWithParams',
-    'getFullMethodSnippet',
     'getExtendedCodeActionEdits',
     'getLastResolvedCompletion',
 ] as const
@@ -78,7 +77,6 @@ export type RequestResponseTypes = {
           }
     turnArrayIntoObjectEdit: ts.TextChange[]
     getFixAllEdits: ts.TextChange[]
-    getFullMethodSnippet: string[] | 'ambiguous' | undefined
     getExtendedCodeActionEdits: ApplyExtendedCodeActionResult
     getLastResolvedCompletion: {
         name: string
@@ -113,9 +111,6 @@ export type RequestOptionsTypes = {
     getExtendedCodeActionEdits: {
         range: [number, number]
         applyCodeActionTitle: string
-    }
-    getFullMethodSnippet: {
-        acceptAmbiguous: boolean
     }
 }
 

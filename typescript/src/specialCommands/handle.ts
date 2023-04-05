@@ -94,16 +94,6 @@ export default (
         const node = findChildContainingPosition(ts, sourceFile, position)
         return !node ? undefined : nodeToApiResponse(node)
     }
-    if (specialCommand === 'getFullMethodSnippet') {
-        changeType<RequestOptionsTypes['getFullMethodSnippet']>(specialCommandArg)
-        return constructMethodSnippet(
-            languageService,
-            sourceFile,
-            position,
-            configuration,
-            specialCommandArg.acceptAmbiguous,
-        ) satisfies RequestResponseTypes['getFullMethodSnippet']
-    }
     if (specialCommand === 'getSpanOfEnclosingComment') {
         return languageService.getSpanOfEnclosingComment(fileName, position, false)
     }

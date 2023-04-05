@@ -13,7 +13,7 @@ export default (tsApi: { onCompletionAccepted }) => {
     let onCompletionAcceptedOverride: ((item: any) => void) | undefined
 
     // eslint-disable-next-line complexity
-    tsApi.onCompletionAccepted(async (item: vscode.CompletionItem & { document: vscode.TextDocument }) => {
+    tsApi.onCompletionAccepted(async (item: vscode.CompletionItem & { document: vscode.TextDocument; tsEntry }) => {
         if (onCompletionAcceptedOverride) {
             onCompletionAcceptedOverride(item)
             return
@@ -36,57 +36,56 @@ export default (tsApi: { onCompletionAccepted }) => {
             return
         }
 
-        const enableMethodSnippets = vscode.workspace.getConfiguration(process.env.IDS_PREFIX, item.document).get('enableMethodSnippets')
-
-        if (enableMethodSnippets && /* snippet by vscode or by us to ignore pos */ typeof insertText !== 'object') {
+        if (/* snippet is by vscode or by us to ignore pos */ typeof insertText !== 'object') {
             const editor = getActiveRegularEditor()!
-            const startPos = editor.selection.start
-            const nextSymbol = editor.document.getText(new vscode.Range(startPos, startPos.translate(0, 1)))
-            if (!['(', '.', '`'].includes(nextSymbol)) {
-                // all-in handling
-                const controller = new AbortController()
-                inFlightMethodSnippetOperation = controller
-                const params: RequestResponseTypes['getFullMethodSnippet'] | undefined = await sendCommand('getFullMethodSnippet', {
-                    inputOptions: {
-                        acceptAmbiguous: lastAcceptedAmbiguousMethodSnippetSuggestion === suggestionName,
-                    } satisfies RequestOptionsTypes['getFullMethodSnippet'],
+            if (item.tsEntry.source) {
+                await new Promise<void>(resolve => {
+                    vscode.workspace.onDidChangeTextDocument(({ document }) => {
+                        if (editor.document !== document) return
+                        resolve()
+                    })
                 })
-
-                if (controller.signal.aborted) return
-                if (params === 'ambiguous') {
-                    lastAcceptedAmbiguousMethodSnippetSuggestion = suggestionName
-                    return
-                }
-
-                if (!params) {
-                    return
-                }
-
-                const replaceArguments = getExtensionSetting('methodSnippets.replaceArguments')
-
-                const snippet = new vscode.SnippetString('')
-                snippet.appendText('(')
-                // todo maybe when have optional (skipped), add a way to leave trailing , with tabstop (previous behavior)
-                for (const [i, param] of params.entries()) {
-                    const replacer = replaceArguments[param.replace(/\?$/, '')]
-                    if (replacer === null) continue
-                    if (replacer) {
-                        useReplacer(snippet, replacer)
-                    } else {
-                        snippet.appendPlaceholder(param)
-                    }
-
-                    if (i !== params.length - 1) snippet.appendText(', ')
-                }
-
-                snippet.appendText(')')
-                void editor.insertSnippet(snippet, undefined, {
-                    undoStopAfter: false,
-                    undoStopBefore: false,
+                await new Promise(resolve => {
+                    setTimeout(resolve, 0)
                 })
-                if (vscode.workspace.getConfiguration('editor.parameterHints').get('enabled') && params.length > 0) {
-                    void vscode.commands.executeCommand('editor.action.triggerParameterHints')
+            }
+
+            const documentation = typeof item.documentation === 'object' ? item.documentation.value : item.documentation
+            const dataMarker = '<!--tep '
+            if (!documentation?.startsWith(dataMarker)) return
+            const parsed = JSON.parse(documentation.slice(dataMarker.length, documentation.indexOf('e-->')))
+            const { methodSnippet: params, isAmbiguous } = parsed
+            if (!params) return
+
+            if (isAmbiguous && lastAcceptedAmbiguousMethodSnippetSuggestion !== suggestionName) {
+                lastAcceptedAmbiguousMethodSnippetSuggestion = suggestionName
+                return
+            }
+
+            const replaceArguments = getExtensionSetting('methodSnippets.replaceArguments')
+
+            const snippet = new vscode.SnippetString('')
+            snippet.appendText('(')
+            // todo maybe when have optional (skipped), add a way to leave trailing , with tabstop (previous behavior)
+            for (const [i, param] of params.entries()) {
+                const replacer = replaceArguments[param.replace(/\?$/, '')]
+                if (replacer === null) continue
+                if (replacer) {
+                    useReplacer(snippet, replacer)
+                } else {
+                    snippet.appendPlaceholder(param)
                 }
+
+                if (i !== params.length - 1) snippet.appendText(', ')
+            }
+
+            snippet.appendText(')')
+            void editor.insertSnippet(snippet, undefined, {
+                undoStopAfter: false,
+                undoStopBefore: false,
+            })
+            if (vscode.workspace.getConfiguration('editor.parameterHints').get('enabled') && params.length > 0) {
+                void vscode.commands.executeCommand('editor.action.triggerParameterHints')
             }
         }
     })

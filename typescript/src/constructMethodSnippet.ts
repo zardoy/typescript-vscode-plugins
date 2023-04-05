@@ -4,18 +4,30 @@ import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
 
 // todo-low-ee inspect any last arg infer
-export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, position: number, c: GetConfig, acceptAmbiguous: boolean) => {
-    let node = findChildContainingExactPosition(sourceFile, position)
-    if (!node || isTypeNode(node)) return
+export default (
+    languageService: ts.LanguageService,
+    sourceFile: ts.SourceFile,
+    position: number,
+    symbol: ts.Symbol,
+    c: GetConfig,
+    // acceptAmbiguous: boolean,
+    resolveData: {
+        isAmbiguous: boolean
+    },
+) => {
+    let containerNode = findChildContainingExactPosition(sourceFile, position)
+    if (!containerNode || isTypeNode(containerNode)) return
 
     const checker = languageService.getProgram()!.getTypeChecker()!
-    const type = checker.getTypeAtLocation(node)
+    const type = checker.getTypeOfSymbol(symbol)
 
-    if (ts.isIdentifier(node)) node = node.parent
-    if (ts.isPropertyAccessExpression(node)) node = node.parent
+    if (ts.isIdentifier(containerNode)) containerNode = containerNode.parent
+    if (ts.isPropertyAccessExpression(containerNode)) containerNode = containerNode.parent
 
-    const isNewExpression = ts.isNewExpression(node)
-    if (!isNewExpression && !acceptAmbiguous && (type.getProperties().length > 0 || type.getStringIndexType() || type.getNumberIndexType())) return 'ambiguous'
+    const isNewExpression = ts.isNewExpression(containerNode)
+    if (!isNewExpression && (type.getProperties().length > 0 || type.getStringIndexType() || type.getNumberIndexType())) {
+        resolveData.isAmbiguous = true
+    }
 
     const signatures = checker.getSignaturesOfType(type, isNewExpression ? ts.SignatureKind.Construct : ts.SignatureKind.Call)
     // ensure node is not used below

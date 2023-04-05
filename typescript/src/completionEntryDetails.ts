@@ -1,4 +1,5 @@
 import { PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
+import constructMethodSnippet from './constructMethodSnippet'
 import { RequestResponseTypes } from './ipcTypes'
 import namespaceAutoImports from './namespaceAutoImports'
 import { GetConfig } from './types'
@@ -12,7 +13,7 @@ export default function completionEntryDetails(
     languageService: ts.LanguageService,
     prevCompletionsMap: PrevCompletionMap,
     c: GetConfig,
-    prevCompletionsAdittionalData: PrevCompletionsAdditionalData,
+    { enableMethodCompletion, completionsSymbolMap }: PrevCompletionsAdditionalData,
 ): ts.CompletionEntryDetails | undefined {
     const [fileName, position, entryName, formatOptions, source, preferences, data] = inputArgs
     lastResolvedCompletion.value = { name: entryName }
@@ -48,6 +49,23 @@ export default function completionEntryDetails(
         prior.displayParts = [{ kind: 'text', text: detailPrepend }, ...prior.displayParts]
     }
     if (!prior) return
+    const nextChar = sourceFile.getFullText().slice(position, position + 1)
+
+    if (enableMethodCompletion && c('enableMethodSnippets') && !['(', '.', '`'].includes(nextChar)) {
+        const symbol = completionsSymbolMap.get(entryName)?.find(c => c.source === source)?.symbol
+        if (symbol) {
+            const resolveData = {
+                isAmbiguous: false,
+            }
+            console.time('resolve methodSnippet')
+            const methodSnippet = constructMethodSnippet(languageService, sourceFile, position, symbol, c, resolveData)
+            console.timeEnd('resolve methodSnippet')
+            if (methodSnippet) {
+                const data = JSON.stringify({ methodSnippet, isAmbiguous: resolveData.isAmbiguous })
+                prior.documentation = [{ kind: 'text', text: `<!--tep ${data} e-->` }, ...(prior.documentation ?? [])]
+            }
+        }
+    }
     if (source) {
         const namespaceImport = namespaceAutoImports(
             c,
