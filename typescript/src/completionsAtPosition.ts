@@ -366,6 +366,7 @@ export const getCompletionsAtPosition = (
             sortText: `${entry.sortText ?? ''}${index.toString().padStart(4, '0')}`,
         }))
     }
+
     const needsCompletionsSymbolMap = c('enableMethodSnippets')
     const completionsSymbolMap: PrevCompletionsAdditionalData['completionsSymbolMap'] = new Map()
     if (needsCompletionsSymbolMap) {
@@ -380,6 +381,13 @@ export const getCompletionsAtPosition = (
             ])
         }
     }
+
+    // Otherwise may crash Volar
+    prior.entries = prior.entries.map(entry => ({
+        ...entry,
+        symbol: undefined,
+    }))
+
     return {
         completions: prior,
         prevCompletionsMap,

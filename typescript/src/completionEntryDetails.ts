@@ -57,9 +57,7 @@ export default function completionEntryDetails(
             const resolveData = {
                 isAmbiguous: false,
             }
-            console.time('resolve methodSnippet')
             const methodSnippet = constructMethodSnippet(languageService, sourceFile, position, symbol, c, resolveData)
-            console.timeEnd('resolve methodSnippet')
             if (methodSnippet) {
                 const data = JSON.stringify({ methodSnippet, isAmbiguous: resolveData.isAmbiguous })
                 prior.documentation = [{ kind: 'text', text: `<!--tep ${data} e-->` }, ...(prior.documentation ?? [])]
