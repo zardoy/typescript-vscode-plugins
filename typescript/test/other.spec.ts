@@ -1,7 +1,7 @@
-import decorateFormatFeatures from '../src/decorateFormatFeatures'
-import { defaultConfigFunc, entrypoint, sharedLanguageService } from './shared'
-import { getNavTreeItems } from '../src/getPatchedNavTree'
 import { createRequire } from 'module'
+import decorateFormatFeatures from '../src/decorateFormatFeatures'
+import { getNavTreeItems } from '../src/getPatchedNavTree'
+import { defaultConfigFunc, entrypoint, sharedLanguageService } from './shared'
 
 const { languageService, languageServiceHost, updateProject, getCurrentFile } = sharedLanguageService
 
@@ -61,7 +61,7 @@ test('Patched navtree (outline)', () => {
         arraysTuplesNumberedItems: false,
     })
     const simplify = (items: ts.NavigationTree[]) => {
-        const newItems: { text: any; childItems? }[] = []
+        const newItems: Array<{ text: any; childItems? }> = []
         for (const { text, childItems } of items) {
             if (text === 'classes') continue
             newItems.push({ text, ...(childItems ? { childItems: simplify(childItems) } : {}) })

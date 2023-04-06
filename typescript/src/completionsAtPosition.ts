@@ -229,7 +229,7 @@ export const getCompletionsAtPosition = (
     }
 
     if (node) prior.entries = defaultHelpers(prior.entries, node, languageService) ?? prior.entries
-    if (exactNode) prior.entries = objectLiteralCompletions(prior.entries, exactNode, languageService, options ?? {}, c) ?? prior.entries
+    prior.entries = objectLiteralCompletions(prior) ?? prior.entries
     // 90%
     prior.entries = adjustAutoImports(prior.entries)
 

@@ -28,7 +28,11 @@ jobs:
       - run: pnpm lint
       - run: pnpm vscode-utils prepareFrameworkBuild
       - run: pnpm build
+      - run: timeout 60 pnpm test-plugin
+        if: ${{ runner.os != 'Windows' }}
+      # if command with timeout already failed on unix, Windows job will be cancelled
       - run: pnpm test-plugin
+        if: ${{ runner.os == 'Windows' }}
       - uses: GabrielBB/xvfb-action@v1.6
         with:
           run: pnpm integration-test
