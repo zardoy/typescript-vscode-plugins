@@ -28,7 +28,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm vscode-utils prepareFrameworkBuild
       - run: pnpm build
-      - run: pnpm test-plugin
+      - run: timeout 60 pnpm test-plugin
       - uses: GabrielBB/xvfb-action@v1.6
         with:
           run: pnpm integration-test

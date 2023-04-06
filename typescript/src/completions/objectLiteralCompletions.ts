@@ -21,7 +21,6 @@ export default (
         const nextChar = node.getSourceFile().getFullText()[position]
         if (!ts.isObjectLiteralExpression(node) || nextChar === ':') return
 
-        entries = [...entries]
         const typeChecker = languageService.getProgram()!.getTypeChecker()!
         const objType = typeChecker.getContextualType(node)
         let oldProperties: ts.Symbol[] | undefined
@@ -29,7 +28,8 @@ export default (
             if (!objType) return
             oldProperties = getAllPropertiesOfType(objType, typeChecker)
         }
-        for (const entry of entries) {
+        // eslint-disable-next-line unicorn/no-useless-spread
+        for (const entry of [...entries]) {
             let type: ts.Type | undefined
             if (!isTs5()) {
                 const property = oldProperties!.find(property => property.name === entry.name)
