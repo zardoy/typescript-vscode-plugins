@@ -562,10 +562,15 @@ test('Object Literal Completions', () => {
             /*3*/
         }
     })
+
+    const a = {
+        /*4*/
+    }
     `)
     const { entriesSorted: pos1 } = getCompletionsAtPosition(numPositions[1]!)!
     const { entriesSorted: pos2 } = getCompletionsAtPosition(numPositions[2]!)!
     const { entriesSorted: pos3 } = getCompletionsAtPosition(numPositions[3]!)!
+    const { entriesSorted: pos4 } = getCompletionsAtPosition(numPositions[4]!)!
     // todo resolve sorting problem + add tests with other keepOriginal (it was tested manually)
     for (const entry of [...pos1, ...pos2, ...pos3]) {
         entry.insertText = entry.insertText?.replaceAll('\n', '\\n')
@@ -657,6 +662,7 @@ test('Object Literal Completions', () => {
         "foo: \${1|true,false|},$0",
       ]
     `)
+    expect(pos4.filter(x => x.insertText?.includes(': '))).toEqual([])
 })
 
 test('Extract to type / interface name inference', () => {
