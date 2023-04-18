@@ -22,8 +22,8 @@ export default (prior: ts.CompletionInfo): ts.CompletionEntry[] | void => {
         if (!objType) return
         oldProperties = getAllPropertiesOfType(objType, typeChecker)
     }
-    // eslint-disable-next-line unicorn/no-useless-spread
-    for (const entry of [...entries]) {
+    const clonedEntries = [...entries]
+    for (const entry of clonedEntries) {
         let type: ts.Type | undefined
         if (!isTs5()) {
             const property = oldProperties!.find(property => property.name === entry.name)
@@ -70,6 +70,7 @@ export default (prior: ts.CompletionInfo): ts.CompletionEntry[] | void => {
         const index = entries.indexOf(entry)
         entries.splice(index + (keepOriginal === 'before' ? 1 : 0), keepOriginal === 'remove' ? 1 : 0, {
             ...entry,
+            name: entry.name.replace(/\$/g, '\\$'),
             // todo setting incompatible!!!
             sortText: entry.sortText,
             labelDetails: {
