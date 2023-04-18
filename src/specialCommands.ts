@@ -1,12 +1,14 @@
 import * as vscode from 'vscode'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
-import { getExtensionCommandId, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'
+import { getExtensionCommandId, getExtensionSetting, registerExtensionCommand, VSCodeQuickPickItem } from 'vscode-framework'
 import { showQuickPick } from '@zardoy/vscode-utils/build/quickPick'
 import _ from 'lodash'
 import { compact } from '@zardoy/utils'
+import { offsetPosition } from '@zardoy/vscode-utils/build/position'
 import { RequestOptionsTypes, RequestResponseTypes } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
 import { tsRangeToVscode, tsRangeToVscodeSelection } from './util'
+import { onCompletionAcceptedOverride } from './onCompletionAccepted'
 
 export default () => {
     registerExtensionCommand('removeFunctionArgumentsTypesInSelection', async () => {
@@ -241,8 +243,37 @@ export default () => {
     registerExtensionCommand('insertNameOfCompletion', async () => {
         const editor = vscode.window.activeTextEditor
         if (!editor) return
-        const result = await sendCommand<RequestResponseTypes['getLastResolvedCompletion']>('getLastResolvedCompletion')
-        if (!result) return
-        await editor.insertSnippet(new vscode.SnippetString().appendText(result.name))
+        if (!getExtensionSetting('experimental.enableInsertNameOfSuggestionFix')) {
+            const result = await sendCommand<RequestResponseTypes['getLastResolvedCompletion']>('getLastResolvedCompletion')
+            if (!result) return
+            await editor.insertSnippet(new vscode.SnippetString().appendText(result.name))
+            return
+        }
+
+        onCompletionAcceptedOverride.value = () => {}
+        const { ranges, text } = await new Promise<{ text: string; ranges: vscode.Range[] }>(resolve => {
+            vscode.workspace.onDidChangeTextDocument(({ document, contentChanges }) => {
+                if (document !== editor.document || contentChanges.length === 0) return
+                const ranges = contentChanges.map(
+                    change => new vscode.Range(change.range.start, offsetPosition(document, change.range.start, change.text.length)),
+                )
+                resolve({ ranges, text: contentChanges[0]!.text })
+            })
+            void vscode.commands.executeCommand('acceptSelectedSuggestion')
+        })
+        const needle = ['(', ': '].find(needle => text.includes(needle))
+        if (!needle) return
+        const cleanedText = text.slice(0, text.indexOf(needle))
+        await editor.edit(
+            e => {
+                for (const range of ranges) {
+                    e.replace(range, cleanedText)
+                }
+            },
+            {
+                undoStopBefore: false,
+                undoStopAfter: false,
+            },
+        )
     })
 }

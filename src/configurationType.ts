@@ -605,6 +605,12 @@ export type Configuration = {
               typeAlias: string
               interface: string
           }
+    /**
+     * Use workaround method for inserting name of TypeScript suggestion.
+     * If you move to next suggestion and then to previous, and then run *insert name of completion* via keybinding, name of **last resolved** completion will be inserted, so you might prefer to enable this setting. Also it makes this feature work in Vue.
+     * @default false
+     */
+    'experimental.enableInsertNameOfSuggestionFix': boolean
 }
 
 // scrapped using search editor. config: caseInsesetive, context lines: 0, regex: const fix\w+ = "[^ ]+"

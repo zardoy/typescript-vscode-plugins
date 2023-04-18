@@ -3,19 +3,19 @@ import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 import { expandPosition } from '@zardoy/vscode-utils/build/position'
 import { getExtensionSetting, registerExtensionCommand } from 'vscode-framework'
 import { oneOf } from '@zardoy/utils'
-import { RequestOptionsTypes, RequestResponseTypes } from '../typescript/src/ipcTypes'
-import { sendCommand } from './sendCommand'
+
+export const onCompletionAcceptedOverride: { value: ((item: any) => void) | undefined } = { value: undefined }
 
 export default (tsApi: { onCompletionAccepted }) => {
     let inFlightMethodSnippetOperation: undefined | AbortController
     let justAcceptedReturnKeywordSuggestion = false
     let lastAcceptedAmbiguousMethodSnippetSuggestion: string | undefined
-    let onCompletionAcceptedOverride: ((item: any) => void) | undefined
 
     // eslint-disable-next-line complexity
     tsApi.onCompletionAccepted(async (item: vscode.CompletionItem & { document: vscode.TextDocument; tsEntry }) => {
-        if (onCompletionAcceptedOverride) {
-            onCompletionAcceptedOverride(item)
+        if (onCompletionAcceptedOverride.value) {
+            onCompletionAcceptedOverride.value(item)
+            onCompletionAcceptedOverride.value = undefined
             return
         }
 
@@ -100,10 +100,9 @@ export default (tsApi: { onCompletionAccepted }) => {
             async (_progress, token) => {
                 const accepted = await new Promise<boolean>(resolve => {
                     token.onCancellationRequested(() => {
-                        onCompletionAcceptedOverride = undefined
                         resolve(false)
                     })
-                    onCompletionAcceptedOverride = item => {
+                    onCompletionAcceptedOverride.value = item => {
                         console.dir(item, { depth: 4 })
                         resolve(true)
                     }
