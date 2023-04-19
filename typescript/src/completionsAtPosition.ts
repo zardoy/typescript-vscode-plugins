@@ -268,13 +268,6 @@ export const getCompletionsAtPosition = (
             prior.entries = prior.entries.filter(({ name, kind }) => kind === ts.ScriptElementKind.warning || !name.startsWith('__'))
         }
     }
-    if (isVueFile && exactNode && ts.isArrayLiteralExpression(ts.isIdentifier(exactNode) ? exactNode.parent : exactNode)) {
-        const type = languageService
-            .getProgram()!
-            .getTypeChecker()!
-            .getTypeOfSymbol(prior.entries.find(e => e.name === 'Logo')?.symbol!)
-        console.log(type)
-    }
     // #endregion
 
     addSourceDefinition(prior.entries)
