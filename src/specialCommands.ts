@@ -243,7 +243,7 @@ export default () => {
     registerExtensionCommand('insertNameOfCompletion', async (_, { insertMode } = {}) => {
         const editor = vscode.window.activeTextEditor
         if (!editor) return
-        if (!getExtensionSetting('experimental.enableInsertNameOfSuggestionFix')) {
+        if (!getExtensionSetting('experiments.enableInsertNameOfSuggestionFix')) {
             const result = await sendCommand<RequestResponseTypes['getLastResolvedCompletion']>('getLastResolvedCompletion')
             if (!result) return
             const position = editor.selection.active
