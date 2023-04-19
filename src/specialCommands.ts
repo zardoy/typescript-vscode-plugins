@@ -240,13 +240,18 @@ export default () => {
         await vscode.commands.executeCommand(preview ? 'acceptRenameInputWithPreview' : 'acceptRenameInput')
     })
 
-    registerExtensionCommand('insertNameOfCompletion', async () => {
+    registerExtensionCommand('insertNameOfCompletion', async (_, { insertMode } = {}) => {
         const editor = vscode.window.activeTextEditor
         if (!editor) return
         if (!getExtensionSetting('experimental.enableInsertNameOfSuggestionFix')) {
             const result = await sendCommand<RequestResponseTypes['getLastResolvedCompletion']>('getLastResolvedCompletion')
             if (!result) return
-            await editor.insertSnippet(new vscode.SnippetString().appendText(result.name))
+            const position = editor.selection.active
+            const range = result.range ? tsRangeToVscode(editor.document, result.range) : editor.document.getWordRangeAtPosition(position)
+            await editor.insertSnippet(
+                new vscode.SnippetString().appendText(result.name),
+                (insertMode || vscode.workspace.getConfiguration().get('editor.suggest.insertMode')) === 'replace' ? range : range?.with(undefined, position),
+            )
             return
         }
 

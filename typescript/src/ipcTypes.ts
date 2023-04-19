@@ -80,6 +80,7 @@ export type RequestResponseTypes = {
     getExtendedCodeActionEdits: ApplyExtendedCodeActionResult
     getLastResolvedCompletion: {
         name: string
+        range?: TsRange
     }
 }
 

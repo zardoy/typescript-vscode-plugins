@@ -40,6 +40,7 @@ export type PrevCompletionMap = Record<
         documentationOverride?: string | ts.SymbolDisplayPart[]
         detailPrepend?: string
         documentationAppend?: string
+        range?: [number, number]
         // textChanges?: ts.TextChange[]
     }
 >
@@ -48,7 +49,7 @@ export type PrevCompletionsAdditionalData = {
     completionsSymbolMap: Map</*entryName*/ string, Array<{ symbol: ts.Symbol; source?: string }>>
 }
 
-type GetCompletionAtPositionReturnType = {
+export type GetCompletionAtPositionReturnType = {
     completions: ts.CompletionInfo
     /** Let default getCompletionEntryDetails to know original name or let add documentation from here */
     prevCompletionsMap: PrevCompletionMap
@@ -267,6 +268,13 @@ export const getCompletionsAtPosition = (
             prior.entries = prior.entries.filter(({ name, kind }) => kind === ts.ScriptElementKind.warning || !name.startsWith('__'))
         }
     }
+    if (isVueFile && exactNode && ts.isArrayLiteralExpression(ts.isIdentifier(exactNode) ? exactNode.parent : exactNode)) {
+        const type = languageService
+            .getProgram()!
+            .getTypeChecker()!
+            .getTypeOfSymbol(prior.entries.find(e => e.name === 'Logo')?.symbol!)
+        console.log(type)
+    }
     // #endregion
 
     addSourceDefinition(prior.entries)
@@ -380,6 +388,13 @@ export const getCompletionsAtPosition = (
                 },
             ])
         }
+    }
+
+    for (const entry of prior.entries) {
+        const { replacementSpan } = entry
+        if (!replacementSpan) continue
+        prevCompletionsMap[entry.name] ??= {}
+        prevCompletionsMap[entry.name]!.range = [replacementSpan.start, ts.textSpanEnd(replacementSpan)]
     }
 
     // Otherwise may crash Volar

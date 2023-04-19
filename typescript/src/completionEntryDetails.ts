@@ -16,7 +16,7 @@ export default function completionEntryDetails(
     { enableMethodCompletion, completionsSymbolMap }: PrevCompletionsAdditionalData,
 ): ts.CompletionEntryDetails | undefined {
     const [fileName, position, entryName, formatOptions, source, preferences, data] = inputArgs
-    lastResolvedCompletion.value = { name: entryName }
+    lastResolvedCompletion.value = { name: entryName, range: prevCompletionsMap[entryName]?.range }
     const program = languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
     if (!program || !sourceFile) return
