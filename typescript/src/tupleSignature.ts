@@ -49,7 +49,11 @@ export const getTupleSignature = (node: ts.Node, typeChecker: ts.TypeChecker) =>
             if (!/^\d+$/.test(property.name)) return
             const type = typeChecker.getTypeOfSymbolAtLocation(property, targetNode!)
             let displayString = typeChecker.typeToString(type)
-            const tupleLabelDeclaration: ts.NamedTupleMember | undefined = property['target']?.['tupleLabelDeclaration']
+            const tupleLabelDeclaration: ts.NamedTupleMember | undefined =
+                property['target']?.['tupleLabelDeclaration'] ??
+                // https://github.com/microsoft/TypeScript/blob/main/src/services/symbolDisplay.ts#L648 (labelDecl)
+                // todo uncomment after ts-expose-internals update to 5.0
+                (property as any) /*import('typescript-full').TransientSymbol*/?.links?.target?.links?.tupleLabelDeclaration
             const tupleLabel = tupleLabelDeclaration?.name.text
             if (tupleLabel) {
                 displayString = `${tupleLabel}: ${displayString}`

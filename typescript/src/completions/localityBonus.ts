@@ -9,7 +9,7 @@ export default (entries: ts.CompletionEntry[]) => {
         // eslint-disable-next-line prefer-destructuring
         const symbol: ts.Symbol | undefined = entry['symbol']
         if (!symbol) return
-        const { valueDeclaration } = symbol
+        const { valueDeclaration = symbol.declarations?.[0] } = symbol
         if (!valueDeclaration) return
         if (valueDeclaration.getSourceFile().fileName !== sourceFile.fileName) return -1
         return valueDeclaration.pos

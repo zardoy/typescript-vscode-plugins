@@ -315,6 +315,12 @@ function Foo() {
 }
 ```
 
+`tsEssentialPlugins.methodSnippetsInsertText`:
+
+Optionally resolve insertText of all completion at suggest trigger:
+
+![method-snippets-insert-text](media/method-snippets-insert-text.png)
+
 ### Ambiguous Suggestions
 
 Some variables like `Object` or `lodash` are common to access properties as well as call directly:

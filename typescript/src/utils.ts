@@ -258,6 +258,17 @@ const wordRangeAtPos = (text: string, position: number) => {
     return text.slice(startPos + 1, endPos)
 }
 
+export const wordStartAtPos = (text: string, position: number) => {
+    const isGood = (pos: number) => {
+        return /[\w\d]/i.test(text.at(pos - 1) ?? '')
+    }
+    let startPos = position
+    while (isGood(startPos)) {
+        startPos--
+    }
+    return startPos
+}
+
 type GetIs<T> = T extends (elem: any) => elem is infer T ? T : never
 
 export const createDummySourceFile = (code: string) => {
@@ -281,3 +292,6 @@ export const patchMethod = <T, K extends keyof T>(obj: T, method: K, overriden: 
         })
     }
 }
+
+export const insertTextAfterEntry = (entryOrName: ts.CompletionEntry | string, appendText: string) =>
+    (typeof entryOrName === 'string' ? entryOrName : entryOrName.name).replace(/\$/g, '\\$') + appendText

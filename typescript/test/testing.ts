@@ -64,17 +64,16 @@ export const overrideSettings = (newOverrides: Partial<Configuration>) => {
 export const fourslashLikeTester = (contents: string, fileName = entrypoint) => {
     const [positive, _negative, numberedPositions] = fileContentsSpecialPositions(contents, fileName)
 
-    const ranges = positive.reduce(
+    const ranges = positive.reduce<number[][]>(
         (prevRanges, pos) => {
             const lastPrev = prevRanges[prevRanges.length - 1]!
             if (lastPrev.length < 2) {
                 lastPrev.push(pos)
                 return prevRanges
-            } else {
-                return [...prevRanges, [pos]]
             }
+            return [...prevRanges, [pos]]
         },
-        [[]] as number[][],
+        [[]],
     )
     return {
         completion: (marker: number | number[], matcher: CompletionMatcher, meta?) => {
@@ -127,7 +126,7 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint) => 
                     )!
                     const action = actionsGroup.actions.find(action => action.description === refactorName)!
                     const { edits } = languageService.getEditsForRefactor(fileName, {}, { pos: start, end }, actionsGroup.name, action.name, {})!
-                    const a = tsFull.textChanges.applyChanges(getCurrentFile(), edits![0]!.textChanges)
+                    const a = tsFull.textChanges.applyChanges(getCurrentFile(), edits[0]!.textChanges)
                 } else {
                     expect(appliableNames, `at marker ${mark}`).not.toContain(refactorName)
                 }
@@ -150,7 +149,7 @@ export const fileContentsSpecialPositions = (contents: string, fileName = entryp
         let mainMatch = currentMatch[1]!
         if (addOnly) mainMatch = mainMatch.slice(0, -1)
         const possiblyNum = +mainMatch
-        if (!isNaN(possiblyNum)) {
+        if (!Number.isNaN(possiblyNum)) {
             addArr[2][possiblyNum] = offset
         } else {
             addArr[mainMatch === 't' ? '0' : '1'].push(offset)

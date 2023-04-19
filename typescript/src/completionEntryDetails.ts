@@ -3,6 +3,7 @@ import constructMethodSnippet from './constructMethodSnippet'
 import { RequestResponseTypes } from './ipcTypes'
 import namespaceAutoImports from './namespaceAutoImports'
 import { GetConfig } from './types'
+import { wordStartAtPos } from './utils'
 
 export const lastResolvedCompletion = {
     value: undefined as undefined | RequestResponseTypes['getLastResolvedCompletion'],
@@ -16,7 +17,7 @@ export default function completionEntryDetails(
     { enableMethodCompletion, completionsSymbolMap }: PrevCompletionsAdditionalData,
 ): ts.CompletionEntryDetails | undefined {
     const [fileName, position, entryName, formatOptions, source, preferences, data] = inputArgs
-    lastResolvedCompletion.value = { name: entryName }
+    lastResolvedCompletion.value = { name: entryName, range: prevCompletionsMap[entryName]?.range }
     const program = languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
     if (!program || !sourceFile) return
@@ -49,6 +50,7 @@ export default function completionEntryDetails(
         prior.displayParts = [{ kind: 'text', text: detailPrepend }, ...prior.displayParts]
     }
     if (!prior) return
+    // might be incorrect: write [].entries() -> []|.entries|() -> []./*position*/e
     const nextChar = sourceFile.getFullText().slice(position, position + 1)
 
     if (enableMethodCompletion && c('enableMethodSnippets') && !['(', '.', '`'].includes(nextChar)) {
@@ -59,7 +61,12 @@ export default function completionEntryDetails(
             }
             const methodSnippet = constructMethodSnippet(languageService, sourceFile, position, symbol, c, resolveData)
             if (methodSnippet) {
-                const data = JSON.stringify({ methodSnippet, isAmbiguous: resolveData.isAmbiguous })
+                const wordStartOffset = source ? wordStartAtPos(sourceFile.getFullText(), position) : undefined
+                const data = JSON.stringify({
+                    methodSnippet,
+                    isAmbiguous: resolveData.isAmbiguous,
+                    wordStartOffset,
+                })
                 prior.documentation = [{ kind: 'text', text: `<!--tep ${data} e-->` }, ...(prior.documentation ?? [])]
             }
         }

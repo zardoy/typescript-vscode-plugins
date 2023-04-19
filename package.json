@@ -55,6 +55,10 @@
                 "command": "insertNameOfCompletion",
                 "title": "Insert Name of Completion",
                 "category": "TS Essentials"
+            },
+            {
+                "command": "copyFullType",
+                "title": "Copy Full Type"
             }
         ],
         "keybindings": [

@@ -3,19 +3,19 @@ import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 import { expandPosition } from '@zardoy/vscode-utils/build/position'
 import { getExtensionSetting, registerExtensionCommand } from 'vscode-framework'
 import { oneOf } from '@zardoy/utils'
-import { RequestOptionsTypes, RequestResponseTypes } from '../typescript/src/ipcTypes'
-import { sendCommand } from './sendCommand'
+
+export const onCompletionAcceptedOverride: { value: ((item: any) => void) | undefined } = { value: undefined }
 
 export default (tsApi: { onCompletionAccepted }) => {
     let inFlightMethodSnippetOperation: undefined | AbortController
     let justAcceptedReturnKeywordSuggestion = false
     let lastAcceptedAmbiguousMethodSnippetSuggestion: string | undefined
-    let onCompletionAcceptedOverride: ((item: any) => void) | undefined
 
     // eslint-disable-next-line complexity
     tsApi.onCompletionAccepted(async (item: vscode.CompletionItem & { document: vscode.TextDocument; tsEntry }) => {
-        if (onCompletionAcceptedOverride) {
-            onCompletionAcceptedOverride(item)
+        if (onCompletionAcceptedOverride.value) {
+            onCompletionAcceptedOverride.value(item)
+            onCompletionAcceptedOverride.value = undefined
             return
         }
 
@@ -38,10 +38,18 @@ export default (tsApi: { onCompletionAccepted }) => {
 
         if (/* snippet is by vscode or by us to ignore pos */ typeof insertText !== 'object') {
             const editor = getActiveRegularEditor()!
-            if (item.tsEntry.source) {
+
+            const documentation = typeof item.documentation === 'object' ? item.documentation.value : item.documentation
+            const dataMarker = '<!--tep '
+            if (!documentation?.startsWith(dataMarker)) return
+            const parsed = JSON.parse(documentation.slice(dataMarker.length, documentation.indexOf('e-->')))
+            const { methodSnippet: params, isAmbiguous, wordStartOffset } = parsed
+            const startPos = editor.selection.start
+            const acceptedWordStartOffset = wordStartOffset !== undefined && editor.document.getWordRangeAtPosition(startPos, /[\w\d]+/i)?.start
+            if (!oneOf(acceptedWordStartOffset, false, undefined) && wordStartOffset === editor.document.offsetAt(acceptedWordStartOffset)) {
                 await new Promise<void>(resolve => {
-                    vscode.workspace.onDidChangeTextDocument(({ document }) => {
-                        if (editor.document !== document) return
+                    vscode.workspace.onDidChangeTextDocument(({ document, contentChanges }) => {
+                        if (document !== editor.document || contentChanges.length === 0) return
                         resolve()
                     })
                 })
@@ -50,12 +58,9 @@ export default (tsApi: { onCompletionAccepted }) => {
                 })
             }
 
-            const documentation = typeof item.documentation === 'object' ? item.documentation.value : item.documentation
-            const dataMarker = '<!--tep '
-            if (!documentation?.startsWith(dataMarker)) return
-            const parsed = JSON.parse(documentation.slice(dataMarker.length, documentation.indexOf('e-->')))
-            const { methodSnippet: params, isAmbiguous } = parsed
-            if (!params) return
+            // nextChar check also duplicated in completionEntryDetails for perf, but we need to run this check again with correct position
+            const nextChar = editor.document.getText(new vscode.Range(startPos, startPos.translate(0, 1)))
+            if (!params || ['(', '.', '`'].includes(nextChar)) return
 
             if (isAmbiguous && lastAcceptedAmbiguousMethodSnippetSuggestion !== suggestionName) {
                 lastAcceptedAmbiguousMethodSnippetSuggestion = suggestionName
@@ -100,10 +105,9 @@ export default (tsApi: { onCompletionAccepted }) => {
             async (_progress, token) => {
                 const accepted = await new Promise<boolean>(resolve => {
                     token.onCancellationRequested(() => {
-                        onCompletionAcceptedOverride = undefined
                         resolve(false)
                     })
-                    onCompletionAcceptedOverride = item => {
+                    onCompletionAcceptedOverride.value = item => {
                         console.dir(item, { depth: 4 })
                         resolve(true)
                     }

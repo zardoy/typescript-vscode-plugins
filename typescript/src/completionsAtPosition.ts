@@ -26,11 +26,11 @@ import adjustAutoImports from './completions/adjustAutoImports'
 import addSourceDefinition from './completions/addSourceDefinition'
 import { sharedCompletionContext } from './completions/sharedContext'
 import displayImportedInfo from './completions/displayImportedInfo'
-import changeKindToFunction from './completions/changeKindToFunction'
 import functionPropsAndMethods from './completions/functionPropsAndMethods'
 import { getTupleSignature } from './tupleSignature'
 import stringTemplateTypeCompletions from './completions/stringTemplateType'
 import localityBonus from './completions/localityBonus'
+import functionCompletions from './completions/functionCompletions'
 
 export type PrevCompletionMap = Record<
     string,
@@ -40,6 +40,7 @@ export type PrevCompletionMap = Record<
         documentationOverride?: string | ts.SymbolDisplayPart[]
         detailPrepend?: string
         documentationAppend?: string
+        range?: [number, number]
         // textChanges?: ts.TextChange[]
     }
 >
@@ -48,7 +49,7 @@ export type PrevCompletionsAdditionalData = {
     completionsSymbolMap: Map</*entryName*/ string, Array<{ symbol: ts.Symbol; source?: string }>>
 }
 
-type GetCompletionAtPositionReturnType = {
+export type GetCompletionAtPositionReturnType = {
     completions: ts.CompletionInfo
     /** Let default getCompletionEntryDetails to know original name or let add documentation from here */
     prevCompletionsMap: PrevCompletionMap
@@ -356,9 +357,7 @@ export const getCompletionsAtPosition = (
     if (exactNode) {
         prior.entries = filterJsxElements(prior.entries, exactNode, position, languageService, c) ?? prior.entries
     }
-    if (c('experiments.changeKindToFunction')) {
-        prior.entries = changeKindToFunction(prior.entries)
-    }
+    prior.entries = functionCompletions(prior.entries) ?? prior.entries
 
     if (c('correctSorting.enable')) {
         prior.entries = prior.entries.map(({ ...entry }, index) => ({
@@ -380,6 +379,13 @@ export const getCompletionsAtPosition = (
                 },
             ])
         }
+    }
+
+    for (const entry of prior.entries) {
+        const { replacementSpan } = entry
+        if (!replacementSpan) continue
+        prevCompletionsMap[entry.name] ??= {}
+        prevCompletionsMap[entry.name]!.range = [replacementSpan.start, ts.textSpanEnd(replacementSpan)]
     }
 
     // Otherwise may crash Volar
