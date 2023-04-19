@@ -55,7 +55,10 @@ export default (tsApi: { onCompletionAccepted }) => {
             if (!documentation?.startsWith(dataMarker)) return
             const parsed = JSON.parse(documentation.slice(dataMarker.length, documentation.indexOf('e-->')))
             const { methodSnippet: params, isAmbiguous } = parsed
-            if (!params) return
+            // nextChar check also duplicated in completionEntryDetails for perf, but we need to run this check again with correct position
+            const startPos = editor.selection.start
+            const nextChar = editor.document.getText(new vscode.Range(startPos, startPos.translate(0, 1)))
+            if (!params || ['(', '.', '`'].includes(nextChar)) return
 
             if (isAmbiguous && lastAcceptedAmbiguousMethodSnippetSuggestion !== suggestionName) {
                 lastAcceptedAmbiguousMethodSnippetSuggestion = suggestionName

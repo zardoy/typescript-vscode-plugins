@@ -49,6 +49,7 @@ export default function completionEntryDetails(
         prior.displayParts = [{ kind: 'text', text: detailPrepend }, ...prior.displayParts]
     }
     if (!prior) return
+    // might be incorrect: write [].entries() -> []|.entries|() -> []./*position*/e
     const nextChar = sourceFile.getFullText().slice(position, position + 1)
 
     if (enableMethodCompletion && c('enableMethodSnippets') && !['(', '.', '`'].includes(nextChar)) {

@@ -281,4 +281,11 @@ export default () => {
             },
         )
     })
+
+    registerExtensionCommand('copyFullType', async () => {
+        const response = await sendCommand<RequestResponseTypes['getFullType']>('getFullType')
+        if (!response) return
+        const { text } = response
+        await vscode.env.clipboard.writeText(text)
+    })
 }

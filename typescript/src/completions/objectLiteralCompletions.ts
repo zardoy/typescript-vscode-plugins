@@ -66,11 +66,10 @@ export default (prior: ts.CompletionInfo): ts.CompletionEntry[] | void => {
         const insertSnippetVariant = completingStyleMap.find(([, detector]) => detector(type!, typeChecker))?.[0] ?? fallbackSnippet
         if (!insertSnippetVariant) continue
         const [insertSnippetText, insertSnippetPreview] = typeof insertSnippetVariant === 'function' ? insertSnippetVariant() : insertSnippetVariant
-        const insertText = entry.name + insertSnippetText
+        const insertText = entry.name.replace(/\$/g, '\\$') + insertSnippetText
         const index = entries.indexOf(entry)
         entries.splice(index + (keepOriginal === 'before' ? 1 : 0), keepOriginal === 'remove' ? 1 : 0, {
             ...entry,
-            name: entry.name.replace(/\$/g, '\\$'),
             // todo setting incompatible!!!
             sortText: entry.sortText,
             labelDetails: {
