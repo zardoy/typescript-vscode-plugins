@@ -33,7 +33,7 @@ export default (entries: ts.CompletionEntry[]) => {
             }
             if (methodSnippetInsertTextMode === 'only-local' && entry.source) return
             if (!symbol) return
-            const { valueDeclaration } = symbol
+            const { valueDeclaration = symbol.declarations?.[0] } = symbol
             if (!valueDeclaration) return
 
             // const dateNow = Date.now()
