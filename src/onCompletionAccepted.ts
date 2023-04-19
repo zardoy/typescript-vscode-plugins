@@ -38,17 +38,6 @@ export default (tsApi: { onCompletionAccepted }) => {
 
         if (/* snippet is by vscode or by us to ignore pos */ typeof insertText !== 'object') {
             const editor = getActiveRegularEditor()!
-            if (item.tsEntry.source) {
-                await new Promise<void>(resolve => {
-                    vscode.workspace.onDidChangeTextDocument(({ document }) => {
-                        if (editor.document !== document) return
-                        resolve()
-                    })
-                })
-                await new Promise(resolve => {
-                    setTimeout(resolve, 0)
-                })
-            }
 
             const documentation = typeof item.documentation === 'object' ? item.documentation.value : item.documentation
             const dataMarker = '<!--tep '
