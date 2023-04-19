@@ -254,6 +254,15 @@ export default (
     if (specialCommand === 'getLastResolvedCompletion') {
         return lastResolvedCompletion.value
     }
+    if (specialCommand === 'getFullType') {
+        const node = findChildContainingExactPosition(sourceFile, position)
+        if (!node) return
+        const checker = languageService.getProgram()!.getTypeChecker()!
+        const type = checker.getTypeAtLocation(node)
+        return {
+            text: checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.NoTypeReduction),
+        }
+    }
 
     return null
 }

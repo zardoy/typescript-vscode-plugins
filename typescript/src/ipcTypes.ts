@@ -1,6 +1,6 @@
 // should-not contain other typescript/* imports that use globals as is imported in extension code (src/)
 
-export const passthroughExposedApiCommands = ['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition'] as const
+export const passthroughExposedApiCommands = ['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition', 'getFullType'] as const
 
 export const triggerCharacterCommands = [
     ...passthroughExposedApiCommands,
@@ -81,6 +81,9 @@ export type RequestResponseTypes = {
     getLastResolvedCompletion: {
         name: string
         range?: TsRange
+    }
+    getFullType: {
+        text: string
     }
 }
 
