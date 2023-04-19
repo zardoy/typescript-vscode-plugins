@@ -359,6 +359,15 @@ export type Configuration = {
      */
     enableMethodSnippets: boolean
     /**
+     * Wether add insert text and detail to every function completion on each suggest trigger (instead of expanding method snippet after completion accept).
+     * This way you can enable support for method snippets in Vue files.
+     * `methodSnippets.replaceArguments` isn't supported for now.
+     * This is not enabled by default as it might be really slow in some cases.
+     * Recommended to try!
+     * @default disable
+     */
+    methodSnippetsInsertText: 'disable' | 'only-local' | 'all'
+    /**
      * ```ts
      * const example = ({ a }, b?, c = 5, ...d) => { }
      *
@@ -541,6 +550,12 @@ export type Configuration = {
      */
     'experiments.changeKindToFunction': boolean
     /**
+     * Use workaround method for inserting name of TypeScript suggestion.
+     * If you move to next suggestion and then to previous, and then run *insert name of completion* via keybinding, name of **last resolved** completion will be inserted, so you might prefer to enable this setting. Also it makes this feature work in Vue.
+     * @default false
+     */
+    'experiments.enableInsertNameOfSuggestionFix': boolean
+    /**
      * Map *symbol - array of modules* to change sorting of imports - first available takes precedence in auto import code fixes (+ import all action)
      *
      * Examples:
@@ -605,12 +620,6 @@ export type Configuration = {
               typeAlias: string
               interface: string
           }
-    /**
-     * Use workaround method for inserting name of TypeScript suggestion.
-     * If you move to next suggestion and then to previous, and then run *insert name of completion* via keybinding, name of **last resolved** completion will be inserted, so you might prefer to enable this setting. Also it makes this feature work in Vue.
-     * @default false
-     */
-    'experimental.enableInsertNameOfSuggestionFix': boolean
 }
 
 // scrapped using search editor. config: caseInsesetive, context lines: 0, regex: const fix\w+ = "[^ ]+"

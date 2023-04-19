@@ -26,11 +26,11 @@ import adjustAutoImports from './completions/adjustAutoImports'
 import addSourceDefinition from './completions/addSourceDefinition'
 import { sharedCompletionContext } from './completions/sharedContext'
 import displayImportedInfo from './completions/displayImportedInfo'
-import changeKindToFunction from './completions/changeKindToFunction'
 import functionPropsAndMethods from './completions/functionPropsAndMethods'
 import { getTupleSignature } from './tupleSignature'
 import stringTemplateTypeCompletions from './completions/stringTemplateType'
 import localityBonus from './completions/localityBonus'
+import functionCompletions from './completions/functionCompletions'
 
 export type PrevCompletionMap = Record<
     string,
@@ -357,9 +357,7 @@ export const getCompletionsAtPosition = (
     if (exactNode) {
         prior.entries = filterJsxElements(prior.entries, exactNode, position, languageService, c) ?? prior.entries
     }
-    if (c('experiments.changeKindToFunction')) {
-        prior.entries = changeKindToFunction(prior.entries)
-    }
+    prior.entries = functionCompletions(prior.entries) ?? prior.entries
 
     if (c('correctSorting.enable')) {
         prior.entries = prior.entries.map(({ ...entry }, index) => ({

@@ -281,3 +281,6 @@ export const patchMethod = <T, K extends keyof T>(obj: T, method: K, overriden: 
         })
     }
 }
+
+export const insertTextAfterEntry = (entryOrName: ts.CompletionEntry | string, appendText: string) =>
+    (typeof entryOrName === 'string' ? entryOrName : entryOrName.name).replace(/\$/g, '\\$') + appendText

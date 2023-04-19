@@ -1,4 +1,4 @@
-import { getFullTypeChecker, isTs5 } from '../utils'
+import { getFullTypeChecker, insertTextAfterEntry, isTs5 } from '../utils'
 import { sharedCompletionContext } from './sharedContext'
 
 export default (prior: ts.CompletionInfo): ts.CompletionEntry[] | void => {
@@ -66,7 +66,7 @@ export default (prior: ts.CompletionInfo): ts.CompletionEntry[] | void => {
         const insertSnippetVariant = completingStyleMap.find(([, detector]) => detector(type!, typeChecker))?.[0] ?? fallbackSnippet
         if (!insertSnippetVariant) continue
         const [insertSnippetText, insertSnippetPreview] = typeof insertSnippetVariant === 'function' ? insertSnippetVariant() : insertSnippetVariant
-        const insertText = entry.name.replace(/\$/g, '\\$') + insertSnippetText
+        const insertText = insertTextAfterEntry(entry, insertSnippetText)
         const index = entries.indexOf(entry)
         entries.splice(index + (keepOriginal === 'before' ? 1 : 0), keepOriginal === 'remove' ? 1 : 0, {
             ...entry,
