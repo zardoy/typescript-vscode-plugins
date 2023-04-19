@@ -534,6 +534,17 @@ test('Additional types suggestions', () => {
     })
 })
 
+test('Tuple signature', () => {
+    const tester = fourslashLikeTester(/* ts */ `
+        const [/*1*/] = [] as [a: number]
+    `)
+    tester.completion(1, {
+        exact: {
+            names: ['a'],
+        },
+    })
+})
+
 test('Object Literal Completions', () => {
     const [_positivePositions, _negativePositions, numPositions] = fileContentsSpecialPositions(/* ts */ `
     interface Options {
@@ -684,7 +695,10 @@ test('In Keyword Completions', () => {
     const completion = pickObj(getCompletionsAtPosition(pos!, { shouldHave: true })!, 'entriesSorted', 'prevCompletionsMap')
     // this test is bad case of demonstrating how it can be used with string in union (IT SHOULDNT!)
     // but it is here to ensure this is no previous crash issue, indexes are correct when used only with objects
-    expect(completion).toMatchInlineSnapshot(`
+    expect({
+        ...completion,
+        prevCompletionsMap: Object.entries(completion.prevCompletionsMap).map(([key, v]) => [key, (v.documentationOverride as string).replaceAll('\n', '  ')]),
+    }).toMatchInlineSnapshot(`
       {
         "entriesSorted": [
           {
@@ -727,19 +741,20 @@ test('In Keyword Completions', () => {
             },
           },
         ],
-        "prevCompletionsMap": {
-          "a": {
-            "documentationOverride": "2: boolean
-
-      3: number",
-          },
-          "☆b": {
-            "documentationOverride": "2: string",
-          },
-          "☆c": {
-            "documentationOverride": "3: number",
-          },
-        },
+        "prevCompletionsMap": [
+          [
+            "a",
+            "2: boolean    3: number",
+          ],
+          [
+            "☆b",
+            "2: string",
+          ],
+          [
+            "☆c",
+            "3: number",
+          ],
+        ],
       }
     `)
 })

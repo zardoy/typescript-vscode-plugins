@@ -1,5 +1,6 @@
+/* eslint-disable import/first */
 beforeAll(() => {
-    //@ts-ignore plugin expect it to set globallly
+    //@ts-expect-error plugin expect it to set globallly
     globalThis.__WEB__ = false
 })
 
@@ -15,5 +16,6 @@ export const settingsOverride: Partial<Configuration> = {
     'arrayMethodsSnippets.enable': true,
     'codeActions.extractTypeInferName': true,
     'methodSnippets.skip': 'no-skip',
+    tupleHelpSignature: true,
 }
 export const defaultConfigFunc = await getDefaultConfigFunc(settingsOverride)
