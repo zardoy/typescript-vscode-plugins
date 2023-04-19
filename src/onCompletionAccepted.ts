@@ -43,9 +43,22 @@ export default (tsApi: { onCompletionAccepted }) => {
             const dataMarker = '<!--tep '
             if (!documentation?.startsWith(dataMarker)) return
             const parsed = JSON.parse(documentation.slice(dataMarker.length, documentation.indexOf('e-->')))
-            const { methodSnippet: params, isAmbiguous } = parsed
-            // nextChar check also duplicated in completionEntryDetails for perf, but we need to run this check again with correct position
+            const { methodSnippet: params, isAmbiguous, wordStartOffset } = parsed
             const startPos = editor.selection.start
+            const acceptedWordStartOffset = wordStartOffset !== undefined && editor.document.getWordRangeAtPosition(startPos, /[\w\d]+/i)?.start
+            if (!oneOf(acceptedWordStartOffset, false, undefined) && wordStartOffset === editor.document.offsetAt(acceptedWordStartOffset)) {
+                await new Promise<void>(resolve => {
+                    vscode.workspace.onDidChangeTextDocument(({ document, contentChanges }) => {
+                        if (document !== editor.document || contentChanges.length === 0) return
+                        resolve()
+                    })
+                })
+                await new Promise(resolve => {
+                    setTimeout(resolve, 0)
+                })
+            }
+
+            // nextChar check also duplicated in completionEntryDetails for perf, but we need to run this check again with correct position
             const nextChar = editor.document.getText(new vscode.Range(startPos, startPos.translate(0, 1)))
             if (!params || ['(', '.', '`'].includes(nextChar)) return
 
