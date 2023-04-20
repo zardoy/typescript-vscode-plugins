@@ -19,7 +19,9 @@ export default (
     if (!containerNode || isTypeNode(containerNode)) return
 
     const checker = languageService.getProgram()!.getTypeChecker()!
-    const type = symbol ? checker.getTypeOfSymbol(symbol) : checker.getTypeAtLocation(containerNode)
+    let type = symbol ? checker.getTypeOfSymbol(symbol) : checker.getTypeAtLocation(containerNode)
+    // give another chance
+    if (symbol && type['intrinsicName'] === 'error') type = checker.getTypeOfSymbolAtLocation(symbol, containerNode)
 
     if (ts.isIdentifier(containerNode)) containerNode = containerNode.parent
     if (ts.isPropertyAccessExpression(containerNode)) containerNode = containerNode.parent

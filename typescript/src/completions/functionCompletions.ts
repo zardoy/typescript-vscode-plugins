@@ -7,7 +7,8 @@ export default (entries: ts.CompletionEntry[]) => {
     const { languageService, c, sourceFile, position } = sharedCompletionContext
 
     const methodSnippetInsertTextMode = c('methodSnippetsInsertText')
-    const enableResolvingInsertText = c('enableMethodSnippets') && methodSnippetInsertTextMode !== 'disable'
+    const nextChar = sourceFile.getFullText().slice(position, position + 1)
+    const enableResolvingInsertText = !['(', '.', '`'].includes(nextChar) && c('enableMethodSnippets') && methodSnippetInsertTextMode !== 'disable'
     const changeKindToFunction = c('experiments.changeKindToFunction')
 
     if (!enableResolvingInsertText && !changeKindToFunction) return
