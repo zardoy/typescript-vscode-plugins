@@ -26,7 +26,9 @@ export default (
     if (ts.isIdentifier(containerNode)) containerNode = containerNode.parent
     if (ts.isPropertyAccessExpression(containerNode)) containerNode = containerNode.parent
 
-    const isNewExpression = ts.isNewExpression(containerNode)
+    const isNewExpression =
+        ts.isNewExpression(containerNode) &&
+        ts.textSpanIntersectsWithPosition(ts.createTextSpanFromBounds(containerNode.expression.pos, containerNode.expression.end), position)
     if (!isNewExpression && (type.getProperties().length > 0 || type.getStringIndexType() || type.getNumberIndexType())) {
         resolveData.isAmbiguous = true
     }
@@ -36,7 +38,7 @@ export default (
     if (signatures.length === 0) return
     const signature = signatures[0]!
     // probably need to remove check as class can be instantiated inside another class, and don't really see a reason for this check
-    if (isNewExpression && hasPrivateOrProtectedModifier((signature.getDeclaration() as ts.ConstructorDeclaration).modifiers)) return
+    if (isNewExpression && hasPrivateOrProtectedModifier((signature.getDeclaration() as ts.ConstructorDeclaration | undefined)?.modifiers)) return
     if (signatures.length > 1 && c('methodSnippets.multipleSignatures') === 'empty') {
         return ['']
     }

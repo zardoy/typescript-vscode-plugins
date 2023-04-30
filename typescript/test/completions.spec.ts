@@ -137,6 +137,9 @@ describe('Method snippets', () => {
             function foo(this: {}) {}
             foo/*3*/
 
+            // new class
+            new Something(foo/*301*/)
+
             // contextual type
             declare const bar: {
                 b: (a) => {}
@@ -173,6 +176,7 @@ describe('Method snippets', () => {
         compareMethodSnippetAgainstMarker(markers, 1, null)
         compareMethodSnippetAgainstMarker(markers, 2, '()')
         compareMethodSnippetAgainstMarker(markers, 3, '(a)')
+        compareMethodSnippetAgainstMarker(markers, 301, '(a)')
         compareMethodSnippetAgainstMarker(markers, 4, '($b)')
         compareMethodSnippetAgainstMarker(markers, 5, '(a, b, { d, e: {} }, ...c)')
         compareMethodSnippetAgainstMarker(markers, 6, '(a, b, c)')
@@ -188,13 +192,17 @@ describe('Method snippets', () => {
                 protected constructor(a) {}
             }
 
+            class C {}
+
             new A/*1*/
             // not sure...
             new B/*2*/
+            new C/*3*/
         `)
 
         compareMethodSnippetAgainstMarker(markers, 1, ['a'])
         compareMethodSnippetAgainstMarker(markers, 2, null)
+        compareMethodSnippetAgainstMarker(markers, 3, [])
     })
 
     test('Skip trailing void', () => {
