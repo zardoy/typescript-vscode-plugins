@@ -2,10 +2,11 @@
 // will be required from ./node_modules/typescript-essential-plugins/index.js
 const originalPluginFactory = require('typescript-essential-plugins')
 
-const plugin = (context => {
+const plugin = ((context, { typescript: tsModule } = {}) => {
+    if (!context) throw new Error('Not recieve context')
     const { typescript } = context
-    let configurationHost = context.configurationHost!
-    configurationHost ??= context['env'].configurationHost
+    let configurationHost = context.env
+    if (context['configurationHost']!) configurationHost = context['configurationHost']!
     const patchConfig = config => {
         return {
             ...config,
@@ -17,13 +18,14 @@ const plugin = (context => {
     }
 
     if (typescript && configurationHost) {
+        const ts = tsModule ?? typescript['module']
         const plugin = originalPluginFactory({
-            typescript: typescript.module,
+            typescript: ts,
         })
         // todo support vue-specific settings
         const originalLsMethods = { ...typescript.languageService }
 
-        void configurationHost.getConfiguration<any>('tsEssentialPlugins').then(_configuration => {
+        void configurationHost.getConfiguration!<any>('tsEssentialPlugins').then(_configuration => {
             // if (typescript.languageService[thisPluginMarker]) return
             const config = patchConfig(_configuration)
             if (!config.enablePlugin) return
@@ -39,8 +41,8 @@ const plugin = (context => {
             }
         })
 
-        configurationHost.onDidChangeConfiguration(() => {
-            void configurationHost.getConfiguration<any>('tsEssentialPlugins').then(config => {
+        configurationHost.onDidChangeConfiguration!(() => {
+            void configurationHost.getConfiguration!<any>('tsEssentialPlugins').then(config => {
                 config = patchConfig(config)
                 plugin.onConfigurationChanged?.(config)
                 // temporary workaround
@@ -54,17 +56,17 @@ const plugin = (context => {
         console.warn('Failed to activate tsEssentialPlugins, because of no typescript or configurationHost context')
     }
     return {}
-}) satisfies import('@volar/language-service').LanguageServicePlugin
+}) satisfies import('@volar/language-service').Service
 
 module.exports = {
     plugins: [
-        c => {
+        (...args) => {
             try {
-                return plugin(c)
+                return plugin(...(args as [any]))
             } catch (err) {
                 console.log('TS Essentials error', err)
                 return {}
             }
         },
     ],
-}
+} /*  satisfies import('@volar/language-service').ServiceContext */

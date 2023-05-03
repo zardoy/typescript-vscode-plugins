@@ -138,7 +138,7 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint) => 
 export const fileContentsSpecialPositions = (contents: string, fileName = entrypoint) => {
     const cursorPositions: [number[], number[], number[]] = [[], [], []]
     const cursorPositionsOnly: [number[], number[], number[]] = [[], [], []]
-    const replacement = /\/\*([tf\d]o?)\*\//g
+    const replacement = /\/\*((t|f|\d+)o?)\*\//g
     let currentMatch: RegExpExecArray | null | undefined
     while ((currentMatch = replacement.exec(contents))) {
         const offset = currentMatch.index

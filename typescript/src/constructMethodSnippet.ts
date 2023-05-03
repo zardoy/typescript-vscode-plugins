@@ -19,12 +19,16 @@ export default (
     if (!containerNode || isTypeNode(containerNode)) return
 
     const checker = languageService.getProgram()!.getTypeChecker()!
-    const type = symbol ? checker.getTypeOfSymbol(symbol) : checker.getTypeAtLocation(containerNode)
+    let type = symbol ? checker.getTypeOfSymbol(symbol) : checker.getTypeAtLocation(containerNode)
+    // give another chance
+    if (symbol && type['intrinsicName'] === 'error') type = checker.getTypeOfSymbolAtLocation(symbol, containerNode)
 
     if (ts.isIdentifier(containerNode)) containerNode = containerNode.parent
     if (ts.isPropertyAccessExpression(containerNode)) containerNode = containerNode.parent
 
-    const isNewExpression = ts.isNewExpression(containerNode)
+    const isNewExpression =
+        ts.isNewExpression(containerNode) &&
+        ts.textSpanIntersectsWithPosition(ts.createTextSpanFromBounds(containerNode.expression.pos, containerNode.expression.end), position)
     if (!isNewExpression && (type.getProperties().length > 0 || type.getStringIndexType() || type.getNumberIndexType())) {
         resolveData.isAmbiguous = true
     }
@@ -34,7 +38,7 @@ export default (
     if (signatures.length === 0) return
     const signature = signatures[0]!
     // probably need to remove check as class can be instantiated inside another class, and don't really see a reason for this check
-    if (isNewExpression && hasPrivateOrProtectedModifier((signature.getDeclaration() as ts.ConstructorDeclaration).modifiers)) return
+    if (isNewExpression && hasPrivateOrProtectedModifier((signature.getDeclaration() as ts.ConstructorDeclaration | undefined)?.modifiers)) return
     if (signatures.length > 1 && c('methodSnippets.multipleSignatures') === 'empty') {
         return ['']
     }
