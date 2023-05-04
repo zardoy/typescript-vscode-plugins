@@ -6,8 +6,8 @@ import getCustomCodeActions, { REFACTORS_CATEGORY } from './getCodeActions'
 import improveBuiltin from './improveBuiltin'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
-    proxy.getApplicableRefactors = (fileName, positionOrRange, preferences) => {
-        let prior = languageService.getApplicableRefactors(fileName, positionOrRange, preferences)
+    proxy.getApplicableRefactors = (fileName, positionOrRange, preferences, ...args) => {
+        let prior = languageService.getApplicableRefactors(fileName, positionOrRange, preferences, ...args)
 
         previousGetCodeActionsResult.value = compact(
             prior.flatMap(refactor => {
@@ -34,7 +34,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         return prior
     }
 
-    proxy.getEditsForRefactor = (fileName, formatOptions, positionOrRange, refactorName, actionName, preferences) => {
+    proxy.getEditsForRefactor = (fileName, formatOptions, positionOrRange, refactorName, actionName, preferences, ...args) => {
         const category = refactorName
         if (category === REFACTORS_CATEGORY) {
             const program = languageService.getProgram()
@@ -43,10 +43,19 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             return edit
         }
         if (refactorName === 'Extract Symbol' && actionName.startsWith('function_scope')) {
-            const handledResult = handleFunctionRefactorEdits(actionName, languageService, fileName, formatOptions, positionOrRange, refactorName, preferences)
+            const handledResult = handleFunctionRefactorEdits(
+                actionName,
+                languageService,
+                fileName,
+                formatOptions,
+                positionOrRange,
+                refactorName,
+                preferences,
+                ...args,
+            )
             if (handledResult) return handledResult
         }
-        const prior = languageService.getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences)
+        const prior = languageService.getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences, ...args)
         if (!prior) return
         return improveBuiltin(fileName, refactorName, actionName, languageService, c, prior) ?? prior
     }
