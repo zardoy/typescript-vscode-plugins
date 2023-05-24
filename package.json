@@ -87,6 +87,7 @@
     ],
     "publisher": "zardoy",
     "private": true,
+    "homepage": "https://ts-plugin.zardoy.com/",
     "keywords": [
         "ts",
         "javascript",

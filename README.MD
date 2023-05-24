@@ -16,6 +16,8 @@ TOC:
 - [Contributed Code Actions](#contributed-code-actions)
 - [Even Even More](#even-even-more)
 
+> *Note* Visit website for list of recommended settings: <https://ts-plugin.zardoy.com/>
+
 ## Top Features
 
 > Note: With this plugin React experience hits different! (see below)
