@@ -3,6 +3,7 @@ import { compact } from '@zardoy/utils'
 import { getExtensionSetting, registerExtensionCommand } from 'vscode-framework'
 import { EmmetResult } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
+import { Configuration } from './configurationType'
 
 export const registerEmmet = async () => {
     if (process.env.PLATFORM !== 'web') {
@@ -92,8 +93,12 @@ export const registerEmmet = async () => {
                 void vscode.window.showInformationMessage(`Added to ${addExcludeLangs.join(',')} emmet.excludeLanguages`)
             }
 
-            await vscode.workspace.getConfiguration(process.env.IDS_PREFIX).update('jsxEmmet', true, vscode.ConfigurationTarget.Global)
-            await vscode.workspace.getConfiguration(process.env.IDS_PREFIX).update('jsxPseudoEmmet', false, vscode.ConfigurationTarget.Global)
+            await vscode.workspace
+                .getConfiguration(process.env.IDS_PREFIX)
+                .update('jsxEmmet.enable' satisfies keyof Configuration, true, vscode.ConfigurationTarget.Global)
+            await vscode.workspace
+                .getConfiguration(process.env.IDS_PREFIX)
+                .update('jsxPseudoEmmet.enable' satisfies keyof Configuration, false, vscode.ConfigurationTarget.Global)
         })
 
         // TODO: select wrap, matching, rename tag
