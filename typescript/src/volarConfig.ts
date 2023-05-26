@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 
-import type { Configuration } from './types'
 import { compact } from '@zardoy/utils'
 import { get } from 'lodash'
+import type { Configuration } from './types'
 
 // will be required from ./node_modules/typescript-essential-plugins/index.js
 const originalPluginFactory = require('typescript-essential-plugins')
