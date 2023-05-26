@@ -13,8 +13,7 @@
             },
             {
                 "command": "removeFunctionArgumentsTypesInSelection",
-                "title": "Remove Function Arguments Types in Selection",
-                "category": "TS Essentials"
+                "title": "Remove Function Arguments Types in Selection"
             },
             {
                 "command": "inspectAcceptedCompletion",
@@ -38,27 +37,27 @@
             },
             {
                 "command": "pickAndInsertFunctionArguments",
-                "title": "Pick and Insert Function Arguments",
-                "category": "TS Essentials"
+                "title": "Pick and Insert Function Arguments"
             },
             {
                 "command": "goToNodeBySyntaxKind",
-                "title": "Go to Node by Syntax Kind",
-                "category": "TS Essentials"
+                "title": "Go to Node by Syntax Kind"
             },
             {
                 "command": "goToNodeBySyntaxKindWithinSelection",
-                "title": "Go to Node by Syntax Kind Within Selection",
-                "category": "TS Essentials"
+                "title": "Go to Node by Syntax Kind Within Selection"
             },
             {
                 "command": "insertNameOfCompletion",
-                "title": "Insert Name of Completion",
-                "category": "TS Essentials"
+                "title": "Insert Name of Completion"
             },
             {
                 "command": "copyFullType",
                 "title": "Copy Full Type"
+            },
+            {
+                "command": "pasteCodeWithImports",
+                "title": "Paste Code with Imports"
             }
         ],
         "keybindings": [
@@ -129,7 +128,7 @@
         "tsm": "^2.3.0",
         "type-fest": "^2.13.1",
         "typed-jsonfile": "^0.2.1",
-        "typescript": "^5.0.2",
+        "typescript": "5.1.1-rc",
         "vite": "^4.1.1",
         "vitest": "^0.26.0",
         "vitest-environment-ts-plugin": "./vitest-environment-ts-plugin",
@@ -147,7 +146,7 @@
         "@types/mocha": "^9.1.1",
         "@types/pluralize": "^0.0.29",
         "@volar/language-server": "1.3.0-alpha.3",
-        "@volar/language-service": "1.5.0",
+        "@volar/language-service": "1.6.9",
         "@volar/vue-language-core": "^1.2.0-patch.2",
         "@vscode/emmet-helper": "^2.8.4",
         "@vscode/test-electron": "^2.1.5",
