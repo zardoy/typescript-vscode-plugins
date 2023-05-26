@@ -1,6 +1,7 @@
 import { GetConfig } from '../types'
+import { getFullTypeChecker } from '../utils'
 
-const reactTypesPath = 'node_modules/@types/react/index.d.ts'
+const reactTypesPath = 'node_modules/@types/react/'
 
 const symbolCache = new Map<string, boolean>()
 
@@ -53,24 +54,6 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
         timings[`${name}Count`] ??= 0
         timings[`${name}Count`]++
     }
-    const getIsJsxComponentSignature = (signature: ts.Signature) => {
-        let returnType: ts.Type | undefined = signature.getReturnType()
-        if (!returnType) return
-        // todo setting to allow any!
-        if (returnType.flags & ts.TypeFlags.Any) return false
-        returnType = getPossiblyJsxType(returnType)
-        if (!returnType) return false
-        startMark()
-        // todo(perf) this seems to be taking a lot of time (mui test 180ms)
-        const typeString = typeChecker.typeToString(returnType)
-        addMark('stringType')
-        // todo-low resolve indentifier instead
-        // or compare node name from decl (invest perf)
-        if (['Element', 'ReactElement'].every(s => !typeString.startsWith(s))) return
-        const declFile = returnType.getSymbol()?.declarations?.[0]?.getSourceFile().fileName
-        if (!declFile?.endsWith(reactTypesPath)) return
-        return true
-    }
     const getIsEntryReactComponent = (entry: ts.CompletionEntry) => {
         // todo add more checks from ref https://github.com/microsoft/TypeScript/blob/e4816ed44cf9bcfe7cebb997b1f44cdb5564dac4/src/compiler/checker.ts#L30030
         // todo support classes
@@ -112,7 +95,7 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
         // startMark()
         const signatures = typeChecker.getSignaturesOfType(entryType, ts.SignatureKind.Call)
         // addMark('signatures')
-        const result = signatures.length > 0 && signatures.every(signature => getIsJsxComponentSignature(signature))
+        const result = isJsxElement(typeChecker, signatures, entryType)
         if (shouldBeCached) symbolCache.set(symbolSerialized, result)
         return result
     }
@@ -162,16 +145,30 @@ const isJsxOpeningElem = (position: number, node: ts.Node) => {
     return false
 }
 
-const getReactElementType = (program: ts.Program) => {
-    const reactDeclSource = program.getSourceFiles().find(name => name.fileName.endsWith(reactTypesPath))
-    const namespace = reactDeclSource && ts.forEachChild(reactDeclSource, s => ts.isModuleDeclaration(s) && s.name.text === 'React' && s)
-    if (!namespace || !namespace.body) return
-    return ts.forEachChild(namespace.body, node => {
-        if (ts.isInterfaceDeclaration(node) && node.name.text === 'ReactElement') {
-            return node
-        }
-        return undefined
-    })
+const isJsxElement = (typeChecker: ts.TypeChecker, signatures: readonly ts.Signature[], type: ts.Type) => {
+    if (signatures.length > 0 && signatures.every(signature => getIsJsxComponentSignature(typeChecker, signature))) return true
+    // allow pattern: const Component = condition ? 'div' : 'a'
+    if (type.isUnion() && type.types.every(type => type.isStringLiteral())) return true
+    return false
+}
+
+const getIsJsxComponentSignature = (typeChecker: ts.TypeChecker, signature: ts.Signature) => {
+    let returnType: ts.Type | undefined = signature.getReturnType()
+    if (!returnType) return
+    // todo setting to allow any
+    if (returnType.flags & ts.TypeFlags.Any) return false
+    returnType = getPossiblyJsxType(returnType)
+    if (!returnType) return false
+    // startMark()
+    // todo(perf) this seems to be taking a lot of time (mui test 180ms)
+    const typeString = typeChecker.typeToString(returnType)
+    // addMark('stringType')
+    // todo-low resolve indentifier instead
+    // or compare node name from decl (invest perf)
+    if (['Element', 'ReactElement'].every(s => !typeString.startsWith(s))) return
+    const declFile = returnType.getSymbol()?.declarations?.[0]?.getSourceFile().fileName
+    if (!declFile?.includes(reactTypesPath)) return
+    return true
 }
 
 const getPossiblyJsxType = (type: ts.Type) => {
@@ -187,4 +184,38 @@ const getPossiblyJsxType = (type: ts.Type) => {
         }
     }
     return type.flags & ts.TypeFlags.Object ? type : undefined
+}
+
+const getGlobalJsxElementType = (program: ts.Program) => {
+    const checker = getFullTypeChecker(program.getTypeChecker())
+    const globalJsxNamespace = checker.resolveName('JSX', undefined, ts.SymbolFlags.Namespace, false)
+    if (!globalJsxNamespace) return
+    const exportsSymbols = checker.getExportsOfModule(globalJsxNamespace)
+    const symbolTable = tsFull.createSymbolTable(exportsSymbols)
+    const elementSymbol = getSymbol(checker, symbolTable, 'Element', ts.SymbolFlags.Type)
+    if (!elementSymbol) return
+    return checker.getDeclaredTypeOfSymbol(elementSymbol)
+}
+
+function getSymbol(
+    checker: import('typescript-full').TypeChecker,
+    symbols: import('typescript-full').SymbolTable,
+    name: string,
+    meaning: ts.SymbolFlags,
+): import('typescript-full').Symbol | undefined {
+    if (meaning) {
+        const symbol = checker.getMergedSymbol(symbols.get(name as ts.__String)!)
+        if (symbol) {
+            if (symbol.flags & meaning) {
+                return symbol
+            }
+            if (symbol.flags & ts.SymbolFlags.Alias) {
+                const target = checker.getAliasedSymbol(symbol)
+                if (checker.isUnknownSymbol(target) || target.flags & meaning) {
+                    return symbol
+                }
+            }
+        }
+    }
+    return undefined
 }
