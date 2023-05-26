@@ -43,16 +43,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             return edit
         }
         if (refactorName === 'Extract Symbol' && actionName.startsWith('function_scope')) {
-            const handledResult = handleFunctionRefactorEdits(
-                actionName,
-                languageService,
-                fileName,
-                formatOptions,
-                positionOrRange,
-                refactorName,
-                preferences,
-                ...args,
-            )
+            const handledResult = handleFunctionRefactorEdits(actionName, languageService, fileName, formatOptions, positionOrRange, refactorName, preferences)
             if (handledResult) return handledResult
         }
         const prior = languageService.getEditsForRefactor(fileName, formatOptions, positionOrRange, refactorName, actionName, preferences, ...args)
