@@ -65,4 +65,14 @@ module.exports = defineConfig({
         web: true,
         desktop: true,
     },
+    extendPropsGenerators: [
+        config => {
+            //@ts-ignore
+            config.generatedManifest.contributes.commands = config.generatedManifest.contributes.commands.map(({ ...args }) => ({
+                ...args,
+                category: args.category === 'TypeScript Essential Plugins' ? 'TS Essentials' : args.category,
+            }))
+            return config.generatedManifest
+        },
+    ],
 })

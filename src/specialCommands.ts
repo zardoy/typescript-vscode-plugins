@@ -243,7 +243,7 @@ export default () => {
     registerExtensionCommand('insertNameOfCompletion', async (_, { insertMode } = {}) => {
         const editor = vscode.window.activeTextEditor
         if (!editor) return
-        if (!getExtensionSetting('experiments.enableInsertNameOfSuggestionFix')) {
+        if (!getExtensionSetting('experiments.enableInsertNameOfSuggestionFix') && editor.document.languageId !== 'vue') {
             const result = await sendCommand<RequestResponseTypes['getLastResolvedCompletion']>('getLastResolvedCompletion')
             if (!result) return
             const position = editor.selection.active
@@ -287,5 +287,11 @@ export default () => {
         if (!response) return
         const { text } = response
         await vscode.env.clipboard.writeText(text)
+    })
+
+    registerExtensionCommand('pasteCodeWithImports', async () => {
+        const clipboard = await vscode.env.clipboard.readText()
+        const lines = clipboard.split('\n')
+        const lastImportLineIndex = lines.findIndex(line => line !== 'import')
     })
 }

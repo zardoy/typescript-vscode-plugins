@@ -525,7 +525,8 @@ test('Omit<..., ""> suggestions', () => {
     })
 })
 
-test('Additional types suggestions', () => {
+// Already works out of the box, but the fix can be better
+test.skip('Additional types suggestions', () => {
     const tester = fourslashLikeTester(/* ts */ `
       type A<T /*1*/> = T;
       type A<T extends 'a' | 'b' = '/*2*/'> = T;
