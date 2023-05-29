@@ -351,7 +351,7 @@ export const getCompletionsAtPosition = (
         })
     }
 
-    if (prior.isGlobalCompletion) {
+    if (!prior.isMemberCompletion) {
         prior.entries = markOrRemoveGlobalCompletions(prior.entries, position, languageService, c) ?? prior.entries
     }
     if (exactNode) {
