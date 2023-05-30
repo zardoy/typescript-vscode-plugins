@@ -5,7 +5,23 @@ import { findChildContainingExactPosition } from './utils'
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
     proxy.getDefinitionAndBoundSpan = (fileName, position) => {
         const prior = languageService.getDefinitionAndBoundSpan(fileName, position)
-        if (!prior) {
+
+        if (c('removeModuleFileDefinitions')) {
+            prior.definitions = prior.definitions?.filter(def => {
+                if (
+                    def.kind === ts.ScriptElementKind.moduleElement &&
+                    def.name.slice(1, -1).startsWith('*.') &&
+                    def.containerKind === undefined &&
+                    (def as import('typescript-full').DefinitionInfo).isAmbient
+                ) {
+                    return false
+                }
+                return true
+            })
+        }
+
+        // Definition fallbacks
+        if (!prior || prior.definitions.length === 0) {
             const program = languageService.getProgram()!
             const sourceFile = program.getSourceFile(fileName)!
             const node = findChildContainingExactPosition(sourceFile, position)
@@ -142,20 +158,6 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         }
         if (c('removeVueComponentsOptionDefinition') && prior.definitions) {
             prior.definitions = prior.definitions.filter(definition => definition.containerName !== '__VLS_componentsOption')
-        }
-
-        if (c('removeModuleFileDefinitions')) {
-            prior.definitions = prior.definitions?.filter(def => {
-                if (
-                    def.kind === ts.ScriptElementKind.moduleElement &&
-                    def.name.slice(1, -1).startsWith('*.') &&
-                    def.containerKind === undefined &&
-                    def['isAmbient']
-                ) {
-                    return false
-                }
-                return true
-            })
         }
 
         return prior
