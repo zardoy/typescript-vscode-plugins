@@ -334,12 +334,19 @@ export type Configuration = {
      * @default true
      */
     miscDefinitionImprovement: boolean
+    // todo change setting format to: vue.*
     /**
      * Removes definiion suggestion from vue `components` options.
      * Might be useful with [Vetur-extended goToDefinition](https://github.com/zardoy/vetur-extended/blob/main/src/gotoDefinition.ts) for components as a replacement for (https://github.com/vuejs/language-tools/issues/1245)
      * @default false
      */
     removeVueComponentsOptionDefinition: boolean
+    /**
+     * Use `filter-all` to also exclude auto-import completions (useful for Nuxt projects)
+     * @recommended filter-non-vue
+     * @default disable
+     */
+    cleanupVueComponentCompletions: 'disable' | 'filter-non-vue' | 'filter-all'
     /**
      * Experimental, feedback welcome
      * If default, namespace import or import path click resolves to .d.ts file, try to resolve .js file instead with the same name
