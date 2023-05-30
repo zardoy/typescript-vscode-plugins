@@ -156,8 +156,22 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 return true
             })
         }
+
         if (c('removeVueComponentsOptionDefinition') && prior.definitions) {
-            prior.definitions = prior.definitions.filter(definition => definition.containerName !== '__VLS_componentsOption')
+            const program = languageService.getProgram()!
+            const sourceFile = program.getSourceFile(fileName)!
+
+            const lines = sourceFile.getFullText().split('\n')
+            const { line: curLine } = ts.getLineAndCharacterOfPosition(sourceFile, position)
+
+            const VLS_COMPONENT_STRING = `__VLS_templateComponents`
+            const isTemplateComponent = lines[curLine]?.startsWith(VLS_COMPONENT_STRING)
+            if (!isTemplateComponent) return
+
+            const componentName = lines[curLine]?.match(/\.(\w+);?/)?.[1]
+            if (!componentName) return
+
+            prior.definitions = prior.definitions.filter(({ name }) => !(componentName === name && lines[curLine - 2] === '// @ts-ignore'))
         }
 
         return prior
