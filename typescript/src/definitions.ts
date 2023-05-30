@@ -6,7 +6,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
     proxy.getDefinitionAndBoundSpan = (fileName, position) => {
         const prior = languageService.getDefinitionAndBoundSpan(fileName, position)
 
-        if (c('removeModuleFileDefinitions')) {
+        if (c('removeModuleFileDefinitions') && prior) {
             prior.definitions = prior.definitions?.filter(def => {
                 if (
                     def.kind === ts.ScriptElementKind.moduleElement &&
@@ -21,7 +21,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         }
 
         // Definition fallbacks
-        if (!prior || prior.definitions.length === 0) {
+        if (!prior || prior.definitions?.length === 0) {
             const program = languageService.getProgram()!
             const sourceFile = program.getSourceFile(fileName)!
             const node = findChildContainingExactPosition(sourceFile, position)
