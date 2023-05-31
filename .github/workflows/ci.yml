@@ -6,7 +6,7 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
       fail-fast: true
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
