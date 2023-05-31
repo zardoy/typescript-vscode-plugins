@@ -1,3 +1,4 @@
+import { equals } from 'rambda'
 import { GetConfig } from '../types'
 import {
     createDummySourceFile,
@@ -113,10 +114,13 @@ export const handleFunctionRefactorEdits = (
                     ...textChanges.slice(0, -2),
                     {
                         ...insertChange,
-                        newText: `<${componentName} ${args
-                            .split(', ')
-                            .map(identifierText => `${identifierText}={${identifierText}}`)
-                            .join(' ')} />`,
+                        newText: `<${componentName}${
+                            args &&
+                            ` ${args
+                                .split(', ')
+                                .map(identifierText => `${identifierText}={${identifierText}}`)
+                                .join(' ')}`
+                        } />`,
                     },
                     {
                         span: functionChange.span,

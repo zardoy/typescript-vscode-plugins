@@ -5,7 +5,23 @@ import { findChildContainingExactPosition } from './utils'
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
     proxy.getDefinitionAndBoundSpan = (fileName, position) => {
         const prior = languageService.getDefinitionAndBoundSpan(fileName, position)
-        if (!prior) {
+
+        if (c('removeModuleFileDefinitions') && prior) {
+            prior.definitions = prior.definitions?.filter(def => {
+                if (
+                    def.kind === ts.ScriptElementKind.moduleElement &&
+                    def.name.slice(1, -1).startsWith('*.') &&
+                    def.containerKind === undefined &&
+                    (def as import('typescript-full').DefinitionInfo).isAmbient
+                ) {
+                    return false
+                }
+                return true
+            })
+        }
+
+        // Definition fallbacks
+        if (!prior || prior.definitions?.length === 0) {
             const program = languageService.getProgram()!
             const sourceFile = program.getSourceFile(fileName)!
             const node = findChildContainingExactPosition(sourceFile, position)
@@ -140,22 +156,22 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 return true
             })
         }
-        if (c('removeVueComponentsOptionDefinition') && prior.definitions) {
-            prior.definitions = prior.definitions.filter(definition => definition.containerName !== '__VLS_componentsOption')
-        }
 
-        if (c('removeModuleFileDefinitions')) {
-            prior.definitions = prior.definitions?.filter(def => {
-                if (
-                    def.kind === ts.ScriptElementKind.moduleElement &&
-                    def.name.slice(1, -1).startsWith('*.') &&
-                    def.containerKind === undefined &&
-                    def['isAmbient']
-                ) {
-                    return false
-                }
-                return true
-            })
+        if (c('removeVueComponentsOptionDefinition') && prior.definitions) {
+            const program = languageService.getProgram()!
+            const sourceFile = program.getSourceFile(fileName)!
+
+            const lines = sourceFile.getFullText().split('\n')
+            const { line: curLine } = ts.getLineAndCharacterOfPosition(sourceFile, position)
+
+            const VLS_COMPONENT_STRING = `__VLS_templateComponents`
+            const isTemplateComponent = lines[curLine]?.startsWith(VLS_COMPONENT_STRING)
+            if (!isTemplateComponent) return
+
+            const componentName = lines[curLine]?.match(/\.(\w+);?/)?.[1]
+            if (!componentName) return
+
+            prior.definitions = prior.definitions.filter(({ name }) => !(componentName === name && lines[curLine - 2] === '// @ts-ignore'))
         }
 
         return prior

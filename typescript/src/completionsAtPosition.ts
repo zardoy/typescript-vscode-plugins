@@ -254,8 +254,9 @@ export const getCompletionsAtPosition = (
     prior.entries = arrayMethods(prior.entries, position, sourceFile, c) ?? prior.entries
     prior.entries = jsdocDefault(prior.entries, position, sourceFile, languageService) ?? prior.entries
 
+    const isVueFileName = (fileName: string | undefined) => fileName && (fileName.endsWith('.vue.ts') || fileName.endsWith('.vue.js'))
     // #region Vue (Volar) specific
-    const isVueFile = fileName.endsWith('.vue.ts') || fileName.endsWith('.vue.js')
+    const isVueFile = isVueFileName(fileName)
     if (isVueFile && exactNode) {
         let node = ts.isIdentifier(exactNode) ? exactNode.parent : exactNode
         if (ts.isPropertyAssignment(node)) node = node.parent
@@ -266,6 +267,17 @@ export const getCompletionsAtPosition = (
             node.parent.expression.text === 'defineComponent'
         ) {
             prior.entries = prior.entries.filter(({ name, kind }) => kind === ts.ScriptElementKind.warning || !name.startsWith('__'))
+        }
+        // const afterComponentsMarker = sourceFile.getFullText().lastIndexOf('/* Components */') < position
+        const { line: curLine } = ts.getLineAndCharacterOfPosition(sourceFile, position)
+        const lines = sourceFile.getFullText().split('\n')
+        if (ts.isArrayLiteralExpression(node) && lines[curLine - 1] === '// @ts-ignore' && lines[curLine - 2]?.startsWith('__VLS_components')) {
+            if (c('cleanupVueComponentCompletions') === 'filter-all') {
+                prior.entries = []
+            }
+            if (c('cleanupVueComponentCompletions') === 'filter-non-vue') {
+                prior.entries = prior.entries.filter(entry => isVueFileName(entry.symbol?.declarations?.[0]?.getSourceFile().fileName))
+            }
         }
     }
     // #endregion
@@ -351,7 +363,7 @@ export const getCompletionsAtPosition = (
         })
     }
 
-    if (prior.isGlobalCompletion) {
+    if (!prior.isMemberCompletion) {
         prior.entries = markOrRemoveGlobalCompletions(prior.entries, position, languageService, c) ?? prior.entries
     }
     if (exactNode) {
