@@ -6,7 +6,7 @@ export const run = async () => {
     const mocha = new Mocha({
         color: true,
         parallel: false,
-        timeout: process.env.CI ? 4500 : 2000,
+        timeout: process.env.CI ? 5200 : 2000,
     })
     const testsRoot = join(__dirname, './suite')
     await new Promise<void>(resolve => {

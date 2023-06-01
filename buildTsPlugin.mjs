@@ -2,8 +2,9 @@
 import buildTsPlugin from '@zardoy/vscode-utils/build/buildTypescriptPlugin.js'
 import { build, analyzeMetafile } from 'esbuild'
 
-build({
-    // bundle: true,
+await build({
+    bundle: true,
+    external: ['typescript-essential-plugins'],
     // minify: !watch,
     entryPoints: ['./typescript/src/volarConfig.ts'],
     outfile: './out/volarConfig.js',
