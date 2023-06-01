@@ -1,11 +1,10 @@
 import { compact } from '@zardoy/utils'
 import { getExtendedCodeActions } from '../codeActions/getCodeActions'
-import constructMethodSnippet from '../constructMethodSnippet'
-import { overrideRequestPreferences } from '../decorateProxy'
 import { NodeAtPositionResponse, RequestOptionsTypes, RequestResponseTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
 import { GetConfig } from '../types'
 import { findChildContainingExactPosition, findChildContainingPosition, getNodePath } from '../utils'
 import { lastResolvedCompletion } from '../completionEntryDetails'
+import { overrideRenameRequest } from '../decorateFindRenameLocations'
 import getEmmetCompletions from './emmet'
 import objectIntoArrayConverters from './objectIntoArrayConverters'
 
@@ -200,7 +199,7 @@ export default (
     }
     if (specialCommand === 'acceptRenameWithParams') {
         changeType<RequestOptionsTypes['acceptRenameWithParams']>(specialCommandArg)
-        overrideRequestPreferences.rename = specialCommandArg
+        overrideRenameRequest.value = specialCommandArg
         return undefined
     }
     if (specialCommand === 'pickAndInsertFunctionArguments') {

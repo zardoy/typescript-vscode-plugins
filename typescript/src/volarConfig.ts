@@ -6,7 +6,7 @@ import type { Configuration } from './types'
 // will be required from ./node_modules/typescript-essential-plugins/index.js
 const originalPluginFactory = require('typescript-essential-plugins')
 
-const compact = <T>(arr: (T | undefined)[]): T[] => arr.filter(Boolean) as T[]
+const compact = <T>(arr: Array<T | undefined>): T[] => arr.filter(Boolean) as T[]
 
 const plugin = ((context, { typescript: tsModule } = {}) => {
     if (!context) throw new Error('Not recieve context')

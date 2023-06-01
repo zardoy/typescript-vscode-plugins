@@ -18,6 +18,7 @@ import decorateFormatFeatures from './decorateFormatFeatures'
 import libDomPatching from './libDomPatching'
 import decorateSignatureHelp from './decorateSignatureHelp'
 import { approveCast, findChildContainingExactPosition } from './utils'
+import decorateFindRenameLocations from './decorateFindRenameLocations'
 
 /** @internal */
 export const thisPluginMarker = '__essentialPluginsMarker__'
@@ -29,10 +30,6 @@ export const getInitialProxy = (languageService: ts.LanguageService, proxy = Obj
         proxy[k] = (...args: Array<Record<string, unknown>>) => x.apply(languageService, args)
     }
     return proxy
-}
-
-export const overrideRequestPreferences = {
-    rename: undefined as undefined | RequestOptionsTypes['acceptRenameWithParams'],
 }
 
 export const decorateLanguageService = (
@@ -145,23 +142,7 @@ export const decorateLanguageService = (
     decorateWorkspaceSymbolSearch(proxy, languageService, c, languageServiceHost)
     decorateFormatFeatures(proxy, languageService, languageServiceHost, c)
     decorateSignatureHelp(proxy, languageService, languageServiceHost, c)
-    proxy.findRenameLocations = (fileName, position, findInStrings, findInComments, providePrefixAndSuffixTextForRename) => {
-        if (overrideRequestPreferences.rename) {
-            try {
-                const { comments, strings, alias } = overrideRequestPreferences.rename
-                return languageService.findRenameLocations(
-                    fileName,
-                    position,
-                    strings ?? findInStrings,
-                    comments ?? findInComments,
-                    alias ?? providePrefixAndSuffixTextForRename,
-                )
-            } finally {
-                overrideRequestPreferences.rename = undefined
-            }
-        }
-        return languageService.findRenameLocations(fileName, position, findInStrings, findInComments, providePrefixAndSuffixTextForRename)
-    }
+    decorateFindRenameLocations(proxy, languageService, c)
 
     libDomPatching(languageServiceHost, c)
 
