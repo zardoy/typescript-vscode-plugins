@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 
-import { compact } from '@zardoy/utils'
-import { get } from 'lodash'
+import get from 'lodash/get'
 import type { Configuration } from './types'
 
 // will be required from ./node_modules/typescript-essential-plugins/index.js
 const originalPluginFactory = require('typescript-essential-plugins')
+
+const compact = <T>(arr: (T | undefined)[]): T[] => arr.filter(Boolean) as T[]
 
 const plugin = ((context, { typescript: tsModule } = {}) => {
     if (!context) throw new Error('Not recieve context')
