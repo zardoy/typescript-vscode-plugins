@@ -50,7 +50,8 @@ const plugin = ((context, { typescript: tsModule } = {}) => {
 
         const getResolvedUserConfig = async () => {
             const regularConfig = await configurationHost.getConfiguration!<any>('tsEssentialPlugins')
-            const _vueSpecificConfig = await configurationHost.getConfiguration!<any>('[vue]')
+            const _vueSpecificConfig = (await configurationHost.getConfiguration!<any>('[vue]')) || {}
+
             const vueSpecificConfig = Object.fromEntries(
                 compact(
                     Object.entries(_vueSpecificConfig).map(([key, value]) =>
