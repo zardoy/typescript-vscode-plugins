@@ -223,9 +223,10 @@ export const getCompletionsAtPosition = (
         //     )
         const indexToPatch = prior.entries.findIndex(({ name, kind }) => name === 'toString' && kind !== ts.ScriptElementKind.warning)
         if (indexToPatch !== -1) {
-            prior.entries[indexToPatch]!.insertText = `${prior.entries[indexToPatch]!.insertText ?? prior.entries[indexToPatch]!.name}()`
-            prior.entries[indexToPatch]!.kind = ts.ScriptElementKind.constElement
-            // prior.entries[indexToPatch]!.isSnippet = true
+            const entryToPatch = prior.entries[indexToPatch]!
+            entryToPatch.insertText = `${entryToPatch.insertText ?? entryToPatch.name}()`
+            entryToPatch.isSnippet = true
+            entryToPatch.kind = ts.ScriptElementKind.constElement
         }
     }
 

@@ -28,6 +28,7 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
         // transform?: (found: string, content: string, position: number) => [string?, string?]
     }
     const addChildrenRecursivelySwitchFirstCase = ['function addChildrenRecursively(node)', 'switch (node.kind)']
+    const typeAliasCaseNeedle = [...addChildrenRecursivelySwitchFirstCase, 'TypeAliasDeclaration */']
 
     const patchLocations: PatchLocation[] = [
         {
@@ -44,7 +45,7 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
                     break;`,
         },
         {
-            searchString: 'case 262 /* SyntaxKind.TypeAliasDeclaration */',
+            searchString: typeAliasCaseNeedle,
             linesOffset: 3,
             // https://github.com/microsoft/TypeScript/pull/52558/
             addString: /* js */ `
@@ -54,7 +55,7 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
             `,
         },
         {
-            searchString: 'case 262 /* SyntaxKind.TypeAliasDeclaration */',
+            searchString: typeAliasCaseNeedle,
             linesOffset: 0,
             removeLines: 1,
         },

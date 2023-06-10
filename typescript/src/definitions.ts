@@ -164,14 +164,20 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             const lines = sourceFile.getFullText().split('\n')
             const { line: curLine } = ts.getLineAndCharacterOfPosition(sourceFile, position)
 
-            const VLS_COMPONENT_STRING = `__VLS_templateComponents`
-            const isTemplateComponent = lines[curLine]?.startsWith(VLS_COMPONENT_STRING)
-            if (!isTemplateComponent) return
+            const VLS_COMPONENT_STRINGS = ['__VLS_templateComponents', '__VLS_components']
 
+            const isVLSComponent = VLS_COMPONENT_STRINGS.some(VLS_COMPONENT_STRING => lines[curLine]?.startsWith(VLS_COMPONENT_STRING))
             const componentName = lines[curLine]?.match(/\.(\w+);?/)?.[1]
-            if (!componentName) return
 
-            prior.definitions = prior.definitions.filter(({ name }) => !(componentName === name && lines[curLine - 2] === '// @ts-ignore'))
+            prior.definitions =
+                !isVLSComponent || !componentName
+                    ? prior.definitions
+                    : prior.definitions.filter(({ name, containerName }) => {
+                          const isDefinitionInComponentsProperty = componentName === name && lines[curLine - 2] === '// @ts-ignore'
+                          const isGlobalComponent = containerName === 'GlobalComponents'
+
+                          return !isDefinitionInComponentsProperty || isGlobalComponent
+                      })
         }
 
         return prior
