@@ -11,6 +11,14 @@ export const isGoodPositionMethodCompletion = (sourceFile: ts.SourceFile, positi
         // type A = typeof obj["|"]
         if (ts.isStringLiteralLike(currentNode)) return false
         if (ts.isNamedExports(currentNode)) return false
+        if (
+            ts.isIdentifier(currentNode) &&
+            ts.isBinaryExpression(currentNode.parent) &&
+            currentNode.parent.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+            currentNode === currentNode.parent.left
+        ) {
+            return false
+        }
         if (ts.isIdentifier(currentNode)) currentNode = currentNode.parent
         if (ts.isExportSpecifier(currentNode)) return false
         if (ts.isJsxSelfClosingElement(currentNode) || ts.isJsxOpeningElement(currentNode)) return false

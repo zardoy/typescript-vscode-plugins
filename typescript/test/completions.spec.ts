@@ -56,6 +56,7 @@ test('Banned positions for all method snippets', () => {
         test({
             /*|*/
         })
+        test/*|*/ = test
         ;<Test/*|*/ />
         ;<Test/*|*/></Test>
         ;<Test test={/*|*/}></Test>
@@ -83,6 +84,8 @@ test('Not banned positions for method snippets', () => {
             method: setTimeout/*|*/
         })
         test2/*|*/
+        test = test/*|*/
+        test/*|*/ >= test/*|*/
     `)
     for (const [i, pos] of cursorPositions.entries()) {
         const result = isGoodPositionMethodCompletion(getSourceFile(), pos - 1, defaultConfigFunc)
