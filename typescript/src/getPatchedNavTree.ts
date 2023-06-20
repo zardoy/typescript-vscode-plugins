@@ -128,9 +128,9 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
         })
         const notFoundVariables = new Set<string>()
         const cannotFindCodes = getCannotFindCodes({ includeFromLib: false })
-        for (const { code, messageText } of languageService.getSemanticDiagnostics('main.ts')) {
+        for (const { code, start, length } of languageService.getSemanticDiagnostics('main.ts')) {
             if (!cannotFindCodes.includes(code)) continue
-            const notFoundName = (typeof messageText === 'object' ? messageText.messageText : messageText).match(/^Cannot find name '(.+?)'./)?.[1]
+            const notFoundName = moduleString.slice(start, start! + length!)
             if (!notFoundName) continue
             notFoundVariables.add(notFoundName)
         }

@@ -1,4 +1,3 @@
-import { equals } from 'rambda'
 import { GetConfig } from '../types'
 import {
     createDummySourceFile,
