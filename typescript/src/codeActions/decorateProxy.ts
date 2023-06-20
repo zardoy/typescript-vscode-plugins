@@ -20,7 +20,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         const program = languageService.getProgram()!
         const sourceFile = program.getSourceFile(fileName)!
         processApplicableRefactors(
-            prior.find(r => r.description === 'Extract function'),
+            prior.find(r => r.name === 'Extract Symbol' && r.actions.some(action => action.kind?.startsWith('refactor.extract.function')))?.actions,
             c,
             positionOrRange,
             sourceFile,
