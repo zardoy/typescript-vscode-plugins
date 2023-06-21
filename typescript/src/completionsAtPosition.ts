@@ -15,7 +15,7 @@ import prepareTextForEmmet from './specialCommands/prepareTextForEmmet'
 import switchCaseExcludeCovered from './completions/switchCaseExcludeCovered'
 import additionalTypesSuggestions from './completions/additionalTypesSuggestions'
 import boostKeywordSuggestions from './completions/boostKeywordSuggestions'
-import boostTextSuggestions from './completions/boostNameSuggestions'
+import boostNameSuggestions from './completions/boostNameSuggestions'
 import keywordsSpace from './completions/keywordsSpace'
 import jsdocDefault from './completions/jsdocDefault'
 import defaultHelpers from './completions/defaultHelpers'
@@ -143,7 +143,7 @@ export const getCompletionsAtPosition = (
     }
 
     if (leftNode) {
-        const newEntries = boostTextSuggestions(prior?.entries ?? [], position, sourceFile, leftNode, languageService)
+        const newEntries = boostNameSuggestions(prior?.entries ?? [], position, sourceFile, leftNode, languageService)
         if (newEntries?.length && ensurePrior() && prior) prior.entries = newEntries
     }
 

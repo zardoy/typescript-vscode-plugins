@@ -108,7 +108,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                     }
                 }
             }
-            return
+            return prior
         }
 
         if (__WEB__) {

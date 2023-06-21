@@ -16,7 +16,9 @@ TOC:
 - [Contributed Code Actions](#contributed-code-actions)
 - [Even Even More](#even-even-more)
 
-> *Note* Visit website for list of recommended settings: <https://ts-plugin.zardoy.com/>
+> *Note*: You can disable all optional features with `> Disable All Optional Features` setting right after install.
+>
+> *Note*: Visit website for list of recommended settings: <https://ts-plugin.zardoy.com/>
 
 ## Top Features
 

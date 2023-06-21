@@ -1,4 +1,3 @@
-import { equals } from 'rambda'
 import { GetConfig } from '../types'
 import {
     createDummySourceFile,
@@ -9,16 +8,16 @@ import {
 } from '../utils'
 
 export const processApplicableRefactors = (
-    refactor: ts.ApplicableRefactorInfo | undefined,
+    refactorActions: ts.RefactorActionInfo[] | undefined,
     c: GetConfig,
     posOrRange: number | ts.TextRange,
     sourceFile: ts.SourceFile,
 ) => {
-    if (!refactor) return
-    const functionExtractors = refactor?.actions.filter(({ notApplicableReason }) => !notApplicableReason)
+    if (!refactorActions) return
+    const functionExtractors = refactorActions.filter(({ notApplicableReason }) => !notApplicableReason)
     if (functionExtractors?.length) {
         const kind = functionExtractors[0]!.kind!
-        const blockScopeRefactor = functionExtractors.find(e => e.description.startsWith('Extract to inner function in'))
+        const blockScopeRefactor = functionExtractors.find(e => e.description.includes('inner function'))
         const addArrowCodeActions: ts.RefactorActionInfo[] = []
         if (blockScopeRefactor) {
             addArrowCodeActions.push({
@@ -28,9 +27,7 @@ export const processApplicableRefactors = (
             })
         }
         let addExtractToJsxRefactor = false
-        const globalScopeRefactor = functionExtractors.find(e =>
-            ['Extract to function in global scope', 'Extract to function in module scope'].includes(e.description),
-        )
+        const globalScopeRefactor = functionExtractors.at(-1)
         if (globalScopeRefactor) {
             addArrowCodeActions.push({
                 description: 'Extract to arrow function in global scope above',
@@ -42,8 +39,12 @@ export const processApplicableRefactors = (
         }
 
         if (addExtractToJsxRefactor) {
-            refactor.actions = refactor.actions.filter(action => !action.name.startsWith('function_scope'))
-            refactor.actions.push({
+            for (const refactorAction of refactorActions) {
+                if (refactorAction.name.startsWith('function_scope')) {
+                    refactorAction.notApplicableReason = 'JSX Element Selected. Use Extract to JSX component'
+                }
+            }
+            refactorActions.push({
                 description: 'Extract to JSX component',
                 kind: 'refactor.extract.jsx',
                 name: `${globalScopeRefactor!.name}_jsx`,
@@ -51,7 +52,7 @@ export const processApplicableRefactors = (
             return
         }
 
-        refactor.actions.push(...addArrowCodeActions)
+        refactorActions.push(...addArrowCodeActions)
     }
 }
 
