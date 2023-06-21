@@ -118,6 +118,7 @@ export type Configuration = {
     /**
      * Will be `format-short` by default in future as super useful!
      * Requires TypeScript 5.0+
+     * @recommended
      * @default disable
      */
     'suggestions.displayImportedInfo': 'disable' | 'short-format' | 'long-format'
@@ -160,14 +161,15 @@ export type Configuration = {
      * */
     'correctSorting.enable': boolean
     /**
-     * Try to restore suggestion sorting after `.`
+     * Try to restore properties (not variables!) sorting as in source
      * Experimental and most probably will be changed in future
+     * @recommended
      * @default false
      */
     fixSuggestionsSorting: boolean
-    // TODO
+    // TODO-low
     /**
-     * Mark QuickFixes & refactorings with 🔵
+     * Mark refactorings with 🔵
      * @default true
      */
     'markTsCodeActions.enable': boolean
@@ -206,6 +208,11 @@ export type Configuration = {
      * */
     'removeCodeFixes.enable': boolean
     /**
+     * @default ["fixMissingFunctionDeclaration"]
+     * @uniqueItems true
+     *  */
+    'removeCodeFixes.codefixes': FixId[]
+    /**
      * Also rename name of default or namespace import on refactor caused by file move / rename
      * Probably will be enabled by default in future
      * @default false
@@ -228,13 +235,8 @@ export type Configuration = {
      */
     workspaceSymbolSearchExcludePatterns: string[]
     /**
-     * @default ["fixMissingFunctionDeclaration"]
-     * @uniqueItems true
-     *  */
-    'removeCodeFixes.codefixes': FixId[]
-    /**
-     * Use full-blown emmet in jsx/tsx files!
-     * Requires `jsxPseudoEmmet.enabled` to be disabled and `emmet.excludeLanguages` to have `javascriptreact` and `typescriptreact`
+     * Use strict & precise emmet in jsx/tsx files! Doesn't annoy you everywhere!
+     * Requires `jsxPseudoEmmet.enabled` to be disabled and `emmet.excludeLanguages` to have `javascriptreact` / `typescriptreact`
      * @default true
      * */
     'jsxEmmet.enable': boolean
@@ -443,11 +445,11 @@ export type Configuration = {
      */
     // completionHelpers: boolean
     /**
-     * Extend TypeScript outline!
-     * Extend outline with:
+     * Extend TypeScript outline with:
      * - JSX Elements
      * - Type Alias Declarations
      * Should be stable!
+     * @recommended
      * @default false
      */
     patchOutline: boolean
@@ -458,6 +460,7 @@ export type Configuration = {
     'outline.arraysTuplesNumberedItems': boolean
     /**
      * Exclude covered strings/enum cases in switch in completions
+     * @deprecated Will be removed in next release
      * @default true
      */
     switchExcludeCoveredCases: boolean
@@ -520,12 +523,12 @@ export type Configuration = {
      */
     'figIntegration.enableWhenStartsWith': string[]
     /**
-     * Propose additional completions in object. Just like `typescript.suggest.objectLiteralMethodSnippets.enabled`, but also for string, arrays and objects
+     * Propose additional completions in object. Just like `typescript.suggest.objectLiteralMethodSnippets.enabled`, but also for strings, arrays and objects
      * @default true
      */
     'objectLiteralCompletions.moreVariants': boolean
     /**
-     * When `moreVariants` enabled, always add as fallback variant if other variant can't be derived
+     * When `moreVariants` is enabled, always add fallback variant (`: `) if other variant can't be derived
      * @default false
      */
     'objectLiteralCompletions.fallbackVariant': boolean

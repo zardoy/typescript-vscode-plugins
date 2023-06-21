@@ -58,6 +58,10 @@
             {
                 "command": "pasteCodeWithImports",
                 "title": "Paste Code with Imports"
+            },
+            {
+                "command": "disableAllOptionalFeatures",
+                "title": "Disable All Optional Features"
             }
         ],
         "keybindings": [
@@ -90,7 +94,7 @@
     "keywords": [
         "ts",
         "javascript",
-        "plugin",
+        "pro",
         "webstorm",
         "typescript hero"
     ],
