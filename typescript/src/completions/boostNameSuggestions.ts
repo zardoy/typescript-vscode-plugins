@@ -22,7 +22,11 @@ export default (
     }
     const statementsNode = nodeWithStatements(node) || nodeWithStatements(node.parent)
     // Workaround for current locality bonus & TS 5.1
-    if (statementsNode) {
+    if (
+        statementsNode &&
+        // ensure completions are not blocked
+        entries.length > 0
+    ) {
         const statements = statementsNode.statements as any[]
         const prevNode =
             statementsNode === node
