@@ -3,8 +3,8 @@ import { getCannotFindCodes } from '../utils/cannotFindCodes'
 
 const cannotFindCodes = getCannotFindCodes({ includeFromLib: true })
 
-// 1. add suggestions for unresolved indentifiers in code
-// 2. boost identifer or type name suggestion
+// 1. add suggestions for unresolved identifiers in code
+// 2. boost identifier or type name suggestion
 export default (
     entries: ts.CompletionEntry[],
     position: number,
@@ -17,35 +17,7 @@ export default (
     const fileText = sourceFile.getFullText()
     const fileTextBeforePos = fileText.slice(0, position)
     const beforeConstNodeOffset = fileTextBeforePos.match(/(?:const|let) ([\w\d]*)$/i)?.[1]
-    const nodeWithStatements = node => {
-        return node && 'statements' in node && Array.isArray(node.statements) ? node : undefined
-    }
-    const statementsNode = nodeWithStatements(node) || nodeWithStatements(node.parent)
-    // Workaround for current locality bonus & TS 5.1
-    if (
-        statementsNode &&
-        // ensure completions are not blocked
-        entries.length > 0
-    ) {
-        const statements = statementsNode.statements as any[]
-        const prevNode =
-            statementsNode === node
-                ? [...statements].reverse().find((statement: ts.Node) => statement.pos + statement.getLeadingTriviaWidth() < position)
-                : statements[statements.indexOf(node) - 1]
-        if (prevNode && ts.isVariableStatement(prevNode) && prevNode.declarationList.declarations.length === 1) {
-            const { name } = prevNode.declarationList.declarations[0]!
-            if (ts.isIdentifier(name)) {
-                const kind: ts.ScriptElementKind =
-                    prevNode.declarationList.flags & ts.NodeFlags.Const ? ts.ScriptElementKind.constElement : ts.ScriptElementKind.letElement
-                entries = boostOrAddSuggestions(entries, [
-                    {
-                        name: name.text,
-                        kind,
-                    },
-                ])
-            }
-        }
-    }
+
     /** false - pick all identifiers after cursor
      * node - pick identifiers that within node */
     let filterBlock: undefined | false | ts.Node
