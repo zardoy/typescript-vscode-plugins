@@ -127,6 +127,11 @@ export type Configuration = {
      * @default false
      */
     'suggestions.localityBonus': boolean
+    /**
+     * position = cursor position
+     * @default prefer-before-position
+     */
+    'suggestions.localityBonusMode': 'prefer-before-position' | 'nearest-to-position'
     // TODO! corrent watching!
     /**
      * Wether to enable snippets for array methods like `items.map(item => )`
