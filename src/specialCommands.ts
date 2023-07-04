@@ -289,9 +289,9 @@ export default () => {
         await vscode.env.clipboard.writeText(text)
     })
 
-    registerExtensionCommand('pasteCodeWithImports', async () => {
-        const clipboard = await vscode.env.clipboard.readText()
-        const lines = clipboard.split('\n')
-        const lastImportLineIndex = lines.findIndex(line => line !== 'import')
-    })
+    // registerExtensionCommand('pasteCodeWithImports', async () => {
+    //     const clipboard = await vscode.env.clipboard.readText()
+    //     const lines = clipboard.split('\n')
+    //     const lastImportLineIndex = lines.findIndex(line => line !== 'import')
+    // })
 }
