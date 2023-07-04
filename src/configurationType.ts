@@ -15,7 +15,7 @@ type ReplaceRule = {
         fileNamePattern?: string
         languageMode?: keyof typeof ScriptKind
     }
-    /** by default only first entry is proccessed */
+    /** by default only first entry is processed */
     processMany?: boolean
     delete?: boolean
     /**
@@ -25,7 +25,7 @@ type ReplaceRule = {
     patch?: Partial<{
         name: string
         kind: keyof typeof ScriptElementKind
-        /** Might be useless when `correntSorting.enable` is true */
+        /** Might be useless when `correctSorting.enable` is true */
         sortText: string
         insertText: string | true
         /** Wether insertText differs from completion name */
@@ -36,7 +36,7 @@ type ReplaceRule = {
             description?: string
         }
     }>
-    /** Works only with `correntSorting.enable` set to true (default) */
+    /** Works only with `correctSorting.enable` set to true (default) */
     // movePos?: number
     /** When specified, `movePos` is ignored */
     // TODO!
@@ -86,7 +86,7 @@ export type Configuration = {
     'patchToString.enable': boolean
     /**
      * Format of this setting is very close to `jsxCompletionsMap` setting:
-     * `path#symbol` (exact) or `path/*#symbol` (`#symbol` part can be ommited)
+     * `path#symbol` (exact) or `path/*#symbol` (`#symbol` part can be omitted)
      *
      * Note: Please use `javascript`/`typescript.preferences.autoImportFileExcludePatterns` when possible, to achieve better performance!
      *
@@ -132,7 +132,7 @@ export type Configuration = {
      * @default prefer-before-position
      */
     'suggestions.localityBonusMode': 'prefer-before-position' | 'nearest-to-position'
-    // TODO! corrent watching!
+    // TODO! correct watching!
     /**
      * Wether to enable snippets for array methods like `items.map(item => )`
      * @default false
@@ -150,7 +150,7 @@ export type Configuration = {
      */
     'arrayMethodsSnippets.addOuterTabStop': boolean
     /**
-     * If set to `false` and singular item name can't be inffered, feature will be disabled
+     * If set to `false` and singular item name can't be inferred, feature will be disabled
      * @default item
      */
     'arrayMethodsSnippets.defaultItemName': string | false
@@ -280,12 +280,12 @@ export type Configuration = {
      */
     'jsxPseudoEmmet.tags': { [tag: string]: true | string }
     /**
-     * Exclude lowercase / incorrent suggestions
+     * Exclude lowercase / incorrect suggestions
      * @default true
      */
     'jsxImproveElementsSuggestions.enabled': boolean
     /**
-     * Recommended to enable to experience less uneeded suggestions unless you are using JSX Elements declared in namespaces
+     * Recommended to enable to experience less useless suggestions unless you are using JSX Elements declared in namespaces
      * @default false
      */
     'jsxImproveElementsSuggestions.filterNamespaces': boolean
@@ -343,7 +343,7 @@ export type Configuration = {
     miscDefinitionImprovement: boolean
     // todo change setting format to: vue.*
     /**
-     * Removes definiion suggestion from vue `components` options.
+     * Removes definition suggestion from vue `components` options.
      * Might be useful with [Vetur-extended goToDefinition](https://github.com/zardoy/vetur-extended/blob/main/src/gotoDefinition.ts) for components as a replacement for (https://github.com/vuejs/language-tools/issues/1245)
      * @default false
      */
@@ -436,7 +436,7 @@ export type Configuration = {
      */
     'disableMethodSnippets.jsxAttributes': boolean
     /**
-     * Support `@ts-diagnostic-disable` top-level comment for disabling spefici semantic diagnostics
+     * Support `@ts-diagnostic-disable` top-level comment for disabling specific semantic diagnostics
      * Example: `// @ts-diagnostic-disable
      * Advanced usage only! Enable in `.vscode/settings.json` for projects that need this
      * Since its changes only IDE experience, but not tsc
@@ -470,7 +470,7 @@ export type Configuration = {
      */
     switchExcludeCoveredCases: boolean
     /**
-     * Make completions case-sensetive (see https://github.com/microsoft/TypeScript/issues/46622)
+     * Make completions case-sensitive (see https://github.com/microsoft/TypeScript/issues/46622)
      * Might be enabled by default in future. Experimental as for now compares only start of completions.
      * Might require completion retrigger if was triggered by not quick suggestions.
      * @default false
@@ -478,7 +478,7 @@ export type Configuration = {
     caseSensitiveCompletions: boolean
     /**
      * Might be useful to enable for a moment. Note, that you can bind shortcuts within VSCode to quickly toggle settings like this
-     * Also experimental and wasnt tested in all cases
+     * Also experimental and wasn't tested in all cases
      * Like described in `caseSensitiveCompletions` might require completion retrigger
      * @default false
      */
@@ -487,6 +487,7 @@ export type Configuration = {
      * Disable useless highlighting,
      * @default disable
      */
+    // todo fix spelling
     disableUselessHighlighting: 'disable' | 'inJsxArttributeStrings' | 'inAllStrings'
     /**
      * Improve JSX attribute completions:
@@ -497,7 +498,7 @@ export type Configuration = {
     improveJsxCompletions: boolean
     /**
      * Replace JSX completions by map with `tagName#attribute` pattern as keys
-     * `tagName` can be ommited, but not `attribute` for now
+     * `tagName` can be omitted, but not `attribute` for now
      * Example usages:
      * - `#className`: `insertText: "={classNames$1}"`
      * - `button#type`: `insertText: "='button'"`
@@ -560,7 +561,7 @@ export type Configuration = {
      */
     'experiments.excludeNonJsxCompletions': boolean
     /**
-     * Wether to change funcntion completions to function kind
+     * Wether to change function completions to function kind
      * @default false
      */
     'experiments.changeKindToFunction': boolean
@@ -605,7 +606,7 @@ export type Configuration = {
              */
             useDefaultImport?: boolean
             /**
-             * Set to `false` if module is acessible from global variable
+             * Set to `false` if the module is accessible from the global variable
              * For now not supported in add all missing imports code action
              * @default true */
             addImport?: boolean
@@ -637,7 +638,7 @@ export type Configuration = {
           }
 }
 
-// scrapped using search editor. config: caseInsesetive, context lines: 0, regex: const fix\w+ = "[^ ]+"
+// scrapped using search editor. config: caseInsensitive, context lines: 0, regex: const fix\w+ = "[^ ]+"
 type FixId =
     | 'addConvertToUnknownForNonOverlappingTypes'
     | 'addMissingAsync'
