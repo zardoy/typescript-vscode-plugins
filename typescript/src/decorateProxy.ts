@@ -44,7 +44,7 @@ export const decorateLanguageService = (
     const proxy = getInitialProxy(languageService, existingProxy)
 
     let prevCompletionsMap: PrevCompletionMap
-    let prevCompletionsAdittionalData: PrevCompletionsAdditionalData
+    let prevCompletionsAdditionalData: PrevCompletionsAdditionalData
 
     proxy.getEditsForFileRename = (oldFilePath, newFilePath, formatOptions, preferences) => {
         let edits = languageService.getEditsForFileRename(oldFilePath, newFilePath, formatOptions, preferences)
@@ -127,11 +127,11 @@ export const decorateLanguageService = (
         const result = getCompletionsAtPosition(fileName, position, options, c, languageService, scriptSnapshot, formatOptions, { scriptKind, compilerOptions })
         if (!result) return
         prevCompletionsMap = result.prevCompletionsMap
-        prevCompletionsAdittionalData = result.prevCompletionsAdittionalData
+        prevCompletionsAdditionalData = result.prevCompletionsAdditionalData
         return result.completions
     }
 
-    proxy.getCompletionEntryDetails = (...inputArgs) => completionEntryDetails(inputArgs, languageService, prevCompletionsMap, c, prevCompletionsAdittionalData)
+    proxy.getCompletionEntryDetails = (...inputArgs) => completionEntryDetails(inputArgs, languageService, prevCompletionsMap, c, prevCompletionsAdditionalData)
 
     decorateCodeActions(proxy, languageService, languageServiceHost, c)
     decorateCodeFixes(proxy, languageService, languageServiceHost, c)

@@ -17,6 +17,7 @@ import vueVolarSupport from './vueVolarSupport'
 import moreCompletions from './moreCompletions'
 import { mergeSettingsFromScopes } from './mergeSettings'
 import codeActionProvider from './codeActionProvider'
+import nonTsCommands from './nonTsCommands'
 
 let isActivated = false
 // let erroredStatusBarItem: vscode.StatusBarItem | undefined
@@ -91,7 +92,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
 }
 
 export const activate = async () => {
-    registerDisableOptionalFeaturesCommand()
+    nonTsCommands()
     migrateSettings()
 
     const possiblyActivateTsPlugin = async () => {
@@ -140,55 +141,3 @@ export const activate = async () => {
         })
     }
 }
-
-const registerDisableOptionalFeaturesCommand = () => {
-    registerExtensionCommand('disableAllOptionalFeatures', async () => {
-        const config = vscode.workspace.getConfiguration(process.env.IDS_PREFIX, null)
-        const toDisable: Array<[keyof Settings, any]> = []
-        for (const optionalExperience of optionalExperiences) {
-            const desiredKey = Array.isArray(optionalExperience) ? optionalExperience[0] : optionalExperience
-            const desiredValue = Array.isArray(optionalExperience) ? optionalExperience[1] : false
-            if (config.get(desiredKey) !== desiredValue) toDisable.push([desiredKey, desiredValue])
-        }
-
-        const action = await vscode.window.showInformationMessage(
-            `${toDisable.length} features are going to be disabled`,
-            { detail: '', modal: true },
-            'Write to settings NOW',
-            'Copy settings',
-        )
-        if (!action) return
-        switch (action) {
-            case 'Write to settings NOW': {
-                for (const [key, value] of toDisable) {
-                    void config.update(key, value, vscode.ConfigurationTarget.Global)
-                }
-
-                break
-            }
-
-            case 'Copy settings': {
-                await vscode.env.clipboard.writeText(JSON.stringify(Object.fromEntries(toDisable), undefined, 4))
-                break
-            }
-        }
-    })
-}
-
-/** Experiences that are enabled out of the box */
-const optionalExperiences: Array<keyof ConditionalPick<Settings, boolean> | [keyof Settings, any]> = [
-    'enableMethodSnippets',
-    'removeUselessFunctionProps.enable',
-    'patchToString.enable',
-    ['suggestions.keywordsInsertText', 'none'],
-    'highlightNonFunctionMethods.enable',
-    'markTsCodeActions.enable',
-    ['markTsCodeFixes.character', ''],
-    'removeCodeFixes.enable',
-    'removeDefinitionFromReferences',
-    'removeImportsFromReferences',
-    'miscDefinitionImprovement',
-    'improveJsxCompletions',
-    'objectLiteralCompletions.moreVariants',
-    'codeActions.extractTypeInferName',
-]

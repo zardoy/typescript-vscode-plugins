@@ -11,5 +11,8 @@
     ],
     "githubPullRequests.ignoredPullRequestBranches": [
         "develop"
+    ],
+    "cSpell.words": [
+        "unpatch"
     ]
 }

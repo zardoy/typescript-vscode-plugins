@@ -56,12 +56,12 @@
                 "title": "Copy Full Type"
             },
             {
-                "command": "pasteCodeWithImports",
-                "title": "Paste Code with Imports"
-            },
-            {
                 "command": "disableAllOptionalFeatures",
                 "title": "Disable All Optional Features"
+            },
+            {
+                "command": "replaceGlobalTypescriptWithLocalVersion",
+                "title": "Replace Global Typescript with Local Version"
             }
         ],
         "keybindings": [

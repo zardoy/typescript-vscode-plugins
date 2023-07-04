@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { Except, SetOptional } from 'type-fest'
 import * as semver from 'semver'
+import type { MatchParentsType } from './utilTypes'
 
 export function findChildContainingPosition(typescript: typeof ts, sourceFile: ts.SourceFile, position: number): ts.Node | undefined {
     function find(node: ts.Node): ts.Node | undefined {
@@ -164,12 +165,13 @@ export const isWeb = () => {
 }
 
 // spec isnt strict as well
-export const notStrictStringCompletion = (entry: ts.CompletionEntry): ts.CompletionEntry => ({
-    ...entry,
-    // todo
-    name: `◯${entry.name}`,
-    insertText: entry.insertText ?? entry.name,
-})
+export const buildNotStrictStringCompletion = (node: ts.StringLiteralLike, text: string): ts.CompletionEntry =>
+    buildStringCompletion(node, {
+        // ...entry,
+        sortText: '07',
+        name: `💡${text}`,
+        insertText: text,
+    })
 
 export function addObjectMethodResultInterceptors<T extends Record<string, any>>(
     object: T,
@@ -295,3 +297,18 @@ export const patchMethod = <T, K extends keyof T>(obj: T, method: K, overriden: 
 
 export const insertTextAfterEntry = (entryOrName: ts.CompletionEntry | string, appendText: string) =>
     (typeof entryOrName === 'string' ? entryOrName : entryOrName.name).replace(/\$/g, '\\$') + appendText
+
+export const matchParents: MatchParentsType = (node, treeToCompare) => {
+    let first = true
+    for (const toCompare of treeToCompare) {
+        if (!first) {
+            node = node?.parent
+            first = false
+        }
+        if (!node) return
+        if (!(ts[`is${toCompare}` as keyof typeof ts] as (node) => boolean)(node)) {
+            return
+        }
+    }
+    return node as any
+}

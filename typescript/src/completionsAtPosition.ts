@@ -31,6 +31,7 @@ import { getTupleSignature } from './tupleSignature'
 import stringTemplateTypeCompletions from './completions/stringTemplateType'
 import localityBonus from './completions/localityBonus'
 import functionCompletions from './completions/functionCompletions'
+import staticHintSuggestions from './completions/staticHintSuggestions'
 
 export type PrevCompletionMap = Record<
     string,
@@ -53,7 +54,7 @@ export type GetCompletionAtPositionReturnType = {
     completions: ts.CompletionInfo
     /** Let default getCompletionEntryDetails to know original name or let add documentation from here */
     prevCompletionsMap: PrevCompletionMap
-    prevCompletionsAdittionalData: PrevCompletionsAdditionalData
+    prevCompletionsAdditionalData: PrevCompletionsAdditionalData
 }
 
 export const getCompletionsAtPosition = (
@@ -289,6 +290,7 @@ export const getCompletionsAtPosition = (
     if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 
     prior.entries = localityBonus(prior.entries) ?? prior.entries
+    prior.entries.push(...(staticHintSuggestions() ?? []))
 
     const processedEntries = new Set<ts.CompletionEntry>()
     for (const rule of c('replaceSuggestions')) {
@@ -410,7 +412,7 @@ export const getCompletionsAtPosition = (
     return {
         completions: prior,
         prevCompletionsMap,
-        prevCompletionsAdittionalData: {
+        prevCompletionsAdditionalData: {
             enableMethodCompletion: goodPositionForMethodCompletions,
             completionsSymbolMap,
         },

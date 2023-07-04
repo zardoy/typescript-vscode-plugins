@@ -66,7 +66,8 @@ export default (prior: ts.CompletionInfo): ts.CompletionEntry[] | void => {
         const insertSnippetVariant = completingStyleMap.find(([, detector]) => detector(type!, typeChecker))?.[0] ?? fallbackSnippet
         if (!insertSnippetVariant) continue
         const [insertSnippetText, insertSnippetPreview] = typeof insertSnippetVariant === 'function' ? insertSnippetVariant() : insertSnippetVariant
-        const insertText = insertTextAfterEntry(entry, insertSnippetText)
+        let insertText = insertTextAfterEntry(entry, insertSnippetText)
+        if (node.getSourceFile().getFullText()[position] === ',') insertText = insertText.slice(0, -1)
         const index = entries.indexOf(entry)
         entries.splice(index + (keepOriginal === 'before' ? 1 : 0), keepOriginal === 'remove' ? 1 : 0, {
             ...entry,
@@ -100,10 +101,20 @@ const isEverySubtype = (type: ts.UnionType, predicate: (type: ts.Type) => boolea
     })
 }
 
-const isStringCompletion = (type: ts.Type) => {
+const isStringCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
     if (type.flags & ts.TypeFlags.Undefined) return false
     if (type.flags & ts.TypeFlags.StringLike) return true
-    if (type.isUnion()) return isEverySubtype(type, type => isStringCompletion(type))
+    if (type.isUnion())
+        return isEverySubtype(
+            type,
+            type =>
+                isStringCompletion(type, checker) ||
+                // string & {} for string complete
+                (type.isIntersection() &&
+                    type.types.length === 2 &&
+                    type.types[0]!.flags & ts.TypeFlags.String &&
+                    checker['isEmptyAnonymousObjectType'](type.types[1])),
+        )
     return false
 }
 
