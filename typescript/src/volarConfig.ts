@@ -92,10 +92,10 @@ const plugin = ((context, { typescript: tsModule } = {}) => {
         console.warn('Failed to activate tsEssentialPlugins, because of no typescript or configurationHost context')
     }
     return {}
-}) satisfies import('@volar/language-service').Service
+}) satisfies import('@vue/language-service').Service
 
 module.exports = {
-    plugins: [
+    services: [
         (...args) => {
             try {
                 return plugin(...(args as [any]))
