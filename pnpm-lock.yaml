@@ -1,4 +1,4 @@
-lockfileVersion: '6.0'
+lockfileVersion: '6.1'
 
 settings:
   autoInstallPeers: true
@@ -976,12 +976,6 @@ packages:
       vscode-languageserver-protocol: 3.17.3
       vscode-languageserver-textdocument: 1.0.8
       vscode-uri: 3.0.7
-    dev: false
-
-  /@volar/source-map@1.6.9:
-    resolution: {integrity: sha512-D+IgnJGxO2Q1tL5qh3vU7iaLHtfGXptpdUDLMwmx292Fz0aVIXlC85mHHawGjBWeg/JhRGtEl4BvfTdn+4Ng/w==}
-    dependencies:
-      muggle-string: 0.3.1
     dev: false
 
   /@volar/source-map@1.8.0:
@@ -6260,7 +6254,7 @@ packages:
     resolution: {integrity: sha512-vQaS/a+tl5Pr5d+TUmnh/rzNI48H7PcaIF2vibd2+Q4D558RIGDxgrFq2ge/rDPEO8Ov6EybH8NGmGP/Wd107A==}
     dependencies:
       '@volar/language-service': 1.8.0
-      '@volar/source-map': 1.6.9
+      '@volar/source-map': 1.8.0
       muggle-string: 0.3.1
       pug-lexer: 5.0.1
       pug-parser: 6.0.0

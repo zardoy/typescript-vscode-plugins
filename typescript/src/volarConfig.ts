@@ -69,8 +69,8 @@ const plugin = ((context, { typescript: tsModule } = {}) => {
             const proxy = plugin.create({
                 ...typescript,
                 config,
-                languageService: originalLsMethods as any,
-            } as any)
+                languageService: originalLsMethods,
+            })
             console.log('TS Essentials Plugins activated!')
             // const methodToReassign = ['getCompletionsAtPosition', 'getCompletionEntryDetails']
             for (const method of Object.keys(proxy)) {
@@ -95,14 +95,14 @@ const plugin = ((context, { typescript: tsModule } = {}) => {
 }) satisfies import('@vue/language-service').Service
 
 module.exports = {
-    services: [
-        (...args) => {
+    services: {
+        typescript: (...args) => {
             try {
-                return plugin(...(args as [any]))
+                return plugin(...args)
             } catch (err) {
                 console.log('TS Essentials error', err)
                 return {}
             }
         },
-    ],
-} /*  satisfies import('@volar/language-service').ServiceContext */
+    },
+} satisfies import('@vue/language-service').Config
