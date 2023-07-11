@@ -66,7 +66,7 @@ export default (prior: ts.CompletionInfo): ts.CompletionEntry[] | void => {
         const insertSnippetVariant = completingStyleMap.find(([, detector]) => detector(type!, typeChecker))?.[0] ?? fallbackSnippet
         if (!insertSnippetVariant) continue
         const [insertSnippetText, insertSnippetPreview] = typeof insertSnippetVariant === 'function' ? insertSnippetVariant() : insertSnippetVariant
-        let insertText = insertTextAfterEntry(entry, insertSnippetText)
+        let insertText = insertTextAfterEntry(entry.name, insertSnippetText)
         if (node.getSourceFile().getFullText()[position] === ',') insertText = insertText.slice(0, -1)
         const index = entries.indexOf(entry)
         entries.splice(index + (keepOriginal === 'before' ? 1 : 0), keepOriginal === 'remove' ? 1 : 0, {

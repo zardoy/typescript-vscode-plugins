@@ -5,7 +5,7 @@ import { isGoodPositionMethodCompletion } from '../src/completions/isGoodPositio
 import { findChildContainingExactPosition, isTs5 } from '../src/utils'
 import handleCommand from '../src/specialCommands/handle'
 import constructMethodSnippet from '../src/constructMethodSnippet'
-import { defaultConfigFunc, entrypoint, settingsOverride, sharedLanguageService } from './shared'
+import { currentTestingContext, defaultConfigFunc, entrypoint, settingsOverride, sharedLanguageService } from './shared'
 import { fileContentsSpecialPositions, fourslashLikeTester, getCompletionsAtPosition, overrideSettings } from './testing'
 
 const { languageService, languageServiceHost, updateProject, getCurrentFile } = sharedLanguageService
@@ -122,6 +122,12 @@ const compareMethodSnippetAgainstMarker = (inputMarkers: number[], marker: numbe
     }
     const snippetToInsert = methodSnippet ? `(${methodSnippet.join(', ')})` : null
     expect(Array.isArray(expected) ? methodSnippet : snippetToInsert, `At marker ${marker}`).toEqual(expected)
+}
+
+const assertCompletionInsertText = (marker: number, entryName: string | undefined, insertTextExpected: string) => {
+    const { entries } = getCompletionsAtPosition(currentTestingContext.markers[marker]!)!
+    const entry = entryName === undefined ? entries[0] : entries.find(({ name }) => name === entryName)
+    expect(entry?.insertText).toEqual(insertTextExpected)
 }
 
 describe('Method snippets', () => {
@@ -285,6 +291,24 @@ describe('Method snippets', () => {
 
         compareMethodSnippetAgainstMarker(markers, 1, 'ambiguous')
         compareMethodSnippetAgainstMarker(markers, 2, 'ambiguous')
+    })
+
+    test('methodSnippetsInsertText all', () => {
+        overrideSettings({
+            methodSnippetsInsertText: 'all',
+        })
+        fileContentsSpecialPositions(/* ts */ `
+            const a = (a, b) => {}
+            a/*1*/
+
+            class A {
+                test() {
+                    test/*2*/
+                }
+            }
+        `)
+        assertCompletionInsertText(1, 'a', 'a(${1:a}, ${2:b})')
+        assertCompletionInsertText(2, 'test', 'this.test()')
     })
 })
 

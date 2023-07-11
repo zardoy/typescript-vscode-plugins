@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { getCompletionsAtPosition as getCompletionsAtPositionRaw } from '../src/completionsAtPosition'
 import { Configuration } from '../src/types'
-import { defaultConfigFunc, entrypoint, sharedLanguageService, settingsOverride } from './shared'
+import { defaultConfigFunc, entrypoint, sharedLanguageService, settingsOverride, currentTestingContext } from './shared'
 
 interface CompletionPartMatcher {
     names?: string[]
@@ -29,7 +29,9 @@ export const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, s
     const result = getCompletionsAtPositionRaw(
         fileName,
         pos,
-        {},
+        {
+            includeCompletionsWithInsertText: true,
+        },
         defaultConfigFunc,
         languageService,
         languageServiceHost.getScriptSnapshot(entrypoint)!,
@@ -163,5 +165,6 @@ export const fileContentsSpecialPositions = (contents: string, fileName = entryp
         if (process.env.CI) throw new Error('Only positions not allowed on CI')
         return cursorPositionsOnly
     }
+    currentTestingContext.markers = cursorPositions[2]
     return cursorPositions
 }

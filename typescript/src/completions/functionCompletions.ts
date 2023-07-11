@@ -44,7 +44,7 @@ export default (entries: ts.CompletionEntry[]) => {
                 if (!methodSnippet || resolveData.isAmbiguous) return
                 return {
                     ...entry,
-                    insertText: insertTextAfterEntry(entry, `(${methodSnippet.map((x, i) => `$\{${i + 1}:${x}}`).join(', ')})`),
+                    insertText: insertTextAfterEntry(entry.insertText ?? entry.name, `(${methodSnippet.map((x, i) => `$\{${i + 1}:${x}}`).join(', ')})`),
                     labelDetails: {
                         detail: `(${methodSnippet.join(', ')})`,
                         description: ts.displayPartsToString(entry.sourceDisplay),
