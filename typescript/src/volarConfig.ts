@@ -9,8 +9,6 @@ const originalPluginFactory: typeof import('./index') = require('typescript-esse
 const compact = <T>(arr: Array<T | undefined>): T[] => arr.filter(Boolean) as T[]
 
 const plugin: (...args: Parameters<import('@vue/language-service').Service>) => Promise<void> = async (context, { typescript: tsModule } = {}) => {
-    console.log('load new')
-
     if (!context) {
         console.warn('Skipping activation of tsEssentialPlugins for now, because of no context.')
         return
@@ -81,10 +79,6 @@ const plugin: (...args: Parameters<import('@vue/language-service').Service>) => 
         const config: Configuration = mergeAndPatchConfig(regularConfig, vueSpecificConfig)
         return config
     }
-
-    configurationHost.onDidChangeConfiguration!(async () => {
-        console.log('asldfkjlskdafj')
-    })
 
     let config = await getResolvedUserConfig()
     // if (typescript.languageService[thisPluginMarker]) return
