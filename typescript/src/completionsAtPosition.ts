@@ -246,7 +246,7 @@ export const getCompletionsAtPosition = (
         )
     }
 
-    if (c('suggestions.keywordsInsertText') === 'space') {
+    if (c('suggestions.keywordsInsertText') === 'space' && (!prior?.flags || !(prior.flags & ts.CompletionInfoFlags.IsContinuation))) {
         prior.entries = keywordsSpace(prior.entries, scriptSnapshot, position, exactNode)
     }
 
