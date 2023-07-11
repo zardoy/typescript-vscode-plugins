@@ -26,7 +26,15 @@ export default () => {
                 return
             }
 
+            const sourceActionKind = vscode.CodeActionKind.SourceFixAll.append('ts-essentials')
             if (context.only?.contains(vscode.CodeActionKind.SourceFixAll)) {
+                if (
+                    !context.only.contains(sourceActionKind) ||
+                    (getExtensionSetting('removeCodeFixes.enable') && getExtensionSetting('removeCodeFixes.codefixes').includes('fixAllInFileSourceAction'))
+                ) {
+                    return
+                }
+
                 const fixAllEdits = await sendCommand<RequestResponseTypes['getFixAllEdits']>('getFixAllEdits', {
                     document,
                 })
@@ -35,8 +43,8 @@ export default () => {
                 edit.set(document.uri, tsTextChangesToVscodeTextEdits(document, fixAllEdits))
                 return [
                     {
-                        title: '[essentials] Fix all TypeScript',
-                        kind: vscode.CodeActionKind.SourceFixAll,
+                        title: '[TS essentials] Fix all',
+                        kind: sourceActionKind,
                         edit,
                     },
                 ]

@@ -640,6 +640,7 @@ export type Configuration = {
 
 // scrapped using search editor. config: caseInsensitive, context lines: 0, regex: const fix\w+ = "[^ ]+"
 type FixId =
+    | 'fixAllInFileSourceAction'
     | 'addConvertToUnknownForNonOverlappingTypes'
     | 'addMissingAsync'
     | 'addMissingAwait'
