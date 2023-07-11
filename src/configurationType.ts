@@ -562,6 +562,7 @@ export type Configuration = {
     'experiments.excludeNonJsxCompletions': boolean
     /**
      * Wether to change function completions to function kind
+     * @deprecated Use `methodSnippetsInsertText` instead
      * @default false
      */
     'experiments.changeKindToFunction': boolean
