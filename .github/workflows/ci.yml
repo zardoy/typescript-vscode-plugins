@@ -36,3 +36,10 @@ jobs:
       - uses: GabrielBB/xvfb-action@v1.6
         with:
           run: pnpm integration-test
+      - run: cd out && npx @vscode/vsce package --out ../extension.vsix
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: extension
+          path: |
+            extension.vsix
