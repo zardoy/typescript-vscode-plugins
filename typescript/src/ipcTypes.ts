@@ -64,7 +64,6 @@ export type RequestResponseTypes = {
             totalCount: number
             totalObjectCount: number
         }
-        moveToExistingFile?: Record<string, unknown>
         extendedCodeActions: IpcExtendedCodeAction[]
     }
     twoStepCodeActionSecondStep:
@@ -97,14 +96,10 @@ export type RequestOptionsTypes = {
     }
     twoStepCodeActionSecondStep: {
         range: [number, number]
-        data:
-            | {
-                  name: 'turnArrayIntoObject'
-                  selectedKeyName?: string
-              }
-            | {
-                  name: 'moveToExistingFile'
-              }
+        data: {
+            name: 'turnArrayIntoObject'
+            selectedKeyName?: string
+        }
     }
 
     acceptRenameWithParams: {
