@@ -1,5 +1,5 @@
 import { decorateLanguageService, getInitialProxy, thisPluginMarker } from './decorateProxy'
-import { Configuration } from './types'
+import { Configuration, PluginCreateArg } from './types'
 
 const _configObj = {
     config: undefined! as Configuration,
@@ -7,11 +7,11 @@ const _configObj = {
 
 const updateConfigListeners: Array<() => void> = []
 
-const plugin: ts.server.PluginModuleFactory = ({ typescript }) => {
+const plugin = ({ typescript }: Parameters<ts.server.PluginModuleFactory>[0]) => {
     // eslint-disable-next-line no-multi-assign
     ts = tsFull = typescript as any
     return {
-        create(info) {
+        create(info: PluginCreateArg) {
             // receive fresh config
             _configObj.config = info.config
             console.log('receive config', JSON.stringify(_configObj.config))
@@ -49,6 +49,8 @@ const plugin: ts.server.PluginModuleFactory = ({ typescript }) => {
         },
     }
 }
+
+plugin satisfies ts.server.PluginModuleFactory
 
 //@ts-expect-error
 export = plugin

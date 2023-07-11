@@ -6,6 +6,7 @@ await build({
     bundle: true,
     external: ['typescript-essential-plugins'],
     // minify: !watch,
+    watch: true,
     entryPoints: ['./typescript/src/volarConfig.ts'],
     outfile: './out/volarConfig.js',
     format: 'cjs',
