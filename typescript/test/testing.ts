@@ -1,11 +1,12 @@
 import _ from 'lodash'
 import { getCompletionsAtPosition as getCompletionsAtPositionRaw } from '../src/completionsAtPosition'
 import { Configuration } from '../src/types'
-import { defaultConfigFunc, entrypoint, sharedLanguageService, settingsOverride } from './shared'
+import { defaultConfigFunc, entrypoint, sharedLanguageService, settingsOverride, currentTestingContext } from './shared'
 
 interface CompletionPartMatcher {
     names?: string[]
-    all?: Pick<ts.CompletionEntry, 'kind' | 'isSnippet'>
+    insertTexts?: string[]
+    all?: Partial<Pick<ts.CompletionEntry, 'kind' | 'isSnippet'>>
 }
 
 interface CompletionMatcher {
@@ -29,7 +30,13 @@ export const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, s
     const result = getCompletionsAtPositionRaw(
         fileName,
         pos,
-        {},
+        {
+            includeCompletionsWithInsertText: true,
+            includeCompletionsWithObjectLiteralMethodSnippets: true,
+            includeCompletionsWithSnippetText: true,
+            includeCompletionsWithClassMemberSnippets: true,
+            useLabelDetailsInCompletionEntries: true,
+        },
         defaultConfigFunc,
         languageService,
         languageServiceHost.getScriptSnapshot(entrypoint)!,
@@ -83,9 +90,15 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint) => 
                 const message = ` at marker ${mark}`
                 const { exact, includes, excludes } = matcher
                 if (exact) {
-                    const { names, all } = exact
+                    const { names, all, insertTexts } = exact
                     if (names) {
                         expect(result?.entryNames, message).toEqual(names)
+                    }
+                    if (insertTexts) {
+                        expect(
+                            result.entries.map(entry => entry.insertText),
+                            message,
+                        ).toEqual(insertTexts)
                     }
                     if (all) {
                         for (const entry of result.entries) {
@@ -163,5 +176,6 @@ export const fileContentsSpecialPositions = (contents: string, fileName = entryp
         if (process.env.CI) throw new Error('Only positions not allowed on CI')
         return cursorPositionsOnly
     }
+    currentTestingContext.markers = cursorPositions[2]
     return cursorPositions
 }

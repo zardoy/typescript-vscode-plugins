@@ -561,6 +561,7 @@ export type Configuration = {
     'experiments.excludeNonJsxCompletions': boolean
     /**
      * Wether to change function completions to function kind
+     * @deprecated Use `methodSnippetsInsertText` instead
      * @default false
      */
     'experiments.changeKindToFunction': boolean
@@ -639,6 +640,7 @@ export type Configuration = {
 
 // scrapped using search editor. config: caseInsensitive, context lines: 0, regex: const fix\w+ = "[^ ]+"
 type FixId =
+    | 'fixAllInFileSourceAction'
     | 'addConvertToUnknownForNonOverlappingTypes'
     | 'addMissingAsync'
     | 'addMissingAwait'

@@ -8,7 +8,10 @@ export default (entries: ts.CompletionEntry[]) => {
 
     const methodSnippetInsertTextMode = c('methodSnippetsInsertText')
     const nextChar = sourceFile.getFullText().slice(position, position + 1)
-    const enableResolvingInsertText = !['(', '.', '`'].includes(nextChar) && c('enableMethodSnippets') && methodSnippetInsertTextMode !== 'disable'
+    const isMethodSnippetInsertTextModeEnabled = methodSnippetInsertTextMode !== 'disable'
+
+    const enableResolvingInsertText = !['(', '.', '`'].includes(nextChar) && c('enableMethodSnippets') && isMethodSnippetInsertTextModeEnabled
+
     const changeKindToFunction = c('experiments.changeKindToFunction')
 
     if (!enableResolvingInsertText && !changeKindToFunction) return
@@ -44,12 +47,12 @@ export default (entries: ts.CompletionEntry[]) => {
                 if (!methodSnippet || resolveData.isAmbiguous) return
                 return {
                     ...entry,
-                    insertText: insertTextAfterEntry(entry, `(${methodSnippet.map((x, i) => `$\{${i + 1}:${x}}`).join(', ')})`),
+                    insertText: insertTextAfterEntry(entry.insertText ?? entry.name, `(${methodSnippet.map((x, i) => `$\{${i + 1}:${x}}`).join(', ')})`),
                     labelDetails: {
                         detail: `(${methodSnippet.join(', ')})`,
                         description: ts.displayPartsToString(entry.sourceDisplay),
                     },
-                    kind: changeKindToFunction ? ts.ScriptElementKind.functionElement : entry.kind,
+                    kind: ts.ScriptElementKind.functionElement,
                     isSnippet: true,
                 }
             }
