@@ -4,16 +4,35 @@ import get from 'lodash/get'
 import type { Configuration } from './types'
 
 // will be required from ./node_modules/typescript-essential-plugins/index.js
-const originalPluginFactory = require('typescript-essential-plugins')
+const originalPluginFactory: typeof import('./index') = require('typescript-essential-plugins')
 
 const compact = <T>(arr: Array<T | undefined>): T[] => arr.filter(Boolean) as T[]
 
-const plugin = ((context, { typescript: tsModule } = {}) => {
-    if (!context) throw new Error('Not recieve context')
-    const { typescript } = context
-    let configurationHost = context.env
-    if (context['configurationHost']) configurationHost = context['configurationHost']
-    configurationHost = configurationHost['configurationHost'] ?? configurationHost
+const plugin: (...args: Parameters<import('@vue/language-service').Service>) => Promise<void> = async (context, { typescript: tsModule } = {}) => {
+    if (!context) {
+        console.warn('Skipping activation of tsEssentialPlugins for now, because of no context.')
+        return
+    }
+    if (!tsModule) throw new Error('typescript module is missing!')
+    await new Promise(resolve => {
+        if (context.services.typescript) {
+            resolve()
+        } else {
+            context.services = new Proxy(context.services, {
+                set(target, p, newValue, receiver) {
+                    Reflect.set(target, p, newValue, receiver)
+                    if (p === 'typescript') {
+                        resolve()
+                    }
+                    return true
+                },
+            })
+        }
+    })
+    const typescriptService = context.services.typescript!
+    const languageService = typescriptService.provide['typescript/languageService']()
+    const languageServiceHost = typescriptService.provide['typescript/languageServiceHost']()
+    const configurationHost = context.env
     const mergeAndPatchConfig = (generalConfig, vueConfig) => {
         const mergedConfig = {
             ...generalConfig,
@@ -41,68 +60,73 @@ const plugin = ((context, { typescript: tsModule } = {}) => {
         }
     }
 
-    if (typescript && configurationHost) {
-        const ts = tsModule ?? typescript['module']
-        const plugin = originalPluginFactory({
-            typescript: ts,
-        })
-        const originalLsMethods = { ...typescript.languageService }
+    const plugin = originalPluginFactory({
+        typescript: tsModule,
+    })
+    const originalLanguageService = { ...languageService }
 
-        const getResolvedUserConfig = async () => {
-            const regularConfig = await configurationHost.getConfiguration!<any>('tsEssentialPlugins')
-            const _vueSpecificConfig = (await configurationHost.getConfiguration!<any>('[vue]')) || {}
+    const getResolvedUserConfig = async () => {
+        const regularConfig = await configurationHost.getConfiguration!<any>('tsEssentialPlugins')
+        const _vueSpecificConfig = (await configurationHost.getConfiguration!<any>('[vue]')) || {}
 
-            const vueSpecificConfig = Object.fromEntries(
-                compact(
-                    Object.entries(_vueSpecificConfig).map(([key, value]) =>
-                        key.startsWith('tsEssentialPlugins') ? [key.slice('tsEssentialPlugins.'.length), value] : undefined,
-                    ),
+        const vueSpecificConfig = Object.fromEntries(
+            compact(
+                Object.entries(_vueSpecificConfig).map(([key, value]) =>
+                    key.startsWith('tsEssentialPlugins') ? [key.slice('tsEssentialPlugins.'.length), value] : undefined,
                 ),
-            )
-            const config: Configuration = mergeAndPatchConfig(regularConfig, vueSpecificConfig)
-            return config
-        }
-
-        void getResolvedUserConfig().then(async config => {
-            // if (typescript.languageService[thisPluginMarker]) return
-            if (!config.enablePlugin) return
-            const proxy = plugin.create({
-                ...typescript,
-                config,
-                languageService: originalLsMethods as any,
-            } as any)
-            console.log('TS Essentials Plugins activated!')
-            // const methodToReassign = ['getCompletionsAtPosition', 'getCompletionEntryDetails']
-            for (const method of Object.keys(proxy)) {
-                typescript.languageService[method] = proxy[method]
-            }
-        })
-
-        configurationHost.onDidChangeConfiguration!(() => {
-            void getResolvedUserConfig().then(config => {
-                plugin.onConfigurationChanged?.(config)
-                // temporary workaround
-                if (!config.enablePlugin) {
-                    typescript.languageService = originalLsMethods
-                }
-            })
-        })
-        // typescript.languageService[thisPluginMarker] = true
-    } else {
-        console.warn('Failed to activate tsEssentialPlugins, because of no typescript or configurationHost context')
+            ),
+        )
+        const config: Configuration = mergeAndPatchConfig(regularConfig, vueSpecificConfig)
+        return config
     }
-    return {}
-}) satisfies import('@volar/language-service').Service
+
+    let config = await getResolvedUserConfig()
+    // if (typescript.languageService[thisPluginMarker]) return
+    const proxy = plugin.create({
+        languageServiceHost,
+        config,
+        languageService: originalLanguageService,
+    })
+
+    const activatePlugin = () => {
+        if (!config.enableVueSupport) return
+        Object.assign(languageService, proxy)
+        console.log('TS Essentials Plugins activated!')
+        // typescript.languageService[thisPluginMarker] = true
+    }
+
+    const deactivatePlugin = () => {
+        Object.assign(languageService, originalLanguageService)
+        console.log('TS Essentials Plugins deactivated!')
+    }
+
+    configurationHost.onDidChangeConfiguration!(async () => {
+        const prevConfig = config
+        config = await getResolvedUserConfig()
+        if (prevConfig.enableVueSupport !== config.enableVueSupport) {
+            if (config.enableVueSupport) {
+                activatePlugin()
+            } else {
+                deactivatePlugin()
+            }
+        }
+        plugin.onConfigurationChanged?.(config)
+    })
+
+    activatePlugin()
+}
 
 module.exports = {
-    plugins: [
-        (...args) => {
-            try {
-                return plugin(...(args as [any]))
-            } catch (err) {
-                console.log('TS Essentials error', err)
-                return {}
-            }
+    services: {
+        typescriptEssentialPlugins: (...args) => {
+            ;(async () => {
+                try {
+                    await plugin(...args)
+                } catch (err) {
+                    console.log('TS Essentials error', err)
+                }
+            })()
+            return {}
         },
-    ],
-} /*  satisfies import('@volar/language-service').ServiceContext */
+    },
+} satisfies import('@vue/language-service').Config

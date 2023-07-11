@@ -12,7 +12,7 @@ import handleSpecialCommand from './specialCommands/handle'
 import decorateDefinitions from './definitions'
 import decorateDocumentHighlights from './documentHighlights'
 import completionEntryDetails from './completionEntryDetails'
-import { GetConfig } from './types'
+import { GetConfig, PluginCreateArg } from './types'
 import decorateWorkspaceSymbolSearch from './workspaceSymbolSearch'
 import decorateFormatFeatures from './decorateFormatFeatures'
 import libDomPatching from './libDomPatching'
@@ -33,7 +33,7 @@ export const getInitialProxy = (languageService: ts.LanguageService, proxy = Obj
 }
 
 export const decorateLanguageService = (
-    { languageService, languageServiceHost }: ts.server.PluginCreateInfo,
+    { languageService, languageServiceHost }: PluginCreateArg,
     existingProxy: ts.LanguageService | undefined,
     config: { config: any },
     { pluginSpecificSyntaxServerConfigCheck = true }: { pluginSpecificSyntaxServerConfigCheck?: boolean } = {},

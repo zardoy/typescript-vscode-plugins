@@ -172,8 +172,8 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             prior.definitions =
                 !isVLSComponent || !componentName
                     ? prior.definitions
-                    : prior.definitions.filter(({ name, containerName }) => {
-                          const isDefinitionInComponentsProperty = componentName === name && lines[curLine - 2] === '// @ts-ignore'
+                    : prior.definitions.filter(({ containerName }) => {
+                          const isDefinitionInComponentsProperty = containerName === '__VLS_componentsOption'
                           const isGlobalComponent = containerName === 'GlobalComponents'
 
                           return !isDefinitionInComponentsProperty || isGlobalComponent

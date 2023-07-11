@@ -1,4 +1,5 @@
 import { ConditionalPick } from 'type-fest'
+
 //@ts-expect-error
 import type { Configuration } from '../../src/configurationType'
 // eslint-disable-next-line @typescript-eslint/no-redeclare
@@ -8,3 +9,5 @@ export type LanguageServiceMethodWithConfig<T extends keyof ConditionalPick<ts.L
     c: GetConfig,
     ...args: Parameters<ts.LanguageService[T]>
 ) => ReturnType<ts.LanguageService[T]>
+
+export type PluginCreateArg = Pick<ts.server.PluginCreateInfo, 'languageService' | 'languageServiceHost' | 'config'>
