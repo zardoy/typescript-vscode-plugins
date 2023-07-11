@@ -52,7 +52,7 @@ export default (entries: ts.CompletionEntry[]) => {
                         detail: `(${methodSnippet.join(', ')})`,
                         description: ts.displayPartsToString(entry.sourceDisplay),
                     },
-                    kind: changeKindToFunction || isMethodSnippetInsertTextModeEnabled ? ts.ScriptElementKind.functionElement : entry.kind,
+                    kind: ts.ScriptElementKind.functionElement,
                     isSnippet: true,
                 }
             }
