@@ -8,7 +8,10 @@ export default (entries: ts.CompletionEntry[]) => {
 
     const methodSnippetInsertTextMode = c('methodSnippetsInsertText')
     const nextChar = sourceFile.getFullText().slice(position, position + 1)
-    const enableResolvingInsertText = !['(', '.', '`'].includes(nextChar) && c('enableMethodSnippets') && methodSnippetInsertTextMode !== 'disable'
+    const isMethodSnippetInsertTextModeEnabled = methodSnippetInsertTextMode !== 'disable'
+
+    const enableResolvingInsertText = !['(', '.', '`'].includes(nextChar) && c('enableMethodSnippets') && isMethodSnippetInsertTextModeEnabled
+
     const changeKindToFunction = c('experiments.changeKindToFunction')
 
     if (!enableResolvingInsertText && !changeKindToFunction) return
@@ -49,7 +52,7 @@ export default (entries: ts.CompletionEntry[]) => {
                         detail: `(${methodSnippet.join(', ')})`,
                         description: ts.displayPartsToString(entry.sourceDisplay),
                     },
-                    kind: changeKindToFunction ? ts.ScriptElementKind.functionElement : entry.kind,
+                    kind: ts.ScriptElementKind.functionElement,
                     isSnippet: true,
                 }
             }
