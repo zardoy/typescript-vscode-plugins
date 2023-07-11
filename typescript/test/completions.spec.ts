@@ -673,6 +673,17 @@ test('Object Literal Completions', () => {
           "name": "callback",
         },
         {
+          "insertText": "callback() {\\\\n    $0\\\\n},",
+          "isSnippet": true,
+          "kind": "method",
+          "kindModifiers": "optional",
+          "labelDetails": {
+            "detail": "()",
+          },
+          "name": "callback",
+          "source": "ObjectLiteralMethodSnippet/",
+        },
+        {
           "insertText": "mood",
           "isSnippet": true,
           "kind": "property",
