@@ -712,7 +712,7 @@ test('Object Literal Completions', () => {
     expect(pos4.filter(x => x.insertText?.includes(': '))).toEqual([])
 })
 
-test.only('Object Literal Completions with keepOriginal: remove & builtin method snippets', () => {
+test('Object Literal Completions with keepOriginal: remove & builtin method snippets', () => {
     overrideSettings({
         'objectLiteralCompletions.keepOriginal': 'remove',
     })
