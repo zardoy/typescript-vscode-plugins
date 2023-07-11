@@ -712,6 +712,29 @@ test('Object Literal Completions', () => {
     expect(pos4.filter(x => x.insertText?.includes(': '))).toEqual([])
 })
 
+test.only('Object Literal Completions with keepOriginal: remove & builtin method snippets', () => {
+    overrideSettings({
+        'objectLiteralCompletions.keepOriginal': 'remove',
+    })
+    const { completion } = fourslashLikeTester(/* ts */ `
+        interface Options {
+            a: {}
+            onA()
+        }
+        const options: Options = {
+            /*1*/
+        }
+    `)
+    completion(1, {
+        exact: {
+            insertTexts: ['a: {\n\t$1\n},$0', 'onA() {\n    $0\n},'],
+            all: {
+                isSnippet: true,
+            },
+        },
+    })
+})
+
 test('Extract to type / interface name inference', () => {
     fourslashLikeTester(/* ts */ `
         const foo: { bar: string; } = { bar: 'baz' }

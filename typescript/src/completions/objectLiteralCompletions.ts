@@ -9,7 +9,7 @@ export default (prior: ts.CompletionInfo): ts.CompletionEntry[] | void => {
     const enableMoreVariants = c('objectLiteralCompletions.moreVariants')
     const keepOriginal = c('objectLiteralCompletions.keepOriginal')
     if (!preferences.includeCompletionsWithObjectLiteralMethodSnippets && !enableMoreVariants) return
-    // plans to make it hihgly configurable! e.g. if user wants to make some subtype leading (e.g. from [] | {})
+    // plans to make it highly configurable! e.g. if user wants to make some subtype leading (e.g. from [] | {})
     if (ts.isIdentifier(node)) node = node.parent
     if (ts.isShorthandPropertyAssignment(node)) node = node.parent
     const nextChar = node.getSourceFile().getFullText()[position]
@@ -22,8 +22,8 @@ export default (prior: ts.CompletionInfo): ts.CompletionEntry[] | void => {
         if (!objType) return
         oldProperties = getAllPropertiesOfType(objType, typeChecker)
     }
-    const clonedEntries = [...entries]
-    for (const entry of clonedEntries) {
+    const nonObjectLiteralEntries = entries.filter(entry => !isObjectLiteralMethodSnippet(entry))
+    for (const entry of nonObjectLiteralEntries) {
         let type: ts.Type | undefined
         if (!isTs5()) {
             const property = oldProperties!.find(property => property.name === entry.name)

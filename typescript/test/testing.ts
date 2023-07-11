@@ -5,7 +5,8 @@ import { defaultConfigFunc, entrypoint, sharedLanguageService, settingsOverride,
 
 interface CompletionPartMatcher {
     names?: string[]
-    all?: Pick<ts.CompletionEntry, 'kind' | 'isSnippet'>
+    insertTexts?: string[]
+    all?: Partial<Pick<ts.CompletionEntry, 'kind' | 'isSnippet'>>
 }
 
 interface CompletionMatcher {
@@ -31,6 +32,10 @@ export const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, s
         pos,
         {
             includeCompletionsWithInsertText: true,
+            includeCompletionsWithObjectLiteralMethodSnippets: true,
+            includeCompletionsWithSnippetText: true,
+            includeCompletionsWithClassMemberSnippets: true,
+            useLabelDetailsInCompletionEntries: true,
         },
         defaultConfigFunc,
         languageService,
@@ -85,9 +90,15 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint) => 
                 const message = ` at marker ${mark}`
                 const { exact, includes, excludes } = matcher
                 if (exact) {
-                    const { names, all } = exact
+                    const { names, all, insertTexts } = exact
                     if (names) {
                         expect(result?.entryNames, message).toEqual(names)
+                    }
+                    if (insertTexts) {
+                        expect(
+                            result.entries.map(entry => entry.insertText),
+                            message,
+                        ).toEqual(insertTexts)
                     }
                     if (all) {
                         for (const entry of result.entries) {
