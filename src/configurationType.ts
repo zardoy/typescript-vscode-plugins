@@ -441,6 +441,11 @@ export type Configuration = {
      */
     'disableMethodSnippets.jsxAttributes': boolean
     /**
+     * disable method snippets at function arguments
+     * @default true
+     */
+    'disableMethodSnippets.functionArguments': boolean
+    /**
      * Support `@ts-diagnostic-disable` top-level comment for disabling specific semantic diagnostics
      * Example: `// @ts-diagnostic-disable
      * Advanced usage only! Enable in `.vscode/settings.json` for projects that need this
