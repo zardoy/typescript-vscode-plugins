@@ -154,6 +154,12 @@ export type Configuration = {
      */
     'arrayMethodsSnippets.defaultItemName': string | false
     /**
+     * E.g. `entries.filter(e => )` instead of `entries.filter(entry => )`
+     *
+     * @default false
+     */
+    'arrayMethodsSnippets.inferredFirstLetterOnly': boolean
+    /**
      * Highlights non-function methods. Also applies for static class methods. Activates when `bind`, `call`, `apply`, `arguments` completions detected.
      * @default true
      * */
