@@ -41,13 +41,15 @@ export default (entries: ts.CompletionEntry[]) => {
             if (!valueDeclaration) return
 
             // const dateNow = Date.now()
-            if (enableResolvingInsertText) {
+            if (enableResolvingInsertText && !entry.isSnippet) {
                 const resolveData = {} as { isAmbiguous: boolean }
                 const methodSnippet = constructMethodSnippet(languageService, sourceFile, position, symbol, c, resolveData)
                 if (!methodSnippet || resolveData.isAmbiguous) return
+                const originalText = entry.insertText ?? entry.name
+                const insertTextSnippetAdd = `(${methodSnippet.map((x, i) => `$\{${i + 1}:${x}}`).join(', ')})`
                 return {
                     ...entry,
-                    insertText: insertTextAfterEntry(entry.insertText ?? entry.name, `(${methodSnippet.map((x, i) => `$\{${i + 1}:${x}}`).join(', ')})`),
+                    insertText: insertTextAfterEntry(originalText, insertTextSnippetAdd),
                     labelDetails: {
                         detail: `(${methodSnippet.join(', ')})`,
                         description: ts.displayPartsToString(entry.sourceDisplay),

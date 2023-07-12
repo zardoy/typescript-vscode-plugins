@@ -124,9 +124,9 @@ const compareMethodSnippetAgainstMarker = (inputMarkers: number[], marker: numbe
     expect(Array.isArray(expected) ? methodSnippet : snippetToInsert, `At marker ${marker}`).toEqual(expected)
 }
 
-const assertCompletionInsertText = (marker: number, entryName: string | undefined, insertTextExpected: string) => {
+const assertCompletionInsertText = (marker: number, entryPredicate: string | undefined | number, insertTextExpected: string) => {
     const { entries } = getCompletionsAtPosition(currentTestingContext.markers[marker]!)!
-    const entry = entryName === undefined ? entries[0] : entries.find(({ name }) => name === entryName)
+    const entry = typeof entryPredicate === 'string' ? entries.find(({ name }) => name === entryPredicate) : entries[entryPredicate ?? 0]
     expect(entry?.insertText).toEqual(insertTextExpected)
 }
 
@@ -293,7 +293,7 @@ describe('Method snippets', () => {
         compareMethodSnippetAgainstMarker(markers, 2, 'ambiguous')
     })
 
-    test('methodSnippetsInsertText all', () => {
+    test.only('methodSnippetsInsertText all', () => {
         overrideSettings({
             methodSnippetsInsertText: 'all',
         })
@@ -306,9 +306,14 @@ describe('Method snippets', () => {
                     test/*2*/
                 }
             }
+
+            const b: { a() } = {
+                /*3*/
+            }
         `)
         assertCompletionInsertText(1, 'a', 'a(${1:a}, ${2:b})')
         assertCompletionInsertText(2, 'test', 'this.test()')
+        assertCompletionInsertText(3, 1, 'a() {\n$0\n},')
     })
 })
 
@@ -602,7 +607,7 @@ test('Object Literal Completions', () => {
         /*1*/
     })
 
-    const somethingWithUntions: { a: string } | { a: any[], b: string } = {/*2*/}
+    const somethingWithUnions: { a: string } | { a: any[], b: string } = {/*2*/}
 
     makeDay({
         additionalOptions: {
@@ -673,7 +678,7 @@ test('Object Literal Completions', () => {
           "name": "callback",
         },
         {
-          "insertText": "callback() {\\\\n    $0\\\\n},",
+          "insertText": "callback() {\\\\n$0\\\\n},",
           "isSnippet": true,
           "kind": "method",
           "kindModifiers": "optional",
@@ -738,7 +743,7 @@ test('Object Literal Completions with keepOriginal: remove & builtin method snip
     `)
     completion(1, {
         exact: {
-            insertTexts: ['a: {\n\t$1\n},$0', 'onA() {\n    $0\n},'],
+            insertTexts: ['a: {\n\t$1\n},$0', 'onA() {\n$0\n},'],
             all: {
                 isSnippet: true,
             },

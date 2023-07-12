@@ -40,7 +40,9 @@ export const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, s
         defaultConfigFunc,
         languageService,
         languageServiceHost.getScriptSnapshot(entrypoint)!,
-        undefined,
+        {
+            convertTabsToSpaces: false,
+        },
         { scriptKind: ts.ScriptKind.TSX, compilerOptions: {} },
     )
     if (shouldHave) expect(result).not.toBeUndefined()
