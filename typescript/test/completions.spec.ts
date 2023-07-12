@@ -293,7 +293,7 @@ describe('Method snippets', () => {
         compareMethodSnippetAgainstMarker(markers, 2, 'ambiguous')
     })
 
-    test.only('methodSnippetsInsertText all', () => {
+    test('methodSnippetsInsertText all', () => {
         overrideSettings({
             methodSnippetsInsertText: 'all',
         })
