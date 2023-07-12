@@ -1,4 +1,5 @@
 import pluralize from 'pluralize'
+import { lowerCaseFirst } from '@zardoy/utils'
 import { GetConfig } from '../types'
 import { findChildContainingPosition, getLineTextBeforePos } from '../utils'
 
@@ -29,20 +30,30 @@ export default (entries: ts.CompletionEntry[], position: number, sourceFile: ts.
     const nodeBeforeDot = findChildContainingPosition(ts, sourceFile, position - postfixRemoveLength - 1)
     if (!nodeBeforeDot) return
 
-    const cleanSourceText = getItemNameFromNode(nodeBeforeDot)?.replace(/^(?:all)?(.+?)(?:List)?$/, '$1')
+    let inferred = true
+    const defaultItemName = {
+        get value() {
+            inferred = false
+            return c('arrayMethodsSnippets.defaultItemName')
+        },
+    }
+    const cleanSourceText = lowerCaseFirst(getItemNameFromNode(nodeBeforeDot)?.replace(/^(?:all)?(.+?)(?:List)?$/, '$1') ?? '') || defaultItemName.value
     if (!cleanSourceText) return
     let inferredName = pluralize.singular(cleanSourceText)
-    const defaultItemName = c('arrayMethodsSnippets.defaultItemName')
     // both can be undefined
     if (inferredName === cleanSourceText) {
-        if (defaultItemName === false) return
-        inferredName = defaultItemName
+        if (defaultItemName.value === false) return
+        inferredName = defaultItemName.value
+    }
+
+    if (inferredName && c('arrayMethodsSnippets.inferredFirstLetterOnly')) {
+        inferredName = inferredName[0]!
     }
 
     // workaround for
     // https://github.com/microsoft/vscode/blob/4765b898acb38a44f9dd8fa7ed48e833fff6ecc6/extensions/typescript-language-features/src/languageFeatures/completions.ts#L99
     // (overriding default range)
-    // after []. .fill was appearing above .filter becuase .filter is snippet in insertText, not changing insertText of .fill so vscode method completions calls work as expected
+    // after []. .fill was appearing above .filter because .filter is snippet in insertText, not changing insertText of .fill so vscode method completions calls work as expected
     const resetRangeKinds = fullText.slice(position - 1, position) === '.' && [
         ts.ScriptElementKind.constElement,
         ts.ScriptElementKind.memberFunctionElement,
