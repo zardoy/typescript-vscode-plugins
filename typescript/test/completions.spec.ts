@@ -471,7 +471,7 @@ test('Fix properties sorting', () => {
     overrideSettings({
         fixSuggestionsSorting: true,
     })
-    const tester = fourslashLikeTester(/* tsx */ `
+    fourslashLikeTester(/* tsx */ `
         let a: {
             d
             b(a: {c, a}): {c, a}
@@ -486,22 +486,20 @@ test('Fix properties sorting', () => {
 
         declare function MyComponent(props: { b?; c? } & { a? }): JSX.Element
         <MyComponent /*4*/ />;
+
+        let a: { b:{}, a() } = {
+            /*5*/
+        }
     `)
-    tester.completion(1, {
-        exact: {
-            names: ['c', 'b'],
-        },
-    })
-    tester.completion([2, 3], {
-        exact: {
-            names: ['c', 'b'],
-        },
-    })
-    tester.completion(4, {
-        exact: {
-            names: ['b', 'c', 'a'],
-        },
-    })
+    const assertSorted = (marker: number, expected: string[]) => {
+        const { entriesSorted } = getCompletionsAtPosition(currentTestingContext.markers[marker]!)!
+        expect(entriesSorted.map(x => x.name)).toEqual(expected)
+    }
+    assertSorted(1, ['c', 'b'])
+    assertSorted(2, ['c', 'b'])
+    assertSorted(3, ['c', 'b'])
+    assertSorted(4, ['b', 'c', 'a'])
+    assertSorted(5, ['b', 'b', 'a', 'a'])
     settingsOverride.fixSuggestionsSorting = false
 })
 

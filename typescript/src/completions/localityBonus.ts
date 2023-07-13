@@ -1,8 +1,8 @@
 import { sharedCompletionContext } from './sharedContext'
 
 export default (entries: ts.CompletionEntry[]) => {
-    const { node, sourceFile, c, position } = sharedCompletionContext
-    if (!c('suggestions.localityBonus')) return
+    const { node, sourceFile, c, position, prior } = sharedCompletionContext
+    if (!c('suggestions.localityBonus') || prior.isMemberCompletion) return
 
     if (!node) return
     const LOWEST_SCORE = node.getSourceFile().getFullText().length

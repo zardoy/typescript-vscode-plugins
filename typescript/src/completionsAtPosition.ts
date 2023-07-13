@@ -74,18 +74,6 @@ export const getCompletionsAtPosition = (
     const exactNode = findChildContainingExactPosition(sourceFile, position)
     const isCheckedFile =
         !tsFull.isSourceFileJS(sourceFile as any) || !!tsFull.isCheckJsEnabledForFile(sourceFile as any, additionalData.compilerOptions as any)
-    Object.assign(sharedCompletionContext, {
-        position,
-        languageService,
-        sourceFile,
-        program,
-        isCheckedFile,
-        node: exactNode,
-        prevCompletionsMap,
-        c,
-        formatOptions: formatOptions || {},
-        preferences: options || {},
-    } satisfies typeof sharedCompletionContext)
     const unpatch = patchBuiltinMethods(c, languageService, isCheckedFile)
     const getPrior = () => {
         try {
@@ -155,6 +143,20 @@ export const getCompletionsAtPosition = (
     }
 
     if (!prior) return
+
+    Object.assign(sharedCompletionContext, {
+        position,
+        languageService,
+        sourceFile,
+        program,
+        isCheckedFile,
+        node: exactNode,
+        prevCompletionsMap,
+        c,
+        formatOptions: formatOptions || {},
+        preferences: options || {},
+        prior,
+    } satisfies typeof sharedCompletionContext)
 
     if (c('tupleHelpSignature') && node) {
         const tupleSignature = getTupleSignature(node, program.getTypeChecker()!)
