@@ -122,6 +122,21 @@ export const getCompletionsAtPosition = (
         }
     }
     // #endregion
+
+    Object.assign(sharedCompletionContext, {
+        position,
+        languageService,
+        sourceFile,
+        program,
+        isCheckedFile,
+        node: exactNode,
+        prevCompletionsMap,
+        c,
+        formatOptions: formatOptions || {},
+        preferences: options || {},
+        prior: prior!,
+    } satisfies typeof sharedCompletionContext)
+
     if (node && !hasSuggestions && ensurePrior() && prior) {
         prior.entries = additionalTypesSuggestions(prior.entries, program, node) ?? prior.entries
     }
@@ -143,20 +158,6 @@ export const getCompletionsAtPosition = (
     }
 
     if (!prior) return
-
-    Object.assign(sharedCompletionContext, {
-        position,
-        languageService,
-        sourceFile,
-        program,
-        isCheckedFile,
-        node: exactNode,
-        prevCompletionsMap,
-        c,
-        formatOptions: formatOptions || {},
-        preferences: options || {},
-        prior,
-    } satisfies typeof sharedCompletionContext)
 
     if (c('tupleHelpSignature') && node) {
         const tupleSignature = getTupleSignature(node, program.getTypeChecker()!)
