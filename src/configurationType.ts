@@ -115,10 +115,9 @@ export type Configuration = {
      */
     'suggestions.keywordsInsertText': 'none' | 'space'
     /**
-     * Will be `format-short` by default in future as super useful!
-     * Requires TypeScript 5.0+
+     * Wether to show module name from which completion comes (inserted at start of completion detail)
      * @recommended
-     * @default disable
+     * @default short-format
      */
     'suggestions.displayImportedInfo': 'disable' | 'short-format' | 'long-format'
     /**
