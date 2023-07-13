@@ -36,7 +36,7 @@ export default (entries: ts.CompletionEntry[], scriptSnapshot: ts.IScriptSnapsho
             return entry
         }
         if (entry.name === 'default' && !includeDefaultSpace) return entry
-        return { ...entry, insertText: `${entry.insertText ?? entry.name} ` }
+        return { ...entry, insertText: `${(entry.insertText ?? entry.name).trimEnd()} ` }
     })
 }
 
