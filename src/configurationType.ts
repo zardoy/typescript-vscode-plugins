@@ -441,8 +441,8 @@ export type Configuration = {
      */
     'disableMethodSnippets.jsxAttributes': boolean
     /**
-     * disable method snippets at function arguments
-     * @default true
+     * Wether to disable method snippets in function arguments
+     * @default false
      */
     'disableMethodSnippets.functionArguments': boolean
     /**
