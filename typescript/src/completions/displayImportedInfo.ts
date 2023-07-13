@@ -9,7 +9,7 @@ export default (entries: ts.CompletionEntry[]) => {
     for (const entry of entries) {
         const { symbol } = entry
         if (!symbol) continue
-        const [node] = symbol.getDeclarations() ?? []
+        const [node] = symbol.declarations ?? []
         if (!node) continue
         let importDeclaration: ts.ImportDeclaration | undefined
         if (ts.isImportSpecifier(node) && ts.isNamedImports(node.parent) && ts.isImportDeclaration(node.parent.parent.parent)) {

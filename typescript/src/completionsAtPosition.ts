@@ -91,8 +91,12 @@ export const getCompletionsAtPosition = (
         }
     }
     let prior = getPrior()
+    // todo rethink its usage and maybe always prefill instead
     const ensurePrior = () => {
-        if (!prior) prior = { entries: [], isGlobalCompletion: false, isMemberCompletion: false, isNewIdentifierLocation: false }
+        if (!prior) {
+            prior = { entries: [], isGlobalCompletion: false, isMemberCompletion: false, isNewIdentifierLocation: false }
+            ;(sharedCompletionContext.prior as typeof prior) = prior
+        }
         return true
     }
     const hasSuggestions = prior?.entries.some(({ kind }) => kind !== ts.ScriptElementKind.warning)
