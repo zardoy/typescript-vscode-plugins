@@ -63,7 +63,7 @@ export default () => {
             .getConfiguration('')
             .update(VOLAR_CONFIG_FILE_SETTING, extensionCtx.asAbsolutePath('./volarConfig.js'), vscode.ConfigurationTarget.Global)
         if (restartNeeded) {
-            void vscode.commands.executeCommand('workbench.action.restartExtensionHost')
+            void vscode.commands.executeCommand('volar.action.restartServer')
         }
     })
 }
