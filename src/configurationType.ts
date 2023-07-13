@@ -57,9 +57,8 @@ export type Configuration = {
      */
     enablePlugin: boolean
     /**
-     * Wether to enable support in Vue SFC files via Volar config file.
-     * Changing setting false->true->false requires volar server restart
-     * Experimental.
+     * Wether to enable support in Volar support via Volar config file, mainly for Vue SFC files and takeover mode.
+     * Changing setting from true to false requires Volar server restart
      * @default false
      */
     enableVueSupport: boolean
@@ -154,6 +153,12 @@ export type Configuration = {
      * @default item
      */
     'arrayMethodsSnippets.defaultItemName': string | false
+    /**
+     * E.g. `entries.filter(e => )` instead of `entries.filter(entry => )`
+     *
+     * @default false
+     */
+    'arrayMethodsSnippets.inferredFirstLetterOnly': boolean
     /**
      * Highlights non-function methods. Also applies for static class methods. Activates when `bind`, `call`, `apply`, `arguments` completions detected.
      * @default true
@@ -436,6 +441,11 @@ export type Configuration = {
      */
     'disableMethodSnippets.jsxAttributes': boolean
     /**
+     * disable method snippets at function arguments
+     * @default true
+     */
+    'disableMethodSnippets.functionArguments': boolean
+    /**
      * Support `@ts-diagnostic-disable` top-level comment for disabling specific semantic diagnostics
      * Example: `// @ts-diagnostic-disable
      * Advanced usage only! Enable in `.vscode/settings.json` for projects that need this
@@ -562,6 +572,7 @@ export type Configuration = {
     'experiments.excludeNonJsxCompletions': boolean
     /**
      * Wether to change function completions to function kind
+     * @deprecated Use `methodSnippetsInsertText` instead
      * @default false
      */
     'experiments.changeKindToFunction': boolean
@@ -640,6 +651,7 @@ export type Configuration = {
 
 // scrapped using search editor. config: caseInsensitive, context lines: 0, regex: const fix\w+ = "[^ ]+"
 type FixId =
+    | 'fixAllInFileSourceAction'
     | 'addConvertToUnknownForNonOverlappingTypes'
     | 'addMissingAsync'
     | 'addMissingAwait'

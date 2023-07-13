@@ -2,7 +2,6 @@ import _ from 'lodash'
 import { compact } from '@zardoy/utils'
 import escapeStringRegexp from 'escape-string-regexp'
 import inKeywordCompletions from './completions/inKeywordCompletions'
-// import * as emmet from '@vscode/emmet-helper'
 import isInBannedPosition from './completions/isInBannedPosition'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition, findChildContainingPosition, isTs5, patchMethod } from './utils'
@@ -75,18 +74,6 @@ export const getCompletionsAtPosition = (
     const exactNode = findChildContainingExactPosition(sourceFile, position)
     const isCheckedFile =
         !tsFull.isSourceFileJS(sourceFile as any) || !!tsFull.isCheckJsEnabledForFile(sourceFile as any, additionalData.compilerOptions as any)
-    Object.assign(sharedCompletionContext, {
-        position,
-        languageService,
-        sourceFile,
-        program,
-        isCheckedFile,
-        node: exactNode,
-        prevCompletionsMap,
-        c,
-        formatOptions: formatOptions || {},
-        preferences: options || {},
-    } satisfies typeof sharedCompletionContext)
     const unpatch = patchBuiltinMethods(c, languageService, isCheckedFile)
     const getPrior = () => {
         try {
@@ -135,6 +122,21 @@ export const getCompletionsAtPosition = (
         }
     }
     // #endregion
+
+    Object.assign(sharedCompletionContext, {
+        position,
+        languageService,
+        sourceFile,
+        program,
+        isCheckedFile,
+        node: exactNode,
+        prevCompletionsMap,
+        c,
+        formatOptions: formatOptions || {},
+        preferences: options || {},
+        prior: prior!,
+    } satisfies typeof sharedCompletionContext)
+
     if (node && !hasSuggestions && ensurePrior() && prior) {
         prior.entries = additionalTypesSuggestions(prior.entries, program, node) ?? prior.entries
     }

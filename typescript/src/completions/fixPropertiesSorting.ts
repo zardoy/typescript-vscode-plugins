@@ -60,6 +60,6 @@ export default (entries: ts.CompletionEntry[]) => {
         .sort((a, b) => {
             return getScore(a) - getScore(b)
         })
-        .map((entry, i) => ({ ...entry /* sortText: String(lowestSortText + i) */ }))
+        .map((entry, i) => ({ ...entry, sortText: String(Number.parseInt(entry.sortText, 10)) }))
     return [...notSortableEntries, ...sortedEntries, ...notInterestedEntries]
 }

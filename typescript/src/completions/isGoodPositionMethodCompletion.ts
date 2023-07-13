@@ -26,6 +26,7 @@ export const isGoodPositionMethodCompletion = (sourceFile: ts.SourceFile, positi
         if (ts.isObjectBindingPattern(currentNode) || ts.isObjectLiteralExpression(currentNode)) return false
         if (ts.isJsxAttributes(currentNode) || ts.isJsxAttribute(currentNode)) return false
         if (c('disableMethodSnippets.jsxAttributes') && ts.isJsxExpression(currentNode)) return false
+        if (c('disableMethodSnippets.functionArguments') && ts.isCallExpression(currentNode) && position > currentNode.expression.end) return false
     }
     return true
 }

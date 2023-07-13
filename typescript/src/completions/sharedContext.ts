@@ -3,6 +3,7 @@ import { GetConfig } from '../types'
 
 /** Must be used within functions */
 export const sharedCompletionContext = {} as unknown as Readonly<{
+    prior: ts.CompletionInfo
     position: number
     sourceFile: ts.SourceFile
     program: ts.Program

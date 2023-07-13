@@ -5,7 +5,7 @@ import { isGoodPositionMethodCompletion } from '../src/completions/isGoodPositio
 import { findChildContainingExactPosition, isTs5 } from '../src/utils'
 import handleCommand from '../src/specialCommands/handle'
 import constructMethodSnippet from '../src/constructMethodSnippet'
-import { defaultConfigFunc, entrypoint, settingsOverride, sharedLanguageService } from './shared'
+import { currentTestingContext, defaultConfigFunc, entrypoint, settingsOverride, sharedLanguageService } from './shared'
 import { fileContentsSpecialPositions, fourslashLikeTester, getCompletionsAtPosition, overrideSettings } from './testing'
 
 const { languageService, languageServiceHost, updateProject, getCurrentFile } = sharedLanguageService
@@ -122,6 +122,12 @@ const compareMethodSnippetAgainstMarker = (inputMarkers: number[], marker: numbe
     }
     const snippetToInsert = methodSnippet ? `(${methodSnippet.join(', ')})` : null
     expect(Array.isArray(expected) ? methodSnippet : snippetToInsert, `At marker ${marker}`).toEqual(expected)
+}
+
+const assertCompletionInsertText = (marker: number, entryPredicate: string | undefined | number, insertTextExpected: string) => {
+    const { entries } = getCompletionsAtPosition(currentTestingContext.markers[marker]!)!
+    const entry = typeof entryPredicate === 'string' ? entries.find(({ name }) => name === entryPredicate) : entries[entryPredicate ?? 0]
+    expect(entry?.insertText).toEqual(insertTextExpected)
 }
 
 describe('Method snippets', () => {
@@ -286,6 +292,29 @@ describe('Method snippets', () => {
         compareMethodSnippetAgainstMarker(markers, 1, 'ambiguous')
         compareMethodSnippetAgainstMarker(markers, 2, 'ambiguous')
     })
+
+    test('methodSnippetsInsertText all', () => {
+        overrideSettings({
+            methodSnippetsInsertText: 'all',
+        })
+        fileContentsSpecialPositions(/* ts */ `
+            const a = (a, b) => {}
+            a/*1*/
+
+            class A {
+                test() {
+                    test/*2*/
+                }
+            }
+
+            const b: { a() } = {
+                /*3*/
+            }
+        `)
+        assertCompletionInsertText(1, 'a', 'a(${1:a}, ${2:b})')
+        assertCompletionInsertText(2, 'test', 'this.test()')
+        assertCompletionInsertText(3, 1, 'a() {\n$0\n},')
+    })
 })
 
 test('Emmet completion', () => {
@@ -442,7 +471,7 @@ test('Fix properties sorting', () => {
     overrideSettings({
         fixSuggestionsSorting: true,
     })
-    const tester = fourslashLikeTester(/* tsx */ `
+    fourslashLikeTester(/* tsx */ `
         let a: {
             d
             b(a: {c, a}): {c, a}
@@ -457,22 +486,20 @@ test('Fix properties sorting', () => {
 
         declare function MyComponent(props: { b?; c? } & { a? }): JSX.Element
         <MyComponent /*4*/ />;
+
+        let a: { b:{}, a() } = {
+            /*5*/
+        }
     `)
-    tester.completion(1, {
-        exact: {
-            names: ['c', 'b'],
-        },
-    })
-    tester.completion([2, 3], {
-        exact: {
-            names: ['c', 'b'],
-        },
-    })
-    tester.completion(4, {
-        exact: {
-            names: ['b', 'c', 'a'],
-        },
-    })
+    const assertSorted = (marker: number, expected: string[]) => {
+        const { entriesSorted } = getCompletionsAtPosition(currentTestingContext.markers[marker]!)!
+        expect(entriesSorted.map(x => x.name)).toEqual(expected)
+    }
+    assertSorted(1, ['c', 'b'])
+    assertSorted(2, ['c', 'b'])
+    assertSorted(3, ['c', 'b'])
+    assertSorted(4, ['b', 'c', 'a'])
+    assertSorted(5, ['b', 'b', 'a', 'a'])
     settingsOverride.fixSuggestionsSorting = false
 })
 
@@ -578,7 +605,7 @@ test('Object Literal Completions', () => {
         /*1*/
     })
 
-    const somethingWithUntions: { a: string } | { a: any[], b: string } = {/*2*/}
+    const somethingWithUnions: { a: string } | { a: any[], b: string } = {/*2*/}
 
     makeDay({
         additionalOptions: {
@@ -649,6 +676,17 @@ test('Object Literal Completions', () => {
           "name": "callback",
         },
         {
+          "insertText": "callback() {\\\\n$0\\\\n},",
+          "isSnippet": true,
+          "kind": "method",
+          "kindModifiers": "optional",
+          "labelDetails": {
+            "detail": "()",
+          },
+          "name": "callback",
+          "source": "ObjectLiteralMethodSnippet/",
+        },
+        {
           "insertText": "mood",
           "isSnippet": true,
           "kind": "property",
@@ -686,6 +724,29 @@ test('Object Literal Completions', () => {
       ]
     `)
     expect(pos4.filter(x => x.insertText?.includes(': '))).toEqual([])
+})
+
+test('Object Literal Completions with keepOriginal: remove & builtin method snippets', () => {
+    overrideSettings({
+        'objectLiteralCompletions.keepOriginal': 'remove',
+    })
+    const { completion } = fourslashLikeTester(/* ts */ `
+        interface Options {
+            a: {}
+            onA()
+        }
+        const options: Options = {
+            /*1*/
+        }
+    `)
+    completion(1, {
+        exact: {
+            insertTexts: ['a: {\n\t$1\n},$0', 'onA() {\n$0\n},'],
+            all: {
+                isSnippet: true,
+            },
+        },
+    })
 })
 
 test('Extract to type / interface name inference', () => {

@@ -38,12 +38,10 @@ export default (
         changeType<RequestOptionsTypes['getTwoStepCodeActions']>(specialCommandArg)
         const node = findChildContainingPosition(ts, sourceFile, position)
         const posEnd = { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] }
-        const moveToExistingFile = previousGetCodeActionsResult.value?.some(x => x.name === 'Move to a new file')
 
         const extendedCodeActions = getExtendedCodeActions(sourceFile, posEnd, languageService, undefined, undefined)
         return {
             turnArrayIntoObject: objectIntoArrayConverters(posEnd, node, undefined),
-            moveToExistingFile: moveToExistingFile ? {} : undefined,
             extendedCodeActions,
         }
     }
@@ -68,20 +66,6 @@ export default (
             case 'turnArrayIntoObject': {
                 data = {
                     edits: objectIntoArrayConverters(posEnd, node, specialCommandArg.data.selectedKeyName),
-                }
-                break
-            }
-            case 'moveToExistingFile': {
-                const { edits } =
-                    languageService.getEditsForRefactor(fileName, formatOptions ?? {}, posEnd, 'Move to a new file', 'Move to a new file', preferences) ?? {}
-                if (!edits) return
-                data = {
-                    fileEdits: edits,
-                    fileNames: languageService
-                        .getProgram()!
-                        .getSourceFiles()
-                        .map(f => f.fileName)
-                        .filter(name => !name.includes('/node_modules/')),
                 }
                 break
             }

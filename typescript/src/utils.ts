@@ -144,15 +144,16 @@ export const isTsPatched = () => {
 }
 
 // Workaround esbuild bundle modules
-export const nodeModules = __WEB__
-    ? null
-    : {
-          //   emmet: require('@vscode/emmet-helper') as typeof import('@vscode/emmet-helper'),
-          requireFromString: require('require-from-string'),
-          fs: require('fs') as typeof import('fs'),
-          util: require('util') as typeof import('util'),
-          path: require('path') as typeof import('path'),
-      }
+export const nodeModules =
+    typeof __WEB__ !== 'undefined' && __WEB__
+        ? null
+        : {
+              //   emmet: require('@vscode/emmet-helper') as typeof import('@vscode/emmet-helper'),
+              requireFromString: require('require-from-string'),
+              fs: require('fs') as typeof import('fs'),
+              util: require('util') as typeof import('util'),
+              path: require('path') as typeof import('path'),
+          }
 
 /** runtime detection, shouldn't be used */
 export const isWeb = () => {
@@ -295,8 +296,7 @@ export const patchMethod = <T, K extends keyof T>(obj: T, method: K, overriden: 
     }
 }
 
-export const insertTextAfterEntry = (entryOrName: ts.CompletionEntry | string, appendText: string) =>
-    (typeof entryOrName === 'string' ? entryOrName : entryOrName.name).replace(/\$/g, '\\$') + appendText
+export const insertTextAfterEntry = (entryOrName: string, appendText: string) => entryOrName.replace(/\$/g, '\\$') + appendText
 
 export const matchParents: MatchParentsType = (node, treeToCompare) => {
     let first = true

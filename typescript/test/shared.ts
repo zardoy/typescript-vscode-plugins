@@ -19,3 +19,7 @@ export const settingsOverride: Partial<Configuration> = {
     tupleHelpSignature: true,
 }
 export const defaultConfigFunc = await getDefaultConfigFunc(settingsOverride)
+
+export const currentTestingContext = {
+    markers: [] as number[],
+}
