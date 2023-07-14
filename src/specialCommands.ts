@@ -289,6 +289,11 @@ export default () => {
         await vscode.env.clipboard.writeText(text)
     })
 
+    // registerExtensionCommand('insertImportFlatten', () => {
+    //     // got -> default, got
+    //     type A = ts.Type
+    // })
+
     // registerExtensionCommand('pasteCodeWithImports', async () => {
     //     const clipboard = await vscode.env.clipboard.readText()
     //     const lines = clipboard.split('\n')
