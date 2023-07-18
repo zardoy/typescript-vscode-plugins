@@ -19,6 +19,7 @@ import libDomPatching from './libDomPatching'
 import decorateSignatureHelp from './decorateSignatureHelp'
 import { approveCast, findChildContainingExactPosition } from './utils'
 import decorateFindRenameLocations from './decorateFindRenameLocations'
+import decorateQuickInfoAtPosition from './decorateQuickInfoAtPosition'
 
 /** @internal */
 export const thisPluginMarker = '__essentialPluginsMarker__'
@@ -143,6 +144,7 @@ export const decorateLanguageService = (
     decorateFormatFeatures(proxy, languageService, languageServiceHost, c)
     decorateSignatureHelp(proxy, languageService, languageServiceHost, c)
     decorateFindRenameLocations(proxy, languageService, c)
+    decorateQuickInfoAtPosition(proxy, languageService, languageServiceHost, c)
 
     libDomPatching(languageServiceHost, c)
 
