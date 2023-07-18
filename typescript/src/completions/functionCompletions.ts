@@ -1,13 +1,15 @@
 import { oneOf } from '@zardoy/utils'
 import constructMethodSnippet from '../constructMethodSnippet'
-import { insertTextAfterEntry } from '../utils'
+import { insertTextAfterEntry, wordRangeAtPos } from '../utils'
 import { sharedCompletionContext } from './sharedContext'
 
 export default (entries: ts.CompletionEntry[]) => {
-    const { languageService, c, sourceFile, position } = sharedCompletionContext
+    const { languageService, c, sourceFile, position, prior } = sharedCompletionContext
 
     const methodSnippetInsertTextMode = c('methodSnippetsInsertText')
-    const nextChar = sourceFile.getFullText().slice(position, position + 1)
+    const fullText = sourceFile.getFullText()
+    const nextChar = fullText.slice(position, position + 1)
+    const prevChar = fullText.slice(position - 1, position)
     const isMethodSnippetInsertTextModeEnabled = methodSnippetInsertTextMode !== 'disable'
 
     const enableResolvingInsertText = !['(', '.', '`'].includes(nextChar) && c('enableMethodSnippets') && isMethodSnippetInsertTextModeEnabled
@@ -47,13 +49,21 @@ export default (entries: ts.CompletionEntry[]) => {
                 if (!methodSnippet || resolveData.isAmbiguous) return
                 const originalText = entry.insertText ?? entry.name
                 const insertTextSnippetAdd = `(${methodSnippet.map((x, i) => `$\{${i + 1}:${x}}`).join(', ')})`
+                // https://github.com/zardoy/typescript-vscode-plugins/issues/161
+                const beforeDotWorkaround = prior.isMemberCompletion && prevChar === '.'
                 return {
                     ...entry,
-                    insertText: insertTextAfterEntry(originalText, insertTextSnippetAdd),
+                    insertText: (beforeDotWorkaround ? '.' : '') + insertTextAfterEntry(originalText, insertTextSnippetAdd),
                     labelDetails: {
                         detail: `(${methodSnippet.join(', ')})`,
                         description: ts.displayPartsToString(entry.sourceDisplay),
                     },
+                    replacementSpan: beforeDotWorkaround
+                        ? {
+                              start: position - 1,
+                              length: (c('editorSuggestInsertModeReplace') ? wordRangeAtPos(fullText, position).length : 0) + 1,
+                          }
+                        : undefined,
                     kind: ts.ScriptElementKind.functionElement,
                     isSnippet: true,
                 }

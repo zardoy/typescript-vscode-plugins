@@ -67,6 +67,7 @@ const plugin: (...args: Parameters<import('@vue/language-service').Service>) => 
 
     const getResolvedUserConfig = async () => {
         const regularConfig = await configurationHost.getConfiguration!<any>('tsEssentialPlugins')
+        const editorSuggestInsertModeReplace = (await configurationHost.getConfiguration!<any>('editor.suggest.insertMode')) === 'replace'
         const _vueSpecificConfig = (await configurationHost.getConfiguration!<any>('[vue]')) || {}
 
         const vueSpecificConfig = Object.fromEntries(
@@ -76,7 +77,7 @@ const plugin: (...args: Parameters<import('@vue/language-service').Service>) => 
                 ),
             ),
         )
-        const config: Configuration = mergeAndPatchConfig(regularConfig, vueSpecificConfig)
+        const config: Configuration = { ...mergeAndPatchConfig(regularConfig, vueSpecificConfig), editorSuggestInsertModeReplace }
         return config
     }
 

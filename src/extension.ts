@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import * as vscode from 'vscode'
 import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
-import { Settings, extensionCtx, getExtensionSetting, getExtensionSettingId, registerExtensionCommand } from 'vscode-framework'
+import { extensionCtx, getExtensionSetting, getExtensionSettingId } from 'vscode-framework'
 import { pickObj } from '@zardoy/utils'
 import { watchExtensionSettings } from '@zardoy/vscode-utils/build/settings'
-import { ConditionalPick } from 'type-fest'
 import webImports from './webImports'
 import { sendCommand } from './sendCommand'
 import { registerEmmet } from './emmet'
@@ -27,13 +26,21 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
     isActivated = true
     let webWaitingForConfigSync = false
 
+    const getResolvedConfig = () => {
+        const configuration = vscode.workspace.getConfiguration()
+        const config: any = {
+            ...configuration.get(process.env.IDS_PREFIX!),
+            editorSuggestInsertModeReplace: configuration.get('editor.suggest.insertMode') === 'replace',
+        }
+        mergeSettingsFromScopes(config, 'typescript', extensionCtx.extension.packageJSON)
+        return config
+    }
+
     const syncConfig = () => {
         if (!tsApi) return
         console.log('sending configure request for typescript-essential-plugins')
-        const config: any = { ...vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!) }
         // todo implement language-specific settings
-        mergeSettingsFromScopes(config, 'typescript', extensionCtx.extension.packageJSON)
-
+        const config = getResolvedConfig()
         tsApi.configurePlugin('typescript-essential-plugins', config)
 
         if (process.env.PLATFORM === 'node') {
@@ -50,7 +57,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
     }
 
     vscode.workspace.onDidChangeConfiguration(async ({ affectsConfiguration }) => {
-        if (affectsConfiguration(process.env.IDS_PREFIX!)) {
+        if (affectsConfiguration(process.env.IDS_PREFIX!) || affectsConfiguration('editor.suggest.insertMode')) {
             syncConfig()
             if (
                 process.env.PLATFORM === 'node' &&
@@ -72,7 +79,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
             if (!activeTextEditor || !vscode.languages.match(defaultJsSupersetLangs, activeTextEditor.document)) return
             if (!webWaitingForConfigSync) return
             // webWaitingForConfigSync = false
-            const config = vscode.workspace.getConfiguration().get(process.env.IDS_PREFIX!)
+            const config = getResolvedConfig()
             void sendCommand(`updateConfig${JSON.stringify(config)}` as any)
         }
 
