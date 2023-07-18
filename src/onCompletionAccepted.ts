@@ -62,33 +62,36 @@ export default (tsApi: { onCompletionAccepted }) => {
             const nextChar = editor.document.getText(new vscode.Range(startPos, startPos.translate(0, 1)))
             if (!params || ['(', '.', '`'].includes(nextChar)) return
 
-            if (isAmbiguous && lastAcceptedAmbiguousMethodSnippetSuggestion !== suggestionName) {
-                lastAcceptedAmbiguousMethodSnippetSuggestion = suggestionName
-                return
-            }
-
-            const replaceArguments = getExtensionSetting('methodSnippets.replaceArguments')
-
-            const snippet = new vscode.SnippetString('')
-            snippet.appendText('(')
-            // todo maybe when have optional (skipped), add a way to leave trailing , with tabstop (previous behavior)
-            for (const [i, param] of params.entries()) {
-                const replacer = replaceArguments[param.replace(/\?$/, '')]
-                if (replacer === null) continue
-                if (replacer) {
-                    useReplacer(snippet, replacer)
-                } else {
-                    snippet.appendPlaceholder(param)
+            if (getExtensionSetting('methodSnippetsInsertText') === 'disable') {
+                // handle insertion only if it wasn't handled by methodSnippetsInsertText already
+                if (isAmbiguous && lastAcceptedAmbiguousMethodSnippetSuggestion !== suggestionName) {
+                    lastAcceptedAmbiguousMethodSnippetSuggestion = suggestionName
+                    return
                 }
 
-                if (i !== params.length - 1) snippet.appendText(', ')
-            }
+                const replaceArguments = getExtensionSetting('methodSnippets.replaceArguments')
 
-            snippet.appendText(')')
-            void editor.insertSnippet(snippet, undefined, {
-                undoStopAfter: false,
-                undoStopBefore: false,
-            })
+                const snippet = new vscode.SnippetString('')
+                snippet.appendText('(')
+                // todo maybe when have optional (skipped), add a way to leave trailing , with tabstop (previous behavior)
+                for (const [i, param] of params.entries()) {
+                    const replacer = replaceArguments[param.replace(/\?$/, '')]
+                    if (replacer === null) continue
+                    if (replacer) {
+                        useReplacer(snippet, replacer)
+                    } else {
+                        snippet.appendPlaceholder(param)
+                    }
+
+                    if (i !== params.length - 1) snippet.appendText(', ')
+                }
+
+                snippet.appendText(')')
+                void editor.insertSnippet(snippet, undefined, {
+                    undoStopAfter: false,
+                    undoStopBefore: false,
+                })
+            }
             if (vscode.workspace.getConfiguration('editor.parameterHints').get('enabled') && params.length > 0) {
                 void vscode.commands.executeCommand('editor.action.triggerParameterHints')
             }
