@@ -289,6 +289,21 @@ export default () => {
         await vscode.env.clipboard.writeText(text)
     })
 
+    registerExtensionCommand('getArgumentReferencesFromCurrentParameter', async () => {
+        const result = await sendCommand<RequestResponseTypes['getArgumentReferencesFromCurrentParameter']>('getArgumentReferencesFromCurrentParameter')
+        if (!result) return
+        const editor = vscode.window.activeTextEditor!
+        const { uri } = editor.document
+        await vscode.commands.executeCommand(
+            'editor.action.goToLocations',
+            uri,
+            editor.selection.active,
+            result.map(({ filename, line, character }) => new vscode.Location(vscode.Uri.file(filename), new vscode.Position(line, character))),
+            vscode.workspace.getConfiguration('editor').get('gotoLocation.multipleReferences') ?? 'peek',
+            'No references',
+        )
+    })
+
     // registerExtensionCommand('insertImportFlatten', () => {
     //     // got -> default, got
     //     type A = ts.Type

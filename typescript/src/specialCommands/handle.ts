@@ -246,6 +246,37 @@ export default (
             text: checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.NoTypeReduction),
         }
     }
+    if (specialCommand === 'getArgumentReferencesFromCurrentParameter') {
+        const node = findChildContainingExactPosition(sourceFile, position)
+        if (!node || !ts.isIdentifier(node) || !ts.isParameter(node.parent) || !ts.isFunctionLike(node.parent.parent)) return
+        let functionDecl = node.parent.parent as ts.Node
+        const functionParameters = node.parent.parent.parameters
+        if (ts.isVariableDeclaration(functionDecl.parent)) {
+            functionDecl = functionDecl.parent
+        }
+        const parameterIndex = functionParameters.indexOf(node.parent)
+        const references = languageService.findReferences(fileName, functionDecl.pos + functionDecl.getLeadingTriviaWidth(sourceFile))
+        if (!references) return
+
+        return compact(
+            references.flatMap(({ references }) => {
+                return references.map(reference => {
+                    const sourceFile = languageService.getProgram()!.getSourceFile(reference.fileName)!
+                    const position = reference.textSpan.start
+
+                    const node = findChildContainingExactPosition(sourceFile, position)
+                    if (!node || !ts.isIdentifier(node) || !ts.isCallExpression(node.parent)) return
+
+                    const arg = node.parent.arguments[parameterIndex]
+                    if (!arg) return
+                    return {
+                        filename: reference.fileName,
+                        ...sourceFile.getLineAndCharacterOfPosition(arg.pos + arg.getLeadingTriviaWidth(sourceFile)),
+                    }
+                })
+            }),
+        )
+    }
 
     return null
 }

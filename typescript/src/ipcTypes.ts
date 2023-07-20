@@ -15,6 +15,7 @@ export const triggerCharacterCommands = [
     'acceptRenameWithParams',
     'getExtendedCodeActionEdits',
     'getLastResolvedCompletion',
+    'getArgumentReferencesFromCurrentParameter',
 ] as const
 
 export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
@@ -84,6 +85,7 @@ export type RequestResponseTypes = {
     getFullType: {
         text: string
     }
+    getArgumentReferencesFromCurrentParameter: Array<{ line: number; character: number; filename: string }>
 }
 
 // INPUT

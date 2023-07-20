@@ -62,6 +62,10 @@
             {
                 "command": "replaceGlobalTypescriptWithLocalVersion",
                 "title": "Replace Global Typescript with Local Version"
+            },
+            {
+                "command": "getArgumentReferencesFromCurrentParameter",
+                "title": "Get Argument References from Current Parameter"
             }
         ],
         "keybindings": [
