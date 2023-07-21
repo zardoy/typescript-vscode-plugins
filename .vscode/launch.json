@@ -49,6 +49,13 @@
                 "Launch Extension",
                 "Attach to TS Server"
             ]
-        }
+        },
+        {
+            "name": "Extension + Volar",
+            "configurations": [
+                "Launch Extension",
+                "Attach to Vue Semantic Server"
+            ]
+        },
     ]
 }
