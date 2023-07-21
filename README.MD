@@ -16,7 +16,7 @@ TOC:
 - [Contributed Code Actions](#contributed-code-actions)
 - [Even Even More](#even-even-more)
 
-> *Note*: You can disable all optional features with `> Disable All Optional Features` setting right after install.
+> *Note*: You can disable all optional features with `> Disable All Optional Features` command right after install.
 >
 > *Note*: Visit website for list of recommended settings: <https://ts-plugin.zardoy.com/>
 
@@ -42,7 +42,7 @@ Also is not supported in the web.
 
 90% work done in this extension highly improves completions experience!
 
-### Strict Emmet
+### Strict JSX Emmet
 
 (*enabled by default*) when react langs are in `emmet.excludeLanguages`
 
