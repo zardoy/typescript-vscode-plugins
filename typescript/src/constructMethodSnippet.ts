@@ -2,6 +2,7 @@ import { compact, oneOf } from '@zardoy/utils'
 import { isTypeNode } from './completions/keywordsSpace'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
+import extractType from './utils/extractType'
 
 // todo-low-ee inspect any last arg infer
 export default (
@@ -17,11 +18,9 @@ export default (
 ) => {
     let containerNode = findChildContainingExactPosition(sourceFile, position)
     if (!containerNode || isTypeNode(containerNode)) return
-
     const checker = languageService.getProgram()!.getTypeChecker()!
-    let type = symbol ? checker.getTypeOfSymbol(symbol) : checker.getTypeAtLocation(containerNode)
-    // give another chance
-    if (symbol && type['intrinsicName'] === 'error') type = checker.getTypeOfSymbolAtLocation(symbol, containerNode)
+
+    const type = extractType(checker, symbol, containerNode)
 
     if (ts.isIdentifier(containerNode)) containerNode = containerNode.parent
     if (ts.isPropertyAccessExpression(containerNode)) containerNode = containerNode.parent
