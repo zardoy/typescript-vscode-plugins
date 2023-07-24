@@ -57,7 +57,7 @@ export const decorateLanguageService = (
                 const possiblyAddRename = (identifier: ts.Identifier | undefined) => {
                     if (identifier?.text !== oldPredictedName) return
                     const sourceFile = languageService.getProgram()!.getSourceFile(edit.fileName)!
-                    const newRenameEdits = proxy.findRenameLocations(edit.fileName, identifier.pos, false, false) ?? []
+                    const newRenameEdits = proxy.findRenameLocations(edit.fileName, identifier.pos, false, false, preferences ?? {}) ?? []
                     if (!newRenameEdits) return
                     // maybe cancel symbol rename on collision instead?
                     const newInsertName = tsFull.getUniqueName(newPredictedName, sourceFile as any)
