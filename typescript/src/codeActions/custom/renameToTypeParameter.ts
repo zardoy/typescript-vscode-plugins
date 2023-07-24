@@ -1,5 +1,6 @@
 import { pipe, groupBy, map } from 'lodash/fp'
 import { CodeAction } from '../getCodeActions'
+import extractType from '../../utils/extractType'
 
 export default {
     id: 'renameToTypeParameter',
@@ -14,9 +15,9 @@ export default {
 
         const functionDecl = node.parent.parent.parent
         const typeChecker = languageService.getProgram()!.getTypeChecker()
-        const typeAtLocation = typeChecker.getTypeAtLocation(functionDecl)
+        const type = extractType(typeChecker, functionDecl)
 
-        const typeDecl = typeAtLocation.getSymbol()?.declarations?.[0]
+        const typeDecl = type.getSymbol()?.declarations?.[0]
         if (!typeDecl || !ts.isFunctionLike(typeDecl)) return
         const paramName = node.getText()
         const typeParamName = typeDecl.parameters[parameterIndex]!.name.getText()

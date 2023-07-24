@@ -20,7 +20,7 @@ export default (
     if (!containerNode || isTypeNode(containerNode)) return
     const checker = languageService.getProgram()!.getTypeChecker()!
 
-    const type = extractType(checker, symbol, containerNode)
+    const type = extractType(checker, containerNode, symbol)
 
     if (ts.isIdentifier(containerNode)) containerNode = containerNode.parent
     if (ts.isPropertyAccessExpression(containerNode)) containerNode = containerNode.parent
