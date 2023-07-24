@@ -1,5 +1,5 @@
+import { pipe, groupBy, map } from 'lodash/fp'
 import { CodeAction } from '../getCodeActions'
-import { getChangesTracker } from '../../utils'
 
 export default {
     id: 'renameToTypeParameter',
@@ -22,15 +22,31 @@ export default {
         const typeParamName = typeDecl.parameters[parameterIndex]!.name.getText()
         if (paramName === typeParamName) return
         if (!formatOptions) return true
-        const changesTracker = getChangesTracker({})
-        changesTracker.replaceNodeWithText(sourceFile, node, typeParamName)
+
+        const renameLocations = languageService.findRenameLocations(sourceFile.fileName, position, false, false, {
+            providePrefixAndSuffixTextForRename: false,
+        })
+        if (!renameLocations) return
+
+        const extractFileName = ({ fileName }: ts.RenameLocation) => fileName
+        const edits = pipe(
+            groupBy(extractFileName),
+            Object.entries,
+            map(
+                ([fileName, changes]): ts.FileTextChanges => ({
+                    fileName,
+                    textChanges: changes.map(
+                        ({ textSpan }): ts.TextChange => ({
+                            newText: typeParamName,
+                            span: textSpan,
+                        }),
+                    ),
+                }),
+            ),
+        )(renameLocations)
+
         return {
-            edits: [
-                {
-                    fileName: sourceFile.fileName,
-                    textChanges: changesTracker.getChanges()[0]!.textChanges,
-                },
-            ],
+            edits,
         }
     },
 } satisfies CodeAction
