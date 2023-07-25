@@ -6,9 +6,15 @@ import objectSwapKeysAndValues from './custom/objectSwapKeysAndValues'
 import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
 import addMissingProperties from './extended/addMissingProperties'
-import renameParameterToNameFromType from './custom/renameParameterToNameFromType'
+import { renameParameterToNameFromType, renameAllParametersToNameFromType } from './custom/renameParameterToNameFromType'
 
-const codeActions: CodeAction[] = [objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization, renameParameterToNameFromType]
+const codeActions: CodeAction[] = [
+    objectSwapKeysAndValues,
+    changeStringReplaceToRegex,
+    splitDeclarationAndInitialization,
+    renameParameterToNameFromType,
+    renameAllParametersToNameFromType,
+]
 const extendedCodeActions: ExtendedCodeAction[] = [addMissingProperties]
 
 type SimplifiedRefactorInfo =
