@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import { defaultJsSupersetLangsWithVue } from '@zardoy/vscode-utils/build/langs'
 import { registerExtensionCommand, showQuickPick, getExtensionSetting, getExtensionCommandId } from 'vscode-framework'
 import { compact } from '@zardoy/utils'
-import { RequestResponseTypes, RequestOptionsTypes } from '../typescript/src/ipcTypes'
+import { RequestOutputTypes, RequestInputTypes } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
 import { tsTextChangesToVscodeTextEdits, vscodeRangeToTs, tsTextChangesToVscodeSnippetTextEdits } from './util'
 
@@ -26,7 +26,7 @@ export default () => {
                     return
                 }
 
-                const fixAllEdits = await sendCommand<RequestResponseTypes['getFixAllEdits']>('getFixAllEdits', {
+                const fixAllEdits = await sendCommand('getFixAllEdits', {
                     document,
                 })
                 if (!fixAllEdits || token.isCancellationRequested) return
@@ -89,16 +89,13 @@ export default () => {
         async resolveCodeAction(codeAction: ExtendedCodeAction, token) {
             const { document } = codeAction
             if (!document) throw new Error('Unresolved code action without document')
-            const result = await sendCommand<RequestResponseTypes['getExtendedCodeActionEdits'], RequestOptionsTypes['getExtendedCodeActionEdits']>(
-                'getExtendedCodeActionEdits',
-                {
-                    document,
-                    inputOptions: {
-                        applyCodeActionTitle: codeAction.title,
-                        range: vscodeRangeToTs(document, codeAction.diagnostics?.length ? codeAction.diagnostics[0]!.range : codeAction.requestRange),
-                    },
+            const result = await sendCommand('getExtendedCodeActionEdits', {
+                document,
+                inputOptions: {
+                    applyCodeActionTitle: codeAction.title,
+                    range: vscodeRangeToTs(document, codeAction.diagnostics?.length ? codeAction.diagnostics[0]!.range : codeAction.requestRange),
                 },
-            )
+            })
             if (!result) throw new Error('No code action edits. Try debug.')
             const { edits = [], snippetEdits = [] } = result
             const workspaceEdit = new vscode.WorkspaceEdit()
@@ -111,9 +108,9 @@ export default () => {
         },
     })
 
-    registerExtensionCommand('applyRefactor' as any, async (_, arg?: RequestResponseTypes['getTwoStepCodeActions']) => {
+    registerExtensionCommand('applyRefactor' as any, async (_, arg?: RequestOutputTypes['getTwoStepCodeActions']) => {
         if (!arg) return
-        let sendNextData: RequestOptionsTypes['twoStepCodeActionSecondStep']['data'] | undefined
+        let sendNextData: RequestInputTypes['twoStepCodeActionSecondStep']['data'] | undefined
         const { turnArrayIntoObject } = arg
         if (turnArrayIntoObject) {
             const { keysCount, totalCount, totalObjectCount } = turnArrayIntoObject
@@ -151,7 +148,7 @@ export default () => {
     })
 
     async function getPossibleTwoStepRefactorings(range: vscode.Range, document = vscode.window.activeTextEditor!.document) {
-        return sendCommand<RequestResponseTypes['getTwoStepCodeActions'], RequestOptionsTypes['getTwoStepCodeActions']>('getTwoStepCodeActions', {
+        return sendCommand('getTwoStepCodeActions', {
             document,
             position: range.start,
             inputOptions: {
@@ -161,16 +158,13 @@ export default () => {
     }
 
     async function getSecondStepRefactoringData(range: vscode.Range, secondStepData?: any, document = vscode.window.activeTextEditor!.document) {
-        return sendCommand<RequestResponseTypes['twoStepCodeActionSecondStep'], RequestOptionsTypes['twoStepCodeActionSecondStep']>(
-            'twoStepCodeActionSecondStep',
-            {
-                document,
-                position: range.start,
-                inputOptions: {
-                    range: vscodeRangeToTs(document, range),
-                    data: secondStepData,
-                },
+        return sendCommand('twoStepCodeActionSecondStep', {
+            document,
+            position: range.start,
+            inputOptions: {
+                range: vscodeRangeToTs(document, range),
+                data: secondStepData,
             },
-        )
+        })
     }
 }

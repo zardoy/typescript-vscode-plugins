@@ -1,6 +1,6 @@
 import lodashGet from 'lodash.get'
 import { getCompletionsAtPosition, PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
-import { RequestOptionsTypes, TriggerCharacterCommand } from './ipcTypes'
+import { RequestInputTypes, TriggerCharacterCommand } from './ipcTypes'
 import { getNavTreeItems } from './getPatchedNavTree'
 import decorateCodeActions from './codeActions/decorateProxy'
 import decorateSemanticDiagnostics from './semanticDiagnostics'

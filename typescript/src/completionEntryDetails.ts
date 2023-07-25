@@ -1,12 +1,12 @@
 import { PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
 import constructMethodSnippet from './constructMethodSnippet'
-import { RequestResponseTypes } from './ipcTypes'
+import { RequestOutputTypes } from './ipcTypes'
 import namespaceAutoImports from './namespaceAutoImports'
 import { GetConfig } from './types'
 import { wordStartAtPos } from './utils'
 
 export const lastResolvedCompletion = {
-    value: undefined as undefined | RequestResponseTypes['getLastResolvedCompletion'],
+    value: undefined as undefined | RequestOutputTypes['getLastResolvedCompletion'],
 }
 
 export default function completionEntryDetails(

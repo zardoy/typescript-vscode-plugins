@@ -5,7 +5,7 @@ import { showQuickPick } from '@zardoy/vscode-utils/build/quickPick'
 import _ from 'lodash'
 import { compact } from '@zardoy/utils'
 import { offsetPosition } from '@zardoy/vscode-utils/build/position'
-import { RequestOptionsTypes, RequestResponseTypes } from '../typescript/src/ipcTypes'
+import { RequestInputTypes, RequestOutputTypes } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
 import { tsRangeToVscode, tsRangeToVscodeSelection } from './util'
 import { onCompletionAcceptedOverride } from './onCompletionAccepted'
@@ -15,10 +15,7 @@ export default () => {
         const editor = getActiveRegularEditor()
         if (!editor) return
         const { selection, document } = editor
-        const response = await sendCommand<
-            RequestResponseTypes['removeFunctionArgumentsTypesInSelection'],
-            RequestOptionsTypes['removeFunctionArgumentsTypesInSelection']
-        >('removeFunctionArgumentsTypesInSelection', {
+        const response = await sendCommand('removeFunctionArgumentsTypesInSelection', {
             document,
             position: selection.start,
             inputOptions: {
@@ -37,7 +34,7 @@ export default () => {
     const getCurrentValueRange = async () => {
         const editor = getActiveRegularEditor()
         if (!editor) return
-        const result = await sendCommand<RequestResponseTypes['getRangeOfSpecialValue']>('getRangeOfSpecialValue')
+        const result = await sendCommand('getRangeOfSpecialValue')
         if (!result) return
         const range = tsRangeToVscode(editor.document, result.range)
         return range.with({ start: range.start.translate(0, / *{?/.exec(editor.document.lineAt(range.start).text.slice(range.start.character))![0]!.length) })
@@ -121,7 +118,7 @@ export default () => {
     registerExtensionCommand('pickAndInsertFunctionArguments', async () => {
         const editor = getActiveRegularEditor()
         if (!editor) return
-        const result = await sendCommand<RequestResponseTypes['pickAndInsertFunctionArguments']>('pickAndInsertFunctionArguments')
+        const result = await sendCommand('pickAndInsertFunctionArguments')
         if (!result) return
 
         const renderArgs = (args: Array<[name: string, type: string]>) => `${args.map(([name, type]) => (type ? `${name}: ${type}` : name)).join(', ')}`
@@ -165,7 +162,7 @@ export default () => {
         const editor = vscode.window.activeTextEditor
         if (!editor) return
         const { document } = editor
-        const result = await sendCommand<RequestResponseTypes['filterBySyntaxKind']>('filterBySyntaxKind')
+        const result = await sendCommand('filterBySyntaxKind')
         if (!result) return
         // todo optimize
         if (filterWithSelection) {
@@ -228,14 +225,14 @@ export default () => {
             document,
             selection: { active: position },
         } = editor
-        await sendCommand<RequestOptionsTypes['acceptRenameWithParams']>('acceptRenameWithParams', {
+        await sendCommand('acceptRenameWithParams', {
             document,
             position,
             inputOptions: {
                 alias,
                 comments,
                 strings,
-            } satisfies RequestOptionsTypes['acceptRenameWithParams'],
+            } satisfies RequestInputTypes['acceptRenameWithParams'],
         })
         await vscode.commands.executeCommand(preview ? 'acceptRenameInputWithPreview' : 'acceptRenameInput')
     })
@@ -244,7 +241,7 @@ export default () => {
         const editor = vscode.window.activeTextEditor
         if (!editor) return
         if (!getExtensionSetting('experiments.enableInsertNameOfSuggestionFix') && editor.document.languageId !== 'vue') {
-            const result = await sendCommand<RequestResponseTypes['getLastResolvedCompletion']>('getLastResolvedCompletion')
+            const result = await sendCommand('getLastResolvedCompletion')
             if (!result) return
             const position = editor.selection.active
             const range = result.range ? tsRangeToVscode(editor.document, result.range) : editor.document.getWordRangeAtPosition(position)
@@ -283,14 +280,14 @@ export default () => {
     })
 
     registerExtensionCommand('copyFullType', async () => {
-        const response = await sendCommand<RequestResponseTypes['getFullType']>('getFullType')
+        const response = await sendCommand('getFullType')
         if (!response) return
         const { text } = response
         await vscode.env.clipboard.writeText(text)
     })
 
     registerExtensionCommand('getArgumentReferencesFromCurrentParameter', async () => {
-        const result = await sendCommand<RequestResponseTypes['getArgumentReferencesFromCurrentParameter']>('getArgumentReferencesFromCurrentParameter')
+        const result = await sendCommand('getArgumentReferencesFromCurrentParameter')
         if (!result) return
         const editor = vscode.window.activeTextEditor!
         const { uri } = editor.document

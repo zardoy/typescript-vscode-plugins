@@ -1,4 +1,4 @@
-import { RequestResponseTypes } from '../ipcTypes'
+import { RequestOutputTypes } from '../ipcTypes'
 import { approveCast, getIndentFromPos } from '../utils'
 
 const nodeToSpan = (node: ts.Node): ts.TextSpan => {
@@ -6,7 +6,7 @@ const nodeToSpan = (node: ts.Node): ts.TextSpan => {
     return { start, length: node.end - start }
 }
 
-type FirstStepData = RequestResponseTypes['getTwoStepCodeActions']['turnArrayIntoObject']
+type FirstStepData = RequestOutputTypes['getTwoStepCodeActions']['turnArrayIntoObject']
 
 // primarily for working with static data
 export default <T extends string | undefined>(range: { pos: number; end: number }, node: ts.Node | undefined, selectedKeyName: T): any => {
