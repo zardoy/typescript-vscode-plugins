@@ -3,9 +3,9 @@ import { CodeAction } from '../getCodeActions'
 import extractType from '../../utils/extractType'
 
 export default {
-    id: 'renameToTypeParameter',
+    id: 'renameParameterToNameFromType',
     name: 'Rename Parameter to Name from Type',
-    kind: 'refactor.rewrite.renameToTypeParameter',
+    kind: 'refactor.rewrite.renameParameterToNameFromType',
     tryToApply(sourceFile, position, range, node, formatOptions, languageService) {
         if (!node || !position) return
         if (!ts.isIdentifier(node) || !ts.isParameter(node.parent) || !ts.isFunctionLike(node.parent.parent)) return
@@ -24,9 +24,7 @@ export default {
         if (paramName === typeParamName) return
         if (!formatOptions) return true
 
-        const renameLocations = languageService.findRenameLocations(sourceFile.fileName, position, false, false, {
-            providePrefixAndSuffixTextForRename: false,
-        })
+        const renameLocations = languageService.findRenameLocations(sourceFile.fileName, position, false, false)
         if (!renameLocations) return
 
         const extractFileName = ({ fileName }: ts.RenameLocation) => fileName
