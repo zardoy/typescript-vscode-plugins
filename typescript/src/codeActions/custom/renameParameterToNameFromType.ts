@@ -17,14 +17,15 @@ export default {
         const typeChecker = languageService.getProgram()!.getTypeChecker()
         const type = extractType(typeChecker, functionDecl)
 
-        const typeDecl = type.getSymbol()?.declarations?.[0]
-        if (!typeDecl || !ts.isFunctionLike(typeDecl)) return
+        const typeSignatureParams = typeChecker.getSignaturesOfType(type, ts.SignatureKind.Call)[0]?.parameters
+        if (!typeSignatureParams) return
+
         const paramName = node.getText()
-        const typeParamName = typeDecl.parameters[parameterIndex]!.name.getText()
+        const typeParamName = typeSignatureParams[parameterIndex]!.name
         if (paramName === typeParamName) return
         if (!formatOptions) return true
 
-        const renameLocations = languageService.findRenameLocations(sourceFile.fileName, position, false, false)
+        const renameLocations = languageService.findRenameLocations(sourceFile.fileName, position, false, false, {})
         if (!renameLocations) return
 
         const extractFileName = ({ fileName }: ts.RenameLocation) => fileName
