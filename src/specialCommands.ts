@@ -34,7 +34,7 @@ export default () => {
     const getCurrentValueRange = async () => {
         const editor = getActiveRegularEditor()
         if (!editor) return
-        const result = await sendCommand('getRangeOfSpecialValue')
+        const result = await sendCommand('getRangeOfSpecialValue', {})
         if (!result) return
         const range = tsRangeToVscode(editor.document, result.range)
         return range.with({ start: range.start.translate(0, / *{?/.exec(editor.document.lineAt(range.start).text.slice(range.start.character))![0]!.length) })
@@ -118,7 +118,7 @@ export default () => {
     registerExtensionCommand('pickAndInsertFunctionArguments', async () => {
         const editor = getActiveRegularEditor()
         if (!editor) return
-        const result = await sendCommand('pickAndInsertFunctionArguments')
+        const result = await sendCommand('pickAndInsertFunctionArguments', {})
         if (!result) return
 
         const renderArgs = (args: Array<[name: string, type: string]>) => `${args.map(([name, type]) => (type ? `${name}: ${type}` : name)).join(', ')}`
@@ -162,7 +162,7 @@ export default () => {
         const editor = vscode.window.activeTextEditor
         if (!editor) return
         const { document } = editor
-        const result = await sendCommand('filterBySyntaxKind')
+        const result = await sendCommand('filterBySyntaxKind', {})
         if (!result) return
         // todo optimize
         if (filterWithSelection) {
@@ -241,7 +241,7 @@ export default () => {
         const editor = vscode.window.activeTextEditor
         if (!editor) return
         if (!getExtensionSetting('experiments.enableInsertNameOfSuggestionFix') && editor.document.languageId !== 'vue') {
-            const result = await sendCommand('getLastResolvedCompletion')
+            const result = await sendCommand('getLastResolvedCompletion', {})
             if (!result) return
             const position = editor.selection.active
             const range = result.range ? tsRangeToVscode(editor.document, result.range) : editor.document.getWordRangeAtPosition(position)
@@ -280,14 +280,14 @@ export default () => {
     })
 
     registerExtensionCommand('copyFullType', async () => {
-        const response = await sendCommand('getFullType')
+        const response = await sendCommand('getFullType', {})
         if (!response) return
         const { text } = response
         await vscode.env.clipboard.writeText(text)
     })
 
     registerExtensionCommand('getArgumentReferencesFromCurrentParameter', async () => {
-        const result = await sendCommand('getArgumentReferencesFromCurrentParameter')
+        const result = await sendCommand('getArgumentReferencesFromCurrentParameter', {})
         if (!result) return
         const editor = vscode.window.activeTextEditor!
         const { uri } = editor.document

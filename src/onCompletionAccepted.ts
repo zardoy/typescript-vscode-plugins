@@ -92,6 +92,7 @@ export default (tsApi: { onCompletionAccepted }) => {
                     undoStopBefore: false,
                 })
             }
+
             if (vscode.workspace.getConfiguration('editor.parameterHints').get('enabled') && params.length > 0) {
                 void vscode.commands.executeCommand('editor.action.triggerParameterHints')
             }

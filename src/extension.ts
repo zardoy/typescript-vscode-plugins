@@ -80,7 +80,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
             if (!webWaitingForConfigSync) return
             // webWaitingForConfigSync = false
             const config = getResolvedConfig()
-            void sendCommand(`updateConfig${JSON.stringify(config)}` as any)
+            void sendCommand(`updateConfig${JSON.stringify(config)}` as any, { inputOptions: {} })
         }
 
         vscode.window.onDidChangeActiveTextEditor(possiblySyncConfig)
