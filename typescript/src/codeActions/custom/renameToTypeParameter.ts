@@ -4,7 +4,7 @@ import extractType from '../../utils/extractType'
 
 export default {
     id: 'renameToTypeParameter',
-    name: 'Rename to Type Parameter',
+    name: 'Rename Parameter to Name from Type',
     kind: 'refactor.rewrite.renameToTypeParameter',
     tryToApply(sourceFile, position, range, node, formatOptions, languageService) {
         if (!node || !position) return
