@@ -8,8 +8,10 @@ const getTypeParamName = (parameterIndex: number, functionDeclaration: ts.Node, 
 
     const typeSignatureParams = typeChecker.getSignaturesOfType(type, ts.SignatureKind.Call)[0]?.parameters
     if (!typeSignatureParams) return
+    const typeSignatureParam = typeSignatureParams[parameterIndex]
+    if (!typeSignatureParam) return
 
-    return typeSignatureParams[parameterIndex]!.name
+    return typeSignatureParam.name
 }
 
 const getEdits = (fileName: string, position: number, newText: string, languageService: ts.LanguageService): ts.FileTextChanges[] | undefined => {
