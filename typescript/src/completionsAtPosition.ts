@@ -141,6 +141,7 @@ export const getCompletionsAtPosition = (
         preferences: options || {},
         prior: prior!,
         fullText: sourceFile.getFullText(),
+        typeChecker: program.getTypeChecker(),
     } satisfies typeof sharedCompletionContext)
 
     if (node && !hasSuggestions && ensurePrior() && prior) {

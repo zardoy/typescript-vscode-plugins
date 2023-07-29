@@ -14,6 +14,9 @@
                 "${workspaceFolder}/out/**/*.js"
             ],
             "sourceMaps": true,
+            "cascadeTerminateToConfigurations": [
+                "Attach to TS Server",
+            ],
             "env": {
                 "TSS_DEBUG": "9223",
                 "TSS_REMOTE_DEBUG": "9223"
