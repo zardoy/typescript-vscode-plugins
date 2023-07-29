@@ -2,7 +2,7 @@ import { pipe, groupBy, map, compact } from 'lodash/fp'
 import { CodeAction } from '../getCodeActions'
 import extractType from '../../utils/extractType'
 
-const getTypeParamName = (parameterIndex: number, functionDeclaration: ts.Node, languageService: ts.LanguageService) => {
+const getTypeParamName = (parameterName: string, parameterIndex: number, functionDeclaration: ts.Node, languageService: ts.LanguageService) => {
     const typeChecker = languageService.getProgram()!.getTypeChecker()
     const type = extractType(typeChecker, functionDeclaration)
 
@@ -10,8 +10,11 @@ const getTypeParamName = (parameterIndex: number, functionDeclaration: ts.Node, 
     if (!typeSignatureParams) return
     const typeSignatureParam = typeSignatureParams[parameterIndex]
     if (!typeSignatureParam) return
+    const typeParamName = typeSignatureParam.name
+    const isInternal = typeParamName.startsWith('__')
+    if (isInternal || parameterName === typeParamName) return
 
-    return typeSignatureParam.name
+    return typeParamName
 }
 
 const getEdits = (fileName: string, position: number, newText: string, languageService: ts.LanguageService): ts.FileTextChanges[] | undefined => {
@@ -39,19 +42,25 @@ const getEdits = (fileName: string, position: number, newText: string, languageS
 
 export const renameParameterToNameFromType = {
     id: 'renameParameterToNameFromType',
-    name: 'Rename Parameter to Name from Type',
+    name: '',
     kind: 'refactor.rewrite.renameParameterToNameFromType',
     tryToApply(sourceFile, position, range, node, formatOptions, languageService) {
         if (!node || !position) return
         const functionSignature = node.parent.parent
-        if (!ts.isIdentifier(node) || !ts.isParameter(node.parent) || !ts.isFunctionLike(functionSignature)) return
+        if (
+            !ts.isIdentifier(node) ||
+            !ts.isParameter(node.parent) ||
+            !ts.isFunctionLike(functionSignature) ||
+            !ts.isVariableDeclaration(functionSignature.parent)
+        )
+            return
         const { parent: functionDecl, parameters: functionParameters } = functionSignature
 
         const parameterIndex = functionParameters.indexOf(node.parent)
         const parameterName = functionParameters[parameterIndex]!.name.getText()
-        const typeParamName = getTypeParamName(functionParameters.indexOf(node.parent), functionDecl, languageService)
-        if (!typeParamName || typeParamName.startsWith('__') || parameterName === typeParamName) return
-
+        const typeParamName = getTypeParamName(parameterName, functionParameters.indexOf(node.parent), functionDecl, languageService)
+        if (!typeParamName) return
+        this.name = `Rename Parameter to Name from Type '${functionDecl.type!.getText()}'`
         if (!formatOptions) return true
 
         const edits = compact(getEdits(sourceFile.fileName, position, typeParamName, languageService))
@@ -63,25 +72,30 @@ export const renameParameterToNameFromType = {
 
 export const renameAllParametersToNameFromType = {
     id: 'renameAllParametersToNameFromType',
-    name: 'Rename All Parameters to Name from Type',
+    name: '',
     kind: 'refactor.rewrite.renameAllParametersToNameFromType',
     tryToApply(sourceFile, position, range, node, formatOptions, languageService) {
         if (!node || !position) return
         const functionSignature = node.parent.parent
-        if (!ts.isIdentifier(node) || !ts.isParameter(node.parent) || !ts.isFunctionLike(functionSignature)) return
+        if (
+            !ts.isIdentifier(node) ||
+            !ts.isParameter(node.parent) ||
+            !ts.isFunctionLike(functionSignature) ||
+            !ts.isVariableDeclaration(functionSignature.parent)
+        )
+            return
         const { parent: functionDecl, parameters: functionParameters } = functionSignature
-
         const paramsToRename = compact(
             functionParameters.map((functionParameter, index) => {
-                const typeParamName = getTypeParamName(index, functionDecl, languageService)
+                const typeParamName = getTypeParamName(functionParameter.getText(), index, functionDecl, languageService)
                 if (!typeParamName) return
-                const isInternal = typeParamName.startsWith('__')
-                if (isInternal || functionParameter.getText() === typeParamName) return
                 return { param: functionParameter, typeParamName }
             }),
         )
+
         if (paramsToRename.length < 2) return
 
+        this.name = `Rename All Parameters to Name from Type '${functionDecl.type!.getText()}'`
         if (!formatOptions) return true
 
         const edits = compact(
