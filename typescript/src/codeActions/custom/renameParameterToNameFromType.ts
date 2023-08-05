@@ -47,20 +47,14 @@ export const renameParameterToNameFromType = {
     tryToApply(sourceFile, position, range, node, formatOptions, languageService) {
         if (!node || !position) return
         const functionSignature = node.parent.parent
-        if (
-            !ts.isIdentifier(node) ||
-            !ts.isParameter(node.parent) ||
-            !ts.isFunctionLike(functionSignature) ||
-            !ts.isVariableDeclaration(functionSignature.parent)
-        )
-            return
+        if (!ts.isIdentifier(node) || !ts.isParameter(node.parent) || !ts.isFunctionLike(functionSignature)) return
         const { parent: functionDecl, parameters: functionParameters } = functionSignature
 
         const parameterIndex = functionParameters.indexOf(node.parent)
         const parameterName = functionParameters[parameterIndex]!.name.getText()
         const typeParamName = getTypeParamName(parameterName, functionParameters.indexOf(node.parent), functionDecl, languageService)
         if (!typeParamName) return
-        this.name = `Rename Parameter to Name from Type '${functionDecl.type!.getText()}'`
+        this.name = `Rename Parameter to Name from Type ('${typeParamName}')`
         if (!formatOptions) return true
 
         const edits = compact(getEdits(sourceFile.fileName, position, typeParamName, languageService))
@@ -95,7 +89,8 @@ export const renameAllParametersToNameFromType = {
 
         if (paramsToRename.length < 2) return
 
-        this.name = `Rename All Parameters to Name from Type '${functionDecl.type!.getText()}'`
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        this.name = `Rename All Parameters to Name from Type '${functionDecl.type?.getText()}'`
         if (!formatOptions) return true
 
         const edits = compact(
