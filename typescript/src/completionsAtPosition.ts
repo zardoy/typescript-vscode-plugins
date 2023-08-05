@@ -31,6 +31,7 @@ import stringTemplateTypeCompletions from './completions/stringTemplateType'
 import localityBonus from './completions/localityBonus'
 import functionCompletions from './completions/functionCompletions'
 import staticHintSuggestions from './completions/staticHintSuggestions'
+import asSuggestions from './completions/asSuggestions'
 
 export type PrevCompletionMap = Record<
     string,
@@ -139,6 +140,8 @@ export const getCompletionsAtPosition = (
         formatOptions: formatOptions || {},
         preferences: options || {},
         prior: prior!,
+        fullText: sourceFile.getFullText(),
+        typeChecker: program.getTypeChecker(),
     } satisfies typeof sharedCompletionContext)
 
     if (node && !hasSuggestions && ensurePrior() && prior) {
@@ -296,9 +299,11 @@ export const getCompletionsAtPosition = (
     if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 
     prior.entries = localityBonus(prior.entries) ?? prior.entries
+    asSuggestions()
     prior.entries.push(...(staticHintSuggestions() ?? []))
 
     const processedEntries = new Set<ts.CompletionEntry>()
+
     for (const rule of c('replaceSuggestions')) {
         if (rule.filter?.fileNamePattern) {
             // todo replace with something better

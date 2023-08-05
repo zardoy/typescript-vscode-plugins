@@ -1,9 +1,9 @@
-import { RequestOptionsTypes } from './ipcTypes'
+import { RequestInputTypes } from './ipcTypes'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
 
 export const overrideRenameRequest = {
-    value: undefined as undefined | RequestOptionsTypes['acceptRenameWithParams'],
+    value: undefined as undefined | RequestInputTypes['acceptRenameWithParams'],
 }
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig) => {

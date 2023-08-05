@@ -15,6 +15,7 @@ export const triggerCharacterCommands = [
     'acceptRenameWithParams',
     'getExtendedCodeActionEdits',
     'getLastResolvedCompletion',
+    'getArgumentReferencesFromCurrentParameter',
 ] as const
 
 export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
@@ -41,11 +42,38 @@ export type IpcExtendedCodeAction = {
     codes?: number[]
 }
 
+// INPUT
+export type RequestInputTypes = {
+    removeFunctionArgumentsTypesInSelection: {
+        endSelection: number
+    }
+    getTwoStepCodeActions: {
+        range: [number, number]
+    }
+    twoStepCodeActionSecondStep: {
+        range: [number, number]
+        data: {
+            name: 'turnArrayIntoObject'
+            selectedKeyName?: string
+        }
+    }
+
+    acceptRenameWithParams: {
+        comments: boolean
+        strings: boolean
+        alias: boolean
+    }
+    getExtendedCodeActionEdits: {
+        range: [number, number]
+        applyCodeActionTitle: string
+    }
+}
+
 // OUTPUT
 /**
  * @keysSuggestions TriggerCharacterCommand
  */
-export type RequestResponseTypes = {
+export type RequestOutputTypes = {
     removeFunctionArgumentsTypesInSelection: {
         ranges: TsRange[]
     }
@@ -84,33 +112,8 @@ export type RequestResponseTypes = {
     getFullType: {
         text: string
     }
-}
-
-// INPUT
-export type RequestOptionsTypes = {
-    removeFunctionArgumentsTypesInSelection: {
-        endSelection: number
-    }
-    getTwoStepCodeActions: {
-        range: [number, number]
-    }
-    twoStepCodeActionSecondStep: {
-        range: [number, number]
-        data: {
-            name: 'turnArrayIntoObject'
-            selectedKeyName?: string
-        }
-    }
-
-    acceptRenameWithParams: {
-        comments: boolean
-        strings: boolean
-        alias: boolean
-    }
-    getExtendedCodeActionEdits: {
-        range: [number, number]
-        applyCodeActionTitle: string
-    }
+    getArgumentReferencesFromCurrentParameter: Array<{ line: number; character: number; filename: string }>
+    'emmet-completions': EmmetResult
 }
 
 // export type EmmetResult = {

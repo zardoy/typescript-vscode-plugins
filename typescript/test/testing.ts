@@ -109,10 +109,18 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint) => 
                     }
                 }
                 if (includes) {
-                    const { names, all } = includes
+                    const { names, all, insertTexts } = includes
                     if (names) {
                         for (const name of names) {
                             expect(result?.entryNames, message).toContain(name)
+                        }
+                    }
+                    if (insertTexts) {
+                        for (const insertText of insertTexts) {
+                            expect(
+                                result.entries.map(entry => entry.insertText),
+                                message,
+                            ).toContain(insertText)
                         }
                     }
                     if (all) {

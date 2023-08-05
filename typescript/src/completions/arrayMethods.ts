@@ -37,7 +37,8 @@ export default (entries: ts.CompletionEntry[], position: number, sourceFile: ts.
             return c('arrayMethodsSnippets.defaultItemName')
         },
     }
-    const cleanSourceText = lowerCaseFirst(getItemNameFromNode(nodeBeforeDot)?.replace(/^(?:all)?(.+?)(?:List)?$/, '$1') ?? '') || defaultItemName.value
+    const _cleanSourceText = getItemNameFromNode(nodeBeforeDot)?.replace(/^(?:all)?(.+?)(?:List)?$/, '$1')
+    const cleanSourceText = _cleanSourceText ? lowerCaseFirst(_cleanSourceText) : defaultItemName.value
     if (!cleanSourceText) return
     let inferredName = pluralize.singular(cleanSourceText)
     // both can be undefined

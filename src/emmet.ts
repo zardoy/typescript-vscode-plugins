@@ -1,7 +1,6 @@
 import * as vscode from 'vscode'
 import { compact } from '@zardoy/utils'
 import { getExtensionSetting, registerExtensionCommand } from 'vscode-framework'
-import { EmmetResult } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
 import { Configuration } from './configurationType'
 
@@ -29,7 +28,7 @@ export const registerEmmet = async () => {
                     const cursorOffset: number = document.offsetAt(position)
 
                     if (context.triggerKind !== vscode.CompletionTriggerKind.TriggerForIncompleteCompletions || !lastStartOffset) {
-                        const result = await sendCommand<EmmetResult>('emmet-completions', { document, position })
+                        const result = await sendCommand('emmet-completions', { document, position })
                         if (!result) {
                             lastStartOffset = undefined
                             return

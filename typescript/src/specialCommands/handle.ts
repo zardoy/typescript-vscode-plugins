@@ -1,6 +1,6 @@
 import { compact } from '@zardoy/utils'
 import { getExtendedCodeActions } from '../codeActions/getCodeActions'
-import { NodeAtPositionResponse, RequestOptionsTypes, RequestResponseTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
+import { NodeAtPositionResponse, RequestInputTypes, RequestOutputTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
 import { GetConfig } from '../types'
 import { findChildContainingExactPosition, findChildContainingPosition, getNodePath } from '../utils'
 import { lastResolvedCompletion } from '../completionEntryDetails'
@@ -35,7 +35,7 @@ export default (
     }
     // todo rename from getTwoStepCodeActions to additionalCodeActions
     if (specialCommand === 'getTwoStepCodeActions') {
-        changeType<RequestOptionsTypes['getTwoStepCodeActions']>(specialCommandArg)
+        changeType<RequestInputTypes['getTwoStepCodeActions']>(specialCommandArg)
         const node = findChildContainingPosition(ts, sourceFile, position)
         const posEnd = { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] }
 
@@ -46,7 +46,7 @@ export default (
         }
     }
     if (specialCommand === 'getExtendedCodeActionEdits') {
-        changeType<RequestOptionsTypes['getExtendedCodeActionEdits']>(specialCommandArg)
+        changeType<RequestInputTypes['getExtendedCodeActionEdits']>(specialCommandArg)
         const { range, applyCodeActionTitle } = specialCommandArg
         const posEnd = { pos: range[0], end: range[1] }
         return getExtendedCodeActions(
@@ -55,13 +55,13 @@ export default (
             languageService,
             formatOptions,
             applyCodeActionTitle,
-        ) satisfies RequestResponseTypes['getExtendedCodeActionEdits']
+        ) satisfies RequestOutputTypes['getExtendedCodeActionEdits']
     }
     if (specialCommand === 'twoStepCodeActionSecondStep') {
-        changeType<RequestOptionsTypes['twoStepCodeActionSecondStep']>(specialCommandArg)
+        changeType<RequestInputTypes['twoStepCodeActionSecondStep']>(specialCommandArg)
         const node = findChildContainingPosition(ts, sourceFile, position)
         const posEnd = { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] }
-        let data: RequestResponseTypes['twoStepCodeActionSecondStep'] | undefined
+        let data: RequestOutputTypes['twoStepCodeActionSecondStep'] | undefined
         switch (specialCommandArg.data.name) {
             case 'turnArrayIntoObject': {
                 data = {
@@ -108,7 +108,7 @@ export default (
         return edits
     }
     if (specialCommand === 'removeFunctionArgumentsTypesInSelection') {
-        changeType<RequestOptionsTypes['removeFunctionArgumentsTypesInSelection']>(specialCommandArg)
+        changeType<RequestInputTypes['removeFunctionArgumentsTypesInSelection']>(specialCommandArg)
 
         const node = findChildContainingPosition(ts, sourceFile, position)
         if (!node) return
@@ -177,12 +177,12 @@ export default (
         if (targetNode) {
             return {
                 range: Array.isArray(targetNode) ? targetNode : [targetNode.pos, targetNode.end],
-            } satisfies RequestResponseTypes['getRangeOfSpecialValue']
+            } satisfies RequestOutputTypes['getRangeOfSpecialValue']
         }
         return
     }
     if (specialCommand === 'acceptRenameWithParams') {
-        changeType<RequestOptionsTypes['acceptRenameWithParams']>(specialCommandArg)
+        changeType<RequestInputTypes['acceptRenameWithParams']>(specialCommandArg)
         overrideRenameRequest.value = specialCommandArg
         return undefined
     }
@@ -212,10 +212,10 @@ export default (
                     ),
                 ]
             }),
-        } satisfies RequestResponseTypes['pickAndInsertFunctionArguments']
+        } satisfies RequestOutputTypes['pickAndInsertFunctionArguments']
     }
     if (specialCommand === 'filterBySyntaxKind') {
-        const collectedNodes: RequestResponseTypes['filterBySyntaxKind']['nodesByKind'] = {}
+        const collectedNodes: RequestOutputTypes['filterBySyntaxKind']['nodesByKind'] = {}
         collectedNodes.comment ??= []
         const collectNodes = (node: ts.Node) => {
             const kind = ts.SyntaxKind[node.kind]!
@@ -232,7 +232,7 @@ export default (
         sourceFile.forEachChild(collectNodes)
         return {
             nodesByKind: collectedNodes,
-        } satisfies RequestResponseTypes['filterBySyntaxKind']
+        } satisfies RequestOutputTypes['filterBySyntaxKind']
     }
     if (specialCommand === 'getLastResolvedCompletion') {
         return lastResolvedCompletion.value
@@ -245,6 +245,37 @@ export default (
         return {
             text: checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.NoTypeReduction),
         }
+    }
+    if (specialCommand === 'getArgumentReferencesFromCurrentParameter') {
+        const node = findChildContainingExactPosition(sourceFile, position)
+        if (!node || !ts.isIdentifier(node) || !ts.isParameter(node.parent) || !ts.isFunctionLike(node.parent.parent)) return
+        let functionDecl = node.parent.parent as ts.Node
+        const functionParameters = node.parent.parent.parameters
+        if (ts.isVariableDeclaration(functionDecl.parent)) {
+            functionDecl = functionDecl.parent
+        }
+        const parameterIndex = functionParameters.indexOf(node.parent)
+        const references = languageService.findReferences(fileName, functionDecl.pos + functionDecl.getLeadingTriviaWidth(sourceFile))
+        if (!references) return
+
+        return compact(
+            references.flatMap(({ references }) => {
+                return references.map(reference => {
+                    const sourceFile = languageService.getProgram()!.getSourceFile(reference.fileName)!
+                    const position = reference.textSpan.start
+
+                    const node = findChildContainingExactPosition(sourceFile, position)
+                    if (!node || !ts.isIdentifier(node) || !ts.isCallExpression(node.parent)) return
+
+                    const arg = node.parent.arguments[parameterIndex]
+                    if (!arg) return
+                    return {
+                        filename: reference.fileName,
+                        ...sourceFile.getLineAndCharacterOfPosition(arg.pos + arg.getLeadingTriviaWidth(sourceFile)),
+                    }
+                })
+            }),
+        )
     }
 
     return null

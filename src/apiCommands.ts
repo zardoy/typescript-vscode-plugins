@@ -27,7 +27,7 @@ export const sharedApiRequest = async (type: TriggerCharacterCommand, { offset, 
     if (!position) offset ??= document.offsetAt(activeTextEditor!.selection.active) + relativeOffset
     const requestOffset = offset ?? document.offsetAt(position!)
     const requestPos = position ?? document.positionAt(offset!)
-    const getData = async () => sendCommand(type, { document: document!, position: requestPos })
+    const getData = async () => sendCommand(type, { document: document!, position: requestPos, inputOptions: {} })
     const CACHE_UNDEFINED_TIMEOUT = 1000
     if (cacheableCommands.has(type as any)) {
         const cacheEntry = operationsCache.get(type)

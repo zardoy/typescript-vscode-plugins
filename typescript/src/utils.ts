@@ -246,7 +246,7 @@ export const getCancellationToken = (languageServiceHost: ts.LanguageServiceHost
     return cancellationToken
 }
 
-const wordRangeAtPos = (text: string, position: number) => {
+export const wordRangeAtPos = (text: string, position: number) => {
     const isGood = (pos: number) => {
         return /[-\w\d]/i.test(text.at(pos) ?? '')
     }

@@ -1,17 +1,22 @@
 import * as vscode from 'vscode'
 import { getActiveRegularEditor } from '@zardoy/vscode-utils'
 import { getExtensionSetting } from 'vscode-framework'
-import { passthroughExposedApiCommands, TriggerCharacterCommand } from '../typescript/src/ipcTypes'
+import { passthroughExposedApiCommands, TriggerCharacterCommand, RequestInputTypes, RequestOutputTypes } from '../typescript/src/ipcTypes'
 
-type SendCommandData<K> = {
+type SendCommandData<Input> = {
     position?: vscode.Position
     document?: vscode.TextDocument
-    inputOptions?: K
-}
-export const sendCommand = async <Response, K = any>(
-    command: TriggerCharacterCommand,
-    sendCommandDataArg?: SendCommandData<K>,
-): Promise<Response | undefined> => {
+    // eslint-disable-next-line @typescript-eslint/ban-types
+} & ([Input] extends [never] ? {} : { inputOptions: Input })
+
+export const sendCommand = async <
+    Command extends TriggerCharacterCommand,
+    Input = RequestInputTypes[Command & keyof RequestInputTypes],
+    Output = RequestOutputTypes[Command & keyof RequestOutputTypes] extends never ? any : RequestOutputTypes[Command & keyof RequestOutputTypes],
+>(
+    command: Command,
+    sendCommandDataArg: SendCommandData<Input>,
+): Promise<Output | undefined> => {
     // plugin id disabled, languageService would not understand the special trigger character
     if (!getExtensionSetting('enablePlugin')) {
         console.warn('Ignoring request because plugin is disabled')
@@ -31,10 +36,10 @@ export const sendCommand = async <Response, K = any>(
     }
 
     const _editor = getActiveRegularEditor()!
-    const { document: { uri } = _editor.document, position = _editor.selection.active, inputOptions } = sendCommandDataArg ?? {}
+    const { document: { uri } = _editor.document, position = _editor.selection.active } = sendCommandDataArg ?? {}
 
-    if (inputOptions) {
-        command = `${command}?${JSON.stringify(inputOptions)}` as any
+    if ('inputOptions' in sendCommandDataArg) {
+        command = `${command}?${JSON.stringify(sendCommandDataArg.inputOptions)}` as any
     }
 
     if (process.env.NODE_ENV === 'development') console.time(`request ${command}`)
