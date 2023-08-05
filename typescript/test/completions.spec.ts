@@ -365,15 +365,22 @@ test('Emmet completion', () => {
 })
 
 test('Array Method Snippets', () => {
-    const positions = newFileContents(/*ts*/ `
+    const { completion } = fourslashLikeTester(/*ts*/ `
         const users = []
-        users./*|*/
-        ;users.filter(Boolean).flatMap/*|*/
+        users./*0*/
+        ;users.filter(Boolean).flatMap/*1*/
+        ;[]./*2*/
     `)
-    for (const [i, pos] of positions.entries()) {
-        const { entries } = getCompletionsAtPosition(pos) ?? {}
-        expect(entries?.find(({ name }) => name === 'flatMap')?.insertText, i.toString()).toBe('flatMap((${2:user}) => $3)')
-    }
+    completion([0, 1], {
+        includes: {
+            insertTexts: ['flatMap((${2:user}) => $3)'],
+        },
+    })
+    completion(2, {
+        includes: {
+            insertTexts: ['flatMap((${2:item}) => $3)'],
+        },
+    })
 })
 
 test('String template type completions', () => {
