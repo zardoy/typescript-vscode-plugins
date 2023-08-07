@@ -5,7 +5,7 @@ import { ApplyExtendedCodeActionResult, IpcExtendedCodeAction } from '../ipcType
 import objectSwapKeysAndValues from './custom/objectSwapKeysAndValues'
 import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
-import addMissingProperties from './extended/addMissingProperties'
+import declareMissingProperties from './extended/declareMissingProperties'
 import { renameParameterToNameFromType, renameAllParametersToNameFromType } from './custom/renameParameterToNameFromType'
 
 const codeActions: CodeAction[] = [
@@ -15,7 +15,7 @@ const codeActions: CodeAction[] = [
     renameParameterToNameFromType,
     renameAllParametersToNameFromType,
 ]
-const extendedCodeActions: ExtendedCodeAction[] = [addMissingProperties]
+const extendedCodeActions: ExtendedCodeAction[] = [declareMissingProperties]
 
 type SimplifiedRefactorInfo =
     | {

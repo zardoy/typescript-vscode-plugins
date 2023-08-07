@@ -1,3 +1,4 @@
+import { matchParents } from '../../utils'
 import { ExtendedCodeAction } from '../getCodeActions'
 
 export default {
@@ -5,8 +6,8 @@ export default {
     kind: 'quickfix',
     title: 'Declare missing property',
     tryToApply({ sourceFile, node }) {
-        if (node && ts.isIdentifier(node) && ts.isObjectBindingPattern(node.parent.parent) && ts.isParameter(node.parent.parent.parent)) {
-            const param = node.parent.parent.parent
+        const param = matchParents(node, ['Identifier', 'ObjectBindingPattern', 'Parameter'])
+        if (param) {
             // special react pattern
             if (ts.isArrowFunction(param.parent) && ts.isVariableDeclaration(param.parent.parent)) {
                 const variableDecl = param.parent.parent
@@ -19,7 +20,7 @@ export default {
                 const hasMembers = param.type.members.length > 0
                 const insertPos = param.type.members.at(-1)?.end ?? param.type.end - 1
                 const insertComma = hasMembers && sourceFile.getFullText().slice(insertPos - 1, insertPos) !== ','
-                let insertText = node.text
+                let insertText = (node as ts.Identifier).text
                 if (insertComma) insertText = `, ${insertText}`
                 // alternatively only one snippetEdit could be used with tsFull.escapeSnippetText(insertText) + $0
                 return {
