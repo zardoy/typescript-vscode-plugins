@@ -50,7 +50,8 @@ export default (entries: ts.CompletionEntry[]) => {
                 const originalText = entry.insertText ?? entry.name
                 const insertTextSnippetAdd = `(${methodSnippet.map((x, i) => `$\{${i + 1}:${x}}`).join(', ')})`
                 // https://github.com/zardoy/typescript-vscode-plugins/issues/161
-                const beforeDotWorkaround = prior.isMemberCompletion && prevChar === '.'
+                // todo implement workaround for ?. as well
+                const beforeDotWorkaround = !entry.replacementSpan && prior.isMemberCompletion && prevChar === '.'
                 return {
                     ...entry,
                     insertText: (beforeDotWorkaround ? '.' : '') + insertTextAfterEntry(originalText, insertTextSnippetAdd),
@@ -63,7 +64,7 @@ export default (entries: ts.CompletionEntry[]) => {
                               start: position - 1,
                               length: (c('editorSuggestInsertModeReplace') ? wordRangeAtPos(fullText, position).length : 0) + 1,
                           }
-                        : undefined,
+                        : entry.replacementSpan,
                     kind: ts.ScriptElementKind.functionElement,
                     isSnippet: true,
                 }

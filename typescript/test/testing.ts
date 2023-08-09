@@ -130,7 +130,9 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint) => 
                     }
                 }
                 if (excludes) {
-                    expect(result?.entryNames, message).not.toContain(excludes)
+                    for (const exclude of excludes) {
+                        expect(result?.entryNames, message).not.toContain(exclude)
+                    }
                 }
             }
         },

@@ -67,7 +67,7 @@ export type Configuration = {
      */
     // volarLoadConfigPaths: string[]
     /**
-     * Removes `Symbol`, `caller`, `prototype` everywhere
+     * Removes annoying `Symbol`, `caller`, `prototype` everywhere
      * @default true
      *  */
     'removeUselessFunctionProps.enable': boolean

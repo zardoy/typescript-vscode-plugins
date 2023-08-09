@@ -254,11 +254,12 @@ export default () => {
 
         onCompletionAcceptedOverride.value = () => {}
         const { ranges, text } = await new Promise<{ text: string; ranges: vscode.Range[] }>(resolve => {
-            vscode.workspace.onDidChangeTextDocument(({ document, contentChanges }) => {
+            const { dispose } = vscode.workspace.onDidChangeTextDocument(({ document, contentChanges }) => {
                 if (document !== editor.document || contentChanges.length === 0) return
                 const ranges = contentChanges.map(
                     change => new vscode.Range(change.range.start, offsetPosition(document, change.range.start, change.text.length)),
                 )
+                dispose()
                 resolve({ ranges, text: contentChanges[0]!.text })
             })
             void vscode.commands.executeCommand('acceptSelectedSuggestion')

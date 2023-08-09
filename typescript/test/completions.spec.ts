@@ -415,6 +415,28 @@ test('String template type completions', () => {
     })
 })
 
+test('Remove Useless Function Props', () => {
+    const tester = fourslashLikeTester(/* ts */ `
+        const a = () => {}
+        a./*1*/
+        const b = {
+            Symbol: 5,
+            prototype: 5,
+            caller: 5,
+        }
+        b./*2*/
+    `)
+    const badProps = ['Symbol', 'caller', 'prototype']
+    tester.completion(1, {
+        excludes: badProps,
+    })
+    tester.completion(2, {
+        includes: {
+            names: badProps,
+        },
+    })
+})
+
 test('Switch Case Exclude Covered', () => {
     const [, _, numPositions] = fileContentsSpecialPositions(/*ts*/ `
         let test: 'foo' | 'bar'

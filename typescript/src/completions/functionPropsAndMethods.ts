@@ -1,4 +1,5 @@
 import { oneOf } from '@zardoy/utils'
+import { matchParents } from '../utils'
 import { sharedCompletionContext } from './sharedContext'
 
 export default (entries: ts.CompletionEntry[]) => {
@@ -6,8 +7,17 @@ export default (entries: ts.CompletionEntry[]) => {
 
     if (c('removeUselessFunctionProps.enable')) {
         entries = entries.filter(entry => {
-            if (oneOf(entry.kind, ts.ScriptElementKind.warning)) return true
-            return !['Symbol', 'caller', 'prototype'].includes(entry.name)
+            const completionDeclaration = entry.symbol?.valueDeclaration
+            if (
+                ['Symbol', 'caller', 'prototype'].includes(entry.name) &&
+                !oneOf(entry.kind, ts.ScriptElementKind.warning) &&
+                (entry.insertText === '[Symbol]' ||
+                    (completionDeclaration?.getSourceFile().fileName.includes('node_modules/typescript/lib/lib') &&
+                        matchParents(completionDeclaration.parent, ['InterfaceDeclaration'])?.name.text === 'Function'))
+            ) {
+                return false
+            }
+            return true
         })
     }
 
