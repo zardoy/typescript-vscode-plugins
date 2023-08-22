@@ -32,6 +32,7 @@ import localityBonus from './completions/localityBonus'
 import functionCompletions from './completions/functionCompletions'
 import staticHintSuggestions from './completions/staticHintSuggestions'
 import asSuggestions from './completions/asSuggestions'
+import nonStrictCompletions from './completions/nonStrictCompletions'
 
 export type PrevCompletionMap = Record<
     string,
@@ -264,6 +265,7 @@ export const getCompletionsAtPosition = (
 
     prior.entries = arrayMethods(prior.entries, position, sourceFile, c) ?? prior.entries
     prior.entries = jsdocDefault(prior.entries, position, sourceFile, languageService) ?? prior.entries
+    nonStrictCompletions()
 
     const isVueFileName = (fileName: string | undefined) => fileName && (fileName.endsWith('.vue.ts') || fileName.endsWith('.vue.js'))
     // #region Vue (Volar) specific
