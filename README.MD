@@ -3,17 +3,17 @@
 Feature-complete TypeScript plugin that improves every single builtin feature such as completions, definitions, references and so on, and also adds even new TypeScript killer features, so you can work with large codebases faster!
 We make completions more informative. Definitions, references (and sometimes even completions) less noisy. And finally our main goal is to provide most customizable TypeScript experience for IDE features.
 
-TOC:
+## TOC
 
 - [Top Features](#top-features)
 - [Minor Useful Features](#minor-useful-features)
 - [Method Snippets](#method-snippets)
-- [Volar (Vue) support](#vue-support)
+- [Volar (Vue) Support](#vue-support)
 - [Auto Imports](#auto-imports)
 - [Type Driven Completions](#type-driven-completions)
-- [Rename Features](#rename-features)
 - [Special Commands List](#special-commands-list)
 - [Contributed Code Actions](#contributed-code-actions)
+- [Rename Features](#rename-features)
 - [Even Even More](#even-even-more)
 
 > *Note*: You can disable all optional features with `> Disable All Optional Features` command right after install.
@@ -132,6 +132,8 @@ This also makes plugin work in Volar's takeover mode!
 > Note: when you open TS/JS file in the web for the first time you currently need to switch between editors to make plugin work.
 
 There is web-only feature: fix clicking on relative `import` paths.
+
+Alternative you can try to use [vscode-typescript-web extension](https://github.com/volarjs/vscode-typescript-web/) for better web intellisense.
 
 ### `in` Keyword Suggestions
 
@@ -448,9 +450,7 @@ You can add this to `keybindings.json` to disable previewing before renaming:
 }
 ```
 
-Another options that is accepted is
-
-> Note: VS Code has builtin setting to disable introducing aliases (e.g. for imports & object properties)
+> Note: VS Code has builtin setting to disable introducing aliases (e.g. for imports & object properties): `typescript.preferences.useAliasesForRenames`
 
 ## Special Commands List
 
