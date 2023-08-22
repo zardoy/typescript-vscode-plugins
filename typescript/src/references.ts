@@ -1,18 +1,34 @@
 import { GetConfig } from './types'
-import { findChildContainingPositionMaxDepth, approveCast } from './utils'
+import { findChildContainingPositionMaxDepth, approveCast, findChildContainingExactPosition, matchParents } from './utils'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig) => {
     proxy.findReferences = (fileName, position) => {
         let prior = languageService.findReferences(fileName, position)
         if (!prior) return
+        const program = languageService.getProgram()!
         if (c('removeDefinitionFromReferences')) {
-            prior = prior.map(({ references, ...other }) => ({
-                ...other,
-                references: references.filter(({ isDefinition }) => !isDefinition),
-            }))
+            const sourceFile = program.getSourceFile(fileName)
+            const node = findChildContainingExactPosition(sourceFile!, position)
+            let filterDefs = true
+            if (
+                node &&
+                node.flags & ts.NodeFlags.JavaScriptFile &&
+                matchParents(node, ['Identifier', 'PropertyAccessExpression'])?.expression.kind === ts.SyntaxKind.ThisKeyword
+            ) {
+                // https://github.com/zardoy/typescript-vscode-plugins/issues/165
+                filterDefs = false
+            }
+
+            if (filterDefs) {
+                prior = prior.map(({ references, ...other }) => ({
+                    ...other,
+                    references: references.filter(({ isDefinition, textSpan, fileName }) => {
+                        return !isDefinition
+                    }),
+                }))
+            }
         }
         if (c('removeImportsFromReferences')) {
-            const program = languageService.getProgram()!
             const refCountPerFileName: Record<
                 string,
                 {

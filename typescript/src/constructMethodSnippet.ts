@@ -28,7 +28,7 @@ export default (
     const isNewExpression =
         ts.isNewExpression(containerNode) &&
         ts.textSpanIntersectsWithPosition(ts.createTextSpanFromBounds(containerNode.expression.pos, containerNode.expression.end), position)
-    if (!isNewExpression && (type.getProperties().length > 0 || type.getStringIndexType() || type.getNumberIndexType())) {
+    if (!isNewExpression && (getNonFunctionProperties(type).length > 0 || type.getStringIndexType() || type.getNumberIndexType())) {
         resolveData.isAmbiguous = true
     }
 
@@ -151,4 +151,9 @@ function getPromiseLikeTypeArgument(type: ts.Type | undefined, checker: ts.TypeC
 
 function hasPrivateOrProtectedModifier(modifiers: ts.NodeArray<ts.ModifierLike> | ts.NodeArray<ts.Modifier> | undefined) {
     return modifiers?.some(modifier => oneOf(modifier.kind, ts.SyntaxKind.PrivateKeyword, ts.SyntaxKind.ProtectedKeyword))
+}
+
+function getNonFunctionProperties(type: ts.Type) {
+    const customSpecialFunctionProperties = ['__promisify__']
+    return type.getProperties().filter(x => !customSpecialFunctionProperties.includes(x.name))
 }
