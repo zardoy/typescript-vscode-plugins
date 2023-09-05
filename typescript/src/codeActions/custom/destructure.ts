@@ -1,17 +1,17 @@
 import { getChangesTracker } from '../../utils'
 import { CodeAction } from '../getCodeActions'
 
-const finalChainElement = (node: ts.Node) =>
+const isFinalChainElement = (node: ts.Node) =>
     ts.isThisTypeNode(node) || ts.isIdentifier(node) || ts.isParenthesizedExpression(node) || ts.isObjectLiteralExpression(node) || ts.isNewExpression(node)
 
-const validChainElement = (node: ts.Node) =>
+const isValidChainElement = (node: ts.Node) =>
     ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node) || ts.isCallExpression(node) || ts.isNonNullExpression(node)
 
 function verifyMatch(match: ts.Expression): boolean {
     let currentChainElement = match
 
-    while (!finalChainElement(currentChainElement)) {
-        if (!validChainElement(currentChainElement)) {
+    while (!isFinalChainElement(currentChainElement)) {
+        if (!isValidChainElement(currentChainElement)) {
             return false
         }
         const castedChainElement = currentChainElement as
@@ -33,9 +33,10 @@ export default {
     name: 'Add Destructure',
     kind: 'refactor.rewrite.addDestructure',
     tryToApply(sourceFile, position, _range, node, formatOptions) {
-        if (!node || !position || !ts.isIdentifier(node) || !ts.isPropertyAccessExpression(node.parent) || !ts.isVariableDeclaration(node.parent.parent)) return
+        if (!node || !position) return
+        const declaration = ts.findAncestor(node, n => ts.isVariableDeclaration(n)) as ts.VariableDeclaration | undefined
+        if (!declaration || ts.isObjectBindingPattern(declaration.name)) return
 
-        const declaration = node.parent.parent
         const { initializer, type, name: declarationName } = declaration
 
         if (!initializer || !verifyMatch(initializer) || !ts.isPropertyAccessExpression(initializer)) return
