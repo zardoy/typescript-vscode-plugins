@@ -32,7 +32,7 @@ export default {
     id: 'addDestructure',
     name: 'Add Destructure',
     kind: 'refactor.rewrite.addDestructure',
-    tryToApply(sourceFile, position, _range, node, _formatOptions) {
+    tryToApply(sourceFile, position, _range, node, formatOptions) {
         if (!node || !position || !ts.isIdentifier(node) || !ts.isPropertyAccessExpression(node.parent) || !ts.isVariableDeclaration(node.parent.parent)) return
 
         const declaration = node.parent.parent
@@ -49,7 +49,7 @@ export default {
             declarationName.getText(),
         )
 
-        const updatedDecl = factory.updateVariableDeclaration(
+        const updatedDeclaration = factory.updateVariableDeclaration(
             declaration,
             factory.createObjectBindingPattern([bindingElement]),
             undefined,
@@ -59,9 +59,9 @@ export default {
             initializer.expression,
         )
 
-        const tracker = getChangesTracker({})
+        const tracker = getChangesTracker(formatOptions ?? {})
 
-        tracker.replaceNode(sourceFile, declaration, updatedDecl)
+        tracker.replaceNode(sourceFile, declaration, updatedDeclaration)
 
         const changes = tracker.getChanges()
         if (!changes) return undefined
