@@ -28,10 +28,14 @@ function verifyMatch(match: ts.Expression): boolean {
     return true
 }
 
+const isPositionMatchesInitializer = (pos: number, start: number, end: number) => {
+    return pos >= start && pos <= end
+}
+
 export default {
     id: 'addDestructure',
     name: 'Add Destructure',
-    kind: 'refactor.rewrite.addDestructure',
+    kind: 'refactor.rewrite.add-destruct',
     tryToApply(sourceFile, position, _range, node, formatOptions) {
         if (!node || !position) return
         const declaration = ts.findAncestor(node, n => ts.isVariableDeclaration(n)) as ts.VariableDeclaration | undefined
@@ -39,7 +43,13 @@ export default {
 
         const { initializer, type, name: declarationName } = declaration
 
-        if (!initializer || !verifyMatch(initializer) || !ts.isPropertyAccessExpression(initializer)) return
+        if (
+            !initializer ||
+            !isPositionMatchesInitializer(position, initializer.getStart(), initializer.getEnd()) ||
+            !verifyMatch(initializer) ||
+            !ts.isPropertyAccessExpression(initializer)
+        )
+            return
 
         const propertyName = initializer.name.text
         const { factory } = ts
