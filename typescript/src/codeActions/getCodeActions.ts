@@ -7,8 +7,9 @@ import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
 import addMissingProperties from './extended/addMissingProperties'
 import addDestructure from './custom/addDestructure'
+import fromDestructure from './custom/fromDestructure'
 
-const codeActions: CodeAction[] = [addDestructure, objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
+const codeActions: CodeAction[] = [addDestructure, fromDestructure, objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
 const extendedCodeActions: ExtendedCodeAction[] = [addMissingProperties]
 
 type SimplifiedRefactorInfo =
