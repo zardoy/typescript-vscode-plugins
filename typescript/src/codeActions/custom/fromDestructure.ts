@@ -33,10 +33,10 @@ export default {
         if (!node || !position) return
         const declaration = ts.findAncestor(node, n => ts.isVariableDeclaration(n)) as ts.VariableDeclaration | undefined
         if (!declaration || !ts.isObjectBindingPattern(declaration.name) || !ts.isVariableDeclarationList(declaration.parent)) return
-
-        const { initializer, type, name: declarationName } = declaration
-        const bindings = declaration.name.elements
+        const { initializer } = declaration
         if (!initializer) return
+
+        const bindings = declaration.name.elements
         const { factory } = ts
 
         const declarations = bindings.map(bindingElement =>
@@ -47,17 +47,12 @@ export default {
                 createFlattenedExpressionFromDestructuring(bindingElement, initializer, factory),
             ),
         )
-        // for (let i = 1; i < declarations.length; i++) {
-        //     factory.forceLeadingNewLine(declarations[i])
-        // }
-
         const variableDeclarationList = declaration.parent
-        const newDeclarations = [...variableDeclarationList.declarations]
-        newDeclarations.splice(0, 1, ...declarations)
 
         const tracker = getChangesTracker(formatOptions ?? {})
+        const updatedVariableDeclarationList = factory.updateVariableDeclarationList(variableDeclarationList, declarations)
 
-        tracker.replaceNode(sourceFile, declaration.parent, factory.updateVariableDeclarationList(variableDeclarationList, newDeclarations))
+        tracker.replaceNode(sourceFile, variableDeclarationList, updatedVariableDeclarationList, { leadingTriviaOption: 1 })
 
         const changes = tracker.getChanges()
         if (!changes) return undefined
