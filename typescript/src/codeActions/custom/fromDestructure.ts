@@ -15,15 +15,14 @@ const createFlattenedExpressionFromDestructuring = (bindingElement: ts.BindingEl
         current = current.parent.parent
     }
 
-    let expression = cloneDeep(baseExpression)
-    for (let i = propertyAccessors.length - 1; i >= 0; i--) {
+    const expression = cloneDeep(baseExpression)
+
+    return propertyAccessors.reduceRight((_, __, i) => {
         const accessor = propertyAccessors[i]
-        expression = isNumber(accessor)
+        return isNumber(accessor)
             ? factory.createElementAccessExpression(expression, factory.createNumericLiteral(accessor))
             : factory.createPropertyAccessExpression(expression, accessor!.text)
-    }
-
-    return expression
+    }, baseExpression)
 }
 export default {
     id: 'fromDestructure',
@@ -32,7 +31,12 @@ export default {
     tryToApply(sourceFile, position, _range, node, formatOptions) {
         if (!node || !position) return
         const declaration = ts.findAncestor(node, n => ts.isVariableDeclaration(n)) as ts.VariableDeclaration | undefined
-        if (!declaration || !ts.isObjectBindingPattern(declaration.name) || !ts.isVariableDeclarationList(declaration.parent)) return
+        if (
+            !declaration ||
+            !ts.isVariableDeclarationList(declaration.parent) ||
+            !(ts.isObjectBindingPattern(declaration.name) || ts.isArrayBindingPattern(declaration.name))
+        )
+            return
         const { initializer } = declaration
         if (!initializer) return
 
