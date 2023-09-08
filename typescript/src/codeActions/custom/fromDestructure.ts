@@ -52,9 +52,10 @@ export default {
                 createFlattenedExpressionFromDestructuring(bindingElement, initializer, factory),
             ),
         )
-        const variableDeclarationList = declaration.parent
 
         const tracker = getChangesTracker(formatOptions ?? {})
+
+        const variableDeclarationList = declaration.parent
         const updatedVariableDeclarationList = factory.updateVariableDeclarationList(variableDeclarationList, declarations)
 
         tracker.replaceNode(sourceFile, variableDeclarationList, updatedVariableDeclarationList, { leadingTriviaOption: 1 })
