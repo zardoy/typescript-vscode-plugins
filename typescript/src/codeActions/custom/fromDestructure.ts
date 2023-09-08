@@ -40,13 +40,12 @@ export default {
         const { initializer } = declaration
         if (!initializer) return
 
-        const bindings = declaration.name.elements
+        const bindings = declaration.name.elements as ts.NodeArray<ts.BindingElement>
         const { factory } = ts
 
-        const declarations = bindings.map((bindingElement, i) =>
+        const declarations = bindings.map(bindingElement =>
             factory.createVariableDeclaration(
-                // force newline for multiple declarations
-                i > 0 ? `\n${bindingElement.name.getText()}` : bindingElement.name,
+                bindingElement.name,
                 undefined,
                 undefined,
                 createFlattenedExpressionFromDestructuring(bindingElement, initializer, factory),
