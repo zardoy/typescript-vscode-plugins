@@ -1,4 +1,4 @@
-import { isNumber } from 'lodash'
+import { cloneDeep, isNumber } from 'lodash'
 import { getChangesTracker } from '../../utils'
 import { CodeAction } from '../getCodeActions'
 
@@ -15,7 +15,7 @@ const createFlattenedExpressionFromDestructuring = (bindingElement: ts.BindingEl
         current = current.parent.parent
     }
 
-    let expression = baseExpression
+    let expression = cloneDeep(baseExpression)
     for (let i = propertyAccessors.length - 1; i >= 0; i--) {
         const accessor = propertyAccessors[i]
         expression = isNumber(accessor)
@@ -39,9 +39,10 @@ export default {
         const bindings = declaration.name.elements
         const { factory } = ts
 
-        const declarations = bindings.map(bindingElement =>
+        const declarations = bindings.map((bindingElement, i) =>
             factory.createVariableDeclaration(
-                bindingElement.name,
+                // force newline for multiple declarations
+                i > 0 ? `\n${bindingElement.name.getText()}` : bindingElement.name,
                 undefined,
                 undefined,
                 createFlattenedExpressionFromDestructuring(bindingElement, initializer, factory),
