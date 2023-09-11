@@ -15,14 +15,39 @@ const createFlattenedExpressionFromDestructuring = (bindingElement: ts.BindingEl
         current = current.parent.parent
     }
 
-    const expression = cloneDeep(baseExpression)
-
-    return propertyAccessors.reduceRight((_, __, i) => {
+    let flattenedExpression = cloneDeep(baseExpression)
+    for (const [i, _] of propertyAccessors.reverse().entries()) {
         const accessor = propertyAccessors[i]
-        return isNumber(accessor)
-            ? factory.createElementAccessExpression(expression, factory.createNumericLiteral(accessor))
-            : factory.createPropertyAccessExpression(expression, accessor!.text)
-    }, baseExpression)
+
+        flattenedExpression = isNumber(accessor)
+            ? factory.createElementAccessExpression(flattenedExpression, factory.createNumericLiteral(accessor))
+            : factory.createPropertyAccessExpression(flattenedExpression, accessor!.text)
+    }
+    return flattenedExpression
+}
+
+export const collectBindings = (node: ts.BindingPattern): ts.BindingElement[] => {
+    const bindings: ts.BindingElement[] = []
+
+    const doCollectBindings = (node: ts.BindingPattern) => {
+        for (const element of node.elements) {
+            if (ts.isOmittedExpression(element)) {
+                continue
+            }
+
+            const elementName = element.name
+
+            if (ts.isIdentifier(elementName)) {
+                bindings.push(element)
+            } else if (ts.isArrayBindingPattern(elementName) || ts.isObjectBindingPattern(elementName)) {
+                doCollectBindings(elementName)
+            }
+        }
+    }
+
+    doCollectBindings(node)
+
+    return bindings
 }
 export default {
     id: 'fromDestructure',
@@ -40,7 +65,7 @@ export default {
         const { initializer } = declaration
         if (!initializer) return
 
-        const bindings = declaration.name.elements as ts.NodeArray<ts.BindingElement>
+        const bindings = collectBindings(declaration.name)
         const { factory } = ts
 
         const declarations = bindings.map(bindingElement =>
@@ -52,11 +77,11 @@ export default {
             ),
         )
 
-        const tracker = getChangesTracker(formatOptions ?? {})
-
         const variableDeclarationList = declaration.parent
+
         const updatedVariableDeclarationList = factory.updateVariableDeclarationList(variableDeclarationList, declarations)
 
+        const tracker = getChangesTracker(formatOptions ?? {})
         tracker.replaceNode(sourceFile, variableDeclarationList, updatedVariableDeclarationList, { leadingTriviaOption: 1 })
 
         const changes = tracker.getChanges()
