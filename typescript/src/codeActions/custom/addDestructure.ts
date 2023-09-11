@@ -5,7 +5,8 @@ const isFinalChainElement = (node: ts.Node) =>
     ts.isThisTypeNode(node) || ts.isIdentifier(node) || ts.isParenthesizedExpression(node) || ts.isObjectLiteralExpression(node) || ts.isNewExpression(node)
 
 const isValidChainElement = (node: ts.Node) =>
-    ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node) || ts.isCallExpression(node) || ts.isNonNullExpression(node)
+    (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node) || ts.isCallExpression(node) || ts.isNonNullExpression(node)) &&
+    !ts.isOptionalChain(node) 
 
 function verifyMatch(match: ts.Expression): boolean {
     let currentChainElement = match
