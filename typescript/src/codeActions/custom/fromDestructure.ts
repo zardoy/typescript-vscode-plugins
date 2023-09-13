@@ -50,8 +50,8 @@ export const collectBindings = (node: ts.BindingPattern): ts.BindingElement[] =>
     return bindings
 }
 export default {
-    id: 'fromDestructure',
-    name: 'From Destructure',
+    id: 'fromDestruct',
+    name: 'From Destruct',
     kind: 'refactor.rewrite.from-destruct',
     tryToApply(sourceFile, position, _range, node, formatOptions) {
         if (!node || !position) return

@@ -34,8 +34,8 @@ const isPositionMatchesInitializer = (pos: number, start: number, end: number) =
 }
 
 export default {
-    id: 'addDestructure',
-    name: 'Add Destructure',
+    id: 'addDestruct',
+    name: 'Add Destruct',
     kind: 'refactor.rewrite.add-destruct',
     tryToApply(sourceFile, position, _range, node, formatOptions) {
         if (!node || !position) return
