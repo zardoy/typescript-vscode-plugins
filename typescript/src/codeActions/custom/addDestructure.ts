@@ -6,7 +6,7 @@ const isFinalChainElement = (node: ts.Node) =>
 
 const isValidChainElement = (node: ts.Node) =>
     (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node) || ts.isCallExpression(node) || ts.isNonNullExpression(node)) &&
-    !ts.isOptionalChain(node) 
+    !ts.isOptionalChain(node)
 
 function verifyMatch(match: ts.Expression): boolean {
     let currentChainElement = match
