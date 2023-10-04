@@ -278,6 +278,9 @@ export default (
         )
     }
 
+    if (specialCommand === 'onEnterActions') {
+    }
+
     return null
 }
 

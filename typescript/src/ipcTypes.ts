@@ -16,6 +16,7 @@ export const triggerCharacterCommands = [
     'getExtendedCodeActionEdits',
     'getLastResolvedCompletion',
     'getArgumentReferencesFromCurrentParameter',
+    'onEnterActions',
 ] as const
 
 export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
