@@ -15,7 +15,7 @@ const createFlattenedExpressionFromDestructuring = (bindingElement: ts.BindingEl
         current = current.parent.parent
     }
 
-    let flattenedExpression = cloneDeep(baseExpression)
+    let flattenedExpression = baseExpression
     for (const [i, _] of propertyAccessors.reverse().entries()) {
         const accessor = propertyAccessors[i]
 
@@ -66,20 +66,28 @@ const convertFromDestructureWithVariableNameReplacement = (
         const highlights = languageService.getDocumentHighlights(sourceFile.fileName, binding.getStart(), [sourceFile.fileName])
         if (!highlights) continue
 
-        const referencesPositions = highlights.flatMap(({ highlightSpans }) => highlightSpans.map(({ textSpan }) => textSpan.start))
+        const highlightsPositions = highlights.flatMap(({ highlightSpans }) => highlightSpans.map(({ textSpan }) => textSpan.start))
 
-        for (const pos of referencesPositions) {
+        for (const pos of highlightsPositions) {
             if (pos >= declarationName.getStart() && pos <= declarationName.getEnd()) {
                 continue
             }
             const node = findChildContainingExactPosition(sourceFile, pos)
 
             if (!node) continue
-            tracker.replaceNode(sourceFile, node, declaration)
+            const printer = ts.createPrinter()
+
+            tracker.replaceRangeWithText(sourceFile, { pos, end: node.end }, printer.printNode(ts.EmitHint.Unspecified, declaration, sourceFile))
         }
     }
 
-    tracker.replaceNode(sourceFile, declarationName, ts.factory.createIdentifier(VARIABLE_NAME))
+    const declarationNameLeadingTrivia = declarationName.getLeadingTriviaWidth(sourceFile)
+
+    tracker.replaceRange(
+        sourceFile,
+        { pos: declarationName.pos + declarationNameLeadingTrivia, end: declarationName.end },
+        ts.factory.createIdentifier(VARIABLE_NAME),
+    )
     const changes = tracker.getChanges()
     return {
         edits: [
