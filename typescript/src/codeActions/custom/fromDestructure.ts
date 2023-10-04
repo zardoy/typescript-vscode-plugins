@@ -50,7 +50,11 @@ const collectBindings = (node: ts.BindingPattern): ts.BindingElement[] => {
     return bindings
 }
 
-const convertFromParameterDestructure = (declarationName: ts.BindingPattern, sourceFile: ts.SourceFile, languageService: ts.LanguageService) => {
+const convertFromDestructureWithVariableNameReplacement = (
+    declarationName: ts.BindingPattern,
+    sourceFile: ts.SourceFile,
+    languageService: ts.LanguageService,
+) => {
     const bindings = collectBindings(declarationName)
     const tracker = getChangesTracker({})
 
@@ -59,9 +63,10 @@ const convertFromParameterDestructure = (declarationName: ts.BindingPattern, sou
     for (const binding of bindings) {
         const declaration = createFlattenedExpressionFromDestructuring(binding, ts.factory.createIdentifier(VARIABLE_NAME))
 
-        const references = languageService.findReferences(sourceFile.fileName, binding.getStart())
-        if (!references) continue
-        const referencesPositions = references.flatMap(reference => reference.references.map(({ textSpan: { start } }) => start))
+        const highlights = languageService.getDocumentHighlights(sourceFile.fileName, binding.getStart(), [sourceFile.fileName])
+        if (!highlights) continue
+
+        const referencesPositions = highlights.flatMap(({ highlightSpans }) => highlightSpans.map(({ textSpan }) => textSpan.start))
 
         for (const pos of referencesPositions) {
             if (pos >= declarationName.getStart() && pos <= declarationName.getEnd()) {
@@ -99,7 +104,7 @@ export default {
         if (!declaration || !(ts.isObjectBindingPattern(declaration.name) || ts.isArrayBindingPattern(declaration.name))) return
 
         if (ts.isParameter(declaration)) {
-            return convertFromParameterDestructure(declaration.name, sourceFile, languageService)
+            return convertFromDestructureWithVariableNameReplacement(declaration.name, sourceFile, languageService)
         }
 
         if (!ts.isVariableDeclarationList(declaration.parent)) return
@@ -108,6 +113,10 @@ export default {
         if (!initializer) return
 
         const bindings = collectBindings(declaration.name)
+        if (bindings.length > 1) {
+            return convertFromDestructureWithVariableNameReplacement(declaration.name, sourceFile, languageService)
+        }
+
         const { factory } = ts
 
         const declarations = bindings.map(bindingElement =>
@@ -121,12 +130,16 @@ export default {
 
         const variableDeclarationList = declaration.parent
 
-        const updatedVariableDeclarationList = factory.updateVariableDeclarationList(variableDeclarationList, declarations)
+        const updatedVariableDeclarationList = factory.createVariableDeclarationList(declarations, variableDeclarationList.flags)
 
         const tracker = getChangesTracker(formatOptions ?? {})
-        tracker.replaceNode(sourceFile, variableDeclarationList, updatedVariableDeclarationList, { leadingTriviaOption: 1 })
+
+        const leadingTrivia = variableDeclarationList.getLeadingTriviaWidth(sourceFile)
+
+        tracker.replaceRange(sourceFile, { pos: variableDeclarationList.pos + leadingTrivia, end: variableDeclarationList.end }, updatedVariableDeclarationList)
 
         const changes = tracker.getChanges()
+
         if (!changes) return undefined
         return {
             edits: [
