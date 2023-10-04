@@ -58,7 +58,7 @@ const convertFromDestructureWithVariableNameReplacement = (
     const bindings = collectBindings(declarationName)
     const tracker = getChangesTracker({})
 
-    const VARIABLE_NAME = 'newVariable'
+    const VARIABLE_NAME = tsFull.getUniqueName('newVariable', sourceFile as unknown as FullSourceFile)
 
     for (const binding of bindings) {
         const declaration = createFlattenedExpressionFromDestructuring(binding, ts.factory.createIdentifier(VARIABLE_NAME))
