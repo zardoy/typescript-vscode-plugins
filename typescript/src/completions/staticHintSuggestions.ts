@@ -28,7 +28,7 @@ const letterKeys = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 
 )
 const someOtherKeys = [
     'Space',
-    'Esc',
+    'Escape',
     'Tab',
     'Enter',
     'Equal',

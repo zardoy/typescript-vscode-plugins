@@ -1,41 +1,57 @@
 import { GetConfig } from './types'
-import { findChildContainingPositionMaxDepth, approveCast } from './utils'
+import { findChildContainingPositionMaxDepth, approveCast, findChildContainingExactPosition, matchParents } from './utils'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig) => {
     proxy.findReferences = (fileName, position) => {
         let prior = languageService.findReferences(fileName, position)
         if (!prior) return
+        const program = languageService.getProgram()!
         if (c('removeDefinitionFromReferences')) {
-            prior = prior.map(({ references, ...other }) => ({
-                ...other,
-                references: references.filter(({ isDefinition }) => !isDefinition),
-            }))
+            const sourceFile = program.getSourceFile(fileName)
+            const node = findChildContainingExactPosition(sourceFile!, position)
+            let filterDefs = true
+            if (
+                node &&
+                node.flags & ts.NodeFlags.JavaScriptFile &&
+                matchParents(node, ['Identifier', 'PropertyAccessExpression'])?.expression.kind === ts.SyntaxKind.ThisKeyword
+            ) {
+                // https://github.com/zardoy/typescript-vscode-plugins/issues/165
+                filterDefs = false
+            }
+
+            if (filterDefs) {
+                prior = prior.map(({ references, ...other }) => ({
+                    ...other,
+                    references: references.filter(({ isDefinition, textSpan, fileName }) => {
+                        return !isDefinition
+                    }),
+                }))
+            }
         }
         if (c('removeImportsFromReferences')) {
-            const program = languageService.getProgram()!
-            const importsCountPerFileName: Record<
+            const refCountPerFileName: Record<
                 string,
                 {
-                    all: number
-                    cur: number
+                    total: number
+                    current: number
                 }
             > = {}
             const allReferences = prior.flatMap(({ references }) => references)
             for (const { fileName } of allReferences) {
-                importsCountPerFileName[fileName] ??= {
-                    all: 0,
-                    cur: 0,
+                refCountPerFileName[fileName] ??= {
+                    total: 0,
+                    current: 0,
                 }
-                importsCountPerFileName[fileName]!.all++
+                refCountPerFileName[fileName]!.total++
             }
             prior = prior.map(({ references, ...other }) => {
                 return {
                     ...other,
                     references: references.filter(({ fileName, textSpan }) => {
-                        const importsCount = importsCountPerFileName[fileName]!
+                        const refsCount = refCountPerFileName[fileName]!
                         // doesn't make sense to handle case where it gets imports twice
-                        if (importsCount.all <= 1 || importsCount.cur !== 0) return true
-                        importsCount.cur++
+                        if (refsCount.total <= 1 || refsCount.current !== 0) return true
+                        refsCount.current++
                         const sourceFile = program.getSourceFile(fileName)
                         if (!sourceFile) return true
                         const end = textSpan.start + textSpan.length

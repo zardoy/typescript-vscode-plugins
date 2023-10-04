@@ -67,7 +67,7 @@ export type Configuration = {
      */
     // volarLoadConfigPaths: string[]
     /**
-     * Removes `Symbol`, `caller`, `prototype` everywhere
+     * Removes annoying `Symbol`, `caller`, `prototype` everywhere
      * @default true
      *  */
     'removeUselessFunctionProps.enable': boolean
@@ -87,7 +87,8 @@ export type Configuration = {
      * Format of this setting is very close to `jsxCompletionsMap` setting:
      * `path#symbol` (exact) or `path/*#symbol` (`#symbol` part can be omitted)
      *
-     * Note: Please use `javascript`/`typescript.preferences.autoImportFileExcludePatterns` when possible, to achieve better performance!
+     * **Note**: Please use builtin `javascript`/`typescript.preferences.autoImportFileExcludePatterns` when possible, to achieve better performance!
+     * The builtin function expects relative paths to .d.ts / .ts files that contains declarations.
      *
      * e.g. instead of declaring `@mui/icons-material` here, declare `node_modules/@mui/icons-material` in aforementioned setting.
      *
@@ -99,7 +100,7 @@ export type Configuration = {
      * - `path/*#join` - ignore path, path/posix and path/win32, but only join symbol
      * - `path/*#join,resolve` - ignore path, path/posix and path/win32, but only join and resolve symbol
      *
-     * - jquery/* - ignore absolutely all auto imports from jquery, even if it was declared virtually (declare module)
+     * - jquery/* - ignore absolutely all auto imports from jquery, even if it was declared using ambient declaration (`declare module`)
      * @default []
      */
     'suggestions.ignoreAutoImports': string[]

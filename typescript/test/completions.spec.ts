@@ -365,15 +365,22 @@ test('Emmet completion', () => {
 })
 
 test('Array Method Snippets', () => {
-    const positions = newFileContents(/*ts*/ `
+    const { completion } = fourslashLikeTester(/*ts*/ `
         const users = []
-        users./*|*/
-        ;users.filter(Boolean).flatMap/*|*/
+        users./*0*/
+        ;users.filter(Boolean).flatMap/*1*/
+        ;[]./*2*/
     `)
-    for (const [i, pos] of positions.entries()) {
-        const { entries } = getCompletionsAtPosition(pos) ?? {}
-        expect(entries?.find(({ name }) => name === 'flatMap')?.insertText, i.toString()).toBe('flatMap((${2:user}) => $3)')
-    }
+    completion([0, 1], {
+        includes: {
+            insertTexts: ['flatMap((${2:user}) => $3)'],
+        },
+    })
+    completion(2, {
+        includes: {
+            insertTexts: ['flatMap((${2:item}) => $3)'],
+        },
+    })
 })
 
 test('String template type completions', () => {
@@ -404,6 +411,28 @@ test('String template type completions', () => {
     tester.completion([2, 3, 4], {
         exact: {
             names: ['foo_|'],
+        },
+    })
+})
+
+test('Remove Useless Function Props', () => {
+    const tester = fourslashLikeTester(/* ts */ `
+        const a = () => {}
+        a./*1*/
+        const b = {
+            Symbol: 5,
+            prototype: 5,
+            caller: 5,
+        }
+        b./*2*/
+    `)
+    const badProps = ['Symbol', 'caller', 'prototype']
+    tester.completion(1, {
+        excludes: badProps,
+    })
+    tester.completion(2, {
+        includes: {
+            names: badProps,
         },
     })
 })

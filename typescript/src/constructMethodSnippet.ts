@@ -2,6 +2,7 @@ import { compact, oneOf } from '@zardoy/utils'
 import { isTypeNode } from './completions/keywordsSpace'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
+import extractType from './utils/extractType'
 
 // todo-low-ee inspect any last arg infer
 export default (
@@ -17,11 +18,9 @@ export default (
 ) => {
     let containerNode = findChildContainingExactPosition(sourceFile, position)
     if (!containerNode || isTypeNode(containerNode)) return
-
     const checker = languageService.getProgram()!.getTypeChecker()!
-    let type = symbol ? checker.getTypeOfSymbol(symbol) : checker.getTypeAtLocation(containerNode)
-    // give another chance
-    if (symbol && type['intrinsicName'] === 'error') type = checker.getTypeOfSymbolAtLocation(symbol, containerNode)
+
+    const type = extractType(checker, containerNode, symbol)
 
     if (ts.isIdentifier(containerNode)) containerNode = containerNode.parent
     if (ts.isPropertyAccessExpression(containerNode)) containerNode = containerNode.parent
@@ -29,7 +28,7 @@ export default (
     const isNewExpression =
         ts.isNewExpression(containerNode) &&
         ts.textSpanIntersectsWithPosition(ts.createTextSpanFromBounds(containerNode.expression.pos, containerNode.expression.end), position)
-    if (!isNewExpression && (type.getProperties().length > 0 || type.getStringIndexType() || type.getNumberIndexType())) {
+    if (!isNewExpression && (getNonFunctionProperties(type).length > 0 || type.getStringIndexType() || type.getNumberIndexType())) {
         resolveData.isAmbiguous = true
     }
 
@@ -152,4 +151,9 @@ function getPromiseLikeTypeArgument(type: ts.Type | undefined, checker: ts.TypeC
 
 function hasPrivateOrProtectedModifier(modifiers: ts.NodeArray<ts.ModifierLike> | ts.NodeArray<ts.Modifier> | undefined) {
     return modifiers?.some(modifier => oneOf(modifier.kind, ts.SyntaxKind.PrivateKeyword, ts.SyntaxKind.ProtectedKeyword))
+}
+
+function getNonFunctionProperties(type: ts.Type) {
+    const customSpecialFunctionProperties = ['__promisify__']
+    return type.getProperties().filter(x => !customSpecialFunctionProperties.includes(x.name))
 }

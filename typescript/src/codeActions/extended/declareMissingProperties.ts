@@ -1,3 +1,4 @@
+import { matchParents } from '../../utils'
 import { ExtendedCodeAction } from '../getCodeActions'
 
 export default {
@@ -5,13 +6,13 @@ export default {
     kind: 'quickfix',
     title: 'Declare missing property',
     tryToApply({ sourceFile, node }) {
-        if (node && ts.isIdentifier(node) && ts.isObjectBindingPattern(node.parent.parent) && ts.isParameter(node.parent.parent.parent)) {
-            const param = node.parent.parent.parent
+        const param = matchParents(node, ['Identifier', 'BindingElement', 'ObjectBindingPattern', 'Parameter'])
+        if (param) {
             // special react pattern
             if (ts.isArrowFunction(param.parent) && ts.isVariableDeclaration(param.parent.parent)) {
                 const variableDecl = param.parent.parent
                 if (variableDecl.type?.getText().match(/(React\.)?FC/)) {
-                    // handle interface
+                    // todo handle interface
                 }
             }
             // general patterns
@@ -19,25 +20,16 @@ export default {
                 const hasMembers = param.type.members.length > 0
                 const insertPos = param.type.members.at(-1)?.end ?? param.type.end - 1
                 const insertComma = hasMembers && sourceFile.getFullText().slice(insertPos - 1, insertPos) !== ','
-                let insertText = node.text
+                let insertText = (node as ts.Identifier).text
                 if (insertComma) insertText = `, ${insertText}`
                 // alternatively only one snippetEdit could be used with tsFull.escapeSnippetText(insertText) + $0
                 return {
-                    edits: [
+                    snippetEdits: [
                         {
-                            newText: insertText,
+                            newText: `${tsFull.escapeSnippetText(insertText)}$0`,
                             span: {
                                 length: 0,
                                 start: insertPos,
-                            },
-                        },
-                    ],
-                    snippetEdits: [
-                        {
-                            newText: '$0',
-                            span: {
-                                length: 0,
-                                start: insertPos + insertText.length - 1,
                             },
                         },
                     ],
@@ -47,3 +39,16 @@ export default {
         return
     },
 } as ExtendedCodeAction
+
+const testCode = () => {
+    const tester = (code: string) => {
+        // ^ - problem location in which quickfix needs to be tested (applied)
+        // | - cursor position after quickfix is applied
+        // [[...]] - applied part of the code
+        /* TODO */
+    }
+
+    tester(/* ts */ `
+        const b = ({ b, ^a }: { b[[, a/*|*/]] }) => {}
+    `)
+}

@@ -72,6 +72,12 @@ export const getCompletionsAtPosition = (
     const sourceFile = program?.getSourceFile(fileName)
     if (!program || !sourceFile) return
     if (!scriptSnapshot || isInBannedPosition(position, scriptSnapshot, sourceFile)) return
+    // just pick up random setting to check if we they are here
+    if (c('correctSorting.enable') === undefined) {
+        throw new Error(
+            "Plugin didn't get required user settings (config). Most probably there is a problem with TypeScript. Either restart TS server, use stable TS version or disable typescript-essentials-plugin if you need to test this TS version",
+        )
+    }
     const exactNode = findChildContainingExactPosition(sourceFile, position)
     const isCheckedFile =
         !tsFull.isSourceFileJS(sourceFile as any) || !!tsFull.isCheckJsEnabledForFile(sourceFile as any, additionalData.compilerOptions as any)
@@ -141,6 +147,7 @@ export const getCompletionsAtPosition = (
         preferences: options || {},
         prior: prior!,
         fullText: sourceFile.getFullText(),
+        typeChecker: program.getTypeChecker(),
     } satisfies typeof sharedCompletionContext)
 
     if (node && !hasSuggestions && ensurePrior() && prior) {
@@ -225,11 +232,6 @@ export const getCompletionsAtPosition = (
     // if (c('completionHelpers') && node) prior.entries = objectLiteralHelpers(node, prior.entries) ?? prior.entries
 
     if (c('patchToString.enable')) {
-        //     const indexToPatch = arrayMoveItemToFrom(
-        //         prior.entries,
-        //         ({ name }) => name === 'toExponential',
-        //         ({ name }) => name === 'toString',
-        //     )
         const indexToPatch = prior.entries.findIndex(({ name, kind }) => name === 'toString' && kind !== ts.ScriptElementKind.warning)
         if (indexToPatch !== -1) {
             const entryToPatch = prior.entries[indexToPatch]!

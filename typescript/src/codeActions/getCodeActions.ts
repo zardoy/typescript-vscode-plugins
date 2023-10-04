@@ -5,12 +5,21 @@ import { ApplyExtendedCodeActionResult, IpcExtendedCodeAction } from '../ipcType
 import objectSwapKeysAndValues from './custom/objectSwapKeysAndValues'
 import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
-import addMissingProperties from './extended/addMissingProperties'
+import declareMissingProperties from './extended/declareMissingProperties'
+import { renameParameterToNameFromType, renameAllParametersToNameFromType } from './custom/renameParameterToNameFromType'
 import addDestructure from './custom/addDestructure'
 import fromDestructure from './custom/fromDestructure'
 
-const codeActions: CodeAction[] = [addDestructure, fromDestructure, objectSwapKeysAndValues, changeStringReplaceToRegex, splitDeclarationAndInitialization]
-const extendedCodeActions: ExtendedCodeAction[] = [addMissingProperties]
+const codeActions: CodeAction[] = [
+    addDestructure,
+    fromDestructure,
+    objectSwapKeysAndValues,
+    changeStringReplaceToRegex,
+    splitDeclarationAndInitialization,
+    renameParameterToNameFromType,
+    renameAllParametersToNameFromType,
+]
+const extendedCodeActions: ExtendedCodeAction[] = [declareMissingProperties]
 
 type SimplifiedRefactorInfo =
     | {

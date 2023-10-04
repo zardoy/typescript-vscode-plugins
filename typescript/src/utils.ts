@@ -303,12 +303,12 @@ export const matchParents: MatchParentsType = (node, treeToCompare) => {
     for (const toCompare of treeToCompare) {
         if (!first) {
             node = node?.parent
-            first = false
         }
         if (!node) return
         if (!(ts[`is${toCompare}` as keyof typeof ts] as (node) => boolean)(node)) {
             return
         }
+        first = false
     }
     return node as any
 }
