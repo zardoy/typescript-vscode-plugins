@@ -15,7 +15,7 @@ const verifyMatch = (match: ts.Expression) => {
         if (!isValidChainElement(currentChainElement)) {
             return false
         }
-        const castedChainElement = currentChainElement as
+        type PossibleChainElement =
             | ts.PropertyAccessExpression
             | ts.CallExpression
             | ts.ElementAccessExpression
@@ -23,7 +23,9 @@ const verifyMatch = (match: ts.Expression) => {
             | ts.ParenthesizedExpression
             | ts.AwaitExpression
 
-        currentChainElement = castedChainElement.expression
+        const chainElement = currentChainElement as PossibleChainElement
+
+        currentChainElement = chainElement.expression
     }
 
     return true
@@ -33,47 +35,41 @@ const isPositionMatchesInitializer = (pos: number, initializer: ts.Expression) =
     return pos >= initializer.getStart() && pos <= initializer.getEnd()
 }
 
+const createDestructuredDeclaration = (declaration: ts.VariableDeclaration, pos: number) => {
+    const { initializer, type, name: declarationName } = declaration
+
+    if (!initializer || !isPositionMatchesInitializer(pos, initializer) || !verifyMatch(initializer) || !ts.isPropertyAccessExpression(initializer)) return
+
+    const propertyName = initializer.name.text
+    const { factory } = ts
+
+    const bindingElement = factory.createBindingElement(
+        undefined,
+        declarationName.getText() === propertyName ? undefined : propertyName,
+        declarationName.getText(),
+    )
+
+    return factory.createVariableDeclaration(
+        factory.createObjectBindingPattern([bindingElement]),
+        undefined,
+        type ? factory.createTypeLiteralNode([factory.createPropertySignature(undefined, factory.createIdentifier(propertyName), undefined, type)]) : undefined,
+        initializer.expression,
+    )
+}
 export default {
     id: 'addDestruct',
     name: 'Add Destruct',
     kind: 'refactor.rewrite.add-destruct',
     tryToApply(sourceFile, position, _range, node, formatOptions, languageService) {
         if (!node || !position) return
-        const declaration = ts.findAncestor(node, n => ts.isVariableDeclaration(n)) as ts.VariableDeclaration | undefined
+        const initialDeclaration = ts.findAncestor(node, n => ts.isVariableDeclaration(n)) as ts.VariableDeclaration | undefined
 
-        if (declaration && ts.isObjectBindingPattern(declaration.name)) {
-            const { initializer, type, name: declarationName } = declaration
-
-            if (
-                !initializer ||
-                !isPositionMatchesInitializer(position, initializer) ||
-                !verifyMatch(initializer) ||
-                !ts.isPropertyAccessExpression(initializer)
-            )
-                return
-
-            const propertyName = initializer.name.text
-            const { factory } = ts
-
-            const bindingElement = factory.createBindingElement(
-                undefined,
-                declarationName.getText() === propertyName ? undefined : propertyName,
-                declarationName.getText(),
-            )
-
-            const updatedDeclaration = factory.updateVariableDeclaration(
-                declaration,
-                factory.createObjectBindingPattern([bindingElement]),
-                undefined,
-                type
-                    ? factory.createTypeLiteralNode([factory.createPropertySignature(undefined, factory.createIdentifier(propertyName), undefined, type)])
-                    : undefined,
-                initializer.expression,
-            )
-
+        if (initialDeclaration && !ts.isObjectBindingPattern(initialDeclaration.name)) {
             const tracker = getChangesTracker(formatOptions ?? {})
+            const createdDeclaration = createDestructuredDeclaration(initialDeclaration, position)
+            if (!createdDeclaration) return
 
-            tracker.replaceNode(sourceFile, declaration, updatedDeclaration)
+            tracker.replaceNode(sourceFile, initialDeclaration, createdDeclaration)
 
             const changes = tracker.getChanges()
             if (!changes) return undefined
