@@ -1,4 +1,4 @@
-import { cloneDeep, isNumber } from 'lodash'
+import { isNumber } from 'lodash'
 import { findChildContainingExactPosition, getChangesTracker } from '../../utils'
 import { CodeAction } from '../getCodeActions'
 
