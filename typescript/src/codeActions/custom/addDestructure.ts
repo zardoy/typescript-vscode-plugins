@@ -8,7 +8,7 @@ const isValidChainElement = (node: ts.Node) =>
     (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node) || ts.isCallExpression(node) || ts.isNonNullExpression(node)) &&
     !ts.isOptionalChain(node)
 
-function verifyMatch(match: ts.Expression): boolean {
+const verifyMatch = (match: ts.Expression) => {
     let currentChainElement = match
 
     while (!isFinalChainElement(currentChainElement)) {
@@ -29,8 +29,8 @@ function verifyMatch(match: ts.Expression): boolean {
     return true
 }
 
-const isPositionMatchesInitializer = (pos: number, start: number, end: number) => {
-    return pos >= start && pos <= end
+const isPositionMatchesInitializer = (pos: number, initializer: ts.Expression) => {
+    return pos >= initializer.getStart() && pos <= initializer.getEnd()
 }
 
 export default {
@@ -44,12 +44,7 @@ export default {
 
         const { initializer, type, name: declarationName } = declaration
 
-        if (
-            !initializer ||
-            !isPositionMatchesInitializer(position, initializer.getStart(), initializer.getEnd()) ||
-            !verifyMatch(initializer) ||
-            !ts.isPropertyAccessExpression(initializer)
-        )
+        if (!initializer || !isPositionMatchesInitializer(position, initializer) || !verifyMatch(initializer) || !ts.isPropertyAccessExpression(initializer))
             return
 
         const propertyName = initializer.name.text
