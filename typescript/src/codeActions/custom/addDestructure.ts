@@ -1,4 +1,4 @@
-import { findChildContainingExactPosition, getChangesTracker } from '../../utils'
+import { findChildContainingExactPosition, getChangesTracker, getNodeHighlightPositions } from '../../utils'
 import { CodeAction } from '../getCodeActions'
 
 const isFinalChainElement = (node: ts.Node) =>
@@ -56,6 +56,66 @@ const createDestructuredDeclaration = (declaration: ts.VariableDeclaration, pos:
         initializer.expression,
     )
 }
+const addDestructureToVariableWithSplittedPropertyAccessors = (
+    node: ts.Node,
+    sourceFile: ts.SourceFile,
+    formatOptions: ts.FormatCodeSettings | undefined,
+    languageService: ts.LanguageService,
+) => {
+    if (!ts.isIdentifier(node) && !(ts.isPropertyAccessExpression(node.parent) || ts.isParameter(node.parent))) return
+
+    const highlightPositions = getNodeHighlightPositions(node, sourceFile, languageService)
+
+    if (!highlightPositions) return
+    const tracker = getChangesTracker(formatOptions ?? {})
+
+    const propertyNames: string[] = []
+    let nodeToReplaceWithBindingPattern: ts.Identifier | undefined
+
+    for (const pos of highlightPositions) {
+        const highlightedNode = findChildContainingExactPosition(sourceFile, pos)
+
+        if (!highlightedNode) continue
+
+        if (ts.isIdentifier(highlightedNode) && ts.isPropertyAccessExpression(highlightedNode.parent)) {
+            propertyNames.push(highlightedNode.parent.name.getText())
+            tracker.replaceRange(sourceFile, { pos, end: highlightedNode.parent.end }, highlightedNode.parent.name)
+            continue
+        }
+
+        if (ts.isIdentifier(highlightedNode) && (ts.isVariableDeclaration(highlightedNode.parent) || ts.isParameter(highlightedNode.parent))) {
+            nodeToReplaceWithBindingPattern = highlightedNode
+            continue
+        }
+    }
+
+    if (!nodeToReplaceWithBindingPattern) return
+    const bindings = propertyNames.map(name => {
+        return ts.factory.createBindingElement(undefined, undefined, name)
+    })
+    const bindingPattern = ts.factory.createObjectBindingPattern(bindings)
+    const { pos, end } = nodeToReplaceWithBindingPattern
+
+    tracker.replaceRange(
+        sourceFile,
+        {
+            pos: pos + nodeToReplaceWithBindingPattern.getLeadingTriviaWidth(),
+            end,
+        },
+        bindingPattern,
+    )
+
+    const changes = tracker.getChanges()
+    if (!changes) return undefined
+    return {
+        edits: [
+            {
+                fileName: sourceFile.fileName,
+                textChanges: changes[0]!.textChanges,
+            },
+        ],
+    }
+}
 export default {
     id: 'addDestruct',
     name: 'Add Destruct',
@@ -67,69 +127,32 @@ export default {
         if (initialDeclaration && !ts.isObjectBindingPattern(initialDeclaration.name)) {
             const tracker = getChangesTracker(formatOptions ?? {})
             const createdDeclaration = createDestructuredDeclaration(initialDeclaration, position)
-            if (!createdDeclaration) return
-
-            tracker.replaceNode(sourceFile, initialDeclaration, createdDeclaration)
-
-            const changes = tracker.getChanges()
-            if (!changes) return undefined
-            return {
-                edits: [
+            if (createdDeclaration) {
+                tracker.replaceRange(
+                    sourceFile,
                     {
-                        fileName: sourceFile.fileName,
-                        textChanges: changes[0]!.textChanges,
+                        pos: initialDeclaration.pos,
+                        end: initialDeclaration.end,
                     },
-                ],
-            }
-        }
+                    createdDeclaration,
+                )
 
-        if (!ts.isIdentifier(node) && !(ts.isPropertyAccessExpression(node.parent) || ts.isParameter(node.parent))) return
-
-        const highlights = languageService.getDocumentHighlights(sourceFile.fileName, node.getStart(), [sourceFile.fileName])
-
-        if (!highlights) return
-
-        const highlightPositions = highlights.flatMap(({ highlightSpans }) => highlightSpans.map(({ textSpan }) => textSpan.start))
-
-        const tracker = getChangesTracker(formatOptions ?? {})
-
-        const propertyNames: string[] = []
-        let nodeToReplaceWithBindingPattern: ts.Identifier | null = null
-        for (const pos of highlightPositions) {
-            const highlightedNode = findChildContainingExactPosition(sourceFile, pos)
-
-            if (!highlightedNode) continue
-
-            if (ts.isIdentifier(highlightedNode) && ts.isPropertyAccessExpression(highlightedNode.parent)) {
-                propertyNames.push(highlightedNode.parent.name.getText())
-                tracker.replaceRange(sourceFile, { pos, end: highlightedNode.parent.end }, highlightedNode.parent.name)
-                continue
+                const changes = tracker.getChanges()
+                if (!changes) return undefined
+                return {
+                    edits: [
+                        {
+                            fileName: sourceFile.fileName,
+                            textChanges: changes[0]!.textChanges,
+                        },
+                    ],
+                }
             }
 
-            if (ts.isIdentifier(highlightedNode) && (ts.isVariableDeclaration(highlightedNode.parent) || ts.isParameter(highlightedNode.parent))) {
-                nodeToReplaceWithBindingPattern = highlightedNode
-                continue
+            if (ts.isIdentifier(node)) {
+                return addDestructureToVariableWithSplittedPropertyAccessors(node, sourceFile, formatOptions, languageService)
             }
         }
-
-        if (!nodeToReplaceWithBindingPattern) return
-        const bindings = propertyNames.map(name => {
-            return ts.factory.createBindingElement(undefined, undefined, name)
-        })
-        const bindingPattern = ts.factory.createObjectBindingPattern(bindings)
-        const { pos, end } = nodeToReplaceWithBindingPattern
-
-        tracker.replaceRange(sourceFile, { pos: pos + nodeToReplaceWithBindingPattern.getLeadingTriviaWidth(), end }, bindingPattern)
-
-        const changes = tracker.getChanges()
-        if (!changes) return undefined
-        return {
-            edits: [
-                {
-                    fileName: sourceFile.fileName,
-                    textChanges: changes[0]!.textChanges,
-                },
-            ],
-        }
+        return addDestructureToVariableWithSplittedPropertyAccessors(node, sourceFile, formatOptions, languageService)
     },
 } satisfies CodeAction

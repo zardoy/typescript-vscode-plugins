@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash'
-import { findChildContainingExactPosition, getChangesTracker } from '../../utils'
+import { findChildContainingExactPosition, getChangesTracker, getNodeHighlightPositions } from '../../utils'
 import { CodeAction } from '../getCodeActions'
 
 export const getPropertyIdentifier = (bindingElement: ts.BindingElement): ts.Identifier | undefined => {
@@ -63,12 +63,11 @@ const convertFromDestructureWithVariableNameReplacement = (
     for (const binding of bindings) {
         const declaration = createFlattenedExpressionFromDestructuring(binding, ts.factory.createIdentifier(VARIABLE_NAME))
 
-        const highlights = languageService.getDocumentHighlights(sourceFile.fileName, binding.getStart(), [sourceFile.fileName])
-        if (!highlights) continue
+        const highlightPositions = getNodeHighlightPositions(binding, sourceFile, languageService)
 
-        const highlightsPositions = highlights.flatMap(({ highlightSpans }) => highlightSpans.map(({ textSpan }) => textSpan.start))
+        if (!highlightPositions) return
 
-        for (const pos of highlightsPositions) {
+        for (const pos of highlightPositions) {
             if (pos >= declarationName.getStart() && pos <= declarationName.getEnd()) {
                 continue
             }

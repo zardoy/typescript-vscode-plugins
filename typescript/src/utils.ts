@@ -312,3 +312,11 @@ export const matchParents: MatchParentsType = (node, treeToCompare) => {
     }
     return node as any
 }
+
+export const getNodeHighlightPositions = (node: ts.Node, sourceFile: ts.SourceFile, languageService: ts.LanguageService) => {
+    const highlights = languageService.getDocumentHighlights(sourceFile.fileName, node.getStart(), [sourceFile.fileName])
+
+    if (!highlights) return
+
+    return highlights.flatMap(({ highlightSpans }) => highlightSpans.map(({ textSpan }) => textSpan.start))
+}
