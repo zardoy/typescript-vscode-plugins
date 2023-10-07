@@ -1,3 +1,4 @@
+import { performance } from 'perf_hooks'
 import lodashGet from 'lodash.get'
 import { getCompletionsAtPosition, PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
 import { RequestInputTypes, TriggerCharacterCommand } from './ipcTypes'
@@ -112,6 +113,31 @@ export const decorateLanguageService = (
         proxy.getNavigationTree = fileName => {
             if (c('patchOutline') || config.patchOutline) return getNavTreeItems(languageService, languageServiceHost, fileName, config.outline)
             return languageService.getNavigationTree(fileName)
+        }
+    }
+
+    const readonlyModeDisableFeatures: Array<keyof ts.LanguageService> = [
+        'getOutliningSpans',
+        'getSyntacticDiagnostics',
+        'getSemanticDiagnostics',
+        'getSuggestionDiagnostics',
+        'provideInlayHints',
+        'getLinkedEditingRangeAtPosition',
+        'getApplicableRefactors',
+        'getCompletionsAtPosition',
+        'getDefinitionAndBoundSpan',
+        'getFormattingEditsAfterKeystroke',
+        'getDocumentHighlights',
+    ]
+    for (const feature of readonlyModeDisableFeatures) {
+        const orig = proxy[feature]
+        proxy[feature] = (...args) => {
+            const start = performance.now()
+            //@ts-expect-error
+            const result = orig(...args)
+            const time = performance.now() - start
+            if (time > 100) console.log(`[typescript-vscode-plugin perf warning] ${feature} took ${time}ms: ${args[0]} ${args[1]}`)
+            return result
         }
     }
 
