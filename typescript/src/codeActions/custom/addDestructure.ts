@@ -91,7 +91,9 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
 
     if (!nodeToReplaceWithBindingPattern) return
     const bindings = propertyNames.map(name => {
-        return ts.factory.createBindingElement(undefined, undefined, name)
+        const uniqueAccessorName = tsFull.getUniqueName(name, sourceFile as unknown as FullSourceFile)
+
+        return ts.factory.createBindingElement(undefined, name, uniqueAccessorName)
     })
     const bindingPattern = ts.factory.createObjectBindingPattern(bindings)
     const { pos, end } = nodeToReplaceWithBindingPattern
