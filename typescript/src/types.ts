@@ -11,4 +11,5 @@ export type LanguageServiceMethodWithConfig<T extends keyof ConditionalPick<ts.L
     ...args: Parameters<ts.LanguageService[T]>
 ) => ReturnType<ts.LanguageService[T]>
 
-export type PluginCreateArg = Pick<ts.server.PluginCreateInfo, 'languageService' | 'languageServiceHost' | 'config' | 'serverHost'>
+export type PluginCreateArg = Pick<ts.server.PluginCreateInfo, 'languageService' | 'languageServiceHost' | 'config'> &
+    Partial<Pick<ts.server.PluginCreateInfo, 'serverHost'>>
