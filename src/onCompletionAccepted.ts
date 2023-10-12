@@ -116,7 +116,10 @@ export default (tsApi: { onCompletionAccepted }) => {
                         resolve(true)
                     }
                 })
-                if (accepted) void vscode.window.showInformationMessage('Completion accepted, see console for details')
+                if (accepted) {
+                    void vscode.window.showInformationMessage('Completion accepted, see console for details')
+                    console.show(true)
+                }
             },
         )
     })

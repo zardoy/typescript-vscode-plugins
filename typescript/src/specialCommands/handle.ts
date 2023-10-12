@@ -277,6 +277,34 @@ export default (
             }),
         )
     }
+    if (specialCommand === 'performanceInfo') {
+        const toMb = (bytes: number) => Math.floor(bytes / 1024 / 1024)
+
+        const sourceFilesContents = Object.fromEntries(
+            languageService
+                .getProgram()!
+                .getSourceFiles()
+                .map(x => [x.fileName, x.getFullText().length]),
+        )
+        return {
+            sourceFiles: {
+                totalFilesNumber: Object.keys(sourceFilesContents).length,
+                total: toMb(Object.entries(sourceFilesContents).reduce((a, [, length]) => a + length, 0)),
+                json: toMb(
+                    Object.entries(sourceFilesContents)
+                        .filter(([fileName]) => fileName.endsWith('.json'))
+                        .map(x => x[1])
+                        .reduce((a, b) => a + b, 0),
+                ),
+                top10: Object.entries(sourceFilesContents)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 10)
+                    .map(([fileName, size]) => ({ fileName, size: toMb(size), raw: size })),
+            },
+            // approx
+            memoryUsedMb: toMb(process.memoryUsage().heapUsed),
+        }
+    }
 
     return null
 }

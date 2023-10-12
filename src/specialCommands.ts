@@ -302,6 +302,13 @@ export default () => {
         )
     })
 
+    registerExtensionCommand('printPerformanceMemoryInfo', async () => {
+        const info = await sendCommand('performanceInfo', {})
+        if (!info) return
+        console.dir(info, { depth: 10 })
+        console.show(true)
+    })
+
     // registerExtensionCommand('insertImportFlatten', () => {
     //     // got -> default, got
     //     type A = ts.Type

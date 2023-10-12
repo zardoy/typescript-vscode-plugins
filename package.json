@@ -66,6 +66,10 @@
             {
                 "command": "getArgumentReferencesFromCurrentParameter",
                 "title": "Get Argument References from Current Parameter"
+            },
+            {
+                "command": "printPerformanceMemoryInfo",
+                "title": "Print Performance & Memory Info"
             }
         ],
         "keybindings": [
