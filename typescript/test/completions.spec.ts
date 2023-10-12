@@ -738,18 +738,18 @@ test('Object Literal Completions', () => {
       [
         "a",
         "b",
-        "b: \\"$1\\",$0",
+        "b: \\"$1\\",",
       ]
     `)
     // I guess vitest hangs forever here
     expect(pos3.map(x => x.insertText)).toMatchInlineSnapshot(`
       [
         "bar",
-        "bar: \${1|true,false|},$0",
+        "bar: \${1|true,false|},",
         "bar2",
         "bar2: false,",
         "foo",
-        "foo: \${1|true,false|},$0",
+        "foo: \${1|true,false|},",
       ]
     `)
     expect(pos4.filter(x => x.insertText?.includes(': '))).toEqual([])
