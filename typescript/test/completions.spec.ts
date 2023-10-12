@@ -664,7 +664,7 @@ test('Object Literal Completions', () => {
           "name": "plugins",
         },
         {
-          "insertText": "plugins: [\\\\n	$1\\\\n],$0",
+          "insertText": "plugins: [\\\\n	$1\\\\n],",
           "isSnippet": true,
           "kind": "property",
           "kindModifiers": "",
@@ -688,7 +688,7 @@ test('Object Literal Completions', () => {
           "name": "additionalOptions",
         },
         {
-          "insertText": "additionalOptions: {\\\\n	$1\\\\n},$0",
+          "insertText": "additionalOptions: {\\\\n	$1\\\\n},",
           "isSnippet": true,
           "kind": "property",
           "kindModifiers": "optional",
@@ -723,7 +723,7 @@ test('Object Literal Completions', () => {
           "name": "mood",
         },
         {
-          "insertText": "mood: \\"$1\\",$0",
+          "insertText": "mood: \\"$1\\",",
           "isSnippet": true,
           "kind": "property",
           "kindModifiers": "optional",
@@ -770,7 +770,7 @@ test('Object Literal Completions with keepOriginal: remove & builtin method snip
     `)
     completion(1, {
         exact: {
-            insertTexts: ['a: {\n\t$1\n},$0', 'onA() {\n$0\n},'],
+            insertTexts: ['a: {\n\t$1\n},', 'onA() {\n$0\n},'],
             all: {
                 isSnippet: true,
             },
