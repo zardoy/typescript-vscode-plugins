@@ -31,14 +31,11 @@ const verifyMatch = (match: ts.Expression) => {
     return true
 }
 
-const isPositionMatchesInitializer = (pos: number, initializer: ts.Expression) => {
-    return pos >= initializer.getStart() && pos <= initializer.getEnd()
-}
 
 const createDestructuredDeclaration = (declaration: ts.VariableDeclaration, pos: number) => {
     const { initializer, type, name: declarationName } = declaration
 
-    if (!initializer || !isPositionMatchesInitializer(pos, initializer) || !verifyMatch(initializer) || !ts.isPropertyAccessExpression(initializer)) return
+    if (!initializer || !verifyMatch(initializer) || !ts.isPropertyAccessExpression(initializer)) return
 
     const propertyName = initializer.name.text
     const { factory } = ts
