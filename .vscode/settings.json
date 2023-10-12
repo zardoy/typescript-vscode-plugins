@@ -14,5 +14,11 @@
     ],
     "cSpell.words": [
         "unpatch"
+    ],
+    "vitest.enable": true,
+    "vitest.commandLine": "pnpm test-plugin",
+    "vitest.showFailMessages": true,
+    "vitest.include": [
+        "typescript/test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"
     ]
 }
