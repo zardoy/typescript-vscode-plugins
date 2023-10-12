@@ -133,7 +133,7 @@ export default {
                 tracker.replaceRange(
                     sourceFile,
                     {
-                        pos: initialDeclaration.pos,
+                        pos: initialDeclaration.pos + initialDeclaration.getLeadingTriviaWidth(),
                         end: initialDeclaration.end,
                     },
                     createdDeclaration,
