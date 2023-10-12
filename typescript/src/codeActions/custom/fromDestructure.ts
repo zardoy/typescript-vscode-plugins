@@ -1,6 +1,7 @@
 import { isNumber } from 'lodash'
 import { findChildContainingExactPosition, getChangesTracker, getNodeHighlightPositions } from '../../utils'
 import { CodeAction } from '../getCodeActions'
+import { verifyMatch } from './verifyMatch'
 
 export const getPropertyIdentifier = (bindingElement: ts.BindingElement): ts.Identifier | undefined => {
     const name = bindingElement.propertyName ?? bindingElement.name
@@ -117,7 +118,7 @@ export default {
         if (!ts.isVariableDeclarationList(declaration.parent)) return
 
         const { initializer } = declaration
-        if (!initializer) return
+        if (!initializer || !verifyMatch(initializer)) return
 
         const bindings = collectBindings(declaration.name)
         if (bindings.length > 1) {

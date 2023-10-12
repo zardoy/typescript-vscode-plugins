@@ -22,7 +22,7 @@ interface CodeActionMatcher {
     /**
      * null - refactor is not expected
      */
-    newContent: string | null
+    newContent?: string | null
 }
 
 const { languageService, languageServiceHost, updateProject, getCurrentFile } = sharedLanguageService
@@ -143,7 +143,7 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint, { d
                 }
             }
         },
-        codeAction: (marker: number | number[], matcher: CodeActionMatcher, meta?) => {
+        codeAction: (marker: number | number[], matcher: CodeActionMatcher, meta?, { compareContent = false } = {}) => {
             for (const mark of Array.isArray(marker) ? marker : [marker]) {
                 if (!ranges[mark]) throw new Error(`No range with index ${mark} found, highest index is ${ranges.length - 1}`)
                 const start = ranges[mark]![0]!
@@ -151,7 +151,7 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint, { d
                 const appliableRefactors = fakeProxy.getApplicableRefactors(fileName, { pos: start, end }, {}, 'invoked')
                 const appliableNames = appliableRefactors.flatMap(appliableRefactor => appliableRefactor.actions.map(action => action.description))
                 const { refactorName, newContent } = matcher
-                if (newContent) {
+                if (newContent || compareContent) {
                     expect(appliableNames, `at marker ${mark}`).toContain(refactorName)
                     const actionsGroup = appliableRefactors.find(appliableRefactor =>
                         appliableRefactor.actions.find(action => action.description === refactorName),
@@ -166,11 +166,14 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint, { d
                         {},
                     )!
                     const newContentsActual = tsFull.textChanges.applyChanges(getCurrentFile(), edits[0]!.textChanges)
-                    expect(dedentString(newContent), `at marker ${mark}`).toEqual(newContentsActual)
-                } else {
-                    expect(appliableNames, `at marker ${mark}`).not.toContain(refactorName)
+                    if (newContent) {
+                        expect(dedentString(newContent), `at marker ${mark}`).toEqual(newContentsActual)
+                    }
+                    return newContentsActual
                 }
+                if (newContent === null) expect(appliableNames, `at marker ${mark}`).not.toContain(refactorName)
             }
+            return
         },
     }
 }

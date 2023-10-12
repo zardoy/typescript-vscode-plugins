@@ -1,41 +1,9 @@
 import { findChildContainingExactPosition, getChangesTracker, getNodeHighlightPositions } from '../../utils'
 import { CodeAction } from '../getCodeActions'
+import { verifyMatch } from './verifyMatch'
 
-const isFinalChainElement = (node: ts.Node) =>
-    ts.isThisTypeNode(node) || ts.isIdentifier(node) || ts.isParenthesizedExpression(node) || ts.isObjectLiteralExpression(node) || ts.isNewExpression(node)
-
-const isValidChainElement = (node: ts.Node) =>
-    (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node) || ts.isCallExpression(node) || ts.isNonNullExpression(node)) &&
-    !ts.isOptionalChain(node)
-
-const verifyMatch = (match: ts.Expression) => {
-    let currentChainElement = match
-
-    while (!isFinalChainElement(currentChainElement)) {
-        if (!isValidChainElement(currentChainElement)) {
-            return false
-        }
-        type PossibleChainElement =
-            | ts.PropertyAccessExpression
-            | ts.CallExpression
-            | ts.ElementAccessExpression
-            | ts.NonNullExpression
-            | ts.ParenthesizedExpression
-            | ts.AwaitExpression
-
-        const chainElement = currentChainElement as PossibleChainElement
-
-        currentChainElement = chainElement.expression
-    }
-
-    return true
-}
-
-
-const createDestructuredDeclaration = (declaration: ts.VariableDeclaration, pos: number) => {
-    const { initializer, type, name: declarationName } = declaration
-
-    if (!initializer || !verifyMatch(initializer) || !ts.isPropertyAccessExpression(initializer)) return
+const createDestructuredDeclaration = (initializer: ts.Expression, type: ts.TypeNode | undefined, declarationName: ts.BindingName) => {
+    if (!ts.isPropertyAccessExpression(initializer)) return
 
     const propertyName = initializer.name.text
     const { factory } = ts
@@ -124,8 +92,16 @@ export default {
         const initialDeclaration = ts.findAncestor(node, n => ts.isVariableDeclaration(n)) as ts.VariableDeclaration | undefined
 
         if (initialDeclaration && !ts.isObjectBindingPattern(initialDeclaration.name)) {
+            const { initializer, type, name } = initialDeclaration
+
+            const result = addDestructureToVariableWithSplittedPropertyAccessors(node, sourceFile, formatOptions, languageService)
+
+            if (result) return result
+
+            if (!initializer || !verifyMatch(initializer)) return
+
             const tracker = getChangesTracker(formatOptions ?? {})
-            const createdDeclaration = createDestructuredDeclaration(initialDeclaration, position)
+            const createdDeclaration = createDestructuredDeclaration(initializer, type, name)
             if (createdDeclaration) {
                 tracker.replaceRange(
                     sourceFile,
@@ -146,10 +122,6 @@ export default {
                         },
                     ],
                 }
-            }
-
-            if (ts.isIdentifier(node)) {
-                return addDestructureToVariableWithSplittedPropertyAccessors(node, sourceFile, formatOptions, languageService)
             }
         }
         return addDestructureToVariableWithSplittedPropertyAccessors(node, sourceFile, formatOptions, languageService)
