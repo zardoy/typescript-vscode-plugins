@@ -321,7 +321,6 @@ export const getNodeHighlightPositions = (node: ts.Node, sourceFile: ts.SourceFi
     return highlights.flatMap(({ highlightSpans }) => highlightSpans.map(({ textSpan }) => textSpan.start))
 }
 
-
 export const isValidInitializerForDestructure = (match: ts.Expression) => {
     const isFinalChainElement = (node: ts.Node) =>
         ts.isThisTypeNode(node) || ts.isIdentifier(node) || ts.isParenthesizedExpression(node) || ts.isObjectLiteralExpression(node) || ts.isNewExpression(node)
