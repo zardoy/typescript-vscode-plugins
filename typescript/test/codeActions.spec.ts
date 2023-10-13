@@ -90,6 +90,58 @@ describe('Add destructure', () => {
             newContent: null,
         })
     })
+    test('Should convert `new` Expression', () => {
+        const { codeAction } = fourslashLikeTester(
+            /* ts */ `
+            const /*t*/something/*t*/ = new Foo().something;
+        `,
+            undefined,
+            { dedent: true },
+        )
+
+        codeAction(0, {
+            refactorName: 'Add Destruct',
+            newContent: /* ts */ `
+            const { something } = new Foo();
+        `,
+        })
+    })
+    test('Should convert `await` Expression', () => {
+        const { codeAction } = fourslashLikeTester(
+            /* ts */ `
+            const /*t*/something/*t*/ = (await aPromise()).something;
+        `,
+            undefined,
+            { dedent: true },
+        )
+
+        codeAction(0, {
+            refactorName: 'Add Destruct',
+            newContent: /* ts */ `
+            const { something } = (await aPromise());
+        `,
+        })
+    })
+    test('Should destruct function params', () => {
+        const { codeAction } = fourslashLikeTester(
+            /* ts */ `
+            function fn(/*t*/newVariable/*t*/) {
+                const something = newVariable.bar + newVariable.foo
+            }
+        `,
+            undefined,
+            { dedent: true },
+        )
+
+        codeAction(0, {
+            refactorName: 'Add Destruct',
+            newContent: /* ts */ `
+            function fn({ bar, foo }) {
+                const something = bar + foo
+            }
+        `,
+        })
+    })
 })
 
 describe('From destructure', () => {
@@ -163,10 +215,10 @@ describe('From destructure', () => {
             newContent: null,
         })
     })
-    test('Nested', () => {
+    test('Should convert nested', () => {
         const { codeAction } = fourslashLikeTester(
             /* ts */ `
-            const { something: { test: { abc } } } = obj;
+            const { something: { test: { /*t*/abc/*t*/ } } } = obj;
         `,
             undefined,
             { dedent: true },
@@ -176,6 +228,26 @@ describe('From destructure', () => {
             refactorName: 'From Destruct',
             newContent: /* ts */ `
             const abc = obj.something.test.abc;
+        `,
+        })
+    })
+    test('Should convert destructured function params', () => {
+        const { codeAction } = fourslashLikeTester(
+            /* ts */ `
+            function foo({ /*t*/bar, foo/*t*/ }) {
+                const something = bar + foo
+            }
+        `,
+            undefined,
+            { dedent: true },
+        )
+
+        codeAction(0, {
+            refactorName: 'From Destruct',
+            newContent: /* ts */ `
+            function foo(newVariable) {
+                const something = newVariable.bar + newVariable.foo
+            }
         `,
         })
     })

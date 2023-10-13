@@ -1,6 +1,5 @@
-import { findChildContainingExactPosition, getChangesTracker, getNodeHighlightPositions } from '../../utils'
+import { findChildContainingExactPosition, getChangesTracker, getNodeHighlightPositions, isValidInitializerForDestructure } from '../../utils'
 import { CodeAction } from '../getCodeActions'
-import { verifyMatch } from './verifyMatch'
 
 const createDestructuredDeclaration = (initializer: ts.Expression, type: ts.TypeNode | undefined, declarationName: ts.BindingName) => {
     if (!ts.isPropertyAccessExpression(initializer)) return
@@ -54,11 +53,9 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
         }
     }
 
-    if (!nodeToReplaceWithBindingPattern) return
+    if (!nodeToReplaceWithBindingPattern || propertyNames.length === 0) return
     const bindings = propertyNames.map(name => {
-        const uniqueAccessorName = tsFull.getUniqueName(name, sourceFile as unknown as FullSourceFile)
-
-        return ts.factory.createBindingElement(undefined, name, uniqueAccessorName)
+        return ts.factory.createBindingElement(undefined, undefined, name)
     })
     const bindingPattern = ts.factory.createObjectBindingPattern(bindings)
     const { pos, end } = nodeToReplaceWithBindingPattern
@@ -98,7 +95,7 @@ export default {
 
             if (result) return result
 
-            if (!initializer || !verifyMatch(initializer)) return
+            if (!initializer || !isValidInitializerForDestructure(initializer)) return
 
             const tracker = getChangesTracker(formatOptions ?? {})
             const createdDeclaration = createDestructuredDeclaration(initializer, type, name)
