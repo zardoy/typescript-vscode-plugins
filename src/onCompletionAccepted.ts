@@ -62,8 +62,8 @@ export default (tsApi: { onCompletionAccepted }) => {
             const nextChar = editor.document.getText(new vscode.Range(startPos, startPos.translate(0, 1)))
             if (!params || ['(', '.', '`'].includes(nextChar)) return
 
-            if (getExtensionSetting('methodSnippetsInsertText') === 'disable') {
-                // handle insertion only if it wasn't handled by methodSnippetsInsertText already
+            if (getExtensionSetting('methodSnippets.previewSignature') === 'disable') {
+                // handle insertion only if it wasn't handled by 'methodSnippets.previewSignature' already
                 if (isAmbiguous && lastAcceptedAmbiguousMethodSnippetSuggestion !== suggestionName) {
                     lastAcceptedAmbiguousMethodSnippetSuggestion = suggestionName
                     return

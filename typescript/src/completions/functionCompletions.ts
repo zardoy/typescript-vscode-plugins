@@ -6,7 +6,7 @@ import { sharedCompletionContext } from './sharedContext'
 export default (entries: ts.CompletionEntry[]) => {
     const { languageService, c, sourceFile, position, prior } = sharedCompletionContext
 
-    const methodSnippetInsertTextMode = c('methodSnippetsInsertText')
+    const methodSnippetInsertTextMode = c('methodSnippets.previewSignature')
     const fullText = sourceFile.getFullText()
     const nextChar = fullText.slice(position, position + 1)
     const prevChar = fullText.slice(position - 1, position)
