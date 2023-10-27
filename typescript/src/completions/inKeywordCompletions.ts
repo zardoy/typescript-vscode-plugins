@@ -49,8 +49,8 @@ export default () => {
         const docPerCompletion: Record<string, string> = {}
         const maxUsingDisplayIndex = Math.max(...[...suggestionsData.entries()].map(([, { usingDisplayIndexes }]) => usingDisplayIndexes.length))
         const completions: ts.CompletionEntry[] = [...suggestionsData.entries()]
-            .map(([originaName, { insertText, usingDisplayIndexes, documentations }], i) => {
-                const name = types.length > 1 && usingDisplayIndexes.length === 1 ? `☆${originaName}` : originaName
+            .map(([originalName, { insertText, usingDisplayIndexes, documentations }], i) => {
+                const name = types.length > 1 && usingDisplayIndexes.length === 1 ? `☆${originalName}` : originalName
                 docPerCompletion[name] = documentations.join('\n\n')
                 return buildStringCompletion(node, {
                     // ⚀ ⚁ ⚂ ⚃ ⚄ ⚅
