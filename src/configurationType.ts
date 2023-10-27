@@ -385,7 +385,7 @@ export type Configuration = {
      * Recommended to try!
      * @default disable
      */
-    previewMethodSignatureInCompletions: 'disable' | 'only-local' | 'all'
+    'methodSnippets.previewSignature': 'disable' | 'only-local' | 'all'
     /**
      * ```ts
      * const example = ({ a }, b?, c = 5, ...d) => { }
@@ -572,7 +572,7 @@ export type Configuration = {
     'experiments.excludeNonJsxCompletions': boolean
     /**
      * Wether to change function completions to function kind
-     * @deprecated Use `previewMethodSignatureInCompletions` instead
+     * @deprecated Use `methodSnippets.previewSignature` instead
      * @default false
      */
     'experiments.changeKindToFunction': boolean
