@@ -385,7 +385,7 @@ export type Configuration = {
      * Recommended to try!
      * @default disable
      */
-    methodSnippetsInsertText: 'disable' | 'only-local' | 'all'
+    previewMethodSignatureInCompletions: 'disable' | 'only-local' | 'all'
     /**
      * ```ts
      * const example = ({ a }, b?, c = 5, ...d) => { }
@@ -572,7 +572,7 @@ export type Configuration = {
     'experiments.excludeNonJsxCompletions': boolean
     /**
      * Wether to change function completions to function kind
-     * @deprecated Use `methodSnippetsInsertText` instead
+     * @deprecated Use `previewMethodSignatureInCompletions` instead
      * @default false
      */
     'experiments.changeKindToFunction': boolean

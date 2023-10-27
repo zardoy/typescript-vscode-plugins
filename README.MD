@@ -321,7 +321,7 @@ function Foo() {
 }
 ```
 
-`tsEssentialPlugins.methodSnippetsInsertText`:
+`tsEssentialPlugins.previewMethodSignatureInCompletions`:
 
 Optionally resolve insertText of all completion at suggest trigger:
 

@@ -293,9 +293,9 @@ describe('Method snippets', () => {
         compareMethodSnippetAgainstMarker(markers, 2, 'ambiguous')
     })
 
-    test('methodSnippetsInsertText all', () => {
+    test('previewMethodSignatureInCompletions all', () => {
         overrideSettings({
-            methodSnippetsInsertText: 'all',
+            previewMethodSignatureInCompletions: 'all',
         })
         fileContentsSpecialPositions(/* ts */ `
             const a = (a, b) => {}
