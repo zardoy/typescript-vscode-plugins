@@ -350,3 +350,8 @@ export const isValidInitializerForDestructure = (match: ts.Expression) => {
 
     return true
 }
+export const isNameUniqueAtLocation = (name: string, location: ts.Node | undefined, typeChecker: ts.TypeChecker) => {
+    const checker = getFullTypeChecker(typeChecker)
+
+    return !!checker.resolveName(name, location as unknown as import('typescript-full').Node, ts.SymbolFlags.Value, true)
+}

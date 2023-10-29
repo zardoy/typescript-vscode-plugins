@@ -142,6 +142,30 @@ describe('Add destructure', () => {
         `,
         })
     })
+    test('Should work with name collisions', () => {
+        const { codeAction } = fourslashLikeTester(
+            /* ts */ `
+            function fn(/*t*/newVariable/*t*/) {
+                const bar = 4
+                const foo = 5
+                const something = newVariable.bar + newVariable.foo
+            }
+        `,
+            undefined,
+            { dedent: true },
+        )
+
+        codeAction(0, {
+            refactorName: 'Add Destruct',
+            newContent: /* ts */ `
+            function fn({ bar: bar_1, foo: foo_1 }) {
+                const bar = 4
+                const foo = 5
+                const something = bar_1 + foo_1
+            }
+        `,
+        })
+    })
 })
 
 describe('From destructure', () => {
