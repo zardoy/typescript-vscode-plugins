@@ -353,5 +353,14 @@ export const isValidInitializerForDestructure = (match: ts.Expression) => {
 export const isNameUniqueAtLocation = (name: string, location: ts.Node | undefined, typeChecker: ts.TypeChecker) => {
     const checker = getFullTypeChecker(typeChecker)
 
-    return !!checker.resolveName(name, location as unknown as import('typescript-full').Node, ts.SymbolFlags.Value, true)
+    const newVariable = checker.resolveName(name, location as unknown as import('typescript-full').Node, ts.SymbolFlags.Value, true)
+    return !newVariable
+}
+export const isNameUniqueAtNodeClosestScope = (name: string, node: ts.Node, typeChecker: ts.TypeChecker) => {
+    const closestScope = findClosestParent(
+        node,
+        [ts.SyntaxKind.Block, ts.SyntaxKind.FunctionDeclaration, ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction],
+        [],
+    )
+    return isNameUniqueAtLocation(name, closestScope, typeChecker)
 }

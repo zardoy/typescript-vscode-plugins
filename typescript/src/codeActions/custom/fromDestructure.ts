@@ -1,5 +1,11 @@
 import { isNumber } from 'lodash'
-import { findChildContainingExactPosition, getChangesTracker, getPositionHighlights, isValidInitializerForDestructure } from '../../utils'
+import {
+    findChildContainingExactPosition,
+    getChangesTracker,
+    getPositionHighlights,
+    isValidInitializerForDestructure,
+    isNameUniqueAtNodeClosestScope,
+} from '../../utils'
 import { CodeAction } from '../getCodeActions'
 
 export const getPropertyIdentifier = (bindingElement: ts.BindingElement): ts.Identifier | undefined => {
@@ -58,10 +64,14 @@ const convertFromDestructureWithVariableNameReplacement = (
     const bindings = collectBindings(declarationName)
     const tracker = getChangesTracker({})
 
-    const VARIABLE_NAME = tsFull.getUniqueName('newVariable', sourceFile as unknown as FullSourceFile)
+    const BASE_VARIABLE_NAME = 'newVariable'
+
+    const variableName = isNameUniqueAtNodeClosestScope(BASE_VARIABLE_NAME, declarationName, languageService.getProgram()!.getTypeChecker())
+        ? BASE_VARIABLE_NAME
+        : tsFull.getUniqueName(BASE_VARIABLE_NAME, sourceFile as unknown as FullSourceFile)
 
     for (const binding of bindings) {
-        const declaration = createFlattenedExpressionFromDestructuring(binding, ts.factory.createIdentifier(VARIABLE_NAME))
+        const declaration = createFlattenedExpressionFromDestructuring(binding, ts.factory.createIdentifier(variableName))
 
         /** Important to use `getEnd()` here to get correct highlights for destructured and renamed binding, e.g. `{ bar: bar_1 }` */
         const bindingNameEndPos = binding.getEnd()
@@ -87,7 +97,7 @@ const convertFromDestructureWithVariableNameReplacement = (
     tracker.replaceRange(
         sourceFile,
         { pos: declarationName.pos + declarationNameLeadingTrivia, end: declarationName.end },
-        ts.factory.createIdentifier(VARIABLE_NAME),
+        ts.factory.createIdentifier(variableName),
     )
     const changes = tracker.getChanges()
     return {

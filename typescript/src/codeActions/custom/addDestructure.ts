@@ -1,10 +1,9 @@
 import {
     findChildContainingExactPosition,
-    findClosestParent,
     getChangesTracker,
-    isNameUniqueAtLocation,
     getPositionHighlights,
     isValidInitializerForDestructure,
+    isNameUniqueAtNodeClosestScope,
 } from '../../utils'
 import { CodeAction } from '../getCodeActions'
 
@@ -42,11 +41,6 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
 
     const propertyNames: Array<{ initial: string; unique: string | undefined }> = []
     let nodeToReplaceWithBindingPattern: ts.Identifier | undefined
-    const closestScope = findClosestParent(
-        node,
-        [ts.SyntaxKind.Block, ts.SyntaxKind.FunctionDeclaration, ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction],
-        [],
-    )
 
     for (const pos of highlightPositions) {
         const highlightedNode = findChildContainingExactPosition(sourceFile, pos)
@@ -55,9 +49,10 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
 
         if (ts.isIdentifier(highlightedNode) && ts.isPropertyAccessExpression(highlightedNode.parent)) {
             const propertyAccessorName = highlightedNode.parent.name.getText()
-            const hasNameInScope = isNameUniqueAtLocation(propertyAccessorName, closestScope, languageService.getProgram()!.getTypeChecker())
 
-            const uniquePropertyName = hasNameInScope ? tsFull.getUniqueName(propertyAccessorName, sourceFile as any) : undefined
+            const uniquePropertyName = isNameUniqueAtNodeClosestScope(propertyAccessorName, node, languageService.getProgram()!.getTypeChecker())
+                ? undefined
+                : tsFull.getUniqueName(propertyAccessorName, sourceFile as any)
 
             propertyNames.push({ initial: propertyAccessorName, unique: uniquePropertyName })
 
