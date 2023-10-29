@@ -275,4 +275,24 @@ describe('From destructure', () => {
         `,
         })
     })
+    test('Should work with renamed params', () => {
+        const { codeAction } = fourslashLikeTester(
+            /* ts */ `
+            function fn({ bar: /*t*/bar_1/*t*/, foo: foo_1 }) {
+                const something = bar_1 + foo_1
+            }
+        `,
+            undefined,
+            { dedent: true },
+        )
+
+        codeAction(0, {
+            refactorName: 'From Destruct',
+            newContent: /* ts */ `
+            function fn(newVariable) {
+                const something = newVariable.bar + newVariable.foo
+            }
+        `,
+        })
+    })
 })

@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash'
-import { findChildContainingExactPosition, getChangesTracker, getNodeHighlightPositions, isValidInitializerForDestructure } from '../../utils'
+import { findChildContainingExactPosition, getChangesTracker, getPositionHighlights, isValidInitializerForDestructure } from '../../utils'
 import { CodeAction } from '../getCodeActions'
 
 export const getPropertyIdentifier = (bindingElement: ts.BindingElement): ts.Identifier | undefined => {
@@ -63,7 +63,9 @@ const convertFromDestructureWithVariableNameReplacement = (
     for (const binding of bindings) {
         const declaration = createFlattenedExpressionFromDestructuring(binding, ts.factory.createIdentifier(VARIABLE_NAME))
 
-        const highlightPositions = getNodeHighlightPositions(binding, sourceFile, languageService)
+        /** Important to use `getEnd()` here to get correct highlights for destructured and renamed binding, e.g. `{ bar: bar_1 }` */
+        const bindingNameEndPos = binding.getEnd()
+        const highlightPositions = getPositionHighlights(bindingNameEndPos, sourceFile, languageService)
 
         if (!highlightPositions) return
 

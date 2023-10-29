@@ -313,8 +313,8 @@ export const matchParents: MatchParentsType = (node, treeToCompare) => {
     return node as any
 }
 
-export const getNodeHighlightPositions = (node: ts.Node, sourceFile: ts.SourceFile, languageService: ts.LanguageService) => {
-    const highlights = languageService.getDocumentHighlights(sourceFile.fileName, node.getStart(), [sourceFile.fileName])
+export const getPositionHighlights = (position: number, sourceFile: ts.SourceFile, languageService: ts.LanguageService) => {
+    const highlights = languageService.getDocumentHighlights(sourceFile.fileName, position, [sourceFile.fileName])
 
     if (!highlights) return
 

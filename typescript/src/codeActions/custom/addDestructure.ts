@@ -3,7 +3,7 @@ import {
     findClosestParent,
     getChangesTracker,
     isNameUniqueAtLocation,
-    getNodeHighlightPositions,
+    getPositionHighlights,
     isValidInitializerForDestructure,
 } from '../../utils'
 import { CodeAction } from '../getCodeActions'
@@ -35,7 +35,7 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
 ) => {
     if (!ts.isIdentifier(node) && !(ts.isPropertyAccessExpression(node.parent) || ts.isParameter(node.parent))) return
 
-    const highlightPositions = getNodeHighlightPositions(node, sourceFile, languageService)
+    const highlightPositions = getPositionHighlights(node.getStart(), sourceFile, languageService)
 
     if (!highlightPositions) return
     const tracker = getChangesTracker(formatOptions ?? {})
