@@ -860,3 +860,23 @@ test('In Keyword Completions', () => {
       }
     `)
 })
+describe('Typecast completions', () => {
+    test('As completions', () => {
+        const [pos] = newFileContents(/*ts*/ `
+            const b = 5
+            const a = b as /*|*/
+        `)
+        const completions = getCompletionsAtPosition(pos!)?.entriesSorted
+
+        expect(completions?.[0]?.name).toEqual('number')
+    })
+    test('jsDoc typecast', () => {
+        const [pos] = newFileContents(/*ts*/ `
+            const b = 5
+            const a = /** @type {/*|*/} */(b)
+        `)
+        const completions = getCompletionsAtPosition(pos!)?.entriesSorted
+
+        expect(completions?.[0]?.name).toEqual('number')
+    })
+})
