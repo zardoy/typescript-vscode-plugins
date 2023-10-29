@@ -312,3 +312,64 @@ export const matchParents: MatchParentsType = (node, treeToCompare) => {
     }
     return node as any
 }
+
+export const getPositionHighlights = (position: number, sourceFile: ts.SourceFile, languageService: ts.LanguageService) => {
+    const highlights = languageService.getDocumentHighlights(sourceFile.fileName, position, [sourceFile.fileName])
+
+    if (!highlights) return
+
+    return highlights.flatMap(({ highlightSpans }) => highlightSpans.map(({ textSpan }) => textSpan.start))
+}
+
+export const isValidInitializerForDestructure = (match: ts.Expression) => {
+    const isFinalChainElement = (node: ts.Node) =>
+        ts.isThisTypeNode(node) || ts.isIdentifier(node) || ts.isParenthesizedExpression(node) || ts.isObjectLiteralExpression(node) || ts.isNewExpression(node)
+
+    const isValidChainElement = (node: ts.Node) =>
+        (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node) || ts.isCallExpression(node) || ts.isNonNullExpression(node)) &&
+        !ts.isOptionalChain(node)
+
+    let currentChainElement = match
+
+    while (!isFinalChainElement(currentChainElement)) {
+        if (!isValidChainElement(currentChainElement)) {
+            return false
+        }
+        type PossibleChainElement =
+            | ts.PropertyAccessExpression
+            | ts.CallExpression
+            | ts.ElementAccessExpression
+            | ts.NonNullExpression
+            | ts.ParenthesizedExpression
+            | ts.AwaitExpression
+
+        const chainElement = currentChainElement as PossibleChainElement
+
+        currentChainElement = chainElement.expression
+    }
+
+    return true
+}
+export const isNameUniqueAtLocation = (name: string, location: ts.Node | undefined, typeChecker: ts.TypeChecker) => {
+    const checker = getFullTypeChecker(typeChecker)
+    let result: boolean | undefined
+
+    const checkCollision = (childNode: ts.Node) => {
+        if (result) return
+        result = !!checker.resolveName(name, childNode as unknown as import('typescript-full').Node, ts.SymbolFlags.Value, true)
+
+        if (ts.isBlock(childNode)) {
+            childNode.forEachChild(checkCollision)
+        }
+    }
+    location?.forEachChild(checkCollision)
+    return !result
+}
+export const isNameUniqueAtNodeClosestScope = (name: string, node: ts.Node, typeChecker: ts.TypeChecker) => {
+    const closestScope = findClosestParent(
+        node,
+        [ts.SyntaxKind.Block, ts.SyntaxKind.FunctionDeclaration, ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction],
+        [],
+    )
+    return isNameUniqueAtLocation(name, closestScope, typeChecker)
+}
