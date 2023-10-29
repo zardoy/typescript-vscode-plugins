@@ -352,9 +352,18 @@ export const isValidInitializerForDestructure = (match: ts.Expression) => {
 }
 export const isNameUniqueAtLocation = (name: string, location: ts.Node | undefined, typeChecker: ts.TypeChecker) => {
     const checker = getFullTypeChecker(typeChecker)
+    let result: boolean | undefined
 
-    const newVariable = checker.resolveName(name, location as unknown as import('typescript-full').Node, ts.SymbolFlags.Value, true)
-    return !newVariable
+    const checkCollision = (childNode: ts.Node) => {
+        if (result) return
+        result = !!checker.resolveName(name, childNode as unknown as import('typescript-full').Node, ts.SymbolFlags.Value, true)
+
+        if (ts.isBlock(childNode)) {
+            childNode.forEachChild(checkCollision)
+        }
+    }
+    location?.forEachChild(checkCollision)
+    return !result
 }
 export const isNameUniqueAtNodeClosestScope = (name: string, node: ts.Node, typeChecker: ts.TypeChecker) => {
     const closestScope = findClosestParent(
