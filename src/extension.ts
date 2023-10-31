@@ -96,6 +96,10 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
 
     figIntegration()
     vueVolarSupport()
+
+    if (process.env.PLATFORM === 'node' && process.env.NODE_ENV === 'development') {
+        require('./autoPluginReload').default()
+    }
 }
 
 export const activate = async () => {
