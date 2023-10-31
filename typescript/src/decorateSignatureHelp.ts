@@ -39,9 +39,9 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             }
         }
 
-        if (!c('signatureHelp.excludeBlockScope') || options?.triggerReason?.kind !== 'invoked') {
-            return languageService.getSignatureHelpItems(fileName, position, options)
-        }
+        // if (!c('signatureHelp.excludeBlockScope') || options?.triggerReason?.kind !== 'invoked') {
+        //     return languageService.getSignatureHelpItems(fileName, position, options)
+        // }
 
         node ??= findChildContainingExactPosition(sourceFile, position)
         const returnStatement =
@@ -49,7 +49,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 return ts.isBlock(node) ? 'quit' : ts.isReturnStatement(node)
             }) ?? (tsFull.findPrecedingToken?.(position, sourceFile as any)?.kind as any) === ts.SyntaxKind.ReturnKeyword
 
-        return languageService.getSignatureHelpItems(
+        const result = languageService.getSignatureHelpItems(
             fileName,
             position,
             returnStatement
@@ -60,5 +60,21 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                       },
                   },
         )
+        if (!result) return
+        for (const item of result.items) {
+            item.parameters = item.parameters.map((parameter, i) => {
+                return {
+                    ...parameter,
+                    displayParts: parameter.displayParts.map(displayPart => {
+                        if (i === 0 || displayPart.kind !== 'parameterName') return displayPart
+                        return {
+                            kind: displayPart.kind,
+                            text: `🏷️ ${displayPart.text}`,
+                        }
+                    }),
+                }
+            })
+        }
+        return result
     }
 }
