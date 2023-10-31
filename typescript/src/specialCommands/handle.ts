@@ -7,6 +7,7 @@ import { lastResolvedCompletion } from '../completionEntryDetails'
 import { overrideRenameRequest } from '../decorateFindRenameLocations'
 import getEmmetCompletions from './emmet'
 import objectIntoArrayConverters from './objectIntoArrayConverters'
+import getFullType from './getFullType'
 
 export const previousGetCodeActionsResult = {
     value: undefined as undefined | Array<Record<'description' | 'name', string>>,
@@ -238,12 +239,10 @@ export default (
         return lastResolvedCompletion.value
     }
     if (specialCommand === 'getFullType') {
-        const node = findChildContainingExactPosition(sourceFile, position)
-        if (!node) return
-        const checker = languageService.getProgram()!.getTypeChecker()!
-        const type = checker.getTypeAtLocation(node)
+        const text = getFullType(languageService, sourceFile, position)
+        if (!text) return
         return {
-            text: checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.NoTypeReduction),
+            text,
         }
     }
     if (specialCommand === 'getArgumentReferencesFromCurrentParameter') {
