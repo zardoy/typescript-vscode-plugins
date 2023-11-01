@@ -4,6 +4,7 @@ import {
     getPositionHighlights,
     isValidInitializerForDestructure,
     isNameUniqueAtNodeClosestScope,
+    makeUniqueName,
 } from '../../utils'
 import { CodeAction } from '../getCodeActions'
 
@@ -50,17 +51,23 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
         if (ts.isIdentifier(highlightedNode) && ts.isPropertyAccessExpression(highlightedNode.parent)) {
             const propertyAccessorName = highlightedNode.parent.name.getText()
 
-            const uniquePropertyName = isNameUniqueAtNodeClosestScope(propertyAccessorName, node, languageService.getProgram()!.getTypeChecker())
-                ? undefined
-                : tsFull.getUniqueName(propertyAccessorName, sourceFile as any)
+            const isNameUniqueInScope = isNameUniqueAtNodeClosestScope(propertyAccessorName, node, languageService.getProgram()!.getTypeChecker())
+            const isReservedWord = tsFull.isIdentifierANonContextualKeyword(highlightedNode as any)
 
-            propertyNames.push({ initial: propertyAccessorName, unique: uniquePropertyName })
+            const uniquePropertyName = isNameUniqueInScope ? undefined : tsFull.getUniqueName(propertyAccessorName, sourceFile as any)
+
+            const uniqueReservedPropName = isReservedWord ? makeUniqueName(`_${propertyAccessorName}`, sourceFile) : undefined
+
+            propertyNames.push({ initial: propertyAccessorName, unique: uniqueReservedPropName || uniquePropertyName })
 
             tracker.replaceRangeWithText(sourceFile, { pos, end: highlightedNode.parent.end }, uniquePropertyName ?? propertyAccessorName)
             continue
         }
 
-        if (ts.isIdentifier(highlightedNode) && (ts.isVariableDeclaration(highlightedNode.parent) || ts.isParameter(highlightedNode.parent))) {
+        if (
+            ts.isIdentifier(highlightedNode) &&
+            (ts.isVariableDeclaration(highlightedNode.parent) || ts.isParameter(highlightedNode.parent) || ts.isPropertyAssignment(node.parent))
+        ) {
             nodeToReplaceWithBindingPattern = highlightedNode
             continue
         }

@@ -373,3 +373,39 @@ export const isNameUniqueAtNodeClosestScope = (name: string, node: ts.Node, type
     )
     return isNameUniqueAtLocation(name, closestScope, typeChecker)
 }
+
+export const makeUniqueName = (name: string, sourceFile: ts.SourceFile) => {
+    /**
+     * A free identifier is an identifier that can be accessed through name lookup as a local variable.
+     * In the expression `x.y`, `x` is a free identifier, but `y` is not.
+     */
+    const forEachFreeIdentifier = (node: ts.Node, cb: (id: ts.Identifier) => void) => {
+        if (ts.isIdentifier(node) && isFreeIdentifier(node)) cb(node)
+        node.forEachChild(child => forEachFreeIdentifier(child, cb))
+    }
+
+    const isFreeIdentifier = (node: ts.Identifier): boolean => {
+        const { parent } = node
+        switch (parent.kind) {
+            case ts.SyntaxKind.PropertyAccessExpression:
+                return (parent as ts.PropertyAccessExpression).name !== node
+            case ts.SyntaxKind.BindingElement:
+                return (parent as ts.BindingElement).propertyName !== node
+            case ts.SyntaxKind.ImportSpecifier:
+                return (parent as ts.ImportSpecifier).propertyName !== node
+            default:
+                return true
+        }
+    }
+    const collectFreeIdentifiers = (file: ts.SourceFile) => {
+        const map: string[] = []
+        forEachFreeIdentifier(file, id => map.push(id.text))
+        return map
+    }
+
+    const identifiers = collectFreeIdentifiers(sourceFile)
+    while (identifiers.includes(name)) {
+        name = `_${name}`
+    }
+    return name
+}
