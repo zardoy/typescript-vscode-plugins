@@ -304,6 +304,15 @@ export default (
             memoryUsedMb: toMb(process.memoryUsage().heapUsed),
         }
     }
+    if (specialCommand === 'getMigrateToImportsEdits') {
+        const combinedCodeFix = languageService.getCombinedCodeFix(
+            { type: 'file', fileName: sourceFile.fileName },
+            'requireInTs',
+            ts.getDefaultFormatCodeSettings(),
+            preferences,
+        )
+        return combinedCodeFix.changes[0]?.textChanges
+    }
 
     return null
 }
