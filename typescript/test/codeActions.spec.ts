@@ -239,6 +239,54 @@ describe('Add destructure', () => {
             })
         })
     })
+    describe('Should work with index access', () => {
+        test('Adds destructure when index access content is string', () => {
+            const initial = /* ts */ `
+            const /*t*/newVariable/*t*/ = { 
+                foo: 1,
+            }
+            newVariable['foo']
+        `
+            const expected = /* ts */ `
+            const { foo } = { 
+                foo: 1,
+            }
+            foo
+        `
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+        test.todo('Should add rest elements to destructure when index access content is expression', () => {
+            const initial = /* ts */ `
+            const /*t*/object/*t*/ = { 
+                foo: 1,
+                bar: 2,
+            }
+            const foo = 'foo'
+            object[foo]
+            object.bar
+        `
+            const expected = /* ts */ `
+            const { bar, ...newVariable } = { 
+                foo: 1,
+                bar: 2,
+            }
+            const foo = 'foo'
+            newVariable[foo]
+            bar
+        `
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+    })
 })
 
 describe('From destructure', () => {

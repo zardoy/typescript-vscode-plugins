@@ -33,7 +33,8 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
     formatOptions: ts.FormatCodeSettings | undefined,
     languageService: ts.LanguageService,
 ) => {
-    if (!ts.isIdentifier(node) && !(ts.isPropertyAccessExpression(node.parent) || ts.isParameter(node.parent))) return
+    if (!ts.isIdentifier(node) && !(ts.isPropertyAccessExpression(node.parent) || ts.isParameter(node.parent) || !ts.isElementAccessExpression(node.parent)))
+        return
 
     const highlightPositions = getPositionHighlights(node.getStart(), sourceFile, languageService)
 
@@ -48,8 +49,18 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
 
         if (!highlightedNode) continue
 
-        if (ts.isIdentifier(highlightedNode) && ts.isPropertyAccessExpression(highlightedNode.parent)) {
-            const propertyAccessorName = highlightedNode.parent.name.getText()
+        if (
+            ts.isIdentifier(highlightedNode) &&
+            (ts.isPropertyAccessExpression(highlightedNode.parent) || ts.isElementAccessExpression(highlightedNode.parent))
+        ) {
+            const indexedAccessorName =
+                ts.isElementAccessExpression(highlightedNode.parent) && ts.isStringLiteral(highlightedNode.parent.argumentExpression)
+                    ? highlightedNode.parent.argumentExpression.text
+                    : undefined
+
+            const propertyAccessorName = ts.isPropertyAccessExpression(highlightedNode.parent) ? highlightedNode.parent.name.getText() : indexedAccessorName
+
+            if (!propertyAccessorName) continue
 
             const isNameUniqueInScope = isNameUniqueAtNodeClosestScope(propertyAccessorName, node, languageService.getProgram()!.getTypeChecker())
             const isReservedWord = tsFull.isIdentifierANonContextualKeyword(tsFull.factory.createIdentifier(propertyAccessorName))
