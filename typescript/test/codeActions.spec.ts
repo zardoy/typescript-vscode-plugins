@@ -172,10 +172,10 @@ describe('Add destructure', () => {
         codeAction(0, {
             refactorName: 'Add Destruct',
             newContent: /* ts */ `
-            function fn({ bar: bar_1, foo: foo_1 }) {
+            function fn({ bar: _bar, foo: _foo }) {
                 const bar = 4
                 const foo = 5
-                const something = bar_1 + foo_1
+                const something = _bar + _foo
             }
         `,
         })

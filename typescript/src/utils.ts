@@ -80,8 +80,8 @@ export const getIndentFromPos = (typescript: typeof ts, sourceFile: ts.SourceFil
     )
 }
 
-export const findClosestParent = (node: ts.Node, stopKinds: ts.SyntaxKind[], rejectKinds: ts.SyntaxKind[]) => {
-    rejectKinds = [...rejectKinds, ts.SyntaxKind.SourceFile]
+export const findClosestParent = (node: ts.Node, stopKinds: ts.SyntaxKind[], rejectKinds: ts.SyntaxKind[], skipSourceFile = true) => {
+    rejectKinds = [...rejectKinds, ...(skipSourceFile ? [ts.SyntaxKind.SourceFile] : [])]
     while (node && !stopKinds.includes(node.kind)) {
         if (rejectKinds.includes(node.kind)) return
         node = node.parent
@@ -352,69 +352,78 @@ export const isValidInitializerForDestructure = (match: ts.Expression) => {
 }
 export const isNameUniqueAtLocation = (name: string, location: ts.Node | undefined, typeChecker: ts.TypeChecker) => {
     const checker = getFullTypeChecker(typeChecker)
-    let result: boolean | undefined
+    let hasCollision: boolean | undefined
 
     const checkCollision = (childNode: ts.Node) => {
-        if (result) return
-        result = !!checker.resolveName(name, childNode as unknown as import('typescript-full').Node, ts.SymbolFlags.Value, true)
+        if (hasCollision) return
+        hasCollision = !!checker.resolveName(name, childNode as unknown as import('typescript-full').Node, ts.SymbolFlags.Value, true)
 
         if (ts.isBlock(childNode)) {
             childNode.forEachChild(checkCollision)
         }
     }
-    location?.forEachChild(checkCollision)
-    return !result
+    if (!location) return
+
+    if (ts.isSourceFile(location)) {
+        hasCollision = createUniqueName(name, location as any) !== name
+    } else {
+        location.forEachChild(checkCollision)
+    }
+    return !hasCollision
 }
 export const isNameUniqueAtNodeClosestScope = (name: string, node: ts.Node, typeChecker: ts.TypeChecker) => {
     const closestScope = findClosestParent(
         node,
-        [ts.SyntaxKind.Block, ts.SyntaxKind.FunctionDeclaration, ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction],
+        [ts.SyntaxKind.Block, ts.SyntaxKind.FunctionDeclaration, ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.SourceFile],
         [],
+        false,
     )
     return isNameUniqueAtLocation(name, closestScope, typeChecker)
 }
 
-export function makeUniqueName(accessorName: string, node: ts.Node, languageService: ts.LanguageService, sourceFile: ts.SourceFile) {
-    const createUniqueName = (name: string, sourceFile: ts.SourceFile) => {
-        /**
-         * A free identifier is an identifier that can be accessed through name lookup as a local variable.
-         * In the expression `x.y`, `x` is a free identifier, but `y` is not.
-         */
-        const forEachFreeIdentifier = (node: ts.Node, cb: (id: ts.Identifier) => void) => {
-            if (ts.isIdentifier(node) && isFreeIdentifier(node)) cb(node)
-            node.forEachChild(child => forEachFreeIdentifier(child, cb))
-        }
-
-        const isFreeIdentifier = (node: ts.Identifier): boolean => {
-            const { parent } = node
-            switch (parent.kind) {
-                case ts.SyntaxKind.PropertyAccessExpression:
-                    return (parent as ts.PropertyAccessExpression).name !== node
-                case ts.SyntaxKind.BindingElement:
-                    return (parent as ts.BindingElement).propertyName !== node
-                case ts.SyntaxKind.ImportSpecifier:
-                    return (parent as ts.ImportSpecifier).propertyName !== node
-                default:
-                    return true
-            }
-        }
-        const collectFreeIdentifiers = (file: ts.SourceFile) => {
-            const map: string[] = []
-            forEachFreeIdentifier(file, id => map.push(id.text))
-            return map
-        }
-
-        const identifiers = collectFreeIdentifiers(sourceFile)
-        while (identifiers.includes(name)) {
-            name = `_${name}`
-        }
-        return name
+const createUniqueName = (name: string, sourceFile: ts.SourceFile) => {
+    /**
+     * A free identifier is an identifier that can be accessed through name lookup as a local variable.
+     * In the expression `x.y`, `x` is a free identifier, but `y` is not.
+     */
+    const forEachFreeIdentifier = (node: ts.Node, cb: (id: ts.Identifier) => void) => {
+        if (ts.isIdentifier(node) && isFreeIdentifier(node)) cb(node)
+        node.forEachChild(child => forEachFreeIdentifier(child, cb))
     }
 
+    const isFreeIdentifier = (node: ts.Identifier): boolean => {
+        const { parent } = node
+        switch (parent.kind) {
+            case ts.SyntaxKind.PropertyAccessExpression:
+                return (parent as ts.PropertyAccessExpression).name !== node
+            case ts.SyntaxKind.BindingElement:
+                return (parent as ts.BindingElement).propertyName !== node
+            case ts.SyntaxKind.ImportSpecifier:
+                return (parent as ts.ImportSpecifier).propertyName !== node
+            case ts.SyntaxKind.PropertyAssignment:
+                return (parent as ts.PropertyAssignment).name !== node
+            default:
+                return true
+        }
+    }
+    const collectFreeIdentifiers = (file: ts.SourceFile) => {
+        const arr: string[] = []
+        forEachFreeIdentifier(file, id => arr.push(id.text))
+        return arr
+    }
+
+    const identifiers = collectFreeIdentifiers(sourceFile)
+    while (identifiers.includes(name)) {
+        name = `_${name}`
+    }
+    return name
+}
+
+export const makeUniqueName = (accessorName: string, node: ts.Node, languageService: ts.LanguageService, sourceFile: ts.SourceFile) => {
     const isNameUniqueInScope = isNameUniqueAtNodeClosestScope(accessorName, node, languageService.getProgram()!.getTypeChecker())
     const isReservedWord = tsFull.isIdentifierANonContextualKeyword(tsFull.factory.createIdentifier(accessorName))
 
-    const uniquePropertyName = isNameUniqueInScope ? undefined : tsFull.getUniqueName(accessorName, sourceFile as any)
+    const uniquePropertyName = isNameUniqueInScope ? undefined : createUniqueName(accessorName, sourceFile)
 
     const uniqueReservedPropName = isReservedWord ? createUniqueName(`_${accessorName}`, sourceFile) : undefined
     return uniqueReservedPropName || uniquePropertyName || accessorName
