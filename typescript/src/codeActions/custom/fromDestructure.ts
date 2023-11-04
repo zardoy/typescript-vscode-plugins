@@ -66,12 +66,14 @@ const convertFromDestructureWithVariableNameReplacement = (
 
     const BASE_VARIABLE_NAME = 'newVariable'
 
-    const variableName = isNameUniqueAtNodeClosestScope(BASE_VARIABLE_NAME, declarationName, languageService.getProgram()!.getTypeChecker())
+    const uniqueVariableName = isNameUniqueAtNodeClosestScope(BASE_VARIABLE_NAME, declarationName, languageService.getProgram()!.getTypeChecker())
         ? BASE_VARIABLE_NAME
         : tsFull.getUniqueName(BASE_VARIABLE_NAME, sourceFile as unknown as FullSourceFile)
 
+    const uniqueVariableIdentifier = ts.factory.createIdentifier(uniqueVariableName)
+
     for (const binding of bindings) {
-        const declaration = createFlattenedExpressionFromDestructuring(binding, ts.factory.createIdentifier(variableName))
+        const declaration = createFlattenedExpressionFromDestructuring(binding, uniqueVariableIdentifier)
 
         /** Important to use `getEnd()` here to get correct highlights for destructured and renamed binding, e.g. `{ bar: bar_1 }` */
         const bindingNameEndPos = binding.getEnd()
@@ -88,17 +90,15 @@ const convertFromDestructureWithVariableNameReplacement = (
             if (!node || ts.isPropertyAssignment(node.parent)) continue
             const printer = ts.createPrinter()
 
-            tracker.replaceRangeWithText(sourceFile, { pos, end: node.end }, printer.printNode(ts.EmitHint.Unspecified, declaration, sourceFile))
+            // If dotDotDotToken is present, we work with rest element, so we need to replace it with identifier
+            const replacement = binding.dotDotDotToken ? uniqueVariableIdentifier : declaration
+            tracker.replaceRangeWithText(sourceFile, { pos, end: node.end }, printer.printNode(ts.EmitHint.Unspecified, replacement, sourceFile))
         }
     }
 
     const declarationNameLeadingTrivia = declarationName.getLeadingTriviaWidth(sourceFile)
 
-    tracker.replaceRange(
-        sourceFile,
-        { pos: declarationName.pos + declarationNameLeadingTrivia, end: declarationName.end },
-        ts.factory.createIdentifier(variableName),
-    )
+    tracker.replaceRange(sourceFile, { pos: declarationName.pos + declarationNameLeadingTrivia, end: declarationName.end }, uniqueVariableIdentifier)
     const changes = tracker.getChanges()
     return {
         edits: [

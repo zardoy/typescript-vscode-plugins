@@ -418,7 +418,7 @@ describe('From destructure', () => {
     })
     test('Should work with rest elements destructure', () => {
         const initial = /* ts */ `
-            const {foo, ...a} = {
+            const { /*t*/foo/*t*/, ...a } = {
                 bar: 1,
                 foo: 2,
             } 
@@ -438,7 +438,7 @@ describe('From destructure', () => {
         const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
 
         codeAction(0, {
-            refactorName: 'Add Destruct',
+            refactorName: 'From Destruct',
             newContent: expected,
         })
     })
