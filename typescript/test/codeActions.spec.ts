@@ -260,7 +260,7 @@ describe('Add destructure', () => {
                 newContent: expected,
             })
         })
-        test.todo('Should add rest elements to destructure when index access content is expression', () => {
+        test('Should add rest elements to destructure when index access content is expression', () => {
             const initial = /* ts */ `
             const /*t*/object/*t*/ = { 
                 foo: 1,
