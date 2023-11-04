@@ -85,7 +85,7 @@ const convertFromDestructureWithVariableNameReplacement = (
             }
             const node = findChildContainingExactPosition(sourceFile, pos)
 
-            if (!node) continue
+            if (!node || ts.isPropertyAssignment(node.parent)) continue
             const printer = ts.createPrinter()
 
             tracker.replaceRangeWithText(sourceFile, { pos, end: node.end }, printer.printNode(ts.EmitHint.Unspecified, declaration, sourceFile))

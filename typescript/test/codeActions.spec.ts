@@ -1,3 +1,4 @@
+import { initial } from 'lodash'
 import { fourslashLikeTester } from './testing'
 
 test('Split Declaration and Initialization', () => {
@@ -413,6 +414,82 @@ describe('From destructure', () => {
                 }
             };
         `,
+        })
+    })
+    test('Should work with rest elements destructure', () => {
+        const initial = /* ts */ `
+            const {foo, ...a} = {
+                bar: 1,
+                foo: 2,
+            } 
+            
+            a.bar
+            foo
+        `
+        const expected = /* ts */ `
+            const newVariable = {
+                bar: 1,
+                foo: 2,
+            } 
+            
+            newVariable.bar
+            newVariable.foo
+        `
+        const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+        codeAction(0, {
+            refactorName: 'Add Destruct',
+            newContent: expected,
+        })
+    })
+    describe('Works with inline object', () => {
+        test('Destructured only one property', () => {
+            const initial = /* ts*/ `
+                const { /*t*/foo/*t*/ } = {
+                    foo: 1,
+                }
+            `
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            const newContent = codeAction(
+                0,
+                {
+                    refactorName: 'From Destruct',
+                },
+                {},
+                { compareContent: true },
+            )
+            expect(newContent).toMatchInlineSnapshot(`
+              "
+                  const foo = {
+                  foo: 1,
+              }.foo
+              "
+            `)
+        })
+        test('Destructured two or more properties', () => {
+            const initial = /* ts*/ `
+                const { /*t*/foo/*t*/, bar } = {
+                    foo: 1,
+                    bar: 2,
+                }
+                foo;
+                bar;
+            `
+            const expected = /* ts*/ `
+                const newVariable = {
+                    foo: 1,
+                    bar: 2,
+                }
+                newVariable.foo;
+                newVariable.bar;
+            `
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'From Destruct',
+                newContent: expected,
+            })
         })
     })
 })
