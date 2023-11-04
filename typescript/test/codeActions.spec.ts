@@ -122,24 +122,37 @@ describe('Add destructure', () => {
         `,
         })
     })
-    test('Should destruct function params', () => {
-        const { codeAction } = fourslashLikeTester(
-            /* ts */ `
-            function fn(/*t*/newVariable/*t*/) {
-                const something = newVariable.bar + newVariable.foo
-            }
-        `,
-            undefined,
-            { dedent: true },
-        )
-
-        codeAction(0, {
-            refactorName: 'Add Destruct',
-            newContent: /* ts */ `
+    describe('Should destruct function params', () => {
+        const expected = /* ts */ `
             function fn({ bar, foo }) {
                 const something = bar + foo
             }
-        `,
+        `
+        test('Cursor position on param', () => {
+            const cursorOnParam = /* ts */ `
+            function fn(/*t*/newVariable/*t*/) {
+                const something = newVariable.bar + newVariable.foo
+            }
+        `
+            const { codeAction } = fourslashLikeTester(cursorOnParam, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+        test.skip('Cursor position on accessor', () => {
+            const cursorOnParam = /* ts */ `
+            function fn(newVariable) {
+                const something = newVariable./*t*/bar/*t*/ + newVariable.foo
+            }
+        `
+            const { codeAction } = fourslashLikeTester(cursorOnParam, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
         })
     })
     test('Should work with name collisions', () => {
@@ -164,6 +177,65 @@ describe('Add destructure', () => {
                 const something = bar_1 + foo_1
             }
         `,
+        })
+    })
+    describe('Works with inline object', () => {
+        const expected = /* ts */ `
+            const { foo } = {
+                foo: 1,
+            }
+            foo
+        `
+        test('Cursor position on object variable declaration', () => {
+            const cursorOnObjVarDecl = /* ts */ `
+            const /*t*/a/*t*/ = {
+                foo: 1,
+            }
+            a.foo
+        `
+            const { codeAction } = fourslashLikeTester(cursorOnObjVarDecl, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+        test.skip('Cursor position on accessor', () => {
+            const cursorOnAccessor = /* ts */ `
+            const a = {
+                foo: 1,
+            }
+            
+            a./*t*/foo/*t*/
+        `
+            const { codeAction } = fourslashLikeTester(cursorOnAccessor, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+    })
+    describe('Handles reserved words', () => {
+        test('Makes unique identifier for reserved word', () => {
+            const initial = /* ts */ `
+                const /*t*/a/*t*/ = { 
+                    class: 1,
+                }
+                a.class
+            `
+            const expected = /* ts */ `
+                const { class: _class } = { 
+                    class: 1,
+                }
+                _class
+            `
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
         })
     })
 })
