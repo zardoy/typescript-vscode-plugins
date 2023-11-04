@@ -1,11 +1,4 @@
-import {
-    findChildContainingExactPosition,
-    getChangesTracker,
-    getPositionHighlights,
-    isValidInitializerForDestructure,
-    isNameUniqueAtNodeClosestScope,
-    makeUniqueName,
-} from '../../utils'
+import { findChildContainingExactPosition, getChangesTracker, getPositionHighlights, isValidInitializerForDestructure, makeUniqueName } from '../../utils'
 import { CodeAction } from '../getCodeActions'
 
 const createDestructuredDeclaration = (initializer: ts.Expression, type: ts.TypeNode | undefined, declarationName: ts.BindingName) => {
@@ -41,7 +34,7 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
     if (!highlightPositions) return
     const tracker = getChangesTracker(formatOptions ?? {})
 
-    const propertyNames: Array<{ initial: string; unique: string | undefined }> = []
+    const propertyNames: Array<{ initial: string; unique: string | undefined; dotDotDotToken: boolean }> = []
     let nodeToReplaceWithBindingPattern: ts.Identifier | undefined
 
     for (const pos of highlightPositions) {
@@ -62,14 +55,9 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
 
             if (!accessorName) continue
 
-            const isNameUniqueInScope = isNameUniqueAtNodeClosestScope(accessorName, node, languageService.getProgram()!.getTypeChecker())
-            const isReservedWord = tsFull.isIdentifierANonContextualKeyword(tsFull.factory.createIdentifier(accessorName))
+            const uniqueName = makeUniqueName(accessorName, node, languageService, sourceFile)
 
-            const uniquePropertyName = isNameUniqueInScope ? undefined : tsFull.getUniqueName(accessorName, sourceFile as any)
-
-            const uniqueReservedPropName = isReservedWord ? makeUniqueName(`_${accessorName}`, sourceFile) : undefined
-
-            propertyNames.push({ initial: accessorName, unique: uniqueReservedPropName || uniquePropertyName })
+            propertyNames.push({ initial: accessorName, unique: uniqueName === accessorName ? undefined : uniqueName, dotDotDotToken: false })
 
             // Replace both variable and property access expression `a.fo|o` -> `foo`
             // if (ts.isIdentifier(highlightedNode.parent.expression)) {
@@ -81,7 +69,7 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
             //     continue
             // }
 
-            tracker.replaceRangeWithText(sourceFile, { pos, end: highlightedNode.parent.end }, uniqueReservedPropName || uniquePropertyName || accessorName)
+            tracker.replaceRangeWithText(sourceFile, { pos, end: highlightedNode.parent.end }, uniqueName)
             continue
         }
 
