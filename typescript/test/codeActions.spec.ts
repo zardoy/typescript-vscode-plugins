@@ -1,3 +1,4 @@
+import { initial } from 'lodash'
 import { fourslashLikeTester } from './testing'
 
 test('Split Declaration and Initialization', () => {
@@ -122,24 +123,37 @@ describe('Add destructure', () => {
         `,
         })
     })
-    test('Should destruct function params', () => {
-        const { codeAction } = fourslashLikeTester(
-            /* ts */ `
-            function fn(/*t*/newVariable/*t*/) {
-                const something = newVariable.bar + newVariable.foo
-            }
-        `,
-            undefined,
-            { dedent: true },
-        )
-
-        codeAction(0, {
-            refactorName: 'Add Destruct',
-            newContent: /* ts */ `
+    describe('Should destruct function params', () => {
+        const expected = /* ts */ `
             function fn({ bar, foo }) {
                 const something = bar + foo
             }
-        `,
+        `
+        test('Cursor position on param', () => {
+            const cursorOnParam = /* ts */ `
+            function fn(/*t*/newVariable/*t*/) {
+                const something = newVariable.bar + newVariable.foo
+            }
+        `
+            const { codeAction } = fourslashLikeTester(cursorOnParam, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+        test.skip('Cursor position on accessor', () => {
+            const cursorOnParam = /* ts */ `
+            function fn(newVariable) {
+                const something = newVariable./*t*/bar/*t*/ + newVariable.foo
+            }
+        `
+            const { codeAction } = fourslashLikeTester(cursorOnParam, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
         })
     })
     test('Should work with name collisions', () => {
@@ -158,12 +172,119 @@ describe('Add destructure', () => {
         codeAction(0, {
             refactorName: 'Add Destruct',
             newContent: /* ts */ `
-            function fn({ bar: bar_1, foo: foo_1 }) {
+            function fn({ bar: _bar, foo: _foo }) {
                 const bar = 4
                 const foo = 5
-                const something = bar_1 + foo_1
+                const something = _bar + _foo
             }
         `,
+        })
+    })
+    describe('Works with inline object', () => {
+        const expected = /* ts */ `
+            const { foo } = {
+                foo: 1,
+            }
+            foo
+        `
+        test('Cursor position on object variable declaration', () => {
+            const cursorOnObjVarDecl = /* ts */ `
+            const /*t*/a/*t*/ = {
+                foo: 1,
+            }
+            a.foo
+        `
+            const { codeAction } = fourslashLikeTester(cursorOnObjVarDecl, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+        test.skip('Cursor position on accessor', () => {
+            const cursorOnAccessor = /* ts */ `
+            const a = {
+                foo: 1,
+            }
+            
+            a./*t*/foo/*t*/
+        `
+            const { codeAction } = fourslashLikeTester(cursorOnAccessor, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+    })
+    describe('Handles reserved words', () => {
+        test('Makes unique identifier for reserved word', () => {
+            const initial = /* ts */ `
+                const /*t*/a/*t*/ = { 
+                    class: 1,
+                }
+                a.class
+            `
+            const expected = /* ts */ `
+                const { class: _class } = { 
+                    class: 1,
+                }
+                _class
+            `
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+    })
+    describe('Should work with index access', () => {
+        test('Adds destructure when index access content is string', () => {
+            const initial = /* ts */ `
+            const /*t*/newVariable/*t*/ = { 
+                foo: 1,
+            }
+            newVariable['foo']
+        `
+            const expected = /* ts */ `
+            const { foo } = { 
+                foo: 1,
+            }
+            foo
+        `
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+        test('Should add rest elements to destructure when index access content is expression', () => {
+            const initial = /* ts */ `
+            const /*t*/object/*t*/ = { 
+                foo: 1,
+                bar: 2,
+            }
+            const foo = 'foo'
+            object[foo]
+            object.bar
+        `
+            const expected = /* ts */ `
+            const { bar, ...newVariable } = { 
+                foo: 1,
+                bar: 2,
+            }
+            const foo = 'foo'
+            newVariable[foo]
+            bar
+        `
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
         })
     })
 })
@@ -341,6 +462,82 @@ describe('From destructure', () => {
                 }
             };
         `,
+        })
+    })
+    test('Should work with rest elements destructure', () => {
+        const initial = /* ts */ `
+            const { /*t*/foo/*t*/, ...a } = {
+                bar: 1,
+                foo: 2,
+            } 
+            
+            a.bar
+            foo
+        `
+        const expected = /* ts */ `
+            const newVariable = {
+                bar: 1,
+                foo: 2,
+            } 
+            
+            newVariable.bar
+            newVariable.foo
+        `
+        const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+        codeAction(0, {
+            refactorName: 'From Destruct',
+            newContent: expected,
+        })
+    })
+    describe('Works with inline object', () => {
+        test('Destructured only one property', () => {
+            const initial = /* ts*/ `
+                const { /*t*/foo/*t*/ } = {
+                    foo: 1,
+                }
+            `
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            const newContent = codeAction(
+                0,
+                {
+                    refactorName: 'From Destruct',
+                },
+                {},
+                { compareContent: true },
+            )
+            expect(newContent).toMatchInlineSnapshot(`
+              "
+                  const foo = {
+                  foo: 1,
+              }.foo
+              "
+            `)
+        })
+        test('Destructured two or more properties', () => {
+            const initial = /* ts*/ `
+                const { /*t*/foo/*t*/, bar } = {
+                    foo: 1,
+                    bar: 2,
+                }
+                foo;
+                bar;
+            `
+            const expected = /* ts*/ `
+                const newVariable = {
+                    foo: 1,
+                    bar: 2,
+                }
+                newVariable.foo;
+                newVariable.bar;
+            `
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'From Destruct',
+                newContent: expected,
+            })
         })
     })
 })
