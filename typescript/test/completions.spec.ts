@@ -293,9 +293,9 @@ describe('Method snippets', () => {
         compareMethodSnippetAgainstMarker(markers, 2, 'ambiguous')
     })
 
-    test('methodSnippetsInsertText all', () => {
+    test('methodSnippets.previewSignature all', () => {
         overrideSettings({
-            methodSnippetsInsertText: 'all',
+            'methodSnippets.previewSignature': 'all',
         })
         fileContentsSpecialPositions(/* ts */ `
             const a = (a, b) => {}
@@ -664,7 +664,7 @@ test('Object Literal Completions', () => {
           "name": "plugins",
         },
         {
-          "insertText": "plugins: [\\\\n	$1\\\\n],$0",
+          "insertText": "plugins: [\\\\n	$1\\\\n],",
           "isSnippet": true,
           "kind": "property",
           "kindModifiers": "",
@@ -688,7 +688,7 @@ test('Object Literal Completions', () => {
           "name": "additionalOptions",
         },
         {
-          "insertText": "additionalOptions: {\\\\n	$1\\\\n},$0",
+          "insertText": "additionalOptions: {\\\\n	$1\\\\n},",
           "isSnippet": true,
           "kind": "property",
           "kindModifiers": "optional",
@@ -723,7 +723,7 @@ test('Object Literal Completions', () => {
           "name": "mood",
         },
         {
-          "insertText": "mood: \\"$1\\",$0",
+          "insertText": "mood: \\"$1\\",",
           "isSnippet": true,
           "kind": "property",
           "kindModifiers": "optional",
@@ -738,18 +738,18 @@ test('Object Literal Completions', () => {
       [
         "a",
         "b",
-        "b: \\"$1\\",$0",
+        "b: \\"$1\\",",
       ]
     `)
     // I guess vitest hangs forever here
     expect(pos3.map(x => x.insertText)).toMatchInlineSnapshot(`
       [
         "bar",
-        "bar: \${1|true,false|},$0",
+        "bar: \${1|true,false|},",
         "bar2",
         "bar2: false,",
         "foo",
-        "foo: \${1|true,false|},$0",
+        "foo: \${1|true,false|},",
       ]
     `)
     expect(pos4.filter(x => x.insertText?.includes(': '))).toEqual([])
@@ -770,7 +770,7 @@ test('Object Literal Completions with keepOriginal: remove & builtin method snip
     `)
     completion(1, {
         exact: {
-            insertTexts: ['a: {\n\t$1\n},$0', 'onA() {\n$0\n},'],
+            insertTexts: ['a: {\n\t$1\n},', 'onA() {\n$0\n},'],
             all: {
                 isSnippet: true,
             },
@@ -859,4 +859,24 @@ test('In Keyword Completions', () => {
         ],
       }
     `)
+})
+describe('Typecast completions', () => {
+    test('As completions', () => {
+        const [pos] = newFileContents(/*ts*/ `
+            const b = 5
+            const a = b as /*|*/
+        `)
+        const completions = getCompletionsAtPosition(pos!)?.entriesSorted
+
+        expect(completions?.[0]?.name).toEqual('number')
+    })
+    test('jsDoc typecast', () => {
+        const [pos] = newFileContents(/*ts*/ `
+            const b = 5
+            const a = /** @type {/*|*/} */(b)
+        `)
+        const completions = getCompletionsAtPosition(pos!)?.entriesSorted
+
+        expect(completions?.[0]?.name).toEqual('number')
+    })
 })

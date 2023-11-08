@@ -87,7 +87,8 @@ export type Configuration = {
      * Format of this setting is very close to `jsxCompletionsMap` setting:
      * `path#symbol` (exact) or `path/*#symbol` (`#symbol` part can be omitted)
      *
-     * Note: Please use `javascript`/`typescript.preferences.autoImportFileExcludePatterns` when possible, to achieve better performance!
+     * **Note**: Please use builtin `javascript`/`typescript.preferences.autoImportFileExcludePatterns` when possible, to achieve better performance!
+     * The builtin function expects relative paths to .d.ts / .ts files that contains declarations.
      *
      * e.g. instead of declaring `@mui/icons-material` here, declare `node_modules/@mui/icons-material` in aforementioned setting.
      *
@@ -99,7 +100,7 @@ export type Configuration = {
      * - `path/*#join` - ignore path, path/posix and path/win32, but only join symbol
      * - `path/*#join,resolve` - ignore path, path/posix and path/win32, but only join and resolve symbol
      *
-     * - jquery/* - ignore absolutely all auto imports from jquery, even if it was declared virtually (declare module)
+     * - jquery/* - ignore absolutely all auto imports from jquery, even if it was declared using ambient declaration (`declare module`)
      * @default []
      */
     'suggestions.ignoreAutoImports': string[]
@@ -384,7 +385,7 @@ export type Configuration = {
      * Recommended to try!
      * @default disable
      */
-    methodSnippetsInsertText: 'disable' | 'only-local' | 'all'
+    'methodSnippets.previewSignature': 'disable' | 'only-local' | 'all'
     /**
      * ```ts
      * const example = ({ a }, b?, c = 5, ...d) => { }
@@ -571,7 +572,7 @@ export type Configuration = {
     'experiments.excludeNonJsxCompletions': boolean
     /**
      * Wether to change function completions to function kind
-     * @deprecated Use `methodSnippetsInsertText` instead
+     * @deprecated Use `methodSnippets.previewSignature` instead
      * @default false
      */
     'experiments.changeKindToFunction': boolean

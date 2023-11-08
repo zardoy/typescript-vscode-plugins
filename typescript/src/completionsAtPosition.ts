@@ -31,7 +31,7 @@ import stringTemplateTypeCompletions from './completions/stringTemplateType'
 import localityBonus from './completions/localityBonus'
 import functionCompletions from './completions/functionCompletions'
 import staticHintSuggestions from './completions/staticHintSuggestions'
-import asSuggestions from './completions/asSuggestions'
+import typecastCompletions from './completions/typecastCompletions'
 
 export type PrevCompletionMap = Record<
     string,
@@ -300,7 +300,7 @@ export const getCompletionsAtPosition = (
     if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 
     prior.entries = localityBonus(prior.entries) ?? prior.entries
-    asSuggestions()
+    typecastCompletions()
     prior.entries.push(...(staticHintSuggestions() ?? []))
 
     const processedEntries = new Set<ts.CompletionEntry>()

@@ -1,10 +1,13 @@
 {
     "tsEssentialPlugins.autoImport.changeToNamespaceImport": {
-        "typescript": {
+        "typescript/lib/tsserverlibrary": {
             "namespace": "ts",
             "addImport": false
         }
     },
+    "typescript.preferences.autoImportFileExcludePatterns": [
+        "./typescript/src/ts.d.ts"
+    ],
     "tsEssentialPlugins.suggestions.ignoreAutoImports": [
         "typescript-full",
         "@volar/language-service/*"
@@ -13,6 +16,13 @@
         "develop"
     ],
     "cSpell.words": [
+        "tsserverlibrary",
         "unpatch"
+    ],
+    "vitest.enable": true,
+    "vitest.commandLine": "pnpm test-plugin",
+    "vitest.showFailMessages": true,
+    "vitest.include": [
+        "typescript/test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"
     ]
 }

@@ -1,6 +1,8 @@
 import _ from 'lodash'
 import { getCompletionsAtPosition as getCompletionsAtPositionRaw } from '../src/completionsAtPosition'
 import { Configuration } from '../src/types'
+import codeActionsDecorateProxy from '../src/codeActions/decorateProxy'
+import { dedentString } from '../src/utils'
 import { defaultConfigFunc, entrypoint, sharedLanguageService, settingsOverride, currentTestingContext } from './shared'
 
 interface CompletionPartMatcher {
@@ -20,10 +22,14 @@ interface CodeActionMatcher {
     /**
      * null - refactor is not expected
      */
-    newContent: string | null
+    newContent?: string | null
 }
 
 const { languageService, languageServiceHost, updateProject, getCurrentFile } = sharedLanguageService
+
+const fakeProxy = {} as Pick<typeof languageService, 'getApplicableRefactors' | 'getEditsForRefactor'>
+
+codeActionsDecorateProxy(fakeProxy as typeof languageService, languageService, languageServiceHost, defaultConfigFunc)
 
 export const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, shouldHave }: { fileName?: string; shouldHave?: boolean } = {}) => {
     if (pos === undefined) throw new Error('getCompletionsAtPosition: pos is undefined')
@@ -70,7 +76,8 @@ export const overrideSettings = (newOverrides: Partial<Configuration>) => {
     })
 }
 
-export const fourslashLikeTester = (contents: string, fileName = entrypoint) => {
+export const fourslashLikeTester = (contents: string, fileName = entrypoint, { dedent = false }: { dedent? } = {}) => {
+    if (dedent) contents = dedentString(contents)
     const [positive, _negative, numberedPositions] = fileContentsSpecialPositions(contents, fileName)
 
     const ranges = positive.reduce<number[][]>(
@@ -136,26 +143,37 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint) => 
                 }
             }
         },
-        codeAction: (marker: number | number[], matcher: CodeActionMatcher, meta?) => {
+        codeAction: (marker: number | number[], matcher: CodeActionMatcher, meta?, { compareContent = false } = {}) => {
             for (const mark of Array.isArray(marker) ? marker : [marker]) {
                 if (!ranges[mark]) throw new Error(`No range with index ${mark} found, highest index is ${ranges.length - 1}`)
                 const start = ranges[mark]![0]!
                 const end = ranges[mark]![0]!
-                const appliableRefactors = languageService.getApplicableRefactors(fileName, { pos: start, end }, {}, 'invoked')
-                const appliableNames = appliableRefactors.map(appliableRefactor => appliableRefactor.actions.map(action => action.description))
+                const appliableRefactors = fakeProxy.getApplicableRefactors(fileName, { pos: start, end }, {}, 'invoked')
+                const appliableNames = appliableRefactors.flatMap(appliableRefactor => appliableRefactor.actions.map(action => action.description))
                 const { refactorName, newContent } = matcher
-                if (newContent) {
+                if (newContent || compareContent) {
                     expect(appliableNames, `at marker ${mark}`).toContain(refactorName)
                     const actionsGroup = appliableRefactors.find(appliableRefactor =>
                         appliableRefactor.actions.find(action => action.description === refactorName),
                     )!
                     const action = actionsGroup.actions.find(action => action.description === refactorName)!
-                    const { edits } = languageService.getEditsForRefactor(fileName, {}, { pos: start, end }, actionsGroup.name, action.name, {})!
-                    const a = tsFull.textChanges.applyChanges(getCurrentFile(), edits[0]!.textChanges)
-                } else {
-                    expect(appliableNames, `at marker ${mark}`).not.toContain(refactorName)
+                    const { edits } = fakeProxy.getEditsForRefactor(
+                        fileName,
+                        ts.getDefaultFormatCodeSettings(),
+                        { pos: start, end },
+                        actionsGroup.name,
+                        action.name,
+                        {},
+                    )!
+                    const newContentsActual = tsFull.textChanges.applyChanges(getCurrentFile(), edits[0]!.textChanges)
+                    if (newContent) {
+                        expect(dedentString(newContent), `at marker ${mark}`).toEqual(newContentsActual)
+                    }
+                    return newContentsActual
                 }
+                if (newContent === null) expect(appliableNames, `at marker ${mark}`).not.toContain(refactorName)
             }
+            return
         },
     }
 }
