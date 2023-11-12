@@ -36,37 +36,17 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
     if (!highlightPositions) return
     const tracker = getChangesTracker(formatOptions ?? {})
 
-    const propertyNames: Array<{ initial: string; unique: string | undefined; dotDotDotToken?: ts.DotDotDotToken }> = []
+    const propertyNames: Array<{ initial: string; unique: string | undefined }> = []
     let nodeToReplaceWithBindingPattern: ts.Identifier | undefined
 
     for (const pos of highlightPositions) {
         const highlightedNode = findChildContainingExactPosition(sourceFile, pos)
 
         if (!highlightedNode) continue
+        if (ts.isElementAccessExpression(highlightedNode.parent)) return
 
-        if (
-            ts.isIdentifier(highlightedNode) &&
-            (ts.isPropertyAccessExpression(highlightedNode.parent) || ts.isElementAccessExpression(highlightedNode.parent))
-        ) {
-            if (ts.isElementAccessExpression(highlightedNode.parent) && ts.isIdentifier(highlightedNode.parent.argumentExpression)) {
-                const uniqueName = makeUniqueName('newVariable', node, languageService, sourceFile)
-
-                propertyNames.push({
-                    initial: 'newVariable',
-                    unique: uniqueName === 'newVariable' ? undefined : uniqueName,
-                    dotDotDotToken: ts.factory.createToken(ts.SyntaxKind.DotDotDotToken),
-                })
-
-                tracker.replaceRangeWithText(sourceFile, { pos, end: highlightedNode.end }, uniqueName)
-
-                continue
-            }
-            const indexedAccessorName =
-                ts.isElementAccessExpression(highlightedNode.parent) && ts.isStringLiteral(highlightedNode.parent.argumentExpression)
-                    ? highlightedNode.parent.argumentExpression.text
-                    : undefined
-
-            const accessorName = ts.isPropertyAccessExpression(highlightedNode.parent) ? highlightedNode.parent.name.getText() : indexedAccessorName
+        if (ts.isIdentifier(highlightedNode) && ts.isPropertyAccessExpression(highlightedNode.parent)) {
+            const accessorName = highlightedNode.parent.name.getText()
 
             if (!accessorName) continue
 
@@ -86,15 +66,11 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
 
     if (!nodeToReplaceWithBindingPattern || propertyNames.length === 0) return
 
-    const bindings = propertyNames.map(({ initial, unique, dotDotDotToken }) => {
-        return ts.factory.createBindingElement(dotDotDotToken, unique ? initial : undefined, unique ?? initial)
+    const bindings = propertyNames.map(({ initial, unique }) => {
+        return ts.factory.createBindingElement(undefined, unique ? initial : undefined, unique ?? initial)
     })
-    const withoutDotDotDotToken = bindings.filter(binding => !binding.dotDotDotToken)
-    const withDotDotDotToken = bindings.find(binding => binding.dotDotDotToken)
 
-    const bindingsWithRestLast = withDotDotDotToken ? [...withoutDotDotDotToken, withDotDotDotToken] : withoutDotDotDotToken
-
-    const bindingPattern = ts.factory.createObjectBindingPattern(bindingsWithRestLast)
+    const bindingPattern = ts.factory.createObjectBindingPattern(bindings)
     const { pos, end } = nodeToReplaceWithBindingPattern
 
     tracker.replaceRange(
