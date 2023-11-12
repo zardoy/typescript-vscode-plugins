@@ -74,16 +74,6 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
 
             propertyNames.push({ initial: accessorName, unique: uniqueName === accessorName ? undefined : uniqueName })
 
-            // Replace both variable and property access expression `a.fo|o` -> `foo`
-            // if (ts.isIdentifier(highlightedNode.parent.expression)) {
-            //     tracker.replaceRangeWithText(
-            //         sourceFile,
-            //         { pos: highlightedNode.parent.end, end: highlightedNode.parent.expression.end },
-            //         uniquePropertyName || propertyAccessorName,
-            //     )
-            //     continue
-            // }
-
             tracker.replaceRangeWithText(sourceFile, { pos, end: highlightedNode.parent.end }, uniqueName)
             continue
         }
@@ -92,13 +82,6 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
             nodeToReplaceWithBindingPattern = highlightedNode
             continue
         }
-        // Support for `const a = { foo: 1 }; a.fo|o` refactor activation
-        // if (ts.isIdentifier(highlightedNode) && ts.isPropertyAssignment(highlightedNode.parent)) {
-        //     const closestParent = ts.findAncestor(highlightedNode.parent, n => ts.isVariableDeclaration(n))
-
-        //     if (!closestParent || !ts.isVariableDeclaration(closestParent) || !ts.isIdentifier(closestParent.name)) continue
-        //     nodeToReplaceWithBindingPattern = closestParent.name
-        // }
     }
 
     if (!nodeToReplaceWithBindingPattern || propertyNames.length === 0) return
