@@ -1,6 +1,7 @@
 //@ts-check
 import buildTsPlugin from '@zardoy/vscode-utils/build/buildTypescriptPlugin.js'
 import { build, analyzeMetafile } from 'esbuild'
+import fs from 'fs'
 
 const enableWatch = process.argv.includes('--watch')
 await build({
@@ -29,6 +30,22 @@ const result = await buildTsPlugin('typescript', undefined, undefined, {
         js: 'let ts, tsFull;',
         // js: 'const log = (...args) => console.log(...args.map(a => JSON.stringify(a)))',
     },
+    plugins: [
+        {
+            name: 'watch-notifier',
+            setup(build) {
+                const writeStatus = (/** @type {number} */ signal) => {
+                    fs.writeFileSync('./out/build_plugin_result', signal.toString())
+                }
+                build.onStart(() => {
+                    writeStatus(0)
+                })
+                build.onEnd(({ errors }) => {
+                    writeStatus(errors.length ? 2 : 1)
+                })
+            },
+        },
+    ],
 })
 
 // @ts-ignore

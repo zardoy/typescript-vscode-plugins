@@ -7,6 +7,7 @@ import { lastResolvedCompletion } from '../completionEntryDetails'
 import { overrideRenameRequest } from '../decorateFindRenameLocations'
 import getEmmetCompletions from './emmet'
 import objectIntoArrayConverters from './objectIntoArrayConverters'
+import getFullType from './getFullType'
 
 export const previousGetCodeActionsResult = {
     value: undefined as undefined | Array<Record<'description' | 'name', string>>,
@@ -238,12 +239,10 @@ export default (
         return lastResolvedCompletion.value
     }
     if (specialCommand === 'getFullType') {
-        const node = findChildContainingExactPosition(sourceFile, position)
-        if (!node) return
-        const checker = languageService.getProgram()!.getTypeChecker()!
-        const type = checker.getTypeAtLocation(node)
+        const text = getFullType(languageService, sourceFile, position)
+        if (!text) return
         return {
-            text: checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.NoTypeReduction),
+            text,
         }
     }
     if (specialCommand === 'getArgumentReferencesFromCurrentParameter') {
@@ -276,6 +275,34 @@ export default (
                 })
             }),
         )
+    }
+    if (specialCommand === 'performanceInfo') {
+        const toMb = (bytes: number) => Math.floor(bytes / 1024 / 1024)
+
+        const sourceFilesContents = Object.fromEntries(
+            languageService
+                .getProgram()!
+                .getSourceFiles()
+                .map(x => [x.fileName, x.getFullText().length]),
+        )
+        return {
+            sourceFiles: {
+                totalFilesNumber: Object.keys(sourceFilesContents).length,
+                total: toMb(Object.entries(sourceFilesContents).reduce((a, [, length]) => a + length, 0)),
+                json: toMb(
+                    Object.entries(sourceFilesContents)
+                        .filter(([fileName]) => fileName.endsWith('.json'))
+                        .map(x => x[1])
+                        .reduce((a, b) => a + b, 0),
+                ),
+                top10: Object.entries(sourceFilesContents)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 10)
+                    .map(([fileName, size]) => ({ fileName, size: toMb(size), raw: size })),
+            },
+            // approx
+            memoryUsedMb: toMb(process.memoryUsage().heapUsed),
+        }
     }
 
     if (specialCommand === 'onEnterActions') {

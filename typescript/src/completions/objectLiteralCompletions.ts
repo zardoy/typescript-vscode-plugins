@@ -51,16 +51,16 @@ export default (prior: ts.CompletionInfo): ts.CompletionEntry[] | void => {
         if (!enableMoreVariants) continue
         const getQuotedSnippet = (): [string, string] => {
             const quote = tsFull.getQuoteFromPreference(tsFull.getQuotePreference(node!.getSourceFile() as any, preferences))
-            return [`: ${quote}$1${quote},$0`, `: ${quote}${quote},`]
+            return [`: ${quote}$1${quote},`, `: ${quote}${quote},`]
         }
         const insertObjectArrayInnerText = c('objectLiteralCompletions.insertNewLine') ? '\n\t$1\n' : '$1'
         const booleanCompletion = getBooleanCompletion(type, typeChecker)
         const completingStyleMap = [
             [getQuotedSnippet, isStringCompletion],
             [[`: ${booleanCompletion?.[0] ?? ''},`, `: ${booleanCompletion?.[0] ?? ''}`], () => booleanCompletion?.length === 1],
-            [[': ${1|true,false|},$0', `: true/false,`], () => booleanCompletion?.length === 2],
-            [[`: [${insertObjectArrayInnerText}],$0`, `: [],`], isArrayCompletion],
-            [[`: {${insertObjectArrayInnerText}},$0`, `: {},`], isObjectCompletion],
+            [[': ${1|true,false|},', `: true/false,`], () => booleanCompletion?.length === 2],
+            [[`: [${insertObjectArrayInnerText}],`, `: [],`], isArrayCompletion],
+            [[`: {${insertObjectArrayInnerText}},`, `: {},`], isObjectCompletion],
         ] as const
         const fallbackSnippet = c('objectLiteralCompletions.fallbackVariant') ? ([': $0,', ': ,'] as const) : undefined
         const insertSnippetVariant = completingStyleMap.find(([, detector]) => detector(type!, typeChecker))?.[0] ?? fallbackSnippet

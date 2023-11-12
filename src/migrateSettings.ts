@@ -34,6 +34,13 @@ export default () => {
                 },
             },
             {
+                rename: {
+                    old: 'methodSnippetsInsertText',
+                    new: 'methodSnippets.previewSignature',
+                    mustBePrimitive: false,
+                },
+            },
+            {
                 async detect(configuration) {
                     return !!(await migrateSettingValues(configuration, true))
                 },

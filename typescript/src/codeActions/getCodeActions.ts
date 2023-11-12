@@ -7,8 +7,12 @@ import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
 import declareMissingProperties from './extended/declareMissingProperties'
 import { renameParameterToNameFromType, renameAllParametersToNameFromType } from './custom/renameParameterToNameFromType'
+import addDestructure from './custom/addDestructure'
+import fromDestructure from './custom/fromDestructure'
 
 const codeActions: CodeAction[] = [
+    addDestructure,
+    fromDestructure,
     objectSwapKeysAndValues,
     changeStringReplaceToRegex,
     splitDeclarationAndInitialization,
@@ -114,7 +118,7 @@ export default (
 ): { info?: ts.ApplicableRefactorInfo; edit: ts.RefactorEditInfo } => {
     const range = typeof positionOrRange !== 'number' && positionOrRange.pos !== positionOrRange.end ? positionOrRange : undefined
     const pos = typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos
-    const node = findChildContainingPosition(ts, sourceFile, pos)
+    const node = findChildContainingExactPosition(sourceFile, pos)
     const appliableCodeActions = compact(
         codeActions.map(action => {
             const edits = action.tryToApply(sourceFile, pos, range, node, formatOptions, languageService, languageServiceHost)

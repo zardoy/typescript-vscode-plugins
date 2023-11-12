@@ -17,6 +17,7 @@ export const triggerCharacterCommands = [
     'getLastResolvedCompletion',
     'getArgumentReferencesFromCurrentParameter',
     'onEnterActions',
+    'performanceInfo',
 ] as const
 
 export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
