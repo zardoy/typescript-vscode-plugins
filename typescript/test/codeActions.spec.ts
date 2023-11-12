@@ -200,7 +200,7 @@ describe('Add destructure', () => {
                 newContent: expected,
             })
         })
-        test.skip('Should skip if cursor position on accessor', () => {
+        test('Should skip if cursor position on accessor', () => {
             const cursorOnAccessor = /* ts */ `
             const a = {
                 foo: 1,
