@@ -91,7 +91,11 @@ const convertFromDestructureWithVariableNameReplacement = (
             const printer = ts.createPrinter()
 
             // If dotDotDotToken is present, we work with rest element, so we need to replace it with identifier
-            const replacement = binding.dotDotDotToken ? uniqueVariableIdentifier : ts.isShorthandPropertyAssignment(node.parent) ? ts.factory.createPropertyAssignment(node.parent.name, declaration) : declaration
+            const replacement = binding.dotDotDotToken
+                ? uniqueVariableIdentifier
+                : ts.isShorthandPropertyAssignment(node.parent)
+                ? ts.factory.createPropertyAssignment(node.parent.name, declaration)
+                : declaration
 
             tracker.replaceRangeWithText(sourceFile, { pos, end: node.end }, printer.printNode(ts.EmitHint.Unspecified, replacement, sourceFile))
         }

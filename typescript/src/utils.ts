@@ -432,3 +432,22 @@ export const makeUniqueName = (accessorName: string, node: ts.Node, languageServ
     const uniqueReservedPropName = isReservedWord ? createUniqueName(`_${accessorName}`, sourceFile) : undefined
     return uniqueReservedPropName || uniquePropertyName || accessorName
 }
+
+export const isTypeNode = (node: ts.Node) => {
+    if (ts.isTypeNode(node)) {
+        // built-in types
+        return true
+    }
+
+    if (inTypeReference(node)) return true
+
+    return false
+
+    function inTypeReference(node: ts.Node) {
+        if (ts.isTypeReferenceNode(node)) {
+            return true
+        }
+
+        return node.parent && inTypeReference(node.parent)
+    }
+}

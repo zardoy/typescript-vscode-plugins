@@ -1,3 +1,5 @@
+import { isTypeNode } from '../utils'
+
 export default (entries: ts.CompletionEntry[], scriptSnapshot: ts.IScriptSnapshot, position: number, node: ts.Node | undefined) => {
     const charAhead = scriptSnapshot.getText(position, position + 1)
     if (charAhead === ' ') return entries
@@ -38,23 +40,4 @@ export default (entries: ts.CompletionEntry[], scriptSnapshot: ts.IScriptSnapsho
         if (entry.name === 'default' && !includeDefaultSpace) return entry
         return { ...entry, insertText: `${(entry.insertText ?? entry.name).trimEnd()} ` }
     })
-}
-
-export const isTypeNode = (node: ts.Node) => {
-    if (ts.isTypeNode(node)) {
-        // built-in types
-        return true
-    }
-
-    if (inTypeReference(node)) return true
-
-    return false
-
-    function inTypeReference(node: ts.Node) {
-        if (ts.isTypeReferenceNode(node)) {
-            return true
-        }
-
-        return node.parent && inTypeReference(node.parent)
-    }
 }
