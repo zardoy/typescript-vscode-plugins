@@ -647,6 +647,8 @@ export type Configuration = {
               typeAlias: string
               interface: string
           }
+    /** @default false */
+    enableHooksFile: boolean
 }
 
 // scrapped using search editor. config: caseInsensitive, context lines: 0, regex: const fix\w+ = "[^ ]+"
