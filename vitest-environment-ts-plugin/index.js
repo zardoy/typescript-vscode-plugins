@@ -1,5 +1,6 @@
+//@ts-check
 /** @type {import('vitest').Environment} */
-module.exports = {
+const env = {
     name: 'vitest-environment-ts-plugin',
     setup() {
         globalThis.__WEB__ = false
@@ -8,4 +9,7 @@ module.exports = {
             teardown() {},
         }
     },
+    transformMode: 'web',
 }
+
+module.exports = env
