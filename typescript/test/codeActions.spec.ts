@@ -285,6 +285,21 @@ describe('Add destructure', () => {
                 newContent: expected,
             })
         })
+        test('Should only trigger on destructure object', () => {
+            const initial = /* ts */ `
+            const object = { 
+                foo: 1,
+            }
+            const foo = 'foo'
+            /*t*/object[foo]/*t*/
+        `
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'From Destruct',
+                newContent: null,
+            })
+        })
     })
     describe('Should handle `this` keyword destructure', () => {
         test('Basic `this` destructure', () => {
