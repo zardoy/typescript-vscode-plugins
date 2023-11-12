@@ -122,6 +122,29 @@ describe('Add destructure', () => {
         `,
         })
     })
+    test('Should handle shorthandAssignment', () => {
+        const initial = /* ts */ `
+            const /*t*/newVariable/*t*/ = foo
+
+            const obj = {
+                tag: newVariable.tag,
+            }
+        `
+        const expected = /* ts */ `
+            const { tag } = foo
+
+            const obj = {
+                tag,
+            }
+        `
+
+        const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+        codeAction(0, {
+            refactorName: 'Add Destruct',
+            newContent: expected,
+        })
+    })
     describe('Should destruct function params', () => {
         const expected = /* ts */ `
             function fn({ bar, foo }) {
@@ -236,35 +259,6 @@ describe('Add destructure', () => {
                 refactorName: 'Add Destruct',
                 newContent: expected,
             })
-        })
-    })
-    test('Should skip element access expression', () => {
-        const initial = /* ts */ `
-            const /*t*/object/*t*/ = { 
-                foo: 1,
-            }
-            const foo = 'foo'
-            object[foo]
-        `
-        const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
-
-        codeAction(0, {
-            refactorName: 'From Destruct',
-            newContent: null,
-        })
-    })
-    test('Should skip direct param access', () => {
-        const initial = /* ts */ `
-            function setUser(/*t*/user/*t*/) {
-                const foo = user.objectId
-                const bar = user
-            }        
-        `
-        const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
-
-        codeAction(0, {
-            refactorName: 'From Destruct',
-            newContent: null,
         })
     })
     describe('Should handle `this` keyword destructure', () => {
@@ -542,6 +536,35 @@ describe('From destructure', () => {
                 refactorName: 'From Destruct',
                 newContent: expected,
             })
+        })
+    })
+    test('Should skip element access expression', () => {
+        const initial = /* ts */ `
+            const /*t*/object/*t*/ = { 
+                foo: 1,
+            }
+            const foo = 'foo'
+            object[foo]
+        `
+        const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+        codeAction(0, {
+            refactorName: 'From Destruct',
+            newContent: null,
+        })
+    })
+    test('Should skip direct param access', () => {
+        const initial = /* ts */ `
+            function setUser(/*t*/user/*t*/) {
+                const foo = user.objectId
+                const bar = user
+            }        
+        `
+        const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+        codeAction(0, {
+            refactorName: 'From Destruct',
+            newContent: null,
         })
     })
 })

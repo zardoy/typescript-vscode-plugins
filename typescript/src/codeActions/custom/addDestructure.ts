@@ -53,8 +53,15 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
             const uniqueName = makeUniqueName(accessorName, node, languageService, sourceFile)
 
             propertyNames.push({ initial: accessorName, unique: uniqueName === accessorName ? undefined : uniqueName })
+            const range =
+                ts.isPropertyAssignment(highlightedNode.parent.parent) && highlightedNode.parent.parent.name.getText() === accessorName
+                    ? {
+                          pos: highlightedNode.parent.parent.pos + highlightedNode.parent.parent.getLeadingTriviaWidth(),
+                          end: highlightedNode.parent.parent.end,
+                      }
+                    : { pos, end: highlightedNode.parent.end }
 
-            tracker.replaceRangeWithText(sourceFile, { pos, end: highlightedNode.parent.end }, uniqueName)
+            tracker.replaceRangeWithText(sourceFile, range, uniqueName)
             continue
         }
 
