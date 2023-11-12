@@ -89,7 +89,11 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
     const bindings = propertyNames.map(({ initial, unique, dotDotDotToken }) => {
         return ts.factory.createBindingElement(dotDotDotToken, unique ? initial : undefined, unique ?? initial)
     })
-    const bindingsWithRestLast = bindings.sort((a, b) => (!a.dotDotDotToken && !b.dotDotDotToken ? 0 : -1))
+    const withoutDotDotDotToken = bindings.filter(binding => !binding.dotDotDotToken)
+    const withDotDotDotToken = bindings.find(binding => binding.dotDotDotToken)
+
+    const bindingsWithRestLast = withDotDotDotToken ? [...withoutDotDotDotToken, withDotDotDotToken] : withoutDotDotDotToken
+
     const bindingPattern = ts.factory.createObjectBindingPattern(bindingsWithRestLast)
     const { pos, end } = nodeToReplaceWithBindingPattern
 

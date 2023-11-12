@@ -141,7 +141,7 @@ describe('Add destructure', () => {
                 newContent: expected,
             })
         })
-        test.skip('Cursor position on accessor', () => {
+        test('Should skip if cursor position on accessor', () => {
             const cursorOnParam = /* ts */ `
             function fn(newVariable) {
                 const something = newVariable./*t*/bar/*t*/ + newVariable.foo
@@ -151,7 +151,7 @@ describe('Add destructure', () => {
 
             codeAction(0, {
                 refactorName: 'Add Destruct',
-                newContent: expected,
+                newContent: null,
             })
         })
     })
@@ -200,7 +200,7 @@ describe('Add destructure', () => {
                 newContent: expected,
             })
         })
-        test.skip('Cursor position on accessor', () => {
+        test.skip('Should skip if cursor position on accessor', () => {
             const cursorOnAccessor = /* ts */ `
             const a = {
                 foo: 1,
@@ -212,7 +212,7 @@ describe('Add destructure', () => {
 
             codeAction(0, {
                 refactorName: 'Add Destruct',
-                newContent: expected,
+                newContent: null,
             })
         })
     })
@@ -285,7 +285,35 @@ describe('Add destructure', () => {
                 newContent: expected,
             })
         })
-        test('Should only trigger on destructure object', () => {
+        test('Should add rest elements only once', () => {
+            const initial = /* ts */ `
+                const /*t*/object/*t*/ = { 
+                    foo: 1,
+                    bar: 2,
+                }
+                const foo = 'foo'
+                const bar = 'bar'
+                object[foo]
+                object[bar]
+            `
+            const expected = /* ts */ `
+                const { ...newVariable } = { 
+                    foo: 1,
+                    bar: 2,
+                }
+                const foo = 'foo'
+                const bar = 'bar'
+                newVariable[foo]
+                newVariable[bar]
+            `
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+        test('Should skip if cursor on element accessor', () => {
             const initial = /* ts */ `
             const object = { 
                 foo: 1,
