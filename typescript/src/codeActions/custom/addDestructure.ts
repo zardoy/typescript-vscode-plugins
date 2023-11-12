@@ -26,10 +26,10 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
     formatOptions: ts.FormatCodeSettings | undefined,
     languageService: ts.LanguageService,
 ) => {
-    const isObjectVariableDecl = ts.isVariableDeclaration(node.parent) && node.parent.initializer && ts.isObjectLiteralExpression(node.parent.initializer)
+    const isValidInitializer = ts.isVariableDeclaration(node.parent) && node.parent.initializer && isValidInitializerForDestructure(node.parent.initializer)
 
     // Make sure it only triggers on the destructuring object or parameter
-    if (!ts.isIdentifier(node) || !(isObjectVariableDecl || ts.isParameter(node.parent))) return
+    if (!ts.isIdentifier(node) || !(isValidInitializer || ts.isParameter(node.parent))) return
 
     const highlightPositions = getPositionHighlights(node.getStart(), sourceFile, languageService)
 
