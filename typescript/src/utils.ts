@@ -11,6 +11,7 @@ export function findChildContainingPosition(typescript: typeof ts, sourceFile: t
 
         return undefined
     }
+
     return find(sourceFile)
 }
 
@@ -323,7 +324,11 @@ export const getPositionHighlights = (position: number, sourceFile: ts.SourceFil
 
 export const isValidInitializerForDestructure = (match: ts.Expression) => {
     const isFinalChainElement = (node: ts.Node) =>
-        ts.isThisTypeNode(node) || ts.isIdentifier(node) || ts.isParenthesizedExpression(node) || ts.isObjectLiteralExpression(node) || ts.isNewExpression(node)
+        ts.isIdentifier(node) ||
+        ts.isParenthesizedExpression(node) ||
+        ts.isObjectLiteralExpression(node) ||
+        ts.isNewExpression(node) ||
+        node.kind === ts.SyntaxKind.ThisKeyword
 
     const isValidChainElement = (node: ts.Node) =>
         (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node) || ts.isCallExpression(node) || ts.isNonNullExpression(node)) &&
@@ -332,9 +337,8 @@ export const isValidInitializerForDestructure = (match: ts.Expression) => {
     let currentChainElement = match
 
     while (!isFinalChainElement(currentChainElement)) {
-        if (!isValidChainElement(currentChainElement)) {
-            return false
-        }
+        if (!isValidChainElement(currentChainElement)) return false
+
         type PossibleChainElement =
             | ts.PropertyAccessExpression
             | ts.CallExpression

@@ -1,4 +1,3 @@
-import { initial } from 'lodash'
 import { fourslashLikeTester } from './testing'
 
 test('Split Declaration and Initialization', () => {
@@ -279,6 +278,30 @@ describe('Add destructure', () => {
             newVariable[foo]
             bar
         `
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+    })
+    describe('Should handle `this` keyword destructure', () => {
+        test('Basic `this` destructure', () => {
+            const initial = /* ts */ `
+                const obj = {
+                    foo() {
+                        const a = /*t*/this.a/*t*/
+                    }
+                }
+            `
+            const expected = /* ts */ `
+                const obj = {
+                    foo() {
+                        const { a } = this
+                    }
+                }
+            `
             const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
 
             codeAction(0, {
