@@ -59,6 +59,8 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
         }
 
         if (ts.isIdentifier(highlightedNode) && (ts.isVariableDeclaration(highlightedNode.parent) || ts.isParameter(highlightedNode.parent))) {
+            // Already met a target node - abort as we encountered direct use of the potential destructured variable
+            if (nodeToReplaceWithBindingPattern) return
             nodeToReplaceWithBindingPattern = highlightedNode
             continue
         }

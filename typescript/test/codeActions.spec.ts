@@ -238,95 +238,33 @@ describe('Add destructure', () => {
             })
         })
     })
-    describe('Should work with index access', () => {
-        test('Adds destructure when index access content is string', () => {
-            const initial = /* ts */ `
-            const /*t*/newVariable/*t*/ = { 
-                foo: 1,
-            }
-            newVariable['foo']
-        `
-            const expected = /* ts */ `
-            const { foo } = { 
-                foo: 1,
-            }
-            foo
-        `
-            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
-
-            codeAction(0, {
-                refactorName: 'Add Destruct',
-                newContent: expected,
-            })
-        })
-        test('Should add rest elements to destructure when index access content is expression', () => {
-            const initial = /* ts */ `
+    test('Should skip element access expression', () => {
+        const initial = /* ts */ `
             const /*t*/object/*t*/ = { 
                 foo: 1,
-                bar: 2,
             }
             const foo = 'foo'
             object[foo]
-            object.bar
         `
-            const expected = /* ts */ `
-            const { bar, ...newVariable } = { 
-                foo: 1,
-                bar: 2,
-            }
-            const foo = 'foo'
-            newVariable[foo]
-            bar
-        `
-            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+        const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
 
-            codeAction(0, {
-                refactorName: 'Add Destruct',
-                newContent: expected,
-            })
+        codeAction(0, {
+            refactorName: 'From Destruct',
+            newContent: null,
         })
-        test('Should add rest elements only once', () => {
-            const initial = /* ts */ `
-                const /*t*/object/*t*/ = { 
-                    foo: 1,
-                    bar: 2,
-                }
-                const foo = 'foo'
-                const bar = 'bar'
-                object[foo]
-                object[bar]
-            `
-            const expected = /* ts */ `
-                const { ...newVariable } = { 
-                    foo: 1,
-                    bar: 2,
-                }
-                const foo = 'foo'
-                const bar = 'bar'
-                newVariable[foo]
-                newVariable[bar]
-            `
-            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
-
-            codeAction(0, {
-                refactorName: 'Add Destruct',
-                newContent: expected,
-            })
-        })
-        test('Should skip if cursor on element accessor', () => {
-            const initial = /* ts */ `
-            const object = { 
-                foo: 1,
-            }
-            const foo = 'foo'
-            /*t*/object[foo]/*t*/
+    })
+    test('Should skip direct param access', () => {
+        const initial = /* ts */ `
+            function setUser(/*t*/user/*t*/) {
+                const foo = user.objectId
+                const bar = user
+            }        
         `
-            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+        const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
 
-            codeAction(0, {
-                refactorName: 'From Destruct',
-                newContent: null,
-            })
+        codeAction(0, {
+            refactorName: 'From Destruct',
+            newContent: null,
         })
     })
     describe('Should handle `this` keyword destructure', () => {
