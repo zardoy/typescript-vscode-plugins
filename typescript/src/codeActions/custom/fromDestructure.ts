@@ -94,8 +94,8 @@ const convertFromDestructureWithVariableNameReplacement = (
             const replacement = binding.dotDotDotToken
                 ? uniqueVariableIdentifier
                 : ts.isShorthandPropertyAssignment(node.parent)
-                ? ts.factory.createPropertyAssignment(node.parent.name, declaration)
-                : declaration
+                  ? ts.factory.createPropertyAssignment(node.parent.name, declaration)
+                  : declaration
 
             tracker.replaceRangeWithText(sourceFile, { pos, end: node.end }, printer.printNode(ts.EmitHint.Unspecified, replacement, sourceFile))
         }
