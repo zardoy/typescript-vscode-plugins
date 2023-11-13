@@ -285,6 +285,22 @@ describe('Add destructure', () => {
             })
         })
     })
+    test('Should skip if trying to destruct call expression', () => {
+        const initial = /* ts */ `
+            const /*t*/newVariable/*t*/ = foo
+
+            const obj = {
+                tag: newVariable.map(() => 10),
+            }
+        `
+
+        const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+        codeAction(0, {
+            refactorName: 'Add Destruct',
+            newContent: null,
+        })
+    })
 })
 
 describe('From destructure', () => {

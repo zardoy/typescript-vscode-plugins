@@ -438,16 +438,11 @@ export const isTypeNode = (node: ts.Node) => {
         // built-in types
         return true
     }
+    const isInTypeReference = (node: ts.Node) => {
+        if (ts.isTypeReferenceNode(node)) return true
 
-    if (inTypeReference(node)) return true
-
-    return false
-
-    function inTypeReference(node: ts.Node) {
-        if (ts.isTypeReferenceNode(node)) {
-            return true
-        }
-
-        return node.parent && inTypeReference(node.parent)
+        return node.parent && isInTypeReference(node.parent)
     }
+
+    return isInTypeReference(node)
 }
