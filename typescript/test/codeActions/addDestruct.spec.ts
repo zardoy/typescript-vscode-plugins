@@ -267,5 +267,22 @@ describe('Add destructure', () => {
                 newContent: null,
             })
         })
+        test('Should skip typeof operator', () => {
+            const initial = /* ts */ `
+                const /*t*/obj/*t*/ = {
+                    test: 1,
+                }
+                obj.test
+                
+                type foo = typeof obj;
+            `
+
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: null,
+            })
+        })
     })
 })

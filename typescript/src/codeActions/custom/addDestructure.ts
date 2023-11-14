@@ -43,7 +43,13 @@ const addDestructureToVariableWithSplittedPropertyAccessors = (
         const highlightedNode = findChildContainingExactPosition(sourceFile, pos)
 
         if (!highlightedNode) continue
-        if (ts.isElementAccessExpression(highlightedNode.parent) || ts.isCallExpression(highlightedNode.parent.parent)) return
+
+        if (
+            ts.isElementAccessExpression(highlightedNode.parent) ||
+            ts.isCallExpression(highlightedNode.parent.parent) ||
+            ts.isTypeQueryNode(highlightedNode.parent)
+        )
+            return
 
         if (ts.isIdentifier(highlightedNode) && ts.isPropertyAccessExpression(highlightedNode.parent)) {
             const accessorName = highlightedNode.parent.name.getText()
