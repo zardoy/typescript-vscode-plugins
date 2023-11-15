@@ -7,12 +7,12 @@ import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
 import declareMissingProperties from './extended/declareMissingProperties'
 import { renameParameterToNameFromType, renameAllParametersToNameFromType } from './custom/renameParameterToNameFromType'
-import addDestructure from './custom/addDestructure'
-import fromDestructure from './custom/fromDestructure'
+import addDestructure_1 from './custom/addDestructure/addDestructure'
+import fromDestructure_1 from './custom/fromDestructure/fromDestructure'
 
 const codeActions: CodeAction[] = [
-    addDestructure,
-    fromDestructure,
+    addDestructure_1,
+    fromDestructure_1,
     objectSwapKeysAndValues,
     changeStringReplaceToRegex,
     splitDeclarationAndInitialization,
