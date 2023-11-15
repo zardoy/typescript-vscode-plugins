@@ -9,8 +9,8 @@ export default (): ts.CompletionEntry[] => {
     const accessNode = ts.isElementAccessExpression(node.parent)
         ? node.parent
         : isConditionalExpression && ts.isElementAccessExpression(node.parent.parent)
-        ? node.parent.parent
-        : null
+          ? node.parent.parent
+          : null
     if (!accessNode) return []
     const typeChecker = program.getTypeChecker()
     const type = typeChecker.getTypeAtLocation(accessNode.expression)
