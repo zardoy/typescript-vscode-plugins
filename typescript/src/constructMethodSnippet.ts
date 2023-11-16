@@ -1,7 +1,6 @@
 import { compact, oneOf } from '@zardoy/utils'
-import { isTypeNode } from './completions/keywordsSpace'
 import { GetConfig } from './types'
-import { findChildContainingExactPosition } from './utils'
+import { findChildContainingExactPosition, isTypeNode } from './utils'
 import extractType from './utils/extractType'
 
 // todo-low-ee inspect any last arg infer

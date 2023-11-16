@@ -24,14 +24,16 @@ const plugin = ({ typescript }: Parameters<ts.server.PluginModuleFactory>[0]) =>
 
             // #region watch enablePlugin setting
             let prevPluginEnabledSetting = _configObj.config.enablePlugin
+            let prevHooksFile = _configObj.config.enableHooksFile
             updateConfigListeners.push(() => {
                 if ((prevPluginEnabledSetting === true || prevPluginEnabledSetting === undefined) && !_configObj.config.enablePlugin) {
                     // plugin got disabled, restore original languageService methods
                     // todo resetting doesn't work after tsconfig changes
                     getInitialProxy(info.languageService, proxy)
-                } else if (prevPluginEnabledSetting === false && _configObj.config.enablePlugin) {
+                } else if ((prevPluginEnabledSetting === false && _configObj.config.enablePlugin) || prevHooksFile !== _configObj.config.enableHooksFile) {
                     // plugin got enabled
                     decorateLanguageService(info, proxy, _configObj, _configObj.config?.['_additionalPluginOptions'])
+                    prevHooksFile = _configObj.config.enableHooksFile
                 }
 
                 prevPluginEnabledSetting = _configObj.config.enablePlugin

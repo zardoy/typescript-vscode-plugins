@@ -10,8 +10,8 @@ export const printNodeForObjectKey = (node: ts.Node) => {
     const needsComputedBraces = approveCast(node, ts.isStringLiteral, ts.isNumericLiteral)
         ? false
         : approveCast(node, ts.isIdentifier, ts.isCallExpression, ts.isPropertyAccessExpression)
-        ? true
-        : undefined
+          ? true
+          : undefined
     if (needsComputedBraces === undefined) return
     let nodeText = node.getText()
     if (needsComputedBraces) {
@@ -51,8 +51,8 @@ export default {
                     newText: ts.isComputedPropertyName(name)
                         ? name.expression.getText()
                         : ts.isIdentifier(name)
-                        ? /* TODO quote preference */ `'${name.text}'`
-                        : name.getText(),
+                          ? /* TODO quote preference */ `'${name.text}'`
+                          : name.getText(),
                     span: nodeToSpan(initializer),
                 },
             )

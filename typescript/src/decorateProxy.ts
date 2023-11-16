@@ -1,6 +1,7 @@
 import lodashGet from 'lodash.get'
 import { getCompletionsAtPosition, PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
 import { RequestInputTypes, TriggerCharacterCommand } from './ipcTypes'
+import { findChildContainingExactPosition, nodeModules } from './utils'
 import { getNavTreeItems } from './getPatchedNavTree'
 import decorateCodeActions from './codeActions/decorateProxy'
 import decorateSemanticDiagnostics from './semanticDiagnostics'
@@ -116,5 +117,32 @@ export const decorateLanguageService = (
     }
 
     languageService[thisPluginMarker] = true
+
+    if (!__WEB__ && c('enableHooksFile')) {
+        const projectRoot = languageServiceHost.getCurrentDirectory()
+        const hooksFilePath = nodeModules!.path.join(projectRoot, '.vscode/ts-essentials.js')
+        if (languageServiceHost.fileExists(hooksFilePath)) {
+            try {
+                proxy['original-proxy'] ??= { ...proxy }
+                const ls = proxy['original-proxy']
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
+                const hooks = require(hooksFilePath)({
+                    ts,
+                    ls,
+                    languageService: ls,
+                    languageServiceHost,
+                    c,
+                    config,
+                    utils: {
+                        getNodeAtPosition: findChildContainingExactPosition,
+                    },
+                })
+                Object.assign(proxy, hooks)
+            } catch (err) {
+                console.warn('Failed to load hooks file', err) // todo issue
+            }
+        }
+    }
+
     return proxy
 }
