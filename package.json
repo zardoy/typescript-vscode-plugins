@@ -138,6 +138,7 @@
         "fs-extra": "^10.1.0",
         "got": "^12.5.3",
         "got-cjs": "npm:got@^11.x",
+        "prettier": "3.1.0",
         "tsm": "^2.3.0",
         "type-fest": "^2.13.1",
         "typed-jsonfile": "^0.2.1",
