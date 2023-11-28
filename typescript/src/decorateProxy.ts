@@ -19,6 +19,7 @@ import decorateSignatureHelp from './decorateSignatureHelp'
 import decorateFindRenameLocations from './decorateFindRenameLocations'
 import decorateQuickInfoAtPosition from './decorateQuickInfoAtPosition'
 import decorateEditsForFileRename from './decorateEditsForFileRename'
+import decorateLinkedEditing from './decorateLinkedEditing'
 
 /** @internal */
 export const thisPluginMarker = '__essentialPluginsMarker__'
@@ -102,6 +103,7 @@ export const decorateLanguageService = (
     decorateSignatureHelp(proxy, languageService, languageServiceHost, c)
     decorateFindRenameLocations(proxy, languageService, c)
     decorateQuickInfoAtPosition(proxy, languageService, languageServiceHost, c)
+    decorateLinkedEditing(proxy, languageService, languageServiceHost, c)
 
     libDomPatching(languageServiceHost, c)
 
