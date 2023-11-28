@@ -76,7 +76,7 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
         let shouldBeCached = firstDeclarationFileName.includes('node_modules')
         if (!shouldBeCached && firstDeclaration.getSourceFile().fileName === fileName) {
             // startMark()
-            const definitionAtPosition = languageService.getDefinitionAtPosition(fileName, firstDeclaration.pos + 1)?.[0]
+            const definitionAtPosition = languageService.getDefinitionAtPosition(fileName, firstDeclaration.pos + firstDeclaration.getLeadingTriviaWidth())?.[0]
             // addMark('getDefinitionAtPosition')
             if (!definitionAtPosition) return
             shouldBeCached = definitionAtPosition.fileName.includes('node_modules')
