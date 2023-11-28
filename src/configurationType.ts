@@ -583,6 +583,12 @@ export type Configuration = {
      */
     'experiments.enableInsertNameOfSuggestionFix': boolean
     /**
+     * Speed up JSX linked editing by not using actual tsserver command when possible, which in theory may introduce some inconsistencies.
+     * Note that currently it doesn't really help if you have `"typescript.tsserver.useSyntaxServer": "auto"` in the settings.
+     * @default true
+     */
+    'experiments.speedLinkedEditing': boolean
+    /**
      * Map *symbol - array of modules* to change sorting of imports - first available takes precedence in auto import code fixes (+ import all action)
      *
      * Examples:

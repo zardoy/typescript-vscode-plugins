@@ -7,14 +7,21 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
     proxy.getEditsForFileRename = (oldFilePath, newFilePath, formatOptions, preferences) => {
         let edits = languageService.getEditsForFileRename(oldFilePath, newFilePath, formatOptions, preferences)
         if (c('renameImportNameOfFileRename')) {
-            const predictedNameFromPath = (p: string) => camelCase(p.split(/[/\\]/g).pop()!.replace(/\..+/, ''))
+            const predictedNameFromPath = (p: string) => {
+                const input = p.split(/[/\\]/g).pop()!.replace(/\..+/, '')
+                const transformed = camelCase(input)
+                // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+                const isFirstUppercase = input && input.startsWith(input[0]!.toUpperCase())
+                return isFirstUppercase ? transformed[0]!.toUpperCase() + transformed.slice(1) : transformed
+            }
             const oldPredictedName = predictedNameFromPath(oldFilePath)
             const newPredictedName = predictedNameFromPath(newFilePath)
             for (const edit of edits) {
                 const possiblyAddRename = (identifier: ts.Identifier | undefined) => {
                     if (identifier?.text !== oldPredictedName) return
                     const sourceFile = languageService.getProgram()!.getSourceFile(edit.fileName)!
-                    const newRenameEdits = proxy.findRenameLocations(edit.fileName, identifier.pos, false, false, preferences ?? {}) ?? []
+                    const newRenameEdits =
+                        proxy.findRenameLocations(edit.fileName, identifier.pos + identifier.getLeadingTriviaWidth(), false, false, preferences ?? {}) ?? []
                     if (!newRenameEdits) return
                     // maybe cancel symbol rename on collision instead?
                     const newInsertName = tsFull.getUniqueName(newPredictedName, sourceFile as any)

@@ -70,6 +70,10 @@
             {
                 "command": "printPerformanceMemoryInfo",
                 "title": "Print Performance & Memory Info"
+            },
+            {
+                "command": "migrateRequireToImports",
+                "title": "Migrate Require to Imports"
             }
         ],
         "keybindings": [

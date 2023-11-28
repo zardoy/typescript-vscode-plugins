@@ -7,7 +7,7 @@ import { compact } from '@zardoy/utils'
 import { offsetPosition } from '@zardoy/vscode-utils/build/position'
 import { RequestInputTypes, RequestOutputTypes } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
-import { tsRangeToVscode, tsRangeToVscodeSelection } from './util'
+import { tsRangeToVscode, tsRangeToVscodeSelection, tsTextChangesToVscodeTextEdits } from './util'
 import { onCompletionAcceptedOverride } from './onCompletionAccepted'
 
 export default () => {
@@ -307,6 +307,16 @@ export default () => {
         if (!info) return
         console.dir(info, { depth: 10 })
         console.show(true)
+    })
+
+    registerExtensionCommand('migrateRequireToImports', async () => {
+        const data = await sendCommand('getMigrateToImportsEdits', {})
+        if (!data) return
+        const { document } = vscode.window.activeTextEditor!
+        const edits = tsTextChangesToVscodeTextEdits(document, data)
+        const edit = new vscode.WorkspaceEdit()
+        edit.set(document.uri, edits)
+        await vscode.workspace.applyEdit(edit)
     })
 
     // registerExtensionCommand('insertImportFlatten', () => {

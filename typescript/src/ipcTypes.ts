@@ -17,6 +17,7 @@ export const triggerCharacterCommands = [
     'getLastResolvedCompletion',
     'getArgumentReferencesFromCurrentParameter',
     'performanceInfo',
+    'getMigrateToImportsEdits',
 ] as const
 
 export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
@@ -115,6 +116,7 @@ export type RequestOutputTypes = {
     }
     getArgumentReferencesFromCurrentParameter: Array<{ line: number; character: number; filename: string }>
     'emmet-completions': EmmetResult
+    getMigrateToImportsEdits: ts.TextChange[]
 }
 
 // export type EmmetResult = {
