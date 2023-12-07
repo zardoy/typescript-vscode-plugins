@@ -11,8 +11,13 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
           }
         | undefined
     proxy.getLinkedEditingRangeAtPosition = (fileName, position) => {
+        const scriptSnapshot = languageServiceHost.getScriptSnapshot(fileName)!
+        const fileContent = scriptSnapshot.getText(0, scriptSnapshot.getLength())
+        const lastChar = fileContent[position - 1]
+
         if (
             c('experiments.speedLinkedEditing') &&
+            /[\w\d.-]/i.test(lastChar ?? '') &&
             lastLinkedEditingRangeRequest &&
             lastLinkedEditingRangeRequest.pos === position - 1 &&
             lastLinkedEditingRangeRequest.fileName === fileName
