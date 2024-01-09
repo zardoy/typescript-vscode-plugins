@@ -20,20 +20,34 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             })
         }
 
+        const program = languageService.getProgram()!
+        const sourceFile = program.getSourceFile(fileName)!
+        const getNode = () => {
+            return findChildContainingExactPosition(sourceFile, position)
+        }
+
+        const noDefs = !prior || !prior.definitions || prior.definitions.length === 0
+        const tryFileResolve = noDefs || ['?', '#'].some(x => prior.definitions?.[0]?.fileName?.includes(x))
+
         // Definition fallbacks
-        if (!prior || prior.definitions?.length === 0) {
-            const program = languageService.getProgram()!
-            const sourceFile = program.getSourceFile(fileName)!
-            const node = findChildContainingExactPosition(sourceFile, position)
+        if (noDefs || tryFileResolve) {
+            const node = getNode()
             if (node && ts.isStringLiteral(node)) {
                 const textSpanStart = node.pos + node.getLeadingTriviaWidth() + 1 // + 1 for quote
                 const textSpan = {
                     start: textSpanStart,
                     length: node.end - textSpanStart - 1,
                 }
-                if (c('enableFileDefinitions') && ['./', '../'].some(str => node.text.startsWith(str))) {
-                    const file = join(fileName, '..', node.text)
-                    if (languageServiceHost.fileExists?.(file)) {
+
+                if (tryFileResolve && c('enableFileDefinitions') && ['./', '../'].some(str => node.text.startsWith(str))) {
+                    const pathText = node.text.split('?')[0]!.split('#')[0]!
+                    const fileCandidates = [
+                        join(fileName, '..', pathText),
+                        // also try to resolve from root. Why? It might common in Node.js script paths that go from working directory (project root)
+                        pathText.startsWith('./') ? join(languageServiceHost.getCurrentDirectory(), pathText) : (undefined as never),
+                    ].filter(Boolean)
+                    const resolvedFile = fileCandidates.find(file => languageServiceHost.fileExists?.(file))
+                    if (resolvedFile) {
                         return {
                             textSpan,
                             definitions: [
@@ -41,7 +55,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                                     containerKind: undefined as any,
                                     containerName: '',
                                     name: '',
-                                    fileName: file,
+                                    fileName: resolvedFile,
                                     textSpan: { start: 0, length: 0 },
                                     kind: ts.ScriptElementKind.moduleElement,
                                     contextSpan: { start: 0, length: 0 },
@@ -50,10 +64,9 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                         }
                     }
                 }
-
                 // partial fix for https://github.com/microsoft/TypeScript/issues/49033 (string literal in function call definition)
                 // thoughts about type definition: no impl here, will be simpler to do this in core instead
-                if (ts.isCallExpression(node.parent)) {
+                if (noDefs && ts.isCallExpression(node.parent)) {
                     const parameterIndex = node.parent.arguments.indexOf(node)
                     const typeChecker = program.getTypeChecker()
                     const type = typeChecker.getContextualType(node.parent.expression) ?? typeChecker.getTypeAtLocation(node.parent.expression)
@@ -108,7 +121,8 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                     }
                 }
             }
-            return prior
+
+            if (noDefs) return prior
         }
 
         if (__WEB__) {
