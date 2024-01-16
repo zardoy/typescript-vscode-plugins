@@ -83,13 +83,12 @@ const isConfigValueChanged = (settingId: string) => {
                 path = path[0]!.toUpperCase() + path.slice(1)
             }
 
-            return path.replace(/\\/g, '/')
+            return path.replaceAll('\\', '/')
         }
 
         userValue = normalizePathWin(userValue)
         extensionsBasePath = normalizePathWin(extensionsBasePath)
-        if (userValue.startsWith(extensionsBasePath)) return false
-        return true
+        return !userValue.startsWith(extensionsBasePath)
     }
 
     return undefined

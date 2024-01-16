@@ -8,15 +8,12 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
 
         if (c('removeModuleFileDefinitions') && prior) {
             prior.definitions = prior.definitions?.filter(def => {
-                if (
+                return !(
                     def.kind === ts.ScriptElementKind.moduleElement &&
                     def.name.slice(1, -1).startsWith('*.') &&
                     def.containerKind === undefined &&
                     (def as import('typescript-full').DefinitionInfo).isAmbient
-                ) {
-                    return false
-                }
-                return true
+                )
             })
         }
 
@@ -26,7 +23,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             return findChildContainingExactPosition(sourceFile, position)
         }
 
-        const noDefs = !prior || !prior.definitions || prior.definitions.length === 0
+        const noDefs = !prior?.definitions || prior.definitions.length === 0
         const tryFileResolve = noDefs || ['?', '#'].some(x => prior.definitions?.[0]?.fileName?.includes(x))
 
         // Definition fallbacks
@@ -153,6 +150,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 const isFcDef = filterOutReactFcDef && fileName.endsWith('node_modules/@types/react/index.d.ts') && containerName === 'FunctionComponent'
                 if (isFcDef) return false
                 // filter out css modules index definition
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
                 if (containerName === 'classes' && containerKind === undefined && rest['isAmbient'] && kind === 'index' && name === '__index') {
                     // ensure we don't filter out something important?
                     const nodeAtDefinition = findChildContainingExactPosition(languageService.getProgram()!.getSourceFile(fileName)!, textSpan.start)

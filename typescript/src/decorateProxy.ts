@@ -93,7 +93,7 @@ export const decorateLanguageService = (
             return result.completions
         } catch (err) {
             setTimeout(() => {
-                throw err
+                throw err as Error
             })
             return {
                 entries: [

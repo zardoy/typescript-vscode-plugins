@@ -29,7 +29,11 @@
                     }
                 ]
             }
-        ]
+        ],
+        "unicorn/switch-case-braces": "off",
+        "@typescript-eslint/consistent-type-imports": "off",
+        "@typescript-eslint/ban-types": "off",
+        "sonarjs/prefer-single-boolean-return": "off"
     },
     "overrides": [
         {

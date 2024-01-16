@@ -234,7 +234,7 @@ export const getCancellationToken = (languageServiceHost: ts.LanguageServiceHost
     // }
     cancellationToken ??= {
         isCancellationRequested: () => false,
-        throwIfCancellationRequested: () => {},
+        throwIfCancellationRequested() {},
     }
     if (!cancellationToken.throwIfCancellationRequested) {
         cancellationToken.throwIfCancellationRequested = () => {
@@ -297,7 +297,7 @@ export const patchMethod = <T, K extends keyof T>(obj: T, method: K, overriden: 
     }
 }
 
-export const insertTextAfterEntry = (entryOrName: string, appendText: string) => entryOrName.replace(/\$/g, '\\$') + appendText
+export const insertTextAfterEntry = (entryOrName: string, appendText: string) => entryOrName.replaceAll('$', '\\$') + appendText
 
 export const matchParents: MatchParentsType = (node, treeToCompare) => {
     let first = true

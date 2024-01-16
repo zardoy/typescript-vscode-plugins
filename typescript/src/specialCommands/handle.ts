@@ -76,7 +76,7 @@ export default (
     if (specialCommand === 'getNodeAtPosition') {
         // ensure return data is the same as for node in getNodePath
         const node = findChildContainingPosition(ts, sourceFile, position)
-        return !node ? undefined : nodeToApiResponse(node)
+        return node ? nodeToApiResponse(node) : undefined
     }
     if (specialCommand === 'getSpanOfEnclosingComment') {
         return languageService.getSpanOfEnclosingComment(fileName, position, false)

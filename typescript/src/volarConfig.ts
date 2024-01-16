@@ -119,7 +119,7 @@ const plugin: (...args: Parameters<import('@vue/language-service').Service>) => 
 
 module.exports = {
     services: {
-        typescriptEssentialPlugins: (...args) => {
+        typescriptEssentialPlugins(...args) {
             ;(async () => {
                 try {
                     await plugin(...args)

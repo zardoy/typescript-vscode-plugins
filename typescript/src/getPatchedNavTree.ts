@@ -10,7 +10,7 @@ type AdditionalFeatures = Record<'arraysTuplesNumberedItems', boolean>
 
 const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavigationTree(...args) } => {
     // what is happening here: grabbing & patching NavigationBar module contents from actual running JS
-    const tsServerPath = typeof __TS_SEVER_PATH__ !== 'undefined' ? __TS_SEVER_PATH__ : require.main!.filename
+    const tsServerPath = __TS_SEVER_PATH__ === undefined ? require.main!.filename : __TS_SEVER_PATH__
     // current lib/tsserver.js
     const mainScript = nodeModules!.fs.readFileSync(tsServerPath, 'utf8')
     type PatchData = {
@@ -90,19 +90,19 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
         patches,
         returnModuleCode,
         skipStartMarker = false,
-    }: PatchData = !isTs5()
+    }: PatchData = isTs5()
         ? {
-              markerModuleStart: 'var NavigationBar;',
-              markerModuleEnd: '(ts.NavigationBar = {}));',
-              patches: patchLocations,
-              returnModuleCode: 'NavigationBar',
-          }
-        : {
               markerModuleStart: '// src/services/navigationBar.ts',
               skipStartMarker: true,
               markerModuleEnd: '// src/',
               patches: patchLocations,
               returnModuleCode: '{ getNavigationTree }',
+          }
+        : {
+              markerModuleStart: 'var NavigationBar;',
+              markerModuleEnd: '(ts.NavigationBar = {}));',
+              patches: patchLocations,
+              returnModuleCode: 'NavigationBar',
           }
 
     const contentAfterModuleStart = mainScript.slice(mainScript.indexOf(markerModuleStart) + (skipStartMarker ? markerModuleStart.length : 0))
@@ -114,10 +114,10 @@ const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavig
             const newIndexStart = addTypeIndex + 1
             addTypeIndex = newIndexStart + lines.slice(newIndexStart).findIndex(line => line.includes(search))
         }
-        if (addTypeIndex !== -1) {
-            lines.splice(addTypeIndex + linesOffset, removeLines, ...(addString ? [addString] : []))
-        } else {
+        if (addTypeIndex === -1) {
             console.error(`TS Essentials: Failed to patch NavBar module (outline): ${JSON.stringify(searchString)}`)
+        } else {
+            lines.splice(addTypeIndex + linesOffset, removeLines, ...(addString ? [addString] : []))
         }
     }
     const getModuleString = () => `module.exports = (ts, getNameFromJsxTag) => {\n${lines.join('\n')}\nreturn ${returnModuleCode}}`

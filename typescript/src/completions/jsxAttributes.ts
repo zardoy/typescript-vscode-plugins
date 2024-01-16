@@ -84,11 +84,11 @@ export default (
             const locals = collectLocalSymbols(node, sharedCompletionContext.typeChecker)
             entries = entries.flatMap(entry => {
                 if (locals.includes(entry.name)) {
-                    const insertText = entry.name + `={${entry.name}}`
+                    const insertText = `${entry.name}={${entry.name}}`
                     const additionalSuggestions = {
                         ...entry,
                         name: insertText,
-                        insertText: insertText,
+                        insertText,
                     }
                     return enableJsxAttributesShortcuts === 'after' ? [entry, additionalSuggestions] : [additionalSuggestions, entry]
                 }

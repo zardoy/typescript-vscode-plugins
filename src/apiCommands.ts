@@ -15,7 +15,7 @@ type RequestOptions = Partial<{
 }>
 
 /** @unique */
-const cacheableCommands: Set<(typeof passthroughExposedApiCommands)[number]> = new Set(['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition'])
+const cacheableCommands = new Set<(typeof passthroughExposedApiCommands)[number]>(['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition'])
 const operationsCache = new Map<string, { key: string; data; time?: number }>()
 export const sharedApiRequest = async (type: TriggerCharacterCommand, { offset, relativeOffset = 0, document, position }: RequestOptions) => {
     if (position && offset) throw new Error('Only position or offset parameter can be provided')

@@ -36,7 +36,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                     let sorting = '-1'
                     if (placeholderIndexesInfo) {
                         const targetModule = description[placeholderIndexesInfo[1] + 1]
-                        const symbolName = placeholderIndexesInfo[2] !== undefined ? description[placeholderIndexesInfo[2] + 1] : (node as ts.Identifier).text
+                        const symbolName = placeholderIndexesInfo[2] === undefined ? (node as ts.Identifier).text : description[placeholderIndexesInfo[2] + 1]
 
                         const toIgnore = isAutoImportEntryShouldBeIgnored(ignoreAutoImportsSetting, targetModule, symbolName)
 
@@ -201,7 +201,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                                     const sortFn = changeSortingOfAutoImport(c, fixes[0]!.symbolName)
                                     fixes = _.sortBy(
                                         fixes.filter(({ fix, symbolName }) => {
-                                            if (fix.kind === (ImportFixKind.PromoteTypeOnly as number)) return false
+                                            if ((fix.kind as number) === (ImportFixKind.PromoteTypeOnly as number)) return false
                                             const shouldBeIgnored =
                                                 c('autoImport.alwaysIgnoreInImportAll').includes(fix.moduleSpecifier) ||
                                                 isAutoImportEntryShouldBeIgnored(ignoreAutoImportsSetting, fix.moduleSpecifier, symbolName)
@@ -225,9 +225,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                                         )
                                     if (namespaceImportAction) {
                                         fixes = []
-                                        if (!namespaceImportAction.namespace) {
-                                            additionalTextChanges.push(...namespaceImportAction.textChanges)
-                                        } else {
+                                        if (namespaceImportAction.namespace) {
                                             const { namespace, useDefaultImport, textChanges } = namespaceImportAction
                                             additionalTextChanges.push(textChanges[1]!)
                                             fixes.unshift({
@@ -241,6 +239,8 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                                                 },
                                                 symbolName: namespace,
                                             } as FixInfo)
+                                        } else {
+                                            additionalTextChanges.push(...namespaceImportAction.textChanges)
                                         }
                                     }
                                     if (!fixes[0]) throw new Error('No fixes')
@@ -260,7 +260,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                         importAdder.addImportFromDiagnostic({ ...diagnostic, file: sourceFile as unknown as FullSourceFile } as any, context)
                     } catch (err) {
                         if (err.message === 'No fixes') continue
-                        throw err
+                        throw err as Error
                     }
                 } finally {
                     for (const unpatch of toUnpatch) {
@@ -293,7 +293,7 @@ const getFixAllErrorCodes = () => {
     return errorCodes
 }
 
-interface FixInfo {
+type FixInfo = {
     readonly fix: ImportFix
     readonly symbolName: string
     readonly errorIdentifierText: string | undefined
@@ -313,31 +313,31 @@ const enum ImportFixKind {
 type SymbolExportInfo = import('typescript-full').SymbolExportInfo
 
 // Properties are be undefined if fix is derived from an existing import
-interface ImportFixBase {
+type ImportFixBase = {
     readonly isReExport?: boolean
     readonly exportInfo?: SymbolExportInfo
     readonly moduleSpecifier: string
 }
-interface FixUseNamespaceImport extends ImportFixBase {
+type FixUseNamespaceImport = {
     readonly kind: ImportFixKind.UseNamespace
     readonly namespacePrefix: string
     readonly position: number
-}
-interface FixAddJsdocTypeImport extends ImportFixBase {
+} & ImportFixBase
+type FixAddJsdocTypeImport = {
     readonly kind: ImportFixKind.JsdocTypeImport
     readonly position: number
     readonly isReExport: boolean
     readonly exportInfo: SymbolExportInfo
-}
-interface FixAddToExistingImport extends ImportFixBase {
+} & ImportFixBase
+type FixAddToExistingImport = {
     readonly kind: ImportFixKind.AddToExisting
     // readonly importClauseOrBindingPattern: ImportClause | ObjectBindingPattern
     // readonly importKind: ImportKind.Default | ImportKind.Named
     // readonly addAsTypeOnly: AddAsTypeOnly
-}
-interface FixAddNewImport extends ImportFixBase {
+} & ImportFixBase
+type FixAddNewImport = {
     readonly kind: ImportFixKind.AddNew
     // readonly importKind: ImportKind
     // readonly addAsTypeOnly: AddAsTypeOnly
     readonly useRequire: boolean
-}
+} & ImportFixBase
