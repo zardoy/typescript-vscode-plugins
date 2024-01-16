@@ -14,7 +14,7 @@ const plugin: (...args: Parameters<import('@vue/language-service').Service>) => 
         return
     }
     if (!tsModule) throw new Error('typescript module is missing!')
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
         if (context.services.typescript) {
             resolve()
         } else {

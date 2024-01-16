@@ -297,7 +297,7 @@ export const getCompletionsAtPosition = (
     addSourceDefinition(prior.entries)
     displayImportedInfo(prior.entries)
 
-    if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
+    if (leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 
     prior.entries = localityBonus(prior.entries) ?? prior.entries
     typecastCompletions()

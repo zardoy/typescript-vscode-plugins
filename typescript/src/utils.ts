@@ -375,14 +375,31 @@ export const isNameUniqueAtLocation = (name: string, location: ts.Node | undefin
     }
     return !hasCollision
 }
-export const isNameUniqueAtNodeClosestScope = (name: string, node: ts.Node, typeChecker: ts.TypeChecker) => {
-    const closestScope = findClosestParent(
+const getClosestParentScope = (node: ts.Node) => {
+    return findClosestParent(
         node,
         [ts.SyntaxKind.Block, ts.SyntaxKind.FunctionDeclaration, ts.SyntaxKind.FunctionExpression, ts.SyntaxKind.ArrowFunction, ts.SyntaxKind.SourceFile],
         [],
         false,
     )
+}
+export const isNameUniqueAtNodeClosestScope = (name: string, node: ts.Node, typeChecker: ts.TypeChecker) => {
+    const closestScope = getClosestParentScope(node)
     return isNameUniqueAtLocation(name, closestScope, typeChecker)
+}
+
+export const collectLocalSymbols = (location: ts.Node, typeChecker: ts.TypeChecker) => {
+    const symbolNames = new Set<string>()
+    while (location) {
+        const symbols = (location as unknown as import('typescript-full').LocalsContainer).locals
+        if (symbols) {
+            for (const symbol of symbols.keys()) {
+                symbolNames.add(symbol as string)
+            }
+        }
+        location = location.parent
+    }
+    return [...symbolNames]
 }
 
 const createUniqueName = (name: string, sourceFile: ts.SourceFile) => {

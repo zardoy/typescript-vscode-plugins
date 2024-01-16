@@ -82,11 +82,32 @@ export const decorateLanguageService = (
         // have no idea in which cases its possible, but we can't work without it
         if (!scriptSnapshot) return
         const compilerOptions = languageServiceHost.getCompilationSettings()
-        const result = getCompletionsAtPosition(fileName, position, options, c, languageService, scriptSnapshot, formatOptions, { scriptKind, compilerOptions })
-        if (!result) return
-        prevCompletionsMap = result.prevCompletionsMap
-        prevCompletionsAdditionalData = result.prevCompletionsAdditionalData
-        return result.completions
+        try {
+            const result = getCompletionsAtPosition(fileName, position, options, c, languageService, scriptSnapshot, formatOptions, {
+                scriptKind,
+                compilerOptions,
+            })
+            if (!result) return
+            prevCompletionsMap = result.prevCompletionsMap
+            prevCompletionsAdditionalData = result.prevCompletionsAdditionalData
+            return result.completions
+        } catch (err) {
+            setTimeout(() => {
+                throw err
+            })
+            return {
+                entries: [
+                    {
+                        name: 'TS Error',
+                        kind: ts.ScriptElementKind.unknown,
+                        labelDetails: {
+                            detail: ` ${err.message}`,
+                        },
+                        sortText: '!',
+                    },
+                ],
+            }
+        }
     }
 
     proxy.getCompletionEntryDetails = (...inputArgs) => completionEntryDetails(inputArgs, languageService, prevCompletionsMap, c, prevCompletionsAdditionalData)
