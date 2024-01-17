@@ -10,7 +10,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             const predictedNameFromPath = (p: string) => {
                 const input = p.split(/[/\\]/g).pop()!.replace(/\..+/, '')
                 const transformed = camelCase(input)
-                 
+
                 const isFirstUppercase = input && input.startsWith(input[0]!.toUpperCase())
                 return isFirstUppercase ? transformed[0]!.toUpperCase() + transformed.slice(1) : transformed
             }
