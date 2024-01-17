@@ -40,7 +40,7 @@ export default (
         const node = findChildContainingPosition(ts, sourceFile, position)
         const posEnd = { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] }
 
-        const extendedCodeActions = getExtendedCodeActions(sourceFile, posEnd, languageService, undefined, undefined)
+        const extendedCodeActions = getExtendedCodeActions(sourceFile, posEnd, languageService, undefined, undefined, specialCommandArg.diagnostics)
         return {
             turnArrayIntoObject: objectIntoArrayConverters(posEnd, node, undefined),
             extendedCodeActions,
