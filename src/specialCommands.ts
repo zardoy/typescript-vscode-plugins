@@ -205,7 +205,7 @@ export default () => {
             label: document
                 .getText(tsRangeToVscode(document, node.range))
                 .trim()
-                .replace(/\r?\n\s+/g, ' '),
+                .replaceAll(/\r?\n\s+/g, ' '),
             nodeRange: node.range,
             value: node,
         }))

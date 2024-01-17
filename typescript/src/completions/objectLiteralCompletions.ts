@@ -164,7 +164,7 @@ const isObjectCompletion = (type: ts.Type, checker: ts.TypeChecker) => {
     if (type.flags & ts.TypeFlags.Object) {
         if ((type as ts.ObjectType).objectFlags & ts.ObjectFlags.Class) return false
         // complete with regexp?
-        if (type.symbol?.escapedName === 'RegExp') return false
+        if ((type.symbol?.escapedName as string) === 'RegExp') return false
         return true
     }
     if (type.isUnion()) return isEverySubtype(type, type => isObjectCompletion(type, checker))

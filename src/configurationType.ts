@@ -565,6 +565,13 @@ export type Configuration = {
      */
     'objectLiteralCompletions.keepOriginal': 'before' | 'after' | 'remove'
     /**
+     * Add shortcut completions like `className` -> `class={className}` if there is the variable with the same name in scope available
+     * - after - display shortcut after original suggestion
+     * - before - display shortcut before original suggestion
+     * @default after
+     */
+    'jsxAttributeShortcutCompletions.enable': 'disable' | 'before' | 'after'
+    /**
      * Wether to exclude non-JSX components completions in JSX component locations
      * Requires TypeScript 5.0+
      * @default false
