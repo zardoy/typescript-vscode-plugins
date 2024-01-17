@@ -123,7 +123,7 @@
         "watch-plugin": "node buildTsPlugin.mjs --watch",
         "build": "tsc && tsc -p typescript --noEmit && vscode-framework build && pnpm build-plugin",
         "build-plugin": "node buildTsPlugin.mjs && node buildTsPlugin.mjs --browser",
-        "lint": "eslint {src,typescript/src}",
+        "lint": "eslint {src/**,typescript/src/**}",
         "test": "pnpm test-plugin --run && pnpm integration-test",
         "test-plugin": "vitest --globals --dir typescript/test/ --environment ts-plugin",
         "integration-test": "node integration/prerun.mjs && tsc -p tsconfig.test.json && node testsOut/runTests.js",
