@@ -6,7 +6,6 @@ import { passthroughExposedApiCommands, TriggerCharacterCommand, RequestInputTyp
 type SendCommandData<Input> = {
     position?: vscode.Position
     document?: vscode.TextDocument
-    // eslint-disable-next-line @typescript-eslint/ban-types
 } & ([Input] extends [never] ? {} : { inputOptions: Input })
 
 export const sendCommand = async <

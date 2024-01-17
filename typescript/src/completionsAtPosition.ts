@@ -217,10 +217,7 @@ export const getCompletionsAtPosition = (
         const fullText = sourceFile.getFullText()
         const currentWord = fullText.slice(0, position).match(/[\w\d]+$/)
         if (currentWord) {
-            prior.entries = prior.entries.filter(entry => {
-                if (entry.name.startsWith(currentWord[0])) return true
-                return false
-            })
+            prior.entries = prior.entries.filter(entry => entry.name.startsWith(currentWord[0]))
         }
     }
 
@@ -297,7 +294,7 @@ export const getCompletionsAtPosition = (
     addSourceDefinition(prior.entries)
     displayImportedInfo(prior.entries)
 
-    if (c('improveJsxCompletions') && leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
+    if (leftNode) prior.entries = improveJsxCompletions(prior.entries, leftNode, position, sourceFile, c('jsxCompletionsMap'))
 
     prior.entries = localityBonus(prior.entries) ?? prior.entries
     typecastCompletions()
@@ -374,7 +371,7 @@ export const getCompletionsAtPosition = (
     if (!goodPositionForMethodCompletions) {
         prior.entries = prior.entries.map(item => {
             if (item.isSnippet) return item
-            return { ...item, insertText: (item.insertText ?? item.name).replace(/\$/g, '\\$'), isSnippet: true }
+            return { ...item, insertText: (item.insertText ?? item.name).replaceAll('$', '\\$'), isSnippet: true }
         })
     }
 

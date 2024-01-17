@@ -42,7 +42,7 @@ export default () => {
             }
 
             if (context.triggerKind !== vscode.CodeActionTriggerKind.Invoke) return
-            const result = await getPossibleTwoStepRefactorings(range)
+            const result = await getPossibleTwoStepRefactorings(range, document, context.diagnostics)
             if (!result) return
             const { turnArrayIntoObject, extendedCodeActions } = result
             const codeActions: vscode.CodeAction[] = []
@@ -147,12 +147,13 @@ export default () => {
         await vscode.workspace.applyEdit(edit)
     })
 
-    async function getPossibleTwoStepRefactorings(range: vscode.Range, document = vscode.window.activeTextEditor!.document) {
+    async function getPossibleTwoStepRefactorings(range: vscode.Range, document: vscode.TextDocument, diagnostics: Readonly<vscode.Diagnostic[]>) {
         return sendCommand('getTwoStepCodeActions', {
             document,
             position: range.start,
             inputOptions: {
                 range: vscodeRangeToTs(document, range),
+                diagnostics: diagnostics.filter(({ source }) => source === 'ts').map(({ code }) => (typeof code === 'object' ? +code.value : +code!)),
             },
         })
     }

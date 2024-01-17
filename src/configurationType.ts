@@ -565,6 +565,13 @@ export type Configuration = {
      */
     'objectLiteralCompletions.keepOriginal': 'before' | 'after' | 'remove'
     /**
+     * Add shortcut completions like `className` -> `class={className}` if there is the variable with the same name in scope available
+     * - after - display shortcut after original suggestion
+     * - before - display shortcut before original suggestion
+     * @default after
+     */
+    'jsxAttributeShortcutCompletions.enable': 'disable' | 'before' | 'after'
+    /**
      * Wether to exclude non-JSX components completions in JSX component locations
      * Requires TypeScript 5.0+
      * @default false
@@ -582,6 +589,12 @@ export type Configuration = {
      * @default false
      */
     'experiments.enableInsertNameOfSuggestionFix': boolean
+    /**
+     * Speed up JSX linked editing by not using actual tsserver command when possible, which in theory may introduce some inconsistencies.
+     * Note that currently it doesn't really help if you have `"typescript.tsserver.useSyntaxServer": "auto"` in the settings.
+     * @default true
+     */
+    'experiments.speedLinkedEditing': boolean
     /**
      * Map *symbol - array of modules* to change sorting of imports - first available takes precedence in auto import code fixes (+ import all action)
      *

@@ -19,6 +19,7 @@ import decorateSignatureHelp from './decorateSignatureHelp'
 import decorateFindRenameLocations from './decorateFindRenameLocations'
 import decorateQuickInfoAtPosition from './decorateQuickInfoAtPosition'
 import decorateEditsForFileRename from './decorateEditsForFileRename'
+import decorateLinkedEditing from './decorateLinkedEditing'
 
 /** @internal */
 export const thisPluginMarker = '__essentialPluginsMarker__'
@@ -81,11 +82,32 @@ export const decorateLanguageService = (
         // have no idea in which cases its possible, but we can't work without it
         if (!scriptSnapshot) return
         const compilerOptions = languageServiceHost.getCompilationSettings()
-        const result = getCompletionsAtPosition(fileName, position, options, c, languageService, scriptSnapshot, formatOptions, { scriptKind, compilerOptions })
-        if (!result) return
-        prevCompletionsMap = result.prevCompletionsMap
-        prevCompletionsAdditionalData = result.prevCompletionsAdditionalData
-        return result.completions
+        try {
+            const result = getCompletionsAtPosition(fileName, position, options, c, languageService, scriptSnapshot, formatOptions, {
+                scriptKind,
+                compilerOptions,
+            })
+            if (!result) return
+            prevCompletionsMap = result.prevCompletionsMap
+            prevCompletionsAdditionalData = result.prevCompletionsAdditionalData
+            return result.completions
+        } catch (err) {
+            setTimeout(() => {
+                throw err as Error
+            })
+            return {
+                entries: [
+                    {
+                        name: 'TS Error',
+                        kind: ts.ScriptElementKind.unknown,
+                        labelDetails: {
+                            detail: ` ${err.message}`,
+                        },
+                        sortText: '!',
+                    },
+                ],
+            }
+        }
     }
 
     proxy.getCompletionEntryDetails = (...inputArgs) => completionEntryDetails(inputArgs, languageService, prevCompletionsMap, c, prevCompletionsAdditionalData)
@@ -102,6 +124,7 @@ export const decorateLanguageService = (
     decorateSignatureHelp(proxy, languageService, languageServiceHost, c)
     decorateFindRenameLocations(proxy, languageService, c)
     decorateQuickInfoAtPosition(proxy, languageService, languageServiceHost, c)
+    decorateLinkedEditing(proxy, languageService, languageServiceHost, c)
 
     libDomPatching(languageServiceHost, c)
 

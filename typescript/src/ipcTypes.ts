@@ -18,6 +18,7 @@ export const triggerCharacterCommands = [
     'getArgumentReferencesFromCurrentParameter',
     'onEnterActions',
     'performanceInfo',
+    'getMigrateToImportsEdits',
 ] as const
 
 export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
@@ -51,6 +52,7 @@ export type RequestInputTypes = {
     }
     getTwoStepCodeActions: {
         range: [number, number]
+        diagnostics: number[]
     }
     twoStepCodeActionSecondStep: {
         range: [number, number]
@@ -116,6 +118,7 @@ export type RequestOutputTypes = {
     }
     getArgumentReferencesFromCurrentParameter: Array<{ line: number; character: number; filename: string }>
     'emmet-completions': EmmetResult
+    getMigrateToImportsEdits: ts.TextChange[]
 }
 
 // export type EmmetResult = {

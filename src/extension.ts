@@ -113,7 +113,7 @@ export const activate = async () => {
         if (tsExtension) {
             await tsExtension.activate()
 
-            if (!tsExtension.exports || !tsExtension.exports.getAPI) {
+            if (!tsExtension.exports?.getAPI) {
                 throw new Error("TS extension doesn't export API")
             }
 

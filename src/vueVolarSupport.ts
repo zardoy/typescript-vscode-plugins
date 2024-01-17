@@ -72,12 +72,23 @@ export default () => {
 const isConfigValueChanged = (settingId: string) => {
     if (process.env.PLATFORM !== 'web') {
         const config = vscode.workspace.getConfiguration('')
-        const userValue = config.get<string>(settingId)
-        if (userValue === config.inspect(settingId)!.defaultValue) return false
+        let userValue = config.get<string>(settingId)
+        if (!userValue || userValue === config.inspect(settingId)!.defaultValue) return false
         // means that value was set by us programmatically, let's update it
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        if (userValue?.startsWith(require('path').join(extensionCtx.extensionPath, '../..'))) return false
-        return true
+        let extensionsBasePath = require('path').join(extensionCtx.extensionPath, '../..') as string
+        const normalizePathWin = (path: string) => {
+            // normalize casing of drive
+            if (/^[a-z]:/.test(path)) {
+                path = path[0]!.toUpperCase() + path.slice(1)
+            }
+
+            return path.replaceAll('\\', '/')
+        }
+
+        userValue = normalizePathWin(userValue)
+        extensionsBasePath = normalizePathWin(extensionsBasePath)
+        return !userValue.startsWith(extensionsBasePath)
     }
 
     return undefined

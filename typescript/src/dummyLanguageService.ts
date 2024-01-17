@@ -10,7 +10,7 @@ export const createLanguageService = (files: Record<string, string>, { useLib = 
         getScriptVersion: () => dummyVersion.toString(),
         getCompilationSettings: () => ({ allowJs: true, jsx: ts.JsxEmit.Preserve, target: ts.ScriptTarget.ESNext }),
         getScriptFileNames: () => Object.keys(files),
-        getScriptSnapshot: fileName => {
+        getScriptSnapshot(fileName) {
             let contents = files[fileName]
             if (useLib && path.dirname(fileName) === defaultLibDir) contents = ts.sys.readFile(fileName)
             if (contents === undefined) return
@@ -20,7 +20,7 @@ export const createLanguageService = (files: Record<string, string>, { useLib = 
             return ts.ScriptKind.TSX
         },
         getCurrentDirectory: () => '',
-        getDefaultLibFileName: options => {
+        getDefaultLibFileName(options) {
             const defaultLibPath = ts.getDefaultLibFilePath(options)
             defaultLibDir = path.dirname(defaultLibPath)
             return defaultLibPath

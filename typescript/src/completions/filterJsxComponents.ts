@@ -39,7 +39,7 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
         ts.ScriptElementKind.memberVariableElement,
         ts.ScriptElementKind.memberFunctionElement,
     ]
-    const timings = {}
+    const timings = {} as Record<string, number>
     const typeAtLocLog = {}
     const program = languageService.getProgram()!
     const typeChecker = program.getTypeChecker()!
@@ -76,7 +76,7 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
         let shouldBeCached = firstDeclarationFileName.includes('node_modules')
         if (!shouldBeCached && firstDeclaration.getSourceFile().fileName === fileName) {
             // startMark()
-            const definitionAtPosition = languageService.getDefinitionAtPosition(fileName, firstDeclaration.pos + 1)?.[0]
+            const definitionAtPosition = languageService.getDefinitionAtPosition(fileName, firstDeclaration.pos + firstDeclaration.getLeadingTriviaWidth())?.[0]
             // addMark('getDefinitionAtPosition')
             if (!definitionAtPosition) return
             shouldBeCached = definitionAtPosition.fileName.includes('node_modules')
@@ -148,8 +148,7 @@ const isJsxOpeningElem = (position: number, node: ts.Node) => {
 const isJsxElement = (typeChecker: ts.TypeChecker, signatures: readonly ts.Signature[], type: ts.Type) => {
     if (signatures.length > 0 && signatures.every(signature => getIsJsxComponentSignature(typeChecker, signature))) return true
     // allow pattern: const Component = condition ? 'div' : 'a'
-    if (type.isUnion() && type.types.every(type => type.isStringLiteral())) return true
-    return false
+    return !!(type.isUnion() && type.types.every(type => type.isStringLiteral()))
 }
 
 const getIsJsxComponentSignature = (typeChecker: ts.TypeChecker, signature: ts.Signature) => {

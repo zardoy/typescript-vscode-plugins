@@ -80,6 +80,7 @@ export const getExtendedCodeActions = <T extends string | undefined>(
     // languageServiceHost: ts.LanguageServiceHost,
     formatOptions: ts.FormatCodeSettings | undefined,
     applyCodeActionTitle: T,
+    filterErrorCodes?: number[],
 ): T extends undefined ? ExtendedCodeAction[] : ApplyExtendedCodeActionResult => {
     const range = typeof positionOrRange !== 'number' && positionOrRange.pos !== positionOrRange.end ? positionOrRange : undefined
     const position = typeof positionOrRange === 'number' ? positionOrRange : positionOrRange.pos
@@ -99,8 +100,14 @@ export const getExtendedCodeActions = <T extends string | undefined>(
     }
     return compact(
         extendedCodeActions.map(codeAction => {
-            if (!codeAction.codes && !codeAction.tryToApply(tryToApplyOptions)) return
-            return codeAction
+            if (
+                !filterErrorCodes ||
+                !codeAction.codes ||
+                (codeAction.codes.some(c => filterErrorCodes.includes(c)) && codeAction.tryToApply(tryToApplyOptions))
+            ) {
+                return codeAction
+            }
+            return
         }),
     ) as T extends undefined ? ExtendedCodeAction[] : never
 }

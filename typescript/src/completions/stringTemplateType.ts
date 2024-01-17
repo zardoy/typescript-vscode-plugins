@@ -35,7 +35,7 @@ export default (): ts.CompletionEntry[] | void => {
                 return buildStringCompletion(stringNode, {
                     name: texts.map(text => (text === '' ? '|' : text)).join(''),
                     sortText: '07',
-                    insertText: texts.map(text => (text === '' ? `$${tabStop++}` : text.replace(/\$/g, '\\$'))).join(''),
+                    insertText: texts.map(text => (text === '' ? `$${tabStop++}` : text.replaceAll('$', '\\$'))).join(''),
                     isSnippet: true,
                 })
             }),
