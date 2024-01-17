@@ -37,12 +37,8 @@ export default (
         jsxAttributeCandidate = true
         node = node.parent
     }
-    if (jsxAttributeCandidate) {
-        if (
-            sharedCompletionContext.c('improveJsxCompletions') &&
-            Object.keys(jsxCompletionsMap).length > 0 &&
-            (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node))
-        ) {
+    if (jsxAttributeCandidate && (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node))) {
+        if (sharedCompletionContext.c('improveJsxCompletions') && Object.keys(jsxCompletionsMap).length > 0) {
             const tagName = node.tagName.getText()
             // TODO use the same perf optimization for replaceSuggestions
             const patchEntries: Record<number, Configuration['jsxCompletionsMap'][string]> = {}

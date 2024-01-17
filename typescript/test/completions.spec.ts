@@ -499,6 +499,7 @@ test('Case-sensetive completions', () => {
 test('Fix properties sorting', () => {
     overrideSettings({
         fixSuggestionsSorting: true,
+        'jsxAttributeShortcutCompletions.enable': 'disable',
     })
     fourslashLikeTester(/* tsx */ `
         let a: {
@@ -610,6 +611,23 @@ test('Tuple signature', () => {
         exact: {
             names: ['a'],
         },
+    })
+})
+
+test('JSX attribute shortcut completions', () => {
+    const tester = fourslashLikeTester(/* tsx */ `
+        const A = ({a, b}) => {}
+        const a = 5
+        const c = <A /*1*/ />
+        const d = <A a={/*2*/} />
+        `)
+    tester.completion(1, {
+        exact: {
+            names: ['a', 'a={a}', 'b'],
+        },
+    })
+    tester.completion(2, {
+        excludes: ['a={a}'],
     })
 })
 
