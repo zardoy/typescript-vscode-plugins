@@ -132,12 +132,19 @@ export default (
         let targetNode: undefined | ts.Node | [number, number]
         if (ts.isIdentifier(node) && node.parent) {
             node = node.parent
+            if (ts.isJsxExpression(node)) node = node.parent
+            if (ts.isJsxAttributeLike(node)) node = node.parent
+            if (ts.isJsxAttributes(node)) node = node.parent
             if (ts.isPropertyAssignment(node)) {
                 targetNode = node.initializer
             } else if ('body' in node) {
                 targetNode = node.body as ts.Node
             } else if (ts.isJsxOpeningElement(node) || ts.isJsxOpeningFragment(node) || ts.isJsxSelfClosingElement(node)) {
                 const pos = node.end
+                targetNode = [pos, pos]
+            }
+            if (ts.isJsxClosingElement(node) || ts.isJsxClosingFragment(node)) {
+                const { pos } = node
                 targetNode = [pos, pos]
             }
         }
