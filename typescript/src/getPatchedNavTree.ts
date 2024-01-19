@@ -10,7 +10,7 @@ type AdditionalFeatures = Record<'arraysTuplesNumberedItems', boolean>
 
 const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavigationTree(...args) } => {
     // what is happening here: grabbing & patching NavigationBar module contents from actual running JS
-    const tsServerPath = __TS_SEVER_PATH__ === undefined ? require.main!.filename : __TS_SEVER_PATH__
+    const tsServerPath = typeof __TS_SEVER_PATH__ === 'undefined' ? require.main!.filename : __TS_SEVER_PATH__
     // current lib/tsserver.js
     const mainScript = nodeModules!.fs.readFileSync(tsServerPath, 'utf8')
     type PatchData = {
