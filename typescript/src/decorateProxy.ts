@@ -92,9 +92,7 @@ export const decorateLanguageService = (
             prevCompletionsAdditionalData = result.prevCompletionsAdditionalData
             return result.completions
         } catch (err) {
-            setTimeout(() => {
-                throw err as Error
-            })
+            console.error(err)
             return {
                 entries: [
                     {
