@@ -660,6 +660,9 @@ export type Configuration = {
               typeAlias: string
               interface: string
           }
+    /**
+     * @default {}
+     */
     customizeEnabledFeatures: {
         [path: string]:
             | 'disable-auto-invoked'
