@@ -1,4 +1,4 @@
-import { ScriptElementKind, ScriptKind } from 'typescript/lib/tsserverlibrary'
+import { ScriptElementKind, ScriptKind, LanguageService } from 'typescript/lib/tsserverlibrary'
 
 type ReplaceRule = {
     /**
@@ -660,6 +660,21 @@ export type Configuration = {
               typeAlias: string
               interface: string
           }
+    customizeEnabledFeatures: {
+        [path: string]:
+            | 'disable-auto-invoked'
+            // | 'disable-heavy-features'
+            | {
+                  /** @default true */
+                  [feature in keyof LanguageService]: boolean
+              }
+    }
+    // bigFilesLimitFeatures: 'do-not-limit' | 'limit-auto-invoking' | 'force-limit-all-features'
+    /**
+     * in kb default is 1.5mb
+     * @default 100000
+     */
+    // bigFilesThreshold: number
     /** @default false */
     enableHooksFile: boolean
 }

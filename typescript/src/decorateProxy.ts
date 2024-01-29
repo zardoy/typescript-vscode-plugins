@@ -139,6 +139,49 @@ export const decorateLanguageService = (
         }
     }
 
+    const readonlyModeDisableFeatures: Array<keyof ts.LanguageService> = [
+        'getOutliningSpans',
+        'getSyntacticDiagnostics',
+        'getSemanticDiagnostics',
+        'getSuggestionDiagnostics',
+        'provideInlayHints',
+        'getLinkedEditingRangeAtPosition',
+        'getApplicableRefactors',
+        'getCompletionsAtPosition',
+        'getDefinitionAndBoundSpan',
+        'getFormattingEditsAfterKeystroke',
+        'getDocumentHighlights',
+    ]
+    for (const feature of readonlyModeDisableFeatures) {
+        const orig = proxy[feature]
+        proxy[feature] = (...args) => {
+            const enabledFeaturesSetting = c('customizeEnabledFeatures') ?? {}
+            const toDisableRaw =
+                Object.entries(enabledFeaturesSetting).find(([path]) => {
+                    if (typeof args[0] !== 'string') return false
+                    return args[0].includes(path)
+                })?.[1] ??
+                enabledFeaturesSetting['*'] ??
+                {}
+            const toDisable: string[] =
+                toDisableRaw === 'disable-auto-invoked'
+                    ? // todo
+                      readonlyModeDisableFeatures
+                    : Object.entries(toDisableRaw)
+                          .filter(([, v]) => v === false)
+                          .map(([k]) => k)
+            if (toDisable.includes(feature)) return undefined
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const performance = globalThis.performance ?? require('perf_hooks').performance
+            const start = performance.now()
+            //@ts-expect-error
+            const result = orig(...args)
+            const time = performance.now() - start
+            if (time > 100) console.log(`[typescript-vscode-plugin perf warning] ${feature} took ${time}ms: ${args[0]} ${args[1]}`)
+            return result
+        }
+    }
+
     languageService[thisPluginMarker] = true
 
     if (!__WEB__ && c('enableHooksFile')) {
