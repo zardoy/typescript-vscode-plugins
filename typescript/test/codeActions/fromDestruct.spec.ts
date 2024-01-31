@@ -52,10 +52,10 @@ describe('From destructure', () => {
             )
 
             expect(content).toMatchInlineSnapshot(`
-        "
-            const something: number = anObject.something;
-        "
-      `)
+              "
+                  const something: number = anObject.something;
+              "
+            `)
         })
     })
     test('Should convert nested', () => {
@@ -204,12 +204,12 @@ describe('From destructure', () => {
                 { compareContent: true },
             )
             expect(newContent).toMatchInlineSnapshot(`
-            "
-                const foo = {
-                foo: 1,
-            }.foo
-            "
-          `)
+              "
+                  const foo = {
+                  foo: 1,
+              }.foo
+              "
+            `)
         })
         test('Destructured two or more properties', () => {
             const initial = /* ts*/ `
