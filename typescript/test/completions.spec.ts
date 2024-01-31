@@ -40,6 +40,19 @@ test('Banned positions', () => {
     expect(getCompletionsAtPosition(cursorPositions[2]!)?.entries).toHaveLength(1)
 })
 
+test.todo('Const name suggestions (boostNameSuggestions)', () => {
+    const tester = fourslashLikeTester(/* ts */ `
+    const /*0*/ = 5
+    testVariable
+    `)
+    languageService.getSemanticDiagnostics(entrypoint)
+    tester.completion(0, {
+        includes: {
+            names: ['testVariable'],
+        },
+    })
+})
+
 test('Banned positions for all method snippets', () => {
     const cursorPositions = newFileContents(/* tsx */ `
         import {/*|*/} from 'test'
