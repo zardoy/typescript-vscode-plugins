@@ -1,3 +1,4 @@
+import { cachedResponse } from '../decorateProxy'
 import { boostExistingSuggestions, boostOrAddSuggestions, findChildContainingPosition } from '../utils'
 import { getCannotFindCodes } from '../utils/cannotFindCodes'
 
@@ -46,7 +47,7 @@ export default (
     }
 
     if (filterBlock === undefined) return entries
-    const semanticDiagnostics = languageService.getSemanticDiagnostics(sourceFile.fileName)
+    const semanticDiagnostics = cachedResponse.getSemanticDiagnostics?.[sourceFile.fileName] ?? []
 
     const notFoundIdentifiers = semanticDiagnostics
         .filter(({ code }) => cannotFindCodes.includes(code))

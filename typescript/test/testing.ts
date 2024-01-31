@@ -27,7 +27,7 @@ interface CodeActionMatcher {
 
 const { languageService, languageServiceHost, updateProject, getCurrentFile } = sharedLanguageService
 
-const fakeProxy = {} as Pick<typeof languageService, 'getApplicableRefactors' | 'getEditsForRefactor'>
+export const fakeProxy = {} as Pick<typeof languageService, 'getApplicableRefactors' | 'getEditsForRefactor'>
 
 codeActionsDecorateProxy(fakeProxy as typeof languageService, languageService, languageServiceHost, defaultConfigFunc)
 
@@ -82,7 +82,7 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint, { d
 
     const ranges = positive.reduce<number[][]>(
         (prevRanges, pos) => {
-            const lastPrev = prevRanges[prevRanges.length - 1]!
+            const lastPrev = prevRanges.at(-1)!
             if (lastPrev.length < 2) {
                 lastPrev.push(pos)
                 return prevRanges
@@ -92,58 +92,68 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint, { d
         [[]],
     )
     return {
-        completion: (marker: number | number[], matcher: CompletionMatcher, meta?) => {
-            for (const mark of Array.isArray(marker) ? marker : [marker]) {
-                if (numberedPositions[mark] === undefined) throw new Error(`No marker ${mark} found`)
-                const result = getCompletionsAtPosition(numberedPositions[mark]!, { shouldHave: true })!
-                const message = ` at marker ${mark}`
-                const { exact, includes, excludes } = matcher
-                if (exact) {
-                    const { names, all, insertTexts } = exact
-                    if (names) {
-                        expect(result?.entryNames, message).toEqual(names)
-                    }
-                    if (insertTexts) {
-                        expect(
-                            result.entries.map(entry => entry.insertText),
-                            message,
-                        ).toEqual(insertTexts)
-                    }
-                    if (all) {
-                        for (const entry of result.entries) {
-                            expect(entry, entry.name + message).toContain(all)
+        completion(marker: number | number[], matcher: CompletionMatcher, meta?) {
+            const oldGetSemanticDiagnostics = languageService.getSemanticDiagnostics
+            languageService.getSemanticDiagnostics = () => {
+                throw new Error('getSemanticDiagnostics should not be called because of performance reasons')
+                // return []
+            }
+
+            try {
+                for (const mark of Array.isArray(marker) ? marker : [marker]) {
+                    if (numberedPositions[mark] === undefined) throw new Error(`No marker ${mark} found`)
+                    const result = getCompletionsAtPosition(numberedPositions[mark]!, { shouldHave: true })!
+                    const message = ` at marker ${mark}`
+                    const { exact, includes, excludes } = matcher
+                    if (exact) {
+                        const { names, all, insertTexts } = exact
+                        if (names) {
+                            expect(result?.entryNames, message).toEqual(names)
                         }
-                    }
-                }
-                if (includes) {
-                    const { names, all, insertTexts } = includes
-                    if (names) {
-                        for (const name of names) {
-                            expect(result?.entryNames, message).toContain(name)
-                        }
-                    }
-                    if (insertTexts) {
-                        for (const insertText of insertTexts) {
+                        if (insertTexts) {
                             expect(
                                 result.entries.map(entry => entry.insertText),
                                 message,
-                            ).toContain(insertText)
+                            ).toEqual(insertTexts)
+                        }
+                        if (all) {
+                            for (const entry of result.entries) {
+                                expect(entry, entry.name + message).toContain(all)
+                            }
                         }
                     }
-                    if (all) {
-                        for (const entry of result.entries.filter(e => names?.includes(e.name))) {
-                            expect(entry, entry.name + message).toContain(all)
+                    if (includes) {
+                        const { names, all, insertTexts } = includes
+                        if (names) {
+                            for (const name of names) {
+                                expect(result?.entryNames, message).toContain(name)
+                            }
+                        }
+                        if (insertTexts) {
+                            for (const insertText of insertTexts) {
+                                expect(
+                                    result.entries.map(entry => entry.insertText),
+                                    message,
+                                ).toContain(insertText)
+                            }
+                        }
+                        if (all) {
+                            for (const entry of result.entries.filter(e => names?.includes(e.name))) {
+                                expect(entry, entry.name + message).toContain(all)
+                            }
+                        }
+                    }
+                    if (excludes) {
+                        for (const exclude of excludes) {
+                            expect(result?.entryNames, message).not.toContain(exclude)
                         }
                     }
                 }
-                if (excludes) {
-                    for (const exclude of excludes) {
-                        expect(result?.entryNames, message).not.toContain(exclude)
-                    }
-                }
+            } finally {
+                languageService.getSemanticDiagnostics = oldGetSemanticDiagnostics
             }
         },
-        codeAction: (marker: number | number[], matcher: CodeActionMatcher, meta?, { compareContent = false } = {}) => {
+        codeAction(marker: number | number[], matcher: CodeActionMatcher, meta?, { compareContent = false } = {}) {
             for (const mark of Array.isArray(marker) ? marker : [marker]) {
                 if (!ranges[mark]) throw new Error(`No range with index ${mark} found, highest index is ${ranges.length - 1}`)
                 const start = ranges[mark]![0]!
@@ -192,10 +202,10 @@ export const fileContentsSpecialPositions = (contents: string, fileName = entryp
         let mainMatch = currentMatch[1]!
         if (addOnly) mainMatch = mainMatch.slice(0, -1)
         const possiblyNum = +mainMatch
-        if (!Number.isNaN(possiblyNum)) {
-            addArr[2][possiblyNum] = offset
-        } else {
+        if (Number.isNaN(possiblyNum)) {
             addArr[mainMatch === 't' ? '0' : '1'].push(offset)
+        } else {
+            addArr[2][possiblyNum] = offset
         }
         replacement.lastIndex -= matchLength
     }

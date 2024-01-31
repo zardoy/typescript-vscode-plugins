@@ -30,6 +30,7 @@ const result = await buildTsPlugin('typescript', undefined, undefined, {
         js: 'let ts, tsFull;',
         // js: 'const log = (...args) => console.log(...args.map(a => JSON.stringify(a)))',
     },
+    external: ['perf_hooks'],
     plugins: [
         {
             name: 'watch-notifier',
