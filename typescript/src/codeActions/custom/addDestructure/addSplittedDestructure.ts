@@ -1,3 +1,4 @@
+import { uniq } from 'rambda'
 import { findChildContainingExactPosition, getChangesTracker, getPositionHighlights, isValidInitializerForDestructure, makeUniqueName } from '../../../utils'
 
 export default (node: ts.Node, sourceFile: ts.SourceFile, formatOptions: ts.FormatCodeSettings | undefined, languageService: ts.LanguageService) => {
@@ -56,7 +57,7 @@ export default (node: ts.Node, sourceFile: ts.SourceFile, formatOptions: ts.Form
 
     if (!nodeToReplaceWithBindingPattern || propertyNames.length === 0) return
 
-    const bindings = propertyNames.map(({ initial, unique }) => {
+    const bindings = uniq(propertyNames).map(({ initial, unique }) => {
         return ts.factory.createBindingElement(undefined, unique ? initial : undefined, unique ?? initial)
     })
 

@@ -31,6 +31,37 @@ describe('Add destructure', () => {
                 newContent: expected,
             })
         })
+        test('Multiple same prop extractions', () => {
+            const initial = /* ts */ `
+              const /*t*/props/*t*/ = {
+                source: {
+                  type: Object,
+                  required: true,
+                },
+              };
+              const test = props.source;
+              const test2 = props.source;
+              const test3 = props.source;
+            `
+            const expected = /* ts */ `
+              const { source } = {
+                source: {
+                  type: Object,
+                  required: true,
+                },
+              };
+              const test = source;
+              const test2 = source;
+              const test3 = source;
+            `
+
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
     })
     describe('Works with types', () => {
         test('Should preserve type', () => {
