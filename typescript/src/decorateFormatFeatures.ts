@@ -15,7 +15,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
     const isFormattingLineIgnored = (fullText: string, position: number) => {
         // check that lines before line are not ignored
         const linesBefore = fullText.slice(0, position).split('\n')
-        if (isExpectedDirective(linesBefore[linesBefore.length - 2], '@ts-format-ignore-line')) {
+        if (isExpectedDirective(linesBefore.at(-2), '@ts-format-ignore-line')) {
             return true
         }
 

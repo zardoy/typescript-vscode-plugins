@@ -3,7 +3,7 @@ import { addObjectMethodResultInterceptors, findChildContainingExactPosition } f
 
 let currentSymbolName: string | undefined
 
-interface ParsedIgnoreSetting {
+type ParsedIgnoreSetting = {
     module: string
     symbols: string[]
     isAnySymbol: boolean

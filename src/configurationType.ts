@@ -1,4 +1,4 @@
-import { ScriptElementKind, ScriptKind } from 'typescript/lib/tsserverlibrary'
+import { ScriptElementKind, ScriptKind, LanguageService } from 'typescript/lib/tsserverlibrary'
 
 type ReplaceRule = {
     /**
@@ -565,6 +565,13 @@ export type Configuration = {
      */
     'objectLiteralCompletions.keepOriginal': 'before' | 'after' | 'remove'
     /**
+     * Add shortcut completions like `className` -> `class={className}` if there is the variable with the same name in scope available
+     * - after - display shortcut after original suggestion
+     * - before - display shortcut before original suggestion
+     * @default after
+     */
+    'jsxAttributeShortcutCompletions.enable': 'disable' | 'before' | 'after'
+    /**
      * Wether to exclude non-JSX components completions in JSX component locations
      * Requires TypeScript 5.0+
      * @default false
@@ -653,6 +660,24 @@ export type Configuration = {
               typeAlias: string
               interface: string
           }
+    /**
+     * @default {}
+     */
+    customizeEnabledFeatures: {
+        [path: string]:
+            | 'disable-auto-invoked'
+            // | 'disable-heavy-features'
+            | {
+                  /** @default true */
+                  [feature in keyof LanguageService]: boolean
+              }
+    }
+    // bigFilesLimitFeatures: 'do-not-limit' | 'limit-auto-invoking' | 'force-limit-all-features'
+    /**
+     * in kb default is 1.5mb
+     * @default 100000
+     */
+    // bigFilesThreshold: number
     /** @default false */
     enableHooksFile: boolean
 }

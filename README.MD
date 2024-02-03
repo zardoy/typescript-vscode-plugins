@@ -1,5 +1,12 @@
 # TypeScript Essential Plugins
 
+**Use next-Gen TypeScript features in VSCode today!**
+
+No-AI smart predictable completions that efficiently reuses the world of types!
+
+- Stays fast
+- No internet connection required
+
 Feature-complete TypeScript plugin that improves every single builtin feature such as completions, definitions, references and so on, and also adds even new TypeScript killer features, so you can work with large codebases faster!
 We make completions more informative. Definitions, references (and sometimes even completions) less noisy. And finally our main goal is to provide most customizable TypeScript experience for IDE features.
 
@@ -16,7 +23,7 @@ We make completions more informative. Definitions, references (and sometimes eve
 - [Rename Features](#rename-features)
 - [Even Even More](#even-even-more)
 
-> *Note*: You can disable all optional features with `> Disable All Optional Features` command right after install.
+> *Note*: You can disable all optional features with `> Disable All Optional Features` command just after installing.
 >
 > *Note*: Visit website for list of recommended settings: <https://ts-plugin.zardoy.com/>
 

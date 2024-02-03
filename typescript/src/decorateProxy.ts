@@ -33,6 +33,10 @@ export const getInitialProxy = (languageService: ts.LanguageService, proxy = Obj
     return proxy
 }
 
+export const cachedResponse = {
+    getSemanticDiagnostics: {} as Record<string, ts.Diagnostic[]>,
+}
+
 export const decorateLanguageService = (
     { languageService, languageServiceHost }: PluginCreateArg,
     existingProxy: ts.LanguageService | undefined,
@@ -82,11 +86,30 @@ export const decorateLanguageService = (
         // have no idea in which cases its possible, but we can't work without it
         if (!scriptSnapshot) return
         const compilerOptions = languageServiceHost.getCompilationSettings()
-        const result = getCompletionsAtPosition(fileName, position, options, c, languageService, scriptSnapshot, formatOptions, { scriptKind, compilerOptions })
-        if (!result) return
-        prevCompletionsMap = result.prevCompletionsMap
-        prevCompletionsAdditionalData = result.prevCompletionsAdditionalData
-        return result.completions
+        try {
+            const result = getCompletionsAtPosition(fileName, position, options, c, languageService, scriptSnapshot, formatOptions, {
+                scriptKind,
+                compilerOptions,
+            })
+            if (!result) return
+            prevCompletionsMap = result.prevCompletionsMap
+            prevCompletionsAdditionalData = result.prevCompletionsAdditionalData
+            return result.completions
+        } catch (err) {
+            console.error(err)
+            return {
+                entries: [
+                    {
+                        name: 'TS Error',
+                        kind: ts.ScriptElementKind.unknown,
+                        labelDetails: {
+                            detail: ` ${err.message}`,
+                        },
+                        sortText: '!',
+                    },
+                ],
+            }
+        }
     }
 
     proxy.getCompletionEntryDetails = (...inputArgs) => completionEntryDetails(inputArgs, languageService, prevCompletionsMap, c, prevCompletionsAdditionalData)
@@ -115,6 +138,57 @@ export const decorateLanguageService = (
         proxy.getNavigationTree = fileName => {
             if (c('patchOutline') || config.patchOutline) return getNavTreeItems(languageService, languageServiceHost, fileName, config.outline)
             return languageService.getNavigationTree(fileName)
+        }
+    }
+
+    const readonlyModeDisableFeatures: Array<keyof ts.LanguageService> = [
+        'getOutliningSpans',
+        'getSyntacticDiagnostics',
+        'getSemanticDiagnostics',
+        'getSuggestionDiagnostics',
+        'provideInlayHints',
+        'getLinkedEditingRangeAtPosition',
+        'getApplicableRefactors',
+        'getCompletionsAtPosition',
+        'getDefinitionAndBoundSpan',
+        'getFormattingEditsAfterKeystroke',
+        'getDocumentHighlights',
+    ]
+    for (const feature of readonlyModeDisableFeatures) {
+        const orig = proxy[feature]
+        proxy[feature] = (...args) => {
+            const enabledFeaturesSetting = c('customizeEnabledFeatures') ?? {}
+            const toDisableRaw =
+                Object.entries(enabledFeaturesSetting).find(([path]) => {
+                    if (typeof args[0] !== 'string') return false
+                    return args[0].includes(path)
+                })?.[1] ??
+                enabledFeaturesSetting['*'] ??
+                {}
+            const toDisable: string[] =
+                toDisableRaw === 'disable-auto-invoked'
+                    ? // todo
+                      readonlyModeDisableFeatures
+                    : Object.entries(toDisableRaw)
+                          .filter(([, v]) => v === false)
+                          .map(([k]) => k)
+            if (toDisable.includes(feature)) return undefined
+
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const performance = globalThis.performance ?? require('perf_hooks').performance
+            const start = performance.now()
+
+            //@ts-expect-error
+            const result = orig(...args)
+
+            if (feature in cachedResponse) {
+                // todo use weakmap with sourcefiles to ensure it doesn't grow up
+                cachedResponse[feature][args[0]] = result
+            }
+
+            const time = performance.now() - start
+            if (time > 100) console.log(`[typescript-vscode-plugin perf warning] ${feature} took ${time}ms: ${args[0]} ${args[1]}`)
+            return result
         }
     }
 

@@ -40,6 +40,19 @@ test('Banned positions', () => {
     expect(getCompletionsAtPosition(cursorPositions[2]!)?.entries).toHaveLength(1)
 })
 
+test.todo('Const name suggestions (boostNameSuggestions)', () => {
+    const tester = fourslashLikeTester(/* ts */ `
+    const /*0*/ = 5
+    testVariable
+    `)
+    languageService.getSemanticDiagnostics(entrypoint)
+    tester.completion(0, {
+        includes: {
+            names: ['testVariable'],
+        },
+    })
+})
+
 test('Banned positions for all method snippets', () => {
     const cursorPositions = newFileContents(/* tsx */ `
         import {/*|*/} from 'test'
@@ -499,6 +512,7 @@ test('Case-sensetive completions', () => {
 test('Fix properties sorting', () => {
     overrideSettings({
         fixSuggestionsSorting: true,
+        'jsxAttributeShortcutCompletions.enable': 'disable',
     })
     fourslashLikeTester(/* tsx */ `
         let a: {
@@ -610,6 +624,23 @@ test('Tuple signature', () => {
         exact: {
             names: ['a'],
         },
+    })
+})
+
+test('JSX attribute shortcut completions', () => {
+    const tester = fourslashLikeTester(/* tsx */ `
+        const A = ({a, b}) => {}
+        const a = 5
+        const c = <A /*1*/ />
+        const d = <A a={/*2*/} />
+        `)
+    tester.completion(1, {
+        exact: {
+            names: ['a', 'a={a}', 'b'],
+        },
+    })
+    tester.completion(2, {
+        excludes: ['a={a}'],
     })
 })
 

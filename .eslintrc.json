@@ -29,7 +29,13 @@
                     }
                 ]
             }
-        ]
+        ],
+        "unicorn/switch-case-braces": "off",
+        "@typescript-eslint/consistent-type-imports": "off",
+        "@typescript-eslint/ban-types": "off",
+        "sonarjs/prefer-single-boolean-return": "off",
+        "unicorn/no-typeof-undefined": "off", // todo disable globally
+        "@typescript-eslint/consistent-type-definitions": "off"
     },
     "overrides": [
         {

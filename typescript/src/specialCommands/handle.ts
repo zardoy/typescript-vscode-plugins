@@ -40,7 +40,7 @@ export default (
         const node = findChildContainingPosition(ts, sourceFile, position)
         const posEnd = { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] }
 
-        const extendedCodeActions = getExtendedCodeActions(sourceFile, posEnd, languageService, undefined, undefined)
+        const extendedCodeActions = getExtendedCodeActions(sourceFile, posEnd, languageService, undefined, undefined, specialCommandArg.diagnostics)
         return {
             turnArrayIntoObject: objectIntoArrayConverters(posEnd, node, undefined),
             extendedCodeActions,
@@ -76,7 +76,7 @@ export default (
     if (specialCommand === 'getNodeAtPosition') {
         // ensure return data is the same as for node in getNodePath
         const node = findChildContainingPosition(ts, sourceFile, position)
-        return !node ? undefined : nodeToApiResponse(node)
+        return node ? nodeToApiResponse(node) : undefined
     }
     if (specialCommand === 'getSpanOfEnclosingComment') {
         return languageService.getSpanOfEnclosingComment(fileName, position, false)
@@ -132,12 +132,19 @@ export default (
         let targetNode: undefined | ts.Node | [number, number]
         if (ts.isIdentifier(node) && node.parent) {
             node = node.parent
+            if (ts.isJsxExpression(node)) node = node.parent
+            if (ts.isJsxAttributeLike(node)) node = node.parent
+            if (ts.isJsxAttributes(node)) node = node.parent
             if (ts.isPropertyAssignment(node)) {
                 targetNode = node.initializer
             } else if ('body' in node) {
                 targetNode = node.body as ts.Node
             } else if (ts.isJsxOpeningElement(node) || ts.isJsxOpeningFragment(node) || ts.isJsxSelfClosingElement(node)) {
                 const pos = node.end
+                targetNode = [pos, pos]
+            }
+            if (ts.isJsxClosingElement(node) || ts.isJsxClosingFragment(node)) {
+                const { pos } = node
                 targetNode = [pos, pos]
             }
         }

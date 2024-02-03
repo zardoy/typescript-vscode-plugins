@@ -51,6 +51,7 @@ export type RequestInputTypes = {
     }
     getTwoStepCodeActions: {
         range: [number, number]
+        diagnostics: number[]
     }
     twoStepCodeActionSecondStep: {
         range: [number, number]

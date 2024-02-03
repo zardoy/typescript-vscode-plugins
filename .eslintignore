@@ -1,3 +1,4 @@
+src/generated.ts
 src/configurationType.ts
 src/configurationTypeCache.jsonc
 playground.ts

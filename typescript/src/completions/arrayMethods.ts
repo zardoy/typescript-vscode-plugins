@@ -67,7 +67,6 @@ export default (entries: ts.CompletionEntry[], position: number, sourceFile: ts.
 
     return entries.map(entry => {
         if (!arrayMethodsToPatch.includes(entry.name.replace(/^★ /, ''))) {
-            // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
             if (resetRangeKinds && resetRangeKinds.includes(entry.kind) && !entry.replacementSpan) {
                 return {
                     ...entry,

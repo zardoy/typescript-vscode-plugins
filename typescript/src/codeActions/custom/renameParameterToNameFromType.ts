@@ -89,7 +89,6 @@ export const renameAllParametersToNameFromType = {
 
         if (paramsToRename.length < 2) return
 
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         this.name = `Rename All Parameters to Name from Type '${functionDecl.type?.getText()}'`
         if (!formatOptions) return true
 
