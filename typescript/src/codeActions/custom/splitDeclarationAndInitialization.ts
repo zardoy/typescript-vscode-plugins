@@ -24,14 +24,13 @@ export default {
         const { factory } = ts
         const nodeStart = node.pos + node.getLeadingTriviaWidth()
         const varName = declaration.name.text
-        changesTracker.insertNodeAt(
-            sourceFile,
-            nodeStart,
-            factory.createVariableDeclarationList(
-                [factory.createVariableDeclaration(factory.createIdentifier(varName), undefined, typeNode)],
-                ts.NodeFlags.Let,
-            ),
-        )
+        const isJs = !!(node.flags & ts.NodeFlags.JavaScriptFile)
+        const variableDeclaration = factory.createVariableDeclaration(factory.createIdentifier(varName), undefined, isJs ? undefined : typeNode)
+        changesTracker.insertNodeAt(sourceFile, nodeStart, factory.createVariableDeclarationList([variableDeclaration], ts.NodeFlags.Let))
+        if (isJs && typeNode) {
+            const typeTag = factory.createJSDocTypeTag(/*tagName*/ undefined, factory.createJSDocTypeExpression(typeNode), /*comment*/ undefined)
+            changesTracker.addJSDocTags(sourceFile, node, [typeTag as any])
+        }
         changesTracker.replaceNode(
             sourceFile,
             node,
