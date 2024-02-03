@@ -6,6 +6,7 @@ import { showQuickPick } from '@zardoy/vscode-utils/build/quickPick'
 import _ from 'lodash'
 import { compact } from '@zardoy/utils'
 import { offsetPosition } from '@zardoy/vscode-utils/build/position'
+import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
 import { RequestInputTypes, RequestOutputTypes } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
 import { tsRangeToVscode, tsRangeToVscodeSelection, tsTextChangesToVscodeTextEdits } from './util'
@@ -321,24 +322,34 @@ export default () => {
     })
 
     registerTextEditorCommand('wrapIntoNewTag', async (editor, edit, fallbackCommand = 'editor.emmet.action.wrapWithAbbreviation') => {
-        const range = editor.selection
-        const selectedText = '$TM_SELECTED_TEXT'
-        if (editor.selection) {
-            const line = editor.document.lineAt(editor.selection.start.line)
-            const currentIndent = line.text.slice(0, line.firstNonWhitespaceCharacterIndex)
-            await editor.insertSnippet(new vscode.SnippetString(`<\${1:div}$0>\n\t$TM_SELECTED_TEXT\n</\${1:div}>`), editor.selection)
-            return
+        const { selection } = editor
+        if (selection.start.isEqual(selection.end)) {
+            const range = editor.selection
+            const selectedText = '$TM_SELECTED_TEXT'
+
+            if (!defaultJsSupersetLangs.includes(editor.document.languageId)) {
+                if (fallbackCommand) {
+                    await vscode.commands.executeCommand(fallbackCommand, ...fallbackCommand.split(' ').slice(1))
+                }
+
+                return
+            }
+
+            const data = (await sendCommand('getNodePath', {})) ?? []
+            const jsxElem = [...data].reverse().find(d => ['JsxElement', 'JsxSelfClosingElement', 'JsxFragment'].includes(d.kindName))
+            if (!jsxElem) return
+            const { start, end } = jsxElem
+            const startPos = editor.document.positionAt(start)
+            const startRange = new vscode.Range(startPos, startPos)
+            const endPos = editor.document.positionAt(end)
+            const endRange = new vscode.Range(endPos, endPos)
+            editor.selection = new vscode.Selection(startRange.start, endRange.end)
         }
 
-        const data = await sendCommand('getNodePath', {})
-        const jsxElem = data?.find(d => d.kindName === 'JsxElement')
-        if (!jsxElem) return
-        const { start, end } = jsxElem
-        const startPos = editor.document.positionAt(start)
-        const startRange = new vscode.Range(startPos, startPos)
-        const endPos = editor.document.positionAt(end)
-        const endRange = new vscode.Range(endPos, endPos)
-        editor.selection = new vscode.Selection(startRange.start, endRange.end)
+        const line = editor.document.lineAt(editor.selection.start.line)
+        const currentIndent = line.text.slice(0, line.firstNonWhitespaceCharacterIndex)
+        await editor.insertSnippet(new vscode.SnippetString(`<\${1:div}$0>\n\t$TM_SELECTED_TEXT\n</\${1:div}>`), editor.selection)
+        return
     })
 
     // registerExtensionCommand('insertImportFlatten', () => {
