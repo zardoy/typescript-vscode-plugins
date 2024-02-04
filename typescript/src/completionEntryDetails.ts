@@ -22,14 +22,29 @@ export default function completionEntryDetails(
     const sourceFile = program?.getSourceFile(fileName)
     if (!program || !sourceFile) return
 
-    const { documentationOverride, documentationAppend, detailPrepend } = prevCompletionsMap[entryName] ?? {}
+    const { documentationOverride, documentationAppend, detailPrepend, textChanges } = prevCompletionsMap[entryName] ?? {}
     if (documentationOverride) {
-        return {
+        const prior: ts.CompletionEntryDetails = {
             name: entryName,
             kind: ts.ScriptElementKind.alias,
             kindModifiers: '',
             displayParts: typeof documentationOverride === 'string' ? [{ kind: 'text', text: documentationOverride }] : documentationOverride,
         }
+        if (textChanges) {
+            prior.codeActions = [
+                // ...(prior.codeActions ?? []),
+                {
+                    description: 'Includes Text Changes',
+                    changes: [
+                        {
+                            fileName,
+                            textChanges,
+                        },
+                    ],
+                },
+            ]
+        }
+        return prior
     }
     let prior = languageService.getCompletionEntryDetails(
         fileName,

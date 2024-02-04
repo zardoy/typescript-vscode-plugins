@@ -2,6 +2,7 @@ import { compact } from '@zardoy/utils'
 import { Except } from 'type-fest'
 import { findChildContainingExactPosition, findChildContainingPosition } from '../utils'
 import { ApplyExtendedCodeActionResult, IpcExtendedCodeAction } from '../ipcTypes'
+import { GetConfig } from '../types'
 import objectSwapKeysAndValues from './custom/objectSwapKeysAndValues'
 import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
@@ -56,6 +57,7 @@ export type ApplyExtendedCodeAction = (options: {
     /** undefined when no edits is requested */
     formatOptions: ts.FormatCodeSettings | undefined
     languageService: ts.LanguageService
+    c: GetConfig
     // languageServiceHost: ts.LanguageServiceHost
 }) => ApplyExtendedCodeActionResult | boolean | undefined
 
@@ -80,6 +82,7 @@ export const getExtendedCodeActions = <T extends string | undefined>(
     // languageServiceHost: ts.LanguageServiceHost,
     formatOptions: ts.FormatCodeSettings | undefined,
     applyCodeActionTitle: T,
+    config: GetConfig,
     filterErrorCodes?: number[],
 ): T extends undefined ? ExtendedCodeAction[] : ApplyExtendedCodeActionResult => {
     const range = typeof positionOrRange !== 'number' && positionOrRange.pos !== positionOrRange.end ? positionOrRange : undefined
@@ -93,6 +96,7 @@ export const getExtendedCodeActions = <T extends string | undefined>(
         position,
         range,
         sourceFile,
+        c: config,
     }
     if (applyCodeActionTitle) {
         const codeAction = extendedCodeActions.find(codeAction => codeAction.title === applyCodeActionTitle)

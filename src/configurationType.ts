@@ -680,6 +680,34 @@ export type Configuration = {
     // bigFilesThreshold: number
     /** @default false */
     enableHooksFile: boolean
+    /**
+     * @default false
+     */
+    declareMissingPropertyQuickfixOtherFiles: boolean
+    /**
+     * @default {}
+     */
+    filesAutoImport: {
+        [ext: string]: {
+            /**
+             * Override import path (default is "$path")
+             */
+            importPath?: string
+            /**
+             * Start phrase that will trigger search for available files import
+             */
+            prefix: string
+            /**
+             * @default camel
+             */
+            nameCasing?: 'camel' | 'pascal' | 'constant' | 'snake'
+            /**
+             * @default $name
+             */
+            nameTransform?: string
+            iconPost?: string
+        }
+    }
 }
 
 // scrapped using search editor. config: caseInsensitive, context lines: 0, regex: const fix\w+ = "[^ ]+"

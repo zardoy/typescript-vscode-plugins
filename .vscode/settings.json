@@ -3,6 +3,10 @@
         "typescript/lib/tsserverlibrary": {
             "namespace": "ts",
             "addImport": false
+        },
+        "typescript": {
+            "namespace": "ts",
+            "addImport": false
         }
     },
     "typescript.preferences.autoImportFileExcludePatterns": [
@@ -24,5 +28,5 @@
     "vitest.showFailMessages": true,
     "vitest.include": [
         "typescript/test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"
-    ]
+    ],
 }

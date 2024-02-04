@@ -32,6 +32,7 @@ import localityBonus from './completions/localityBonus'
 import functionCompletions from './completions/functionCompletions'
 import staticHintSuggestions from './completions/staticHintSuggestions'
 import typecastCompletions from './completions/typecastCompletions'
+import filesAutoImport from './completions/filesAutoImport'
 
 export type PrevCompletionMap = Record<
     string,
@@ -42,7 +43,7 @@ export type PrevCompletionMap = Record<
         detailPrepend?: string
         documentationAppend?: string
         range?: [number, number]
-        // textChanges?: ts.TextChange[]
+        textChanges?: ts.TextChange[]
     }
 >
 export type PrevCompletionsAdditionalData = {
@@ -63,6 +64,7 @@ export const getCompletionsAtPosition = (
     options: ts.GetCompletionsAtPositionOptions | undefined,
     c: GetConfig,
     languageService: ts.LanguageService,
+    languageServiceHost: ts.LanguageServiceHost,
     scriptSnapshot: ts.IScriptSnapshot,
     formatOptions: ts.FormatCodeSettings | undefined,
     additionalData: { scriptKind: ts.ScriptKind; compilerOptions: ts.CompilerOptions },
@@ -148,6 +150,7 @@ export const getCompletionsAtPosition = (
         prior: prior!,
         fullText: sourceFile.getFullText(),
         typeChecker: program.getTypeChecker(),
+        languageServiceHost,
     } satisfies typeof sharedCompletionContext)
 
     if (node && !hasSuggestions && ensurePrior() && prior) {
@@ -376,6 +379,7 @@ export const getCompletionsAtPosition = (
     }
 
     if (!prior.isMemberCompletion) {
+        prior.entries = [...prior.entries, ...(filesAutoImport() ?? [])]
         prior.entries = markOrRemoveGlobalCompletions(prior.entries, position, languageService, c) ?? prior.entries
     }
     if (exactNode) {

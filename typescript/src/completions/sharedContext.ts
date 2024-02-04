@@ -16,5 +16,5 @@ export const sharedCompletionContext = {} as unknown as Readonly<{
     preferences: ts.UserPreferences
     fullText: string
     typeChecker: ts.TypeChecker
-    // languageServiceHost: ts.LanguageServiceHost
+    languageServiceHost: ts.LanguageServiceHost
 }>

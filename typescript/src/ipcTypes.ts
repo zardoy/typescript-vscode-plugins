@@ -77,6 +77,8 @@ export type RequestInputTypes = {
  * @keysSuggestions TriggerCharacterCommand
  */
 export type RequestOutputTypes = {
+    getNodePath: NodeAtPositionResponse[]
+    getNodeAtPosition: NodeAtPositionResponse
     removeFunctionArgumentsTypesInSelection: {
         ranges: TsRange[]
     }

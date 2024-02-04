@@ -87,7 +87,7 @@ export const decorateLanguageService = (
         if (!scriptSnapshot) return
         const compilerOptions = languageServiceHost.getCompilationSettings()
         try {
-            const result = getCompletionsAtPosition(fileName, position, options, c, languageService, scriptSnapshot, formatOptions, {
+            const result = getCompletionsAtPosition(fileName, position, options, c, languageService, languageServiceHost, scriptSnapshot, formatOptions, {
                 scriptKind,
                 compilerOptions,
             })
