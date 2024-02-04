@@ -680,6 +680,10 @@ export type Configuration = {
     // bigFilesThreshold: number
     /** @default false */
     enableHooksFile: boolean
+    /**
+     * @default false
+     */
+    declareMissingPropertyQuickfixOtherFiles: boolean
 }
 
 // scrapped using search editor. config: caseInsensitive, context lines: 0, regex: const fix\w+ = "[^ ]+"

@@ -40,7 +40,15 @@ export default (
         const node = findChildContainingPosition(ts, sourceFile, position)
         const posEnd = { pos: specialCommandArg.range[0], end: specialCommandArg.range[1] }
 
-        const extendedCodeActions = getExtendedCodeActions(sourceFile, posEnd, languageService, undefined, undefined, specialCommandArg.diagnostics)
+        const extendedCodeActions = getExtendedCodeActions(
+            sourceFile,
+            posEnd,
+            languageService,
+            undefined,
+            undefined,
+            configuration,
+            specialCommandArg.diagnostics,
+        )
         return {
             turnArrayIntoObject: objectIntoArrayConverters(posEnd, node, undefined),
             extendedCodeActions,
@@ -56,6 +64,7 @@ export default (
             languageService,
             formatOptions,
             applyCodeActionTitle,
+            configuration,
         ) satisfies RequestOutputTypes['getExtendedCodeActionEdits']
     }
     if (specialCommand === 'twoStepCodeActionSecondStep') {
