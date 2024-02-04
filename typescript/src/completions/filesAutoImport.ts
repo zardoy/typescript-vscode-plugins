@@ -13,9 +13,8 @@ export default () => {
     for (const [ext, item] of Object.entries(filesAutoImport)) {
         if (currentText.startsWith(item.prefix)) included.push({ ext, item })
     }
-    // if (!included.length) return
+    if (included.length === 0) return
     const root = languageServiceHost.getCurrentDirectory()
-    // const fileRelative = nodeModules.path.relative(root, sourceFile.fileName)
     const collected = [] as string[]
     const MAX_ITERATIONS = 200
     let iter = 0
