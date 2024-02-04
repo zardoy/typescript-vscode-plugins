@@ -45,6 +45,7 @@ export const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, s
         },
         defaultConfigFunc,
         languageService,
+        languageServiceHost,
         languageServiceHost.getScriptSnapshot(entrypoint)!,
         {
             convertTabsToSpaces: false,
