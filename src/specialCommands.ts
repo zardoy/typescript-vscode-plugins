@@ -352,6 +352,94 @@ export default () => {
         return
     })
 
+    registerExtensionCommand('searchWorkspaceBySyntaxKind', async () => {
+        const result = await sendCommand('searchWorkspaceBySyntaxKindPrepare', {})
+        if (!result) return
+        const { syntaxKinds, filesCount } = result
+        const selected = await showQuickPick(
+            syntaxKinds.map(syntaxKind => ({ label: syntaxKind, value: syntaxKind })),
+            {
+                title: `Select syntax kind for filtering in ${filesCount} files`,
+                canPickMany: true,
+                ignoreFocusOut: true,
+            },
+        )
+        if (!selected) return
+        const searchQuery = await vscode.window.showInputBox({
+            prompt: 'Enter search query',
+        })
+        if (!searchQuery) return
+        void vscode.window.showInformationMessage('Processing search...')
+        const result2 = await sendCommand('searchWorkspaceBySyntaxKind', {
+            inputOptions: {
+                query: searchQuery,
+                kinds: selected,
+            },
+        })
+        if (!result2) return
+        const { files } = result2
+        const results = [] as Array<{ document: vscode.TextDocument; range: vscode.Range }>
+        for (const file of files) {
+            const document = await vscode.workspace.openTextDocument(file.filename)
+            // if (!document) continue
+            for (const range of file.ranges) {
+                results.push({ document, range: tsRangeToVscode(document, range) })
+            }
+        }
+
+        let replaceMode = false
+        const displayFilesPicker = async () => {
+            const selectedRange = await showQuickPick(
+                results.map(file => ({
+                    label: file.document.fileName,
+                    value: file,
+                })),
+                {
+                    title: `Found ${results.length} results`,
+                    canPickMany: replaceMode,
+                    ignoreFocusOut: true,
+                    buttons: [
+                        {
+                            iconPath: new vscode.ThemeIcon('replace-all'),
+                            tooltip: 'Toggle replace mode enabled',
+                        },
+                    ],
+                    onDidTriggerButton(event) {
+                        replaceMode = !replaceMode
+                        this.hide()
+                        void displayFilesPicker()
+                    },
+                },
+            )
+            if (!selectedRange) return
+            if (Array.isArray(selectedRange)) {
+                const replaceFor = await vscode.window.showInputBox({
+                    prompt: 'Enter replace for',
+                    ignoreFocusOut: true,
+                })
+                if (!replaceFor) return
+
+                const rangesByFile = _.groupBy(selectedRange, file => file.document.fileName)
+                for (const [_, ranges] of Object.entries(rangesByFile)) {
+                    const { document } = ranges[0]!
+                    const editor = await vscode.window.showTextDocument(document)
+                    // todo
+                    // eslint-disable-next-line no-await-in-loop
+                    await editor.edit(editBuilder => {
+                        for (const file of ranges) {
+                            editBuilder.replace(file.range, replaceFor)
+                        }
+                    })
+                }
+            } else {
+                const { document, range } = selectedRange as any
+                await vscode.window.showTextDocument(document, { selection: range })
+            }
+        }
+
+        await displayFilesPicker()
+    })
+
     // registerExtensionCommand('insertImportFlatten', () => {
     //     // got -> default, got
     //     type A = ts.Type

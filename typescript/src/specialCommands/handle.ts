@@ -2,7 +2,7 @@ import { compact } from '@zardoy/utils'
 import { getExtendedCodeActions } from '../codeActions/getCodeActions'
 import { NodeAtPositionResponse, RequestInputTypes, RequestOutputTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
 import { GetConfig } from '../types'
-import { findChildContainingExactPosition, findChildContainingPosition, getNodePath } from '../utils'
+import { findChildContainingExactPosition, findChildContainingPosition, findClosestParent, getNodePath } from '../utils'
 import { lastResolvedCompletion } from '../completionEntryDetails'
 import { overrideRenameRequest } from '../decorateFindRenameLocations'
 import getEmmetCompletions from './emmet'
@@ -253,6 +253,63 @@ export default (
     }
     if (specialCommand === 'getLastResolvedCompletion') {
         return lastResolvedCompletion.value
+    }
+    if (specialCommand === 'searchWorkspaceBySyntaxKind' || specialCommand === 'searchWorkspaceBySyntaxKindPrepare') {
+        const files = languageService
+            .getProgram()!
+            .getSourceFiles()
+            .filter(x => !x.fileName.includes('node_modules') && !x.fileName.includes('dist') && !x.fileName.includes('build'))
+        const excludeKinds: Array<keyof typeof ts.SyntaxKind> = ['SourceFile']
+        const allowKinds: Array<keyof typeof ts.SyntaxKind> = ['ReturnStatement']
+        if (specialCommand === 'searchWorkspaceBySyntaxKind') {
+            changeType<RequestInputTypes['searchWorkspaceBySyntaxKind']>(specialCommandArg)
+
+            const collectedNodes: RequestOutputTypes['searchWorkspaceBySyntaxKind']['files'] = []
+            for (const file of files) {
+                let lastIndex = 0
+                while (lastIndex !== -1) {
+                    lastIndex = file.text.indexOf(specialCommandArg.query, lastIndex + 1)
+                    if (lastIndex === -1) continue
+                    const node = findChildContainingExactPosition(file, lastIndex)
+                    if (!node || !specialCommandArg.kinds.includes(ts.SyntaxKind[node.kind]!)) continue
+
+                    // ignore imports for now...
+                    const importDecl = findClosestParent(node, [ts.SyntaxKind.ImportDeclaration, ts.SyntaxKind.ExportDeclaration], [])
+                    if (importDecl) continue
+
+                    const fileRanges = collectedNodes.find(x => x.filename === file.fileName)
+                    let start = node.pos + (specialCommandArg.kinds.includes('comment') ? 0 : node.getLeadingTriviaWidth(file))
+                    let endPos = node.end
+                    start += lastIndex - start
+                    endPos -= node.end - (lastIndex + specialCommandArg.query.length)
+                    const range = [start, endPos] as [number, number]
+                    if (fileRanges) {
+                        fileRanges.ranges.push(range)
+                    } else {
+                        collectedNodes.push({ filename: file.fileName, ranges: [range] })
+                    }
+                }
+            }
+
+            return {
+                files: collectedNodes,
+            } satisfies RequestOutputTypes['searchWorkspaceBySyntaxKind']
+        }
+        if (specialCommand === 'searchWorkspaceBySyntaxKindPrepare') {
+            const kinds = Object.values(ts.SyntaxKind) as Array<string | number>
+            return {
+                syntaxKinds: kinds.filter(
+                    kind =>
+                        allowKinds.includes(kind as any) ||
+                        (typeof kind === 'string' &&
+                            !excludeKinds.includes(kind as any) &&
+                            !kind.includes('Token') &&
+                            !kind.includes('Statement') &&
+                            !kind.includes('Operator')),
+                ) as string[],
+                filesCount: files.length,
+            } satisfies RequestOutputTypes['searchWorkspaceBySyntaxKindPrepare']
+        }
     }
     if (specialCommand === 'getFullType') {
         const text = getFullType(languageService, sourceFile, position)

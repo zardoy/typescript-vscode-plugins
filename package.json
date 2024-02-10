@@ -78,6 +78,10 @@
             {
                 "command": "wrapIntoNewTag",
                 "title": "Wrap Into New Tag"
+            },
+            {
+                "command": "searchWorkspaceBySyntaxKind",
+                "title": "Search Workspace by Syntax Kind"
             }
         ],
         "keybindings": [
