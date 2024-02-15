@@ -32,3 +32,12 @@ jobs:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
           # optional
           EXTENSION_ICON: ${{ secrets.EXTENSION_ICON }}
+      - name: Set publishing config
+        run: pnpm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - run: node typescript/npm/beforePublish.mjs
+      - run: pnpm publish --access public
+        working-directory: typescript
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}

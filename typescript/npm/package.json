@@ -1,0 +1,19 @@
+{
+    "name": "typescript-essential-plugins",
+    "version": "0.0.0-dev",
+    "main": "build/index.js",
+    "types": "build/index.d.js",
+    "files": [
+        "build"
+    ],
+    "dependencies": {
+        "@zardoy/utils": "*",
+        "change-case": "*",
+        "escape-string-regexp": "*",
+        "lodash": "*",
+        "pluralize": "github:plurals/pluralize#36f03cd2d573fa6d23e12e1529fa4627e2af74b4",
+        "rambda": "*",
+        "string-dedent": "*",
+        "require-from-string": "*"
+    }
+}
