@@ -67,18 +67,3 @@ export default {
         }
     },
 } satisfies CodeAction
-
-// TODO!
-if (import.meta.vitest) {
-    const { it, expect } = import.meta.vitest
-    it('objectSwapKeysAndValues', () => {
-        const case1 = /* ts */ `
-            const a = /*1*/{
-                // description
-                test: /*inline comment?*/ 3,
-                /** */['test2']: getComputedStyle.apply(),
-                'test2': 'someValue'
-            }/*2*/
-        `
-    })
-}

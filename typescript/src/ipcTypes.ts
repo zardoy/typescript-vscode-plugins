@@ -18,6 +18,8 @@ export const triggerCharacterCommands = [
     'getArgumentReferencesFromCurrentParameter',
     'performanceInfo',
     'getMigrateToImportsEdits',
+    'searchWorkspaceBySyntaxKind',
+    'searchWorkspaceBySyntaxKindPrepare',
 ] as const
 
 export type TriggerCharacterCommand = (typeof triggerCharacterCommands)[number]
@@ -70,6 +72,11 @@ export type RequestInputTypes = {
         range: [number, number]
         applyCodeActionTitle: string
     }
+
+    searchWorkspaceBySyntaxKind: {
+        kinds: string[]
+        query: string
+    }
 }
 
 // OUTPUT
@@ -120,6 +127,16 @@ export type RequestOutputTypes = {
     getArgumentReferencesFromCurrentParameter: Array<{ line: number; character: number; filename: string }>
     'emmet-completions': EmmetResult
     getMigrateToImportsEdits: ts.TextChange[]
+    searchWorkspaceBySyntaxKindPrepare: {
+        filesCount: number
+        syntaxKinds: string[]
+    }
+    searchWorkspaceBySyntaxKind: {
+        files: Array<{
+            filename: string
+            ranges: TsRange[]
+        }>
+    }
 }
 
 // export type EmmetResult = {
