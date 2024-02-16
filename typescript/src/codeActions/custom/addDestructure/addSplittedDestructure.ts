@@ -22,8 +22,8 @@ export default (node: ts.Node, sourceFile: ts.SourceFile, formatOptions: ts.Form
 
         if (
             ts.isElementAccessExpression(highlightedNode.parent) ||
-            ts.isCallExpression(highlightedNode.parent.parent) ||
-            ts.isTypeQueryNode(highlightedNode.parent)
+            ts.isTypeQueryNode(highlightedNode.parent) ||
+            (ts.isCallExpression(highlightedNode.parent.parent) && highlightedNode.parent.parent.expression === highlightedNode.parent)
         )
             return
 
