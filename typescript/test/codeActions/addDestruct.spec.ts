@@ -278,6 +278,52 @@ describe('Add destructure', () => {
             })
         })
     })
+    describe.todo('Vue support', () => {
+        test('Should handle props reactivity lose', () => {
+            const initial = /* ts */ `
+              const /*t*/props/*t*/ = defineProps({
+                  source: {
+                      type: Object,
+                      required: true,
+                  },
+              });
+            `
+            const expected = /* ts */ `
+              const { source } = toRefs(defineProps({
+                  source: {
+                      type: Object,
+                      required: true,
+                  },
+              }));
+            `
+
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+        test('Should handle `reactive` object reactivity lose', () => {
+            const initial = /* ts */ `
+              const /*t*/reactiveObject/*t*/ = reactive({
+                  source: 'str'
+              });
+            `
+            const expected = /* ts */ `
+              const { source } = toRefs(reactive({
+                  source: 'str'
+              }));
+            `
+
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+    })
 
     describe('Skip cases', () => {
         test('Should skip if trying to destruct expression of call expression', () => {
