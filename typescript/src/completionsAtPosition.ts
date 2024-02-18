@@ -288,7 +288,11 @@ export const getCompletionsAtPosition = (
                 prior.entries = []
             }
             if (c('cleanupVueComponentCompletions') === 'filter-non-vue') {
-                prior.entries = prior.entries.filter(entry => isVueFileName(entry.symbol?.declarations?.[0]?.getSourceFile().fileName))
+                prior.entries = prior.entries.filter(entry => {
+                    const fileName = entry.symbol?.declarations?.[0]?.getSourceFile().fileName
+                    if (!fileName) return false
+                    return isVueFileName(fileName)
+                })
             }
         }
     }
