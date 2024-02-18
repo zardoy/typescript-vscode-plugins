@@ -178,7 +178,7 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint, { d
                     )!
                     const newContentsActual = tsFull.textChanges.applyChanges(getCurrentFile(), edits[0]!.textChanges)
                     if (newContent) {
-                        expect(dedentString(newContent), `at marker ${mark}`).toEqual(newContentsActual)
+                        expect(newContentsActual, `at marker ${mark}`).toEqual(dedentString(newContent))
                     }
                     return newContentsActual
                 }
