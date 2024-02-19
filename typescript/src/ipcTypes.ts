@@ -16,6 +16,7 @@ export const triggerCharacterCommands = [
     'getExtendedCodeActionEdits',
     'getLastResolvedCompletion',
     'getArgumentReferencesFromCurrentParameter',
+    'onEnterActions',
     'performanceInfo',
     'getMigrateToImportsEdits',
     'searchWorkspaceBySyntaxKind',

@@ -17,6 +17,7 @@ import moreCompletions from './moreCompletions'
 import { mergeSettingsFromScopes } from './mergeSettings'
 import codeActionProvider from './codeActionProvider'
 import nonTsCommands from './nonTsCommands'
+import onEnterActions from './onEnterActions'
 
 let isActivated = false
 // let erroredStatusBarItem: vscode.StatusBarItem | undefined
@@ -96,6 +97,7 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
 
     figIntegration()
     vueVolarSupport()
+    onEnterActions()
 
     if (process.env.PLATFORM === 'node' && process.env.NODE_ENV === 'development') {
         require('./autoPluginReload').default()

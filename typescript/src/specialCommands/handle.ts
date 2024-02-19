@@ -387,6 +387,9 @@ export default (
         return combinedCodeFix.changes[0]?.textChanges
     }
 
+    if (specialCommand === 'onEnterActions') {
+    }
+
     return null
 }
 
