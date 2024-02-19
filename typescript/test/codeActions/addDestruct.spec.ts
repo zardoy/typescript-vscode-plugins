@@ -253,9 +253,80 @@ describe('Add destructure', () => {
             })
         })
     })
+    describe('Should destruct param call expression param', () => {
+        test('Should skip if trying to destruct call expression', () => {
+            const initial = /* ts */ `
+              const /*t*/newVariable/*t*/ = { test: 1}
+
+              const obj = {
+                  tag: foo.map(newVariable.test),
+              }
+            `
+            const expected = /* ts */ `
+              const { test } = { test: 1}
+
+              const obj = {
+                  tag: foo.map(test),
+              }
+            `
+
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+    })
+    describe.todo('Vue support', () => {
+        test('Should handle props reactivity lose', () => {
+            const initial = /* ts */ `
+              const /*t*/props/*t*/ = defineProps({
+                  source: {
+                      type: Object,
+                      required: true,
+                  },
+              });
+            `
+            const expected = /* ts */ `
+              const { source } = toRefs(defineProps({
+                  source: {
+                      type: Object,
+                      required: true,
+                  },
+              }));
+            `
+
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+        test('Should handle `reactive` object reactivity lose', () => {
+            const initial = /* ts */ `
+              const /*t*/reactiveObject/*t*/ = reactive({
+                  source: 'str'
+              });
+            `
+            const expected = /* ts */ `
+              const { source } = toRefs(reactive({
+                  source: 'str'
+              }));
+            `
+
+            const { codeAction } = fourslashLikeTester(initial, undefined, { dedent: true })
+
+            codeAction(0, {
+                refactorName: 'Add Destruct',
+                newContent: expected,
+            })
+        })
+    })
 
     describe('Skip cases', () => {
-        test('Should skip if trying to destruct call expression', () => {
+        test('Should skip if trying to destruct expression of call expression', () => {
             const initial = /* ts */ `
               const /*t*/newVariable/*t*/ = foo
 

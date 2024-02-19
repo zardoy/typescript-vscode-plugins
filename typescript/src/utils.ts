@@ -2,6 +2,7 @@
 import { Except, SetOptional } from 'type-fest'
 import * as semver from 'semver'
 import type { MatchParentsType } from './utilTypes'
+import isVueFileName from './utils/vue/isVueFileName'
 
 export function findChildContainingPosition(typescript: typeof ts, sourceFile: ts.SourceFile, position: number): ts.Node | undefined {
     function find(node: ts.Node): ts.Node | undefined {
@@ -354,7 +355,7 @@ export const isValidInitializerForDestructure = (match: ts.Expression) => {
 
     return true
 }
-export const isNameUniqueAtLocation = (name: string, location: ts.Node | undefined, typeChecker: ts.TypeChecker) => {
+export const isNameUniqueAtLocation = (name: string, location: ts.Node, typeChecker: ts.TypeChecker) => {
     const checker = getFullTypeChecker(typeChecker)
     let hasCollision: boolean | undefined
 
@@ -366,7 +367,6 @@ export const isNameUniqueAtLocation = (name: string, location: ts.Node | undefin
             childNode.forEachChild(checkCollision)
         }
     }
-    if (!location) return
 
     if (ts.isSourceFile(location)) {
         hasCollision = createUniqueName(name, location as any) !== name
@@ -385,6 +385,8 @@ const getClosestParentScope = (node: ts.Node) => {
 }
 export const isNameUniqueAtNodeClosestScope = (name: string, node: ts.Node, typeChecker: ts.TypeChecker) => {
     const closestScope = getClosestParentScope(node)
+    if (!closestScope) return
+
     return isNameUniqueAtLocation(name, closestScope, typeChecker)
 }
 
@@ -423,6 +425,9 @@ const createUniqueName = (name: string, sourceFile: ts.SourceFile) => {
                 return (parent as ts.ImportSpecifier).propertyName !== node
             case ts.SyntaxKind.PropertyAssignment:
                 return (parent as ts.PropertyAssignment).name !== node
+            // Skip identifiers in vue template
+            case ts.SyntaxKind.ArrayLiteralExpression:
+                return !isVueFileName(sourceFile.fileName)
             default:
                 return true
         }
@@ -437,6 +442,7 @@ const createUniqueName = (name: string, sourceFile: ts.SourceFile) => {
     while (identifiers.includes(name)) {
         name = `_${name}`
     }
+
     return name
 }
 

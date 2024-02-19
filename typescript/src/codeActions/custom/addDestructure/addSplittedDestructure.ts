@@ -1,5 +1,8 @@
-import { uniq } from 'rambda'
-import { findChildContainingExactPosition, getChangesTracker, getPositionHighlights, isValidInitializerForDestructure, makeUniqueName } from '../../../utils'
+import { uniqBy } from 'lodash'
+import { getChangesTracker, getPositionHighlights, isValidInitializerForDestructure } from '../../../utils'
+import isVueFileName from '../../../utils/vue/isVueFileName'
+import { checkNeedToRefsWrap } from './vueSupportUtils'
+import { getDestructureReplaceInfo } from './getDestructureReplaceInfo'
 
 export default (node: ts.Node, sourceFile: ts.SourceFile, formatOptions: ts.FormatCodeSettings | undefined, languageService: ts.LanguageService) => {
     const isValidInitializer = ts.isVariableDeclaration(node.parent) && node.parent.initializer && isValidInitializerForDestructure(node.parent.initializer)
@@ -12,52 +15,32 @@ export default (node: ts.Node, sourceFile: ts.SourceFile, formatOptions: ts.Form
     if (!highlightPositions) return
     const tracker = getChangesTracker(formatOptions ?? {})
 
-    const propertyNames: Array<{ initial: string; unique: string | undefined }> = []
-    let nodeToReplaceWithBindingPattern: ts.Identifier | undefined
+    const res = getDestructureReplaceInfo(highlightPositions, node, sourceFile, languageService)
 
-    for (const pos of highlightPositions) {
-        const highlightedNode = findChildContainingExactPosition(sourceFile, pos)
+    if (!res) return
 
-        if (!highlightedNode) continue
+    const { propertiesToReplace, nodeToReplaceWithBindingPattern } = res
 
-        if (
-            ts.isElementAccessExpression(highlightedNode.parent) ||
-            ts.isCallExpression(highlightedNode.parent.parent) ||
-            ts.isTypeQueryNode(highlightedNode.parent)
-        )
-            return
+    if (!nodeToReplaceWithBindingPattern || propertiesToReplace.length === 0) return
 
-        if (ts.isIdentifier(highlightedNode) && ts.isPropertyAccessExpression(highlightedNode.parent)) {
-            const accessorName = highlightedNode.parent.name.getText()
+    const shouldHandleVueReactivityLose =
+        isVueFileName(sourceFile.fileName) &&
+        ts.isVariableDeclaration(nodeToReplaceWithBindingPattern.parent) &&
+        nodeToReplaceWithBindingPattern.parent.initializer &&
+        checkNeedToRefsWrap(nodeToReplaceWithBindingPattern.parent.initializer)
 
-            if (!accessorName) continue
+    for (const { initial, range, unique } of propertiesToReplace) {
+        const uniqueNameIdentifier = ts.factory.createIdentifier(unique || initial)
 
-            const uniqueName = makeUniqueName(accessorName, node, languageService, sourceFile)
-
-            propertyNames.push({ initial: accessorName, unique: uniqueName === accessorName ? undefined : uniqueName })
-            const range =
-                ts.isPropertyAssignment(highlightedNode.parent.parent) && highlightedNode.parent.parent.name.getText() === accessorName
-                    ? {
-                          pos: highlightedNode.parent.parent.pos + highlightedNode.parent.parent.getLeadingTriviaWidth(),
-                          end: highlightedNode.parent.parent.end,
-                      }
-                    : { pos, end: highlightedNode.parent.end }
-
-            tracker.replaceRangeWithText(sourceFile, range, uniqueName)
+        if (shouldHandleVueReactivityLose) {
+            const propertyAccessExpression = ts.factory.createPropertyAccessExpression(uniqueNameIdentifier, 'value')
+            tracker.replaceRange(sourceFile, range, propertyAccessExpression)
             continue
         }
-
-        if (ts.isIdentifier(highlightedNode) && (ts.isVariableDeclaration(highlightedNode.parent) || ts.isParameter(highlightedNode.parent))) {
-            // Already met a target node - abort as we encountered direct use of the potential destructured variable
-            if (nodeToReplaceWithBindingPattern) return
-            nodeToReplaceWithBindingPattern = highlightedNode
-            continue
-        }
+        tracker.replaceRange(sourceFile, range, uniqueNameIdentifier)
     }
 
-    if (!nodeToReplaceWithBindingPattern || propertyNames.length === 0) return
-
-    const bindings = uniq(propertyNames).map(({ initial, unique }) => {
+    const bindings = uniqBy(propertiesToReplace, 'unique').map(({ initial, unique }) => {
         return ts.factory.createBindingElement(undefined, unique ? initial : undefined, unique ?? initial)
     })
 
@@ -72,6 +55,22 @@ export default (node: ts.Node, sourceFile: ts.SourceFile, formatOptions: ts.Form
         },
         bindingPattern,
     )
+
+    if (shouldHandleVueReactivityLose) {
+        // Wrap the `defineProps` with `toRefs`
+        const toRefs = ts.factory.createIdentifier('toRefs')
+        const unwrappedCall = nodeToReplaceWithBindingPattern.parent.initializer
+        const wrappedWithToRefsCall = ts.factory.createCallExpression(toRefs, undefined, [unwrappedCall])
+
+        tracker.replaceRange(
+            sourceFile,
+            {
+                pos: unwrappedCall.pos,
+                end: unwrappedCall.end,
+            },
+            wrappedWithToRefsCall,
+        )
+    }
 
     const changes = tracker.getChanges()
     if (!changes) return undefined
