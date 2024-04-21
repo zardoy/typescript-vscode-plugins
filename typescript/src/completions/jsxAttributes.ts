@@ -11,6 +11,7 @@ export default (
     sourceFile: ts.SourceFile,
     jsxCompletionsMap: Configuration['jsxCompletionsMap'],
 ): ts.CompletionEntry[] => {
+    const originalNode = node
     // ++ patch with jsxCompletionsMap
     // -- don't
     // <div| - identifier, not attribute --
@@ -78,13 +79,24 @@ export default (
         const enableJsxAttributesShortcuts = sharedCompletionContext.c('jsxAttributeShortcutCompletions.enable')
         if (enableJsxAttributesShortcuts !== 'disable') {
             const locals = collectLocalSymbols(node, sharedCompletionContext.typeChecker)
+            let attrib = originalNode.parent as ts.JsxAttribute | undefined
+            if (!ts.isJsxAttribute(attrib!)) {
+                attrib = undefined
+            }
             entries = entries.flatMap(entry => {
                 if (locals.includes(entry.name)) {
                     const insertText = `${entry.name}={${entry.name}}`
-                    const additionalSuggestions = {
+                    const pos = attrib ? attrib.end - attrib.getWidth() : 0
+                    const additionalSuggestions: ts.CompletionEntry = {
                         ...entry,
                         name: insertText,
                         insertText,
+                        replacementSpan: attrib
+                            ? {
+                                  start: pos,
+                                  length: attrib.end - pos,
+                              }
+                            : undefined,
                     }
                     return enableJsxAttributesShortcuts === 'after' ? [entry, additionalSuggestions] : [additionalSuggestions, entry]
                 }
