@@ -527,21 +527,38 @@ test('Fix properties sorting', () => {
             a.b({/*2*/})./*3*/
         }
 
-        declare function MyComponent(props: { b?; c? } & { a? }): JSX.Element
-        <MyComponent /*4*/ />;
-
         let a: { b:{}, a() } = {
             /*5*/
         }
+
+        declare function MyComponent(props: { b?; c? } & { a? }): JSX.Element
+        <MyComponent /*4*/ />;
+        <MyComponent
+            c=''
+        /*41*/
+        />;
+        <MyComponent
+            test2=''
+        /*41*/
+        test=''
+        />;
+        <MyComponent /*42*/
+            test2=''
+        />;
     `)
     const assertSorted = (marker: number, expected: string[]) => {
         const { entriesSorted } = getCompletionsAtPosition(currentTestingContext.markers[marker]!)!
-        expect(entriesSorted.map(x => x.name)).toEqual(expected)
+        expect(
+            entriesSorted.map(x => x.name),
+            `${marker}`,
+        ).toEqual(expected)
     }
     assertSorted(1, ['c', 'b'])
     assertSorted(2, ['c', 'b'])
     assertSorted(3, ['c', 'b'])
     assertSorted(4, ['b', 'c', 'a'])
+    assertSorted(41, ['b', 'c', 'a'])
+    assertSorted(42, ['b', 'c', 'a'])
     assertSorted(5, ['b', 'b', 'a', 'a'])
     settingsOverride.fixSuggestionsSorting = false
 })
@@ -570,11 +587,36 @@ testTs5('Change to function kind', () => {
 })
 
 testTs5('Filter JSX Components', () => {
-    const tester = fourslashLikeTester(/* ts */ `
-        const a = () => {}
-        a/*1*/
+    overrideSettings({
+        // improveJsxCompletions: false,
+        'experiments.excludeNonJsxCompletions': true,
+    })
+    const tester = fourslashLikeTester(/* tsx */ `
+        const someFunction = () => {}
+        declare namespace JSX {
+            interface IntrinsicElements {
+                superSpan: any;
+            }
+        }
+        // return < // TODO
+        return <s/*1*/
     `)
-    // TODO
+    tester.completion(1, {
+        excludes: ['someFunction'],
+        includes: {
+            names: ['superSpan'],
+        },
+    })
+    // https://github.com/zardoy/typescript-vscode-plugins/issues/205
+    const tester2 = fourslashLikeTester(/* tsx */ `
+        const Img = ({ alt }) => {}
+        <Img\n\t/*1*/\n/>
+    `)
+    tester2.completion(1, {
+        includes: {
+            names: ['alt'],
+        },
+    })
 })
 
 test('Omit<..., ""> suggestions', () => {

@@ -10,6 +10,7 @@ import declareMissingProperties from './extended/declareMissingProperties'
 import { renameParameterToNameFromType, renameAllParametersToNameFromType } from './custom/renameParameterToNameFromType'
 import addDestructure_1 from './custom/addDestructure/addDestructure'
 import fromDestructure_1 from './custom/fromDestructure/fromDestructure'
+import fixClosingTagName from './custom/fixClosingTagName'
 
 const codeActions: CodeAction[] = [
     addDestructure_1,
@@ -19,6 +20,7 @@ const codeActions: CodeAction[] = [
     splitDeclarationAndInitialization,
     renameParameterToNameFromType,
     renameAllParametersToNameFromType,
+    fixClosingTagName,
 ]
 const extendedCodeActions: ExtendedCodeAction[] = [declareMissingProperties]
 

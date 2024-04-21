@@ -23,10 +23,17 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             lastLinkedEditingRangeRequest.fileName === fileName
         ) {
             lastLinkedEditingRangeRequest.pos = position
-            lastLinkedEditingRangeRequest.result.ranges[0]!.length++
+            const startRange = lastLinkedEditingRangeRequest.result.ranges[0]!
+            const endRange = lastLinkedEditingRangeRequest.result.ranges[1]!
+            startRange.length++
             lastLinkedEditingRangeRequest.result.ranges[1]!.start++
+
             lastLinkedEditingRangeRequest.result.ranges[1]!.length++
-            return lastLinkedEditingRangeRequest.result
+            const leadingText = fileContent.slice(startRange.start, startRange.start + startRange.length)
+            const endingText = fileContent.slice(endRange.start, endRange.start + endRange.length)
+            if (leadingText === endingText) {
+                return lastLinkedEditingRangeRequest.result
+            }
         }
         lastLinkedEditingRangeRequest = undefined
 

@@ -31,7 +31,7 @@ export default (entries: ts.CompletionEntry[]) => {
     const typeChecker = program.getTypeChecker()
     let sourceProps: string[]
     if (isJsxElem) {
-        const type = typeChecker.getContextualType((node as ts.JsxOpeningElement).attributes)
+        const type = typeChecker.getContextualType((targetNode as ts.JsxOpeningElement).attributes)
         if (!type) return
         // usually component own props defined first like interface Props extends ... {} or type A = Props & ..., but this is not a case with mui...
         sourceProps = (type.isIntersection() ? type.types.flatMap(type => type.getProperties()) : type.getProperties()).map(symbol => symbol.name)
