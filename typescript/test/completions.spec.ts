@@ -527,26 +527,38 @@ test('Fix properties sorting', () => {
             a.b({/*2*/})./*3*/
         }
 
+        let a: { b:{}, a() } = {
+            /*5*/
+        }
+
         declare function MyComponent(props: { b?; c? } & { a? }): JSX.Element
         <MyComponent /*4*/ />;
         <MyComponent
             c=''
         /*41*/
         />;
-
-        let a: { b:{}, a() } = {
-            /*5*/
-        }
+        <MyComponent
+            test2=''
+        /*41*/
+        test=''
+        />;
+        <MyComponent /*42*/
+            test2=''
+        />;
     `)
     const assertSorted = (marker: number, expected: string[]) => {
         const { entriesSorted } = getCompletionsAtPosition(currentTestingContext.markers[marker]!)!
-        expect(entriesSorted.map(x => x.name)).toEqual(expected)
+        expect(
+            entriesSorted.map(x => x.name),
+            `${marker}`,
+        ).toEqual(expected)
     }
     assertSorted(1, ['c', 'b'])
     assertSorted(2, ['c', 'b'])
     assertSorted(3, ['c', 'b'])
     assertSorted(4, ['b', 'c', 'a'])
-    assertSorted(41, ['b', 'a'])
+    assertSorted(41, ['b', 'c', 'a'])
+    assertSorted(42, ['b', 'c', 'a'])
     assertSorted(5, ['b', 'b', 'a', 'a'])
     settingsOverride.fixSuggestionsSorting = false
 })
