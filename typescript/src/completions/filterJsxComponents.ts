@@ -14,6 +14,12 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
     ) {
         return
     }
+    // const startLineNode = ts.getLineAndCharacterOfPosition(node.getSourceFile(), node.pos).line
+    // const startLinePosition = ts.getLineAndCharacterOfPosition(node.getSourceFile(), position).line
+    // if (startLineNode !== startLinePosition) return
+    const identifier = ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node) ? node.tagName : null
+    // if already got name and we are not typing it
+    if (identifier && identifier.end < position) return
 
     const nodeText = node.getText().slice(0, position - (node.pos + node.getLeadingTriviaWidth()))
     // workaround for <div test |></div>

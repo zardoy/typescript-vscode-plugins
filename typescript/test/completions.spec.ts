@@ -529,6 +529,10 @@ test('Fix properties sorting', () => {
 
         declare function MyComponent(props: { b?; c? } & { a? }): JSX.Element
         <MyComponent /*4*/ />;
+        <MyComponent
+            c=''
+        /*41*/
+        />;
 
         let a: { b:{}, a() } = {
             /*5*/
@@ -542,6 +546,7 @@ test('Fix properties sorting', () => {
     assertSorted(2, ['c', 'b'])
     assertSorted(3, ['c', 'b'])
     assertSorted(4, ['b', 'c', 'a'])
+    assertSorted(41, ['b', 'a'])
     assertSorted(5, ['b', 'b', 'a', 'a'])
     settingsOverride.fixSuggestionsSorting = false
 })
@@ -569,12 +574,37 @@ testTs5('Change to function kind', () => {
     settingsOverride['experiments.changeKindToFunction'] = false
 })
 
-testTs5('Filter JSX Components', () => {
-    const tester = fourslashLikeTester(/* ts */ `
-        const a = () => {}
-        a/*1*/
+testTs5.only('Filter JSX Components', () => {
+    overrideSettings({
+        // improveJsxCompletions: false,
+        'experiments.excludeNonJsxCompletions': true,
+    })
+    const tester = fourslashLikeTester(/* tsx */ `
+        const someFunction = () => {}
+        declare namespace JSX {
+            interface IntrinsicElements {
+                superSpan: any;
+            }
+        }
+        // return < // TODO
+        return <s/*1*/
     `)
-    // TODO
+    tester.completion(1, {
+        excludes: ['someFunction'],
+        includes: {
+            names: ['superSpan'],
+        },
+    })
+    // https://github.com/zardoy/typescript-vscode-plugins/issues/205
+    const tester2 = fourslashLikeTester(/* tsx */ `
+        const Img = ({ alt }) => {}
+        <Img\n\t/*1*/\n/>
+    `)
+    tester2.completion(1, {
+        includes: {
+            names: ['alt'],
+        },
+    })
 })
 
 test('Omit<..., ""> suggestions', () => {
