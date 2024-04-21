@@ -574,7 +574,7 @@ testTs5('Change to function kind', () => {
     settingsOverride['experiments.changeKindToFunction'] = false
 })
 
-testTs5.only('Filter JSX Components', () => {
+testTs5('Filter JSX Components', () => {
     overrideSettings({
         // improveJsxCompletions: false,
         'experiments.excludeNonJsxCompletions': true,
