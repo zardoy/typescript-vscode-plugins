@@ -83,16 +83,3 @@ export default {
         return
     },
 } as ExtendedCodeAction
-
-const testCode = () => {
-    const tester = (code: string) => {
-        // ^ - problem location in which quickfix needs to be tested (applied)
-        // | - cursor position after quickfix is applied
-        // [[...]] - applied part of the code
-        /* TODO */
-    }
-
-    tester(/* ts */ `
-        const b = ({ b, ^a }: { b[[, a/*|*/]] }) => {}
-    `)
-}
