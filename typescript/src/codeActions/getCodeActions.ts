@@ -8,12 +8,12 @@ import changeStringReplaceToRegex from './custom/changeStringReplaceToRegex'
 import splitDeclarationAndInitialization from './custom/splitDeclarationAndInitialization'
 import declareMissingProperties from './extended/declareMissingProperties'
 import { renameParameterToNameFromType, renameAllParametersToNameFromType } from './custom/renameParameterToNameFromType'
-import addDestructure_1 from './custom/addDestructure/addDestructure'
-import fromDestructure_1 from './custom/fromDestructure/fromDestructure'
+import addDestructure from './custom/addDestructure/addDestructure'
+import fromDestructure from './custom/fromDestructure/fromDestructure'
 
 const codeActions: CodeAction[] = [
-    addDestructure_1,
-    fromDestructure_1,
+    addDestructure,
+    fromDestructure,
     objectSwapKeysAndValues,
     changeStringReplaceToRegex,
     splitDeclarationAndInitialization,

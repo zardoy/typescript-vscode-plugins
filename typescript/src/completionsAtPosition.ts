@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { compact } from '@zardoy/utils'
 import escapeStringRegexp from 'escape-string-regexp'
+import isVueFileName from './utils/vue/isVueFileName'
 import inKeywordCompletions from './completions/inKeywordCompletions'
 import isInBannedPosition from './completions/isInBannedPosition'
 import { GetConfig } from './types'
@@ -266,7 +267,6 @@ export const getCompletionsAtPosition = (
     prior.entries = arrayMethods(prior.entries, position, sourceFile, c) ?? prior.entries
     prior.entries = jsdocDefault(prior.entries, position, sourceFile, languageService) ?? prior.entries
 
-    const isVueFileName = (fileName: string | undefined) => fileName && (fileName.endsWith('.vue.ts') || fileName.endsWith('.vue.js'))
     // #region Vue (Volar) specific
     const isVueFile = isVueFileName(fileName)
     if (isVueFile && exactNode) {
@@ -288,7 +288,11 @@ export const getCompletionsAtPosition = (
                 prior.entries = []
             }
             if (c('cleanupVueComponentCompletions') === 'filter-non-vue') {
-                prior.entries = prior.entries.filter(entry => isVueFileName(entry.symbol?.declarations?.[0]?.getSourceFile().fileName))
+                prior.entries = prior.entries.filter(entry => {
+                    const fileName = entry.symbol?.declarations?.[0]?.getSourceFile().fileName
+                    if (!fileName) return false
+                    return isVueFileName(fileName)
+                })
             }
         }
     }
