@@ -5,7 +5,7 @@ import { findChildContainingPosition, getCancellationToken, getIndentFromPos, is
 import namespaceAutoImports from './namespaceAutoImports'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
-    proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
+    proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences, ...args) => {
         const sourceFile = languageService.getProgram()!.getSourceFile(fileName)!
         const node = findChildContainingPosition(ts, sourceFile, start)
 
@@ -72,7 +72,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 },
             )
             toUnpatch.push(unpatch)
-            prior = languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
+            prior = languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences, ...args)
             prior = [...addNamespaceImports, ...prior]
             prior = _.sortBy(prior, ({ fixName }) => {
                 if (fixName.startsWith(importFixName)) {
@@ -82,7 +82,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             })
             prior = prior.filter(x => x.fixName !== 'IGNORE')
         } catch (err) {
-            prior = languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
+            prior = languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences, ...args)
             setTimeout(() => {
                 // make sure we still get code fixes, but error is still getting reported
                 console.error(err)

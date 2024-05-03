@@ -16,7 +16,7 @@ export default function completionEntryDetails(
     c: GetConfig,
     { enableMethodCompletion, completionsSymbolMap }: PrevCompletionsAdditionalData,
 ): ts.CompletionEntryDetails | undefined {
-    const [fileName, position, entryName, formatOptions, source, preferences, data] = inputArgs
+    const [fileName, position, entryName, formatOptions, source, preferences, data, ...args] = inputArgs
     lastResolvedCompletion.value = { name: entryName, range: prevCompletionsMap[entryName]?.range }
     const program = languageService.getProgram()
     const sourceFile = program?.getSourceFile(fileName)
@@ -54,6 +54,7 @@ export default function completionEntryDetails(
         source,
         preferences,
         data,
+        ...args,
     )
     if (detailPrepend) {
         prior ??= {

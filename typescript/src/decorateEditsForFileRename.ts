@@ -4,8 +4,8 @@ import { GetConfig } from './types'
 import { approveCast, findChildContainingExactPosition } from './utils'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig) => {
-    proxy.getEditsForFileRename = (oldFilePath, newFilePath, formatOptions, preferences) => {
-        let edits = languageService.getEditsForFileRename(oldFilePath, newFilePath, formatOptions, preferences)
+    proxy.getEditsForFileRename = (oldFilePath, newFilePath, formatOptions, preferences, ...args) => {
+        let edits = languageService.getEditsForFileRename(oldFilePath, newFilePath, formatOptions, preferences, ...args)
         if (c('renameImportNameOfFileRename')) {
             const predictedNameFromPath = (p: string) => {
                 const input = p.split(/[/\\]/g).pop()!.replace(/\..+/, '')

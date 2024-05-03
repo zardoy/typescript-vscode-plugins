@@ -3,8 +3,8 @@ import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
-    proxy.getDefinitionAndBoundSpan = (fileName, position) => {
-        const prior = languageService.getDefinitionAndBoundSpan(fileName, position)
+    proxy.getDefinitionAndBoundSpan = (fileName, position, ...props) => {
+        const prior = languageService.getDefinitionAndBoundSpan(fileName, position, ...props)
 
         if (c('removeModuleFileDefinitions') && prior) {
             prior.definitions = prior.definitions?.filter(def => {

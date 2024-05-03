@@ -3,7 +3,7 @@ import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
-    proxy.getSignatureHelpItems = (fileName, position, options) => {
+    proxy.getSignatureHelpItems = (fileName, position, options, ...props) => {
         const program = languageService.getProgram()!
         const sourceFile = program.getSourceFile(fileName)!
         let node: ts.Node | undefined
@@ -40,7 +40,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         }
 
         if (!c('signatureHelp.excludeBlockScope') || options?.triggerReason?.kind !== 'invoked') {
-            return languageService.getSignatureHelpItems(fileName, position, options)
+            return languageService.getSignatureHelpItems(fileName, position, options, ...props)
         }
 
         node ??= findChildContainingExactPosition(sourceFile, position)
@@ -59,6 +59,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                           kind: 'retrigger',
                       },
                   },
+            ...props,
         )
     }
 }

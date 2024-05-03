@@ -68,6 +68,7 @@ export const getCompletionsAtPosition = (
     scriptSnapshot: ts.IScriptSnapshot,
     formatOptions: ts.FormatCodeSettings | undefined,
     additionalData: { scriptKind: ts.ScriptKind; compilerOptions: ts.CompilerOptions },
+    ...args: any[]
 ): GetCompletionAtPositionReturnType | undefined => {
     const prevCompletionsMap: PrevCompletionMap = {}
     const program = languageService.getProgram()
@@ -94,6 +95,8 @@ export const getCompletionsAtPosition = (
                     includeSymbol: true,
                 },
                 formatOptions,
+                //@ts-expect-error
+                ...args,
             )
         } finally {
             unpatch?.()
