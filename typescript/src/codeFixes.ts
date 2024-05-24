@@ -103,14 +103,14 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         // #endregion
 
         const semanticDiagnostics = languageService.getSemanticDiagnostics(fileName)
-        const syntacicDiagnostics = languageService.getSyntacticDiagnostics(fileName)
+        const syntacticDiagnostics = languageService.getSyntacticDiagnostics(fileName)
 
         // https://github.com/Microsoft/TypeScript/blob/v4.5.5/src/compiler/diagnosticMessages.json#L458
         const findDiagnosticByCode = (codes: number[]) => {
             const errorCode = codes.find(code => errorCodes.includes(code))
             if (!errorCode) return
             const diagnosticPredicate = ({ code, start: localStart }) => code === errorCode && localStart === start
-            return syntacicDiagnostics.find(diagnosticPredicate) || semanticDiagnostics.find(diagnosticPredicate)
+            return syntacticDiagnostics.find(diagnosticPredicate) || semanticDiagnostics.find(diagnosticPredicate)
         }
 
         const wrapBlockDiagnostics = findDiagnosticByCode([1156, 1157])

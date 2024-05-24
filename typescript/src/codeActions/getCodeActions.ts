@@ -11,6 +11,7 @@ import { renameParameterToNameFromType, renameAllParametersToNameFromType } from
 import addDestructure_1 from './custom/addDestructure/addDestructure'
 import fromDestructure_1 from './custom/fromDestructure/fromDestructure'
 import fixClosingTagName from './custom/fixClosingTagName'
+import declareMissingAttributes from './extended/declareMissingAttributes'
 
 const codeActions: CodeAction[] = [
     addDestructure_1,
@@ -22,7 +23,7 @@ const codeActions: CodeAction[] = [
     renameAllParametersToNameFromType,
     fixClosingTagName,
 ]
-const extendedCodeActions: ExtendedCodeAction[] = [declareMissingProperties]
+const extendedCodeActions: ExtendedCodeAction[] = [declareMissingProperties, declareMissingAttributes]
 
 type SimplifiedRefactorInfo =
     | {
