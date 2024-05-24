@@ -60,7 +60,8 @@ export default () => {
         const files = collected.filter(f => f.endsWith(ext))
         for (const file of files) {
             const fullPath = nodeModules.path.join(root, file)
-            const relativeToFile = nodeModules.path.relative(nodeModules.path.dirname(sourceFile.fileName), fullPath).replaceAll('\\', '/')
+            let relativeToFile = nodeModules.path.relative(nodeModules.path.dirname(sourceFile.fileName), fullPath).replaceAll('\\', '/')
+            if (!relativeToFile.startsWith('.')) relativeToFile = `./${relativeToFile}`
             const lastModified = nodeModules.fs.statSync(fullPath).mtime
             const lastModifiedFormatted = timeDifference(Date.now(), lastModified.getTime())
             const importPath = (item.importPath ?? '$path').replaceAll('$path', relativeToFile)
