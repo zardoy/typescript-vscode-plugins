@@ -100,14 +100,17 @@ export const handleFunctionRefactorEdits = (
     const oldFunctionText = functionChange.newText
     const sourceFile = languageService.getProgram()!.getSourceFile(fileName)!
     if (actionName.endsWith('_jsx')) {
+        // refactor.extract.jsx implementation
         const lines = oldFunctionText.trimStart().split('\n')
         const oldFunctionSignature = lines[0]!
         const componentName = tsFull.getUniqueName('ExtractedComponent', sourceFile as unknown as FullSourceFile)
-        const newFunctionSignature = changeArgumentsToDestructured(oldFunctionSignature, formatOptions, sourceFile, componentName)
-
         const insertChange = textChanges.at(-2)!
-        let args = insertChange.newText.slice(1, -2)
-        args = args.slice(args.indexOf('(') + 1)
+        const args = insertChange.newText.slice(insertChange.newText.indexOf('(') + 1, insertChange.newText.lastIndexOf(')'))
+
+        const newFunctionSignature = changeArgumentsToDestructured(oldFunctionSignature, formatOptions, sourceFile, componentName).replace('{}: {}', '')
+
+        const oldSpan = sourceFile.text.slice(0, functionChange.span.start).length
+
         const fileEdits = [
             {
                 fileName,
@@ -130,11 +133,17 @@ export const handleFunctionRefactorEdits = (
                 ],
             },
         ]
+        const diff = fileEdits[0]!.textChanges.slice(0, -1).reduce((diff, { newText, span }) => {
+            const oldText = sourceFile.text.slice(span.start, span.start + span.length)
+            const newSpan = newText.length
+            const oldSpan = oldText.length
+            diff += newSpan - oldSpan
+            return diff
+        }, 0)
         return {
             edits: fileEdits,
             renameFilename,
-            renameLocation: insertChange.span.start + 1,
-            // renameLocation: tsFull.getRenameLocation(fileEdits, fileName, componentName, /*preferLastLocation*/ false),
+            renameLocation: functionChange.span.start + diff,
         }
     }
 
