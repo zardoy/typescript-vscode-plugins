@@ -2,8 +2,8 @@ import { GetConfig } from './types'
 import { findChildContainingPosition } from './utils'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig) => {
-    proxy.getDocumentHighlights = (fileName, position, filesToSearch) => {
-        const prior = languageService.getDocumentHighlights(fileName, position, filesToSearch)
+    proxy.getDocumentHighlights = (fileName, position, filesToSearch, ...props) => {
+        const prior = languageService.getDocumentHighlights(fileName, position, filesToSearch, ...props)
         if (!prior) return
         if (prior.length !== 1 || c('disableUselessHighlighting') === 'disable') return prior
         const node = findChildContainingPosition(ts, languageService.getProgram()!.getSourceFile(fileName)!, position)

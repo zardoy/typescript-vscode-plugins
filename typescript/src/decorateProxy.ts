@@ -12,7 +12,7 @@ import decorateDefinitions from './definitions'
 import decorateDocumentHighlights from './documentHighlights'
 import completionEntryDetails from './completionEntryDetails'
 import { GetConfig, PluginCreateArg } from './types'
-import decorateWorkspaceSymbolSearch from './workspaceSymbolSearch'
+import decorateWorkspaceSymbolSearch from './decorateWorkspaceSymbolSearch'
 import decorateFormatFeatures from './decorateFormatFeatures'
 import libDomPatching from './libDomPatching'
 import decorateSignatureHelp from './decorateSignatureHelp'
@@ -51,9 +51,9 @@ export const decorateLanguageService = (
     let prevCompletionsMap: PrevCompletionMap
     let prevCompletionsAdditionalData: PrevCompletionsAdditionalData
 
-    proxy.getCompletionsAtPosition = (fileName, position, options, formatOptions) => {
+    proxy.getCompletionsAtPosition = (fileName, position, options, formatOptions, ...args) => {
         if (options?.triggerCharacter && typeof options.triggerCharacter !== 'string') {
-            return languageService.getCompletionsAtPosition(fileName, position, options)
+            return languageService.getCompletionsAtPosition(fileName, position, options, formatOptions, ...args)
         }
         const updateConfigCommand = 'updateConfig'
         if (options?.triggerCharacter?.startsWith(updateConfigCommand)) {
@@ -87,10 +87,21 @@ export const decorateLanguageService = (
         if (!scriptSnapshot) return
         const compilerOptions = languageServiceHost.getCompilationSettings()
         try {
-            const result = getCompletionsAtPosition(fileName, position, options, c, languageService, languageServiceHost, scriptSnapshot, formatOptions, {
-                scriptKind,
-                compilerOptions,
-            })
+            const result = getCompletionsAtPosition(
+                fileName,
+                position,
+                options,
+                c,
+                languageService,
+                languageServiceHost,
+                scriptSnapshot,
+                formatOptions,
+                {
+                    scriptKind,
+                    compilerOptions,
+                },
+                ...args,
+            )
             if (!result) return
             prevCompletionsMap = result.prevCompletionsMap
             prevCompletionsAdditionalData = result.prevCompletionsAdditionalData

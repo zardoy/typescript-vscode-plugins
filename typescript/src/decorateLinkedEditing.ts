@@ -10,7 +10,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
               result: ts.LinkedEditingInfo
           }
         | undefined
-    proxy.getLinkedEditingRangeAtPosition = (fileName, position) => {
+    proxy.getLinkedEditingRangeAtPosition = (fileName, position, ...props) => {
         const scriptSnapshot = languageServiceHost.getScriptSnapshot(fileName)!
         const fileContent = scriptSnapshot.getText(0, scriptSnapshot.getLength())
         const lastChar = fileContent[position - 1]
@@ -37,7 +37,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         }
         lastLinkedEditingRangeRequest = undefined
 
-        const prior = languageService.getLinkedEditingRangeAtPosition(fileName, position)
+        const prior = languageService.getLinkedEditingRangeAtPosition(fileName, position, ...props)
         if (!prior) return
         lastLinkedEditingRangeRequest = {
             pos: position,

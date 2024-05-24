@@ -5,7 +5,7 @@ import { findChildContainingPosition, getCancellationToken, getIndentFromPos, is
 import namespaceAutoImports from './namespaceAutoImports'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
-    proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences) => {
+    proxy.getCodeFixesAtPosition = (fileName, start, end, errorCodes, formatOptions, preferences, ...args) => {
         const sourceFile = languageService.getProgram()!.getSourceFile(fileName)!
         const node = findChildContainingPosition(ts, sourceFile, start)
 
@@ -72,7 +72,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
                 },
             )
             toUnpatch.push(unpatch)
-            prior = languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
+            prior = languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences, ...args)
             prior = [...addNamespaceImports, ...prior]
             prior = _.sortBy(prior, ({ fixName }) => {
                 if (fixName.startsWith(importFixName)) {
@@ -82,7 +82,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             })
             prior = prior.filter(x => x.fixName !== 'IGNORE')
         } catch (err) {
-            prior = languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences)
+            prior = languageService.getCodeFixesAtPosition(fileName, start, end, errorCodes, formatOptions, preferences, ...args)
             setTimeout(() => {
                 // make sure we still get code fixes, but error is still getting reported
                 console.error(err)
@@ -103,14 +103,14 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
         // #endregion
 
         const semanticDiagnostics = languageService.getSemanticDiagnostics(fileName)
-        const syntacicDiagnostics = languageService.getSyntacticDiagnostics(fileName)
+        const syntacticDiagnostics = languageService.getSyntacticDiagnostics(fileName)
 
         // https://github.com/Microsoft/TypeScript/blob/v4.5.5/src/compiler/diagnosticMessages.json#L458
         const findDiagnosticByCode = (codes: number[]) => {
             const errorCode = codes.find(code => errorCodes.includes(code))
             if (!errorCode) return
             const diagnosticPredicate = ({ code, start: localStart }) => code === errorCode && localStart === start
-            return syntacicDiagnostics.find(diagnosticPredicate) || semanticDiagnostics.find(diagnosticPredicate)
+            return syntacticDiagnostics.find(diagnosticPredicate) || semanticDiagnostics.find(diagnosticPredicate)
         }
 
         const wrapBlockDiagnostics = findDiagnosticByCode([1156, 1157])

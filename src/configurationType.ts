@@ -685,6 +685,11 @@ export type Configuration = {
      */
     declareMissingPropertyQuickfixOtherFiles: boolean
     /**
+     * @recommended {".svg": {
+     *   "importPath": "$path?react",
+     *   "prefix": "Svg",
+     *   "nameCasing": "pascal"
+     * },
      * @default {}
      */
     filesAutoImport: {
@@ -708,6 +713,14 @@ export type Configuration = {
             iconPost?: string
         }
     }
+    /**
+     * @default true
+     */
+    'completionsAutoTrigger.jsx': boolean
+    /**
+     * @default false
+     */
+    'inlayHints.missingJsxAttributes.enabled': boolean
 }
 
 // scrapped using search editor. config: caseInsensitive, context lines: 0, regex: const fix\w+ = "[^ ]+"

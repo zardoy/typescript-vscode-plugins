@@ -131,6 +131,7 @@ export const buildStringCompletion = (node: ts.StringLiteralLike, completion: Ex
 
 // semver: can't use compare as it incorrectly works with build postfix
 export const isTs5 = () => semver.major(ts.version) >= 5
+export const isTs5And5 = () => (semver.major(ts.version) === 5 && semver.minor(ts.version) >= 5) || semver.major(ts.version) > 5
 
 export const isTsPatched = () => {
     try {

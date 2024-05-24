@@ -2,8 +2,8 @@ import { GetConfig } from './types'
 import { findChildContainingPositionMaxDepth, approveCast, findChildContainingExactPosition, matchParents } from './utils'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, c: GetConfig) => {
-    proxy.findReferences = (fileName, position) => {
-        let prior = languageService.findReferences(fileName, position)
+    proxy.findReferences = (fileName, position, ...props) => {
+        let prior = languageService.findReferences(fileName, position, ...props)
         if (!prior) return
         const program = languageService.getProgram()!
         if (c('removeDefinitionFromReferences')) {

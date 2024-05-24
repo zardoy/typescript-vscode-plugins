@@ -1,5 +1,5 @@
 import { ensureArray } from '@zardoy/utils'
-import { getCancellationToken, isTs5, nodeModules } from './utils'
+import { getCancellationToken, isTs5, isTs5And5, nodeModules } from './utils'
 import { createLanguageService } from './dummyLanguageService'
 import { getCannotFindCodes } from './utils/cannotFindCodes'
 
@@ -11,8 +11,9 @@ type AdditionalFeatures = Record<'arraysTuplesNumberedItems', boolean>
 const getPatchedNavModule = (additionalFeatures: AdditionalFeatures): { getNavigationTree(...args) } => {
     // what is happening here: grabbing & patching NavigationBar module contents from actual running JS
     const tsServerPath = typeof __TS_SEVER_PATH__ === 'undefined' ? require.main!.filename : __TS_SEVER_PATH__
+    const typescriptFilePath = `${nodeModules!.path.dirname(tsServerPath)}/typescript.js`
     // current lib/tsserver.js
-    const mainScript = nodeModules!.fs.readFileSync(tsServerPath, 'utf8')
+    const mainScript = nodeModules!.fs.readFileSync(isTs5And5() ? typescriptFilePath : tsServerPath, 'utf8')
     type PatchData = {
         markerModuleStart: string
         skipStartMarker?: boolean
@@ -173,7 +174,7 @@ export const getNavTreeItems = (
     fileName: string,
     additionalFeatures: AdditionalFeatures,
 ) => {
-    if (!navModule) navModule = getPatchedNavModule(additionalFeatures)
+    navModule = getPatchedNavModule(additionalFeatures)
     const sourceFile =
         (languageService as unknown as import('typescript-full').LanguageService).getNonBoundSourceFile?.(fileName) ??
         languageService.getProgram()!.getSourceFile(fileName)

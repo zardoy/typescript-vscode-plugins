@@ -1,6 +1,7 @@
 {
     "name": "ts-essential-plugins",
     "displayName": "TypeScript Essential Plugins",
+    "description": "50+ features: TS extension for professionals",
     "version": "0.0.0-dev",
     "license": "MIT",
     "web": true,
