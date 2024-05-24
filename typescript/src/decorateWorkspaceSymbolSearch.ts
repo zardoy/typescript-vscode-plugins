@@ -25,7 +25,7 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
             searchValue,
             maxResultCount,
             excludeDtsFiles ?? false,
-            ...args
+            ...args,
         )
     }
 }
