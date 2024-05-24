@@ -714,6 +714,10 @@ export type Configuration = {
         }
     }
     /**
+     * @default true
+     */
+    'completionsAutoTrigger.jsx': boolean
+    /**
      * @default false
      */
     'inlayHints.missingJsxAttributes.enabled': boolean
