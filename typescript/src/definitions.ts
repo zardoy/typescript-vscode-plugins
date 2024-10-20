@@ -1,6 +1,7 @@
 import { join } from 'path-browserify'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
+import { eventDefinitions } from './eventsReferences'
 
 export default (proxy: ts.LanguageService, languageService: ts.LanguageService, languageServiceHost: ts.LanguageServiceHost, c: GetConfig) => {
     proxy.getDefinitionAndBoundSpan = (fileName, position, ...props) => {
@@ -25,6 +26,9 @@ export default (proxy: ts.LanguageService, languageService: ts.LanguageService, 
 
         const noDefs = !prior?.definitions || prior.definitions.length === 0
         const tryFileResolve = noDefs || ['?', '#'].some(x => prior.definitions?.[0]?.fileName?.includes(x))
+
+        const eventDefs = eventDefinitions(languageService, fileName, position)
+        if (eventDefs) return eventDefs
 
         // Definition fallbacks
         if (noDefs || tryFileResolve) {
