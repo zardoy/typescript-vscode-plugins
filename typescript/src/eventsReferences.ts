@@ -1,4 +1,3 @@
-import ts from 'typescript'
 import { findChildContainingExactPosition, matchParents } from './utils'
 
 export const eventDefinitions = (languageService: ts.LanguageService, fileName: string, position: number): ts.DefinitionInfoAndBoundSpan | undefined => {
