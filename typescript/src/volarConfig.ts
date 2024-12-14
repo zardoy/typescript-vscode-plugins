@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 
 import get from 'lodash/get'
-import type { Configuration } from './types'
-
+import type { VueLanguagePlugin } from '@vue/language-core'
 // will be required from ./node_modules/typescript-essential-plugins/index.js
 const originalPluginFactory: typeof import('./index') = require('typescript-essential-plugins')
 
 const compact = <T>(arr: Array<T | undefined>): T[] => arr.filter(Boolean) as T[]
 
-const plugin: (...args: Parameters<import('@vue/language-service').Service>) => Promise<void> = async (context, { typescript: tsModule } = {}) => {
+const plugin = async (context, tsModule = {}) => {
     if (!context) {
         console.warn('Skipping activation of tsEssentialPlugins for now, because of no context.')
         return
@@ -61,13 +60,17 @@ const plugin: (...args: Parameters<import('@vue/language-service').Service>) => 
     }
 
     const plugin = originalPluginFactory({
+        // @ts-expect-error
         typescript: tsModule,
     })
     const originalLanguageService = { ...languageService }
 
     const getResolvedUserConfig = async () => {
+        // @ts-expect-error
         const regularConfig = await configurationHost.getConfiguration!<any>('tsEssentialPlugins')
+        // @ts-expect-error
         const editorSuggestInsertModeReplace = (await configurationHost.getConfiguration!<any>('editor.suggest.insertMode')) === 'replace'
+        // @ts-expect-error
         const _vueSpecificConfig = (await configurationHost.getConfiguration!<any>('[vue]')) || {}
 
         const vueSpecificConfig = Object.fromEntries(
@@ -77,6 +80,7 @@ const plugin: (...args: Parameters<import('@vue/language-service').Service>) => 
                 ),
             ),
         )
+        // @ts-expect-error
         const config: Configuration = { ...mergeAndPatchConfig(regularConfig, vueSpecificConfig), editorSuggestInsertModeReplace }
         return config
     }
@@ -117,17 +121,39 @@ const plugin: (...args: Parameters<import('@vue/language-service').Service>) => 
     activatePlugin()
 }
 
-module.exports = {
-    services: {
-        typescriptEssentialPlugins(...args) {
-            ;(async () => {
-                try {
-                    await plugin(...args)
-                } catch (err) {
-                    console.log('TS Essentials error', err)
-                }
-            })()
-            return {}
-        },
-    },
-} satisfies import('@vue/language-service').Config
+// module.exports = {
+//     services: {
+//         typescriptEssentialPlugins(...args) {
+//             ;(async () => {
+//                 try {
+//                     await plugin(...args)
+//                 } catch (err) {
+//                     console.log('TS Essentials error', err)
+//                 }
+//             })()
+//             return {}
+//         },
+//     },
+// } satisfies import('@vue/language-service').Config
+
+const vueLanguagePlugin = (context, ts) => {
+    console.log('here')
+
+    // console.log('context', context)
+    // const plugin = originalPluginFactory({
+    //     typescript,
+    // })
+    ;;(async () => {
+        try {
+            await plugin(context, ts)
+        } catch (err) {
+            console.log('TS Essentials error', err)
+        }
+    })()
+
+    return {
+        name: 'typescript-essential-plugins',
+        version: 2,
+    }
+}
+export default vueLanguagePlugin

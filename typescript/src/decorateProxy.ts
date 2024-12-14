@@ -189,6 +189,29 @@ export const decorateLanguageService = (
             const performance = globalThis.performance ?? require('perf_hooks').performance
             const start = performance.now()
 
+            const program = languageService.getProgram()
+
+            console.log('program', program)
+            // if (program?.__vue__) {
+            //     console.log(program.__vue__)
+
+            //     const { language } = program as ts.Program & { language: Language }
+            //     if (language?.scripts) {
+            //         const vFile = language.scripts.get(fileName)
+            //         const serviceScript = vFile?.generated?.languagePlugin.typescript?.getServiceScript(vFile.generated.root)
+            //         if (vFile?.generated?.root?.languageId === 'vue' && serviceScript) {
+            //             const sourceMap = language.maps.get(serviceScript.code, vFile.id)
+
+            //             const snapshotLength = vFile?.generated?.root?.snapshot?.getLength()
+            //             if (startPos < snapshotLength) {
+            //                 startPos =
+            //                     (sourceMap?.getGeneratedOffset?.(startPos)?.[0] || -1) +
+            //                     // https://github.com/volarjs/volar.js/blob/v2.2.0-alpha.12/packages/typescript/lib/node/proxyCreateProgram.ts#L143
+            //                     (snapshotLength || 0)
+            //             }
+            //         }
+            //     }
+            // }
             //@ts-expect-error
             const result = orig(...args)
 
