@@ -174,7 +174,7 @@ export const getNavTreeItems = (
     fileName: string,
     additionalFeatures: AdditionalFeatures,
 ) => {
-    navModule = getPatchedNavModule(additionalFeatures)
+    navModule ??= getPatchedNavModule(additionalFeatures)
     const sourceFile =
         (languageService as unknown as import('typescript-full').LanguageService).getNonBoundSourceFile?.(fileName) ??
         languageService.getProgram()!.getSourceFile(fileName)
