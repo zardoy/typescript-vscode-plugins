@@ -15,7 +15,6 @@ We make completions more informative. Definitions, references (and sometimes eve
 - [Top Features](#top-features)
 - [Minor Useful Features](#minor-useful-features)
 - [Method Snippets](#method-snippets)
-- [Volar (Vue) Support](#vue-support)
 - [Auto Imports](#auto-imports)
 - [Type Driven Completions](#type-driven-completions)
 - [Special Commands List](#special-commands-list)
@@ -121,18 +120,6 @@ Removes import statements from references when symbol has usages in the same fil
 ### `enablePlugin` setting
 
 You can quickly disable this plugin functionality by setting this setting to false. Useful for debugging a problem for example.
-
-> Note: this setting doesn't disable Vue support.
-
-### Vue Support
-
-`.vue` SFC files support is disabled, but can be enabled with setting and when [Vue Language Features (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) is installed.
-
-Enable now: `"tsEssentialPlugins.enableVueSupport": true` (if you're not using local `./volar.config.js`)
-
-For the first time, it will configure `volar.vueserver.configFilePath` setting.
-
-This also makes plugin work in Volar's takeover mode!
 
 ### Web Support
 

@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import * as vscode from 'vscode'
 import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
-import { extensionCtx, getExtensionSetting, getExtensionSettingId } from 'vscode-framework'
+import { extensionCtx, getExtensionSettingId } from 'vscode-framework'
 import { pickObj } from '@zardoy/utils'
-import { watchExtensionSettings } from '@zardoy/vscode-utils/build/settings'
 import webImports from './webImports'
 import { sendCommand } from './sendCommand'
 import { registerEmmet } from './emmet'
@@ -12,7 +11,6 @@ import figIntegration from './figIntegration'
 import apiCommands from './apiCommands'
 import onCompletionAccepted from './onCompletionAccepted'
 import specialCommands from './specialCommands'
-import vueVolarSupport from './vueVolarSupport'
 import moreCompletions from './moreCompletions'
 import { mergeSettingsFromScopes } from './mergeSettings'
 import codeActionProvider from './codeActionProvider'
@@ -97,7 +95,6 @@ export const activateTsPlugin = (tsApi: { configurePlugin; onCompletionAccepted 
     codeActionProvider()
 
     figIntegration()
-    vueVolarSupport()
     inlayHints()
     autoCompletionsTrigger()
 
@@ -129,11 +126,6 @@ export const activate = async () => {
             return true
         }
 
-        if (vscode.extensions.getExtension('Vue.volar') && getExtensionSetting('enableVueSupport')) {
-            activateTsPlugin(undefined)
-            return true
-        }
-
         return false
     }
 
@@ -148,11 +140,5 @@ export const activate = async () => {
             undefined,
             disposables,
         )
-        watchExtensionSettings(['enableVueSupport'], async () => {
-            if (await possiblyActivateTsPlugin()) {
-                // todo
-                // disposables.forEach(d => d.dispose())
-            }
-        })
     }
 }

@@ -52,16 +52,9 @@ type ReplaceRule = {
 export type Configuration = {
     /**
      * Controls wether TypeScript Essentials plugin is enabled or not.
-     * Does not affect Vue support enablement
      * @default true
      */
     enablePlugin: boolean
-    /**
-     * Wether to enable support in Volar support via Volar config file, mainly for Vue SFC files and takeover mode.
-     * Changing setting from true to false requires Volar server restart
-     * @default false
-     */
-    enableVueSupport: boolean
     /**
      * Temporary setting to enable loading config from other locations (also to expose plugin)
      */
