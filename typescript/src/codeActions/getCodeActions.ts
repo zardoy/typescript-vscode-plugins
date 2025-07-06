@@ -1,6 +1,6 @@
 import { compact } from '@zardoy/utils'
 import { Except } from 'type-fest'
-import { findChildContainingExactPosition, findChildContainingPosition } from '../utils'
+import { findChildContainingExactPosition } from '../utils'
 import { ApplyExtendedCodeActionResult, IpcExtendedCodeAction } from '../ipcTypes'
 import { GetConfig } from '../types'
 import objectSwapKeysAndValues from './custom/objectSwapKeysAndValues'
