@@ -142,3 +142,30 @@ export const activate = async () => {
         )
     }
 }
+
+try {
+    const tsExtension = vscode.extensions.getExtension('vscode.typescript-language-features')!
+    const readFileSyncUnpatched = require('fs').readFileSync
+
+    const extensionJsPath = require.resolve('./dist/extension.js', {
+        paths: [tsExtension.extensionPath],
+    })
+
+    require('fs').readFileSync = (...args) => {
+        if (args[0] === extensionJsPath) {
+            let text = readFileSyncUnpatched(...args) as string
+
+            // sort plugins
+            text = text.replace(
+                '"--globalPlugins",i.plugins',
+                '"--globalPlugins",i.plugins.sort((a,b)=>(b.name==="typescript-essential-plugins"?1:0)-(a.name==="typescript-essential-plugins"?1:0))',
+            )
+
+            return text
+        }
+
+        return readFileSyncUnpatched(...args)
+    }
+} catch (e) {
+    console.error('Error patching TS extension', e)
+}
