@@ -166,6 +166,18 @@ try {
 
         return readFileSyncUnpatched(...args)
     }
+
+    const loadedModule = require.cache[extensionJsPath]
+    if (loadedModule) {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete require.cache[extensionJsPath]
+        const patchedModule = require(extensionJsPath)
+        Object.assign(loadedModule.exports, patchedModule)
+    }
+
+    if (tsExtension.isActive) {
+        void vscode.commands.executeCommand('workbench.action.restartExtensionHost')
+    }
 } catch (e) {
     console.error('Error patching TS extension', e)
 }
