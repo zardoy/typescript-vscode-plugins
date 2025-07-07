@@ -148,10 +148,13 @@
         "@types/vscode": "1.72.0",
         "@vitest/ui": "^0.34.6",
         "@zardoy/tsconfig": "^1.3.1",
+        "chokidar": "^3.5.3",
+        "chokidar-cli": "^3.0.0",
         "esbuild": "^0.16.16",
         "fs-extra": "^10.1.0",
         "got": "^12.5.3",
         "got-cjs": "npm:got@^11.x",
+        "npm-run-all": "^4.1.5",
         "prettier": "3.1.0",
         "tsm": "^2.3.0",
         "type-fest": "^2.13.1",
@@ -160,15 +163,21 @@
         "vite": "^4.1.1",
         "vitest": "^0.34.6",
         "vitest-environment-ts-plugin": "./vitest-environment-ts-plugin",
-        "vscode-manifest": "^0.0.4",
-        "chokidar": "^3.5.3",
-        "chokidar-cli": "^3.0.0",
-        "npm-run-all": "^4.1.5"
+        "vscode-manifest": "^0.0.4"
     },
     "pnpm": {
         "overrides": {
             "esbuild": "^0.15.15"
-        }
+        },
+        "ignoredBuiltDependencies": [
+            "playwright"
+        ],
+        "onlyBuiltDependencies": [
+            "esbuild",
+            "typed-vscode",
+            "unleashed-typescript",
+            "vscode-framework"
+        ]
     },
     "dependencies": {
         "@types/chai": "^4.3.3",
@@ -220,5 +229,6 @@
         "preset": {
             "runTest": false
         }
-    }
+    },
+    "packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac"
 }
