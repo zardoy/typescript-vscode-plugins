@@ -19,13 +19,13 @@ export default (node: ts.Node, sourceFile: ts.SourceFile, formatOptions: ts.Form
         const highlightedNode = findChildContainingExactPosition(sourceFile, pos)
 
         if (!highlightedNode) continue
+        /**
+         * Targets `/->/foo.map/<-/(newVariable.test)`
+         */
+        const isInsideExpressionOfCallExpression =
+            ts.isCallExpression(highlightedNode.parent.parent) && highlightedNode.parent.parent.expression === highlightedNode.parent
 
-        if (
-            ts.isElementAccessExpression(highlightedNode.parent) ||
-            ts.isCallExpression(highlightedNode.parent.parent) ||
-            ts.isTypeQueryNode(highlightedNode.parent)
-        )
-            return
+        if (ts.isElementAccessExpression(highlightedNode.parent) || ts.isTypeQueryNode(highlightedNode.parent) || isInsideExpressionOfCallExpression) return
 
         if (ts.isIdentifier(highlightedNode) && ts.isPropertyAccessExpression(highlightedNode.parent)) {
             const accessorName = highlightedNode.parent.name.getText()
