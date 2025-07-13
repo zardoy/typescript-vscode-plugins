@@ -25,7 +25,7 @@ To start the VS Code plugin extension locally for developing:
 
 - `src/*` - VS Code extension code, that is specific to VS Code extension API only. Most probably you don't need to change it. (For now there is a limitation from vscode-framework so folder name cannot be changed to something like `extension` or `vscode`.)
 - `src/configurationType.ts` - Extension configuration live here. Add / change settings here. It is used to generate `out/package.json`'s `contributes.configuration`.
-- `typescript/*` - TypeScript plugin code, that integrates into TypeScript language service. After you change code in it, you need run to `> TypeScript: Restart TS server` to see changes (or `> Volar: Restart Vue server` for Vue files). Thats why it is useful to bind it to a shortcut.
+- `typescript/*` - TypeScript plugin code, that integrates into TypeScript language service. After you change code in it, you need run to `> TypeScript: Restart TS server` to see changes. Thats why it is useful to bind it to a shortcut.
 
 ### Running Tests
 

@@ -1,24 +1,8 @@
 //@ts-check
 import buildTsPlugin from '@zardoy/vscode-utils/build/buildTypescriptPlugin.js'
-import { build, analyzeMetafile } from 'esbuild'
 import fs from 'fs'
 
 const enableWatch = process.argv.includes('--watch')
-await build({
-    bundle: true,
-    external: ['typescript-essential-plugins'],
-    // minify: !watch,
-    watch: enableWatch,
-    entryPoints: ['./typescript/src/volarConfig.ts'],
-    outfile: './out/volarConfig.js',
-    format: 'cjs',
-    logLevel: 'info',
-    platform: 'node',
-    // banner: {
-    //     js: 'let ts, tsFull;',
-    // },
-    // treeShaking: true,
-})
 
 const result = await buildTsPlugin('typescript', undefined, undefined, {
     minify: !enableWatch,
@@ -28,7 +12,6 @@ const result = await buildTsPlugin('typescript', undefined, undefined, {
     },
     banner: {
         js: 'let ts, tsFull;',
-        // js: 'const log = (...args) => console.log(...args.map(a => JSON.stringify(a)))',
     },
     external: ['perf_hooks'],
     plugins: [
@@ -48,6 +31,3 @@ const result = await buildTsPlugin('typescript', undefined, undefined, {
         },
     ],
 })
-
-// @ts-ignore
-// console.log(await analyzeMetafile(result.metafile))
