@@ -20,6 +20,7 @@ We make completions more informative. Definitions, references (and sometimes eve
 - [Special Commands List](#special-commands-list)
 - [Contributed Code Actions](#contributed-code-actions)
 - [Rename Features](#rename-features)
+- [Vue Support](#vue-support)
 - [Even Even More](#even-even-more)
 
 > *Note*: You can disable all optional features with `> Disable All Optional Features` command just after installing.
@@ -445,6 +446,10 @@ You can add this to `keybindings.json` to disable previewing before renaming:
 ```
 
 > Note: VS Code has builtin setting to disable introducing aliases (e.g. for imports & object properties): `typescript.preferences.useAliasesForRenames`
+
+## Vue Support
+
+Vue is only supported if the [official Vue extension](https://marketplace.visualstudio.com/items?itemName=Vue.volar) is above version 3.0.2.
 
 ## Special Commands List
 
