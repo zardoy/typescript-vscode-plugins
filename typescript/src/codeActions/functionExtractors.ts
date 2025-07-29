@@ -133,13 +133,13 @@ export const handleFunctionRefactorEdits = (
                 ],
             },
         ]
-        const diff = fileEdits[0]!.textChanges.slice(0, -1).reduce((diff, { newText, span }) => {
+        let diff = 0
+        for (const { newText, span } of fileEdits[0]!.textChanges.slice(0, -1)) {
             const oldText = sourceFile.text.slice(span.start, span.start + span.length)
             const newSpan = newText.length
             const oldSpan = oldText.length
             diff += newSpan - oldSpan
-            return diff
-        }, 0)
+        }
         return {
             edits: fileEdits,
             renameFilename,

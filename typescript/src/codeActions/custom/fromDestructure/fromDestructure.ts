@@ -10,10 +10,7 @@ export default {
     kind: 'refactor.rewrite.from-destruct',
     tryToApply(sourceFile, position, _range, node, formatOptions, languageService) {
         if (!node || !position) return
-        const declaration = ts.findAncestor(node, n => ts.isVariableDeclaration(n) || ts.isParameter(n)) as
-            | ts.VariableDeclaration
-            | ts.ParameterDeclaration
-            | undefined
+        const declaration = ts.findAncestor(node, n => ts.isVariableDeclaration(n) || ts.isParameter(n))
 
         if (!declaration || !(ts.isObjectBindingPattern(declaration.name) || ts.isArrayBindingPattern(declaration.name))) return
 
