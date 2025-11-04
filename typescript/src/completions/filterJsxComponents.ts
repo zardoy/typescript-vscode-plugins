@@ -66,8 +66,16 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
         const { symbol } = entry
         // tsFull.isCheckJsEnabledForFile(sourceFile, compilerOptions)
         if (!symbol) return true
+        if (entry.name.startsWith('pixi')) return true
         // performance: symbol coming from lib cannot be JSX element, so let's skip checking them
-        // todo other decl
+        // todo test might help
+        // const symbolLinkType = symbol.links?.type
+        // if (symbolLinkType) {
+        //     const symbolLinkTypeString = typeChecker.typeToString(symbolLinkType)
+        //     if (symbolLinkTypeString.includes('ReactElement') || symbolLinkTypeString.includes('ReactNode')) return true
+        // }
+
+        // todo other decl?
         const firstDeclaration = symbol.declarations?.[0]
         if (!firstDeclaration) return
         // todo-low
@@ -158,6 +166,9 @@ const isJsxElement = (typeChecker: ts.TypeChecker, signatures: readonly ts.Signa
 }
 
 const getIsJsxComponentSignature = (typeChecker: ts.TypeChecker, signature: ts.Signature) => {
+    const signatureString = typeChecker.signatureToString(signature)
+    if (signatureString.includes('ReactNode')) return true
+
     let returnType: ts.Type | undefined = signature.getReturnType()
     if (!returnType) return
     // todo setting to allow any
