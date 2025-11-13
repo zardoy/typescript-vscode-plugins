@@ -29,4 +29,5 @@
     "vitest.include": [
         "typescript/test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"
     ],
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
 }

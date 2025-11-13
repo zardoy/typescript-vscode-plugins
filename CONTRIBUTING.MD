@@ -31,13 +31,6 @@ To start the VS Code plugin extension locally for developing:
 
 #### Unit Tests
 
-> Note: currently project doesn't use integration testing so you can ignore `integration` folder
-
-They are in `typescript/test` and using vitest, so they faster than integration. Feel free to add new tests here. But note that most of tests are completion tests, but I do hope to add more types tests in the future.
+They are in `typescript/test` and using vitest. Feel free to add new tests here. But note that most of tests are completion tests, but I do hope to add more types tests in the future.
 
 To launch them run `pnpm test-plugin`.
-
-#### Integration Tests
-
-They are in `integration`. This type of tests launches VSCode. For now I don't recommend either running or adding new tests here, use unit tests.
-> Note that while running this script, you must also keep `pnpm start` running in the background. However, changing a file in `src/`, won't relaunch integration tests. If this is your case, you should edit the script.

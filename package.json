@@ -135,40 +135,38 @@
         "build-plugin:npm": "tsc -p typescript/tsconfig.npm.json",
         "lint": "eslint {src/**,typescript/src/**}",
         "format": "prettier --write '{src,typescript}/**/*.ts' --ignore-path .gitignore",
-        "test": "pnpm test-plugin --run && pnpm integration-test",
+        "test": "pnpm test-plugin --run",
         "test-plugin": "vitest --globals --dir typescript/test/ --environment ts-plugin",
-        "integration-test": "node integration/prerun.mjs && tsc -p tsconfig.test.json && node testsOut/runTests.js",
-        "integration-test:watch": "chokidar \"integration/**\" -c \"pnpm integration-test\" --initial",
         "postinstall": "patch-package && tsm ./typescript/scripts/patchModules.ts"
     },
     "devDependencies": {
-        "@milahu/patch-package-with-pnpm-support": "^6.4.8",
+        "@milahu/patch-package": "^6.4.10",
         "@types/fs-extra": "^9.0.13",
-        "@types/node": "^16.11.21",
-        "@types/semver": "^7.3.13",
+        "@types/node": "^16.18.126",
+        "@types/semver": "^7.7.0",
         "@types/vscode": "1.72.0",
-        "@vitest/ui": "^0.34.6",
-        "@zardoy/tsconfig": "^1.3.1",
-        "chokidar": "^3.5.3",
+        "@vitest/ui": "^0.34.7",
+        "@zardoy/tsconfig": "^1.5.1",
+        "chokidar": "^3.6.0",
         "chokidar-cli": "^3.0.0",
-        "esbuild": "^0.16.16",
+        "esbuild": "^0.16.17",
         "fs-extra": "^10.1.0",
-        "got": "^12.5.3",
-        "got-cjs": "npm:got@^11.x",
+        "got": "^12.6.1",
+        "got-cjs": "npm:got@^11.8.6",
         "npm-run-all": "^4.1.5",
         "prettier": "3.1.0",
         "tsm": "^2.3.0",
-        "type-fest": "^2.13.1",
+        "type-fest": "^2.19.0",
         "typed-jsonfile": "^0.2.1",
-        "typescript": "5.3.3",
-        "vite": "^4.1.1",
+        "typescript": "5.5.0-dev.20240523",
+        "vite": "^4.5.14",
         "vitest": "^0.34.6",
         "vitest-environment-ts-plugin": "./vitest-environment-ts-plugin",
         "vscode-manifest": "^0.0.4"
     },
     "pnpm": {
         "overrides": {
-            "esbuild": "^0.15.15"
+            "esbuild": "^0.15.18"
         },
         "ignoredBuiltDependencies": [
             "playwright"
@@ -181,37 +179,36 @@
         ]
     },
     "dependencies": {
-        "@types/chai": "^4.3.3",
-        "@types/glob": "^8.0.0",
-        "@types/lodash": "^4.14.182",
+        "@types/chai": "^4.3.20",
+        "@types/glob": "^8.1.0",
+        "@types/lodash": "^4.17.20",
         "@types/mocha": "^9.1.1",
         "@types/pluralize": "^0.0.29",
-        "@vscode/emmet-helper": "^2.8.4",
-        "@vscode/test-electron": "^2.1.5",
+        "@vscode/emmet-helper": "^2.11.0",
         "@zardoy/utils": "^0.0.9",
         "@zardoy/vscode-utils": "^0.0.52",
-        "chai": "^4.3.6",
+        "chai": "^4.5.0",
         "change-case": "^4.1.2",
         "delay": "^5.0.0",
         "escape-string-regexp": "^5.0.0",
-        "eslint": "^8.56.0",
+        "eslint": "^8.57.1",
         "eslint-config-zardoy": "^0.2.17",
-        "glob": "^8.0.3",
+        "glob": "^8.1.0",
         "lodash": "^4.17.21",
         "lodash.get": "^4.4.2",
         "lodash.throttle": "^4.1.1",
-        "mocha": "^10.0.0",
+        "mocha": "^10.8.2",
         "path-browserify": "^1.0.1",
         "pluralize": "github:plurals/pluralize#36f03cd2d573fa6d23e12e1529fa4627e2af74b4",
-        "rambda": "^7.2.1",
+        "rambda": "^7.5.0",
         "require-from-string": "^2.0.2",
-        "semver": "^7.3.8",
-        "string-dedent": "^3.0.1",
-        "ts-expose-internals": "^5.3.3",
+        "semver": "^7.7.2",
+        "string-dedent": "^3.0.2",
+        "ts-expose-internals": "^5.6.3",
         "ts-simple-type": "^1.0.7",
         "unleashed-typescript": "^1.3.0",
         "vscode-framework": "^0.0.18",
-        "vscode-uri": "^3.0.6"
+        "vscode-uri": "^3.1.0"
     },
     "prettier": {
         "semi": false,
@@ -231,5 +228,5 @@
             "runTest": false
         }
     },
-    "packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac"
+    "packageManager": "pnpm@10.18.0+sha512.e804f889f1cecc40d572db084eec3e4881739f8dec69c0ff10d2d1beff9a4e309383ba27b5b750059d7f4c149535b6cd0d2cb1ed3aeb739239a4284a68f40cfa"
 }

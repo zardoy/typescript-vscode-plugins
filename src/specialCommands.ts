@@ -7,7 +7,7 @@ import _ from 'lodash'
 import { compact } from '@zardoy/utils'
 import { offsetPosition } from '@zardoy/vscode-utils/build/position'
 import { defaultJsSupersetLangs } from '@zardoy/vscode-utils/build/langs'
-import { RequestInputTypes, RequestOutputTypes } from '../typescript/src/ipcTypes'
+import { RequestInputTypes } from '../typescript/src/ipcTypes'
 import { sendCommand } from './sendCommand'
 import { tsRangeToVscode, tsRangeToVscodeSelection, tsTextChangesToVscodeTextEdits } from './util'
 import { onCompletionAcceptedOverride } from './onCompletionAccepted'
@@ -97,9 +97,10 @@ export default () => {
                         editor.selection = new vscode.Selection(sel.start, sel.start)
                         editor.revealRange(editor.selection, vscode.TextEditorRevealType.InCenterIfOutsideViewport)
                         this.hide()
-                    } else {
-                        editor.selections = [...editor.selections, sel]
+                        return
                     }
+
+                    editor.selections = [...editor.selections, sel]
                 },
                 onDidChangeFirstActive(item) {
                     const pos = editor.document.positionAt((item as any).nodeRange[0])
@@ -123,7 +124,7 @@ export default () => {
         const result = await sendCommand('pickAndInsertFunctionArguments', {})
         if (!result) return
 
-        const renderArgs = (args: Array<[name: string, type: string]>) => `${args.map(([name, type]) => (type ? `${name}: ${type}` : name)).join(', ')}`
+        const renderArgs = (args: Array<[name: string, type: string]>) => args.map(([name, type]) => (type ? `${name}: ${type}` : name)).join(', ')
 
         const selectedFunction = await nodePicker(result.functions, ([name, decl, args]) => ({
             label: name,
@@ -379,10 +380,14 @@ export default () => {
         if (!result2) return
         const { files } = result2
         const results = [] as Array<{ document: vscode.TextDocument; range: vscode.Range }>
-        for (const file of files) {
-            const document = await vscode.workspace.openTextDocument(file.filename)
-            // if (!document) continue
-            for (const range of file.ranges) {
+        const documentsWithRanges = await Promise.all(
+            files.map(async file => {
+                const document = await vscode.workspace.openTextDocument(file.filename)
+                return { document, ranges: file.ranges }
+            }),
+        )
+        for (const { document, ranges } of documentsWithRanges) {
+            for (const range of ranges) {
                 results.push({ document, range: tsRangeToVscode(document, range) })
             }
         }
@@ -420,21 +425,22 @@ export default () => {
                 if (!replaceFor) return
 
                 const rangesByFile = _.groupBy(selectedRange, file => file.document.fileName)
-                for (const [_, ranges] of Object.entries(rangesByFile)) {
-                    const { document } = ranges[0]!
-                    const editor = await vscode.window.showTextDocument(document)
-                    // todo
-                    // eslint-disable-next-line no-await-in-loop
-                    await editor.edit(editBuilder => {
-                        for (const file of ranges) {
-                            editBuilder.replace(file.range, replaceFor)
-                        }
-                    })
-                }
-            } else {
-                const { document, range } = selectedRange as any
-                await vscode.window.showTextDocument(document, { selection: range })
+                await Promise.all(
+                    Object.entries(rangesByFile).map(async ([_, ranges]) => {
+                        const { document } = ranges[0]!
+                        const editor = await vscode.window.showTextDocument(document)
+                        await editor.edit(editBuilder => {
+                            for (const file of ranges) {
+                                editBuilder.replace(file.range, replaceFor)
+                            }
+                        })
+                    }),
+                )
+                return
             }
+
+            const { document, range } = selectedRange as any
+            await vscode.window.showTextDocument(document, { selection: range })
         }
 
         await displayFilesPicker()

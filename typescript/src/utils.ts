@@ -239,7 +239,7 @@ export const getCancellationToken = (languageServiceHost: ts.LanguageServiceHost
     }
     if (!cancellationToken.throwIfCancellationRequested) {
         cancellationToken.throwIfCancellationRequested = () => {
-            if (cancellationToken!.isCancellationRequested()) {
+            if (cancellationToken.isCancellationRequested()) {
                 // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw new ts.OperationCanceledException()
             }

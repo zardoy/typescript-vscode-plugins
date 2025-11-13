@@ -50,7 +50,7 @@ export default (prior: ts.CompletionInfo): ts.CompletionEntry[] | void => {
         }
         if (!enableMoreVariants) continue
         const getQuotedSnippet = (): [string, string] => {
-            const quote = tsFull.getQuoteFromPreference(tsFull.getQuotePreference(node!.getSourceFile() as any, preferences))
+            const quote = tsFull.getQuoteFromPreference(tsFull.getQuotePreference(node.getSourceFile() as any, preferences))
             return [`: ${quote}$1${quote},`, `: ${quote}${quote},`]
         }
         const insertObjectArrayInnerText = c('objectLiteralCompletions.insertNewLine') ? '\n\t$1\n' : '$1'
@@ -63,7 +63,7 @@ export default (prior: ts.CompletionInfo): ts.CompletionEntry[] | void => {
             [[`: {${insertObjectArrayInnerText}},`, `: {},`], isObjectCompletion],
         ] as const
         const fallbackSnippet = c('objectLiteralCompletions.fallbackVariant') ? ([': $0,', ': ,'] as const) : undefined
-        const insertSnippetVariant = completingStyleMap.find(([, detector]) => detector(type!, typeChecker))?.[0] ?? fallbackSnippet
+        const insertSnippetVariant = completingStyleMap.find(([, detector]) => detector(type, typeChecker))?.[0] ?? fallbackSnippet
         if (!insertSnippetVariant) continue
         const [insertSnippetText, insertSnippetPreview] = typeof insertSnippetVariant === 'function' ? insertSnippetVariant() : insertSnippetVariant
         let insertText = insertTextAfterEntry(entry.name, insertSnippetText)

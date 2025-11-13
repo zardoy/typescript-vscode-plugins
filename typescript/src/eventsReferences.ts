@@ -36,7 +36,7 @@ export const eventDefinitions = (languageService: ts.LanguageService, fileName: 
             if (!ts.isCallExpression(upNode.parent)) return
             if (!ts.isPropertyAccessExpression(upNode.parent.expression)) return
             const method = upNode.parent.expression.name.text
-            if (!lookForMethods!.includes(method)) return
+            if (!lookForMethods.includes(method)) return
             const arg = upNode.parent.arguments[0]
             if (!arg || !ts.isStringLiteral(arg)) return
             const lastArgEnd = upNode.parent.arguments.at(-1)!.end
@@ -53,7 +53,7 @@ export const eventDefinitions = (languageService: ts.LanguageService, fileName: 
             }
         })
         .filter(a => a !== undefined)
-        .map(a => a!)
+        .map(a => a)
     return {
         textSpan: ts.createTextSpanFromBounds(node.pos, node.end),
         definitions: defs,

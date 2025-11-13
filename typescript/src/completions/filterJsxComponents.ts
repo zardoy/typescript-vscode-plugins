@@ -49,7 +49,7 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
     const typeAtLocLog = {}
     const program = languageService.getProgram()!
     const typeChecker = program.getTypeChecker()!
-    const nowGetter = tsFull.tryGetNativePerformanceHooks()!.performance
+    const nowGetter = tsFull.tryGetNativePerformanceHooks()!.performance!
     let mark = nowGetter.now()
     const startMark = () => {
         mark = nowGetter.now()
@@ -58,7 +58,7 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
         timings[name] ??= 0
         timings[name] += nowGetter.now() - mark
         timings[`${name}Count`] ??= 0
-        timings[`${name}Count`]++
+        timings[`${name}Count`]!++
     }
     const getIsEntryReactComponent = (entry: ts.CompletionEntry) => {
         // todo add more checks from ref https://github.com/microsoft/TypeScript/blob/e4816ed44cf9bcfe7cebb997b1f44cdb5564dac4/src/compiler/checker.ts#L30030
@@ -122,7 +122,7 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
         // todo?
         if (c('jsxImproveElementsSuggestions.filterNamespaces') && entry.kind === ts.ScriptElementKind.moduleElement) return false
         if (!c('experiments.excludeNonJsxCompletions')) return true
-        // I'm not inrested personally
+        // I'm not interested personally
         if (entry.kind === ts.ScriptElementKind.classElement) return false
         if (entry.kind === ts.ScriptElementKind.localClassElement) return false
         if (!interestedKinds.includes(entry.kind)) return true
