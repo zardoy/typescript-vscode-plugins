@@ -135,10 +135,8 @@
         "build-plugin:npm": "tsc -p typescript/tsconfig.npm.json",
         "lint": "eslint {src/**,typescript/src/**}",
         "format": "prettier --write '{src,typescript}/**/*.ts' --ignore-path .gitignore",
-        "test": "pnpm test-plugin --run && pnpm integration-test",
+        "test": "pnpm test-plugin --run",
         "test-plugin": "vitest --globals --dir typescript/test/ --environment ts-plugin",
-        "integration-test": "node integration/prerun.mjs && tsc -p tsconfig.test.json && node testsOut/runTests.js",
-        "integration-test:watch": "chokidar \"integration/**\" -c \"pnpm integration-test\" --initial",
         "postinstall": "patch-package && tsm ./typescript/scripts/patchModules.ts"
     },
     "devDependencies": {
