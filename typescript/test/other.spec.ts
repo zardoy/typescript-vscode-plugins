@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { createRequire } from 'module'
 import decorateFormatFeatures from '../src/decorateFormatFeatures'
 import { getNavTreeItems } from '../src/getPatchedNavTree'

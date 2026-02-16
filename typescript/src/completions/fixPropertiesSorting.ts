@@ -1,5 +1,6 @@
 import { oneOf } from '@zardoy/utils'
 import { partition } from 'rambda'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { getAllPropertiesOfType } from './objectLiteralCompletions'
 import { sharedCompletionContext } from './sharedContext'
 

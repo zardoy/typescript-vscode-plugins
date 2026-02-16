@@ -1,8 +1,18 @@
-import('ts-expose-internals')
-// prvided by esbuild at top-level of bundle in buildTsPlugin.mjs
-declare let tsFull: typeof import('typescript-full')
+/// <reference types="ts-expose-internals" />
 
-declare type FullChecker = import('typescript-full').TypeChecker
-declare type FullSourceFile = import('typescript-full').SourceFile
+// Runtime globals provided by esbuild banner in buildTsPlugin.mjs
+// Type annotations come from explicit imports in each file
+declare global {
+    // Runtime variable declarations - these are assigned in index.ts and libMethods.ts
+    // eslint-disable-next-line no-var
+    var ts: typeof import('typescript/lib/tsserverlibrary')
+    // eslint-disable-next-line no-var
+    var tsFull: typeof import('typescript-full')
+    // eslint-disable-next-line no-var
+    var __WEB__: boolean
 
-declare let __WEB__: boolean
+    type FullChecker = import('typescript-full').TypeChecker
+    type FullSourceFile = import('typescript-full').SourceFile
+}
+
+export {}

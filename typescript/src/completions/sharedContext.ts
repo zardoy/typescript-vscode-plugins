@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { PrevCompletionMap } from '../completionsAtPosition'
 import { GetConfig } from '../types'
 

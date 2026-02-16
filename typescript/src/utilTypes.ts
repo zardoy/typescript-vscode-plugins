@@ -1,4 +1,5 @@
 import { ConditionalPick } from 'type-fest'
+import * as ts from 'typescript/lib/tsserverlibrary'
 
 type Tail<T> = T extends readonly [...any[], infer U] ? U : never
 type GetIs<T> = T extends (elem: any) => elem is infer T ? T : never

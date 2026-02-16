@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { findChildContainingExactPosition, getChangesTracker, getPositionHighlights, isNameUniqueAtNodeClosestScope } from '../../../utils'
 import createFlattenedExpressionFromDestructuring from './createFlattenedExpressionFromDestructuring'
 import { collectBindings } from './utils'

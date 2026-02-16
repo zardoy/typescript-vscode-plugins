@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 export default (symbol: ts.Symbol) => {
     const [node] = symbol.declarations ?? []
     if (!node) return

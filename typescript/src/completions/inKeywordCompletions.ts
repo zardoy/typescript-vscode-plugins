@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { buildStringCompletion } from '../utils'
 import { sharedCompletionContext } from './sharedContext'
 

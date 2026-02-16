@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import getImportPath from '../utils/getImportPath'
 import { sharedCompletionContext } from './sharedContext'
 

@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { boostOrAddSuggestions, findChildContainingPosition } from '../utils'
 
 export default (entries: ts.CompletionEntry[], position: number, node: ts.Node): ts.CompletionEntry[] | undefined => {

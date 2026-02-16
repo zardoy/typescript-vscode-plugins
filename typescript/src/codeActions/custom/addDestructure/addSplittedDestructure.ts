@@ -1,4 +1,5 @@
 import { uniq } from 'rambda'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { findChildContainingExactPosition, getChangesTracker, getPositionHighlights, isValidInitializerForDestructure, makeUniqueName } from '../../../utils'
 
 export default (node: ts.Node, sourceFile: ts.SourceFile, formatOptions: ts.FormatCodeSettings | undefined, languageService: ts.LanguageService) => {

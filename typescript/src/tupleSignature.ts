@@ -1,4 +1,5 @@
 import { compact } from '@zardoy/utils'
+import * as ts from 'typescript/lib/tsserverlibrary'
 
 export const getTupleSignature = (node: ts.Node, typeChecker: ts.TypeChecker) => {
     const originalNode = node
@@ -47,7 +48,7 @@ export const getTupleSignature = (node: ts.Node, typeChecker: ts.TypeChecker) =>
     const tupleMembers = compact(
         properties.map((property, i) => {
             if (!/^\d+$/.test(property.name)) return
-            const type = typeChecker.getTypeOfSymbolAtLocation(property, targetNode!)
+            const type = typeChecker.getTypeOfSymbolAtLocation(property, targetNode)
             let displayString = typeChecker.typeToString(type)
             const tupleLabelDeclaration: ts.NamedTupleMember | undefined =
                 property['target']?.['tupleLabelDeclaration'] ??

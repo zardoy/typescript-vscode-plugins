@@ -1,4 +1,5 @@
 import { compact } from '@zardoy/utils'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { buildStringCompletion } from '../utils'
 import { sharedCompletionContext } from './sharedContext'
 

@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { matchParents } from '../../utils'
 import { ExtendedCodeAction } from '../getCodeActions'
 

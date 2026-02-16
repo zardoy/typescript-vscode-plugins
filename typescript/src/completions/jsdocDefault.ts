@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { findChildContainingPositionIncludingStartTrivia } from '../utils'
 
 export const getJsdocDefaultTypes = (position: number, sourceFile: ts.SourceFile, languageService: ts.LanguageService) => {

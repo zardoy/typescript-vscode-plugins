@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { getChangesTracker, getIndentFromPos } from '../../utils'
 import { CodeAction } from '../getCodeActions'
 

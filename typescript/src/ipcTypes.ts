@@ -1,3 +1,5 @@
+import type * as ts from 'typescript'
+
 // should-not contain other typescript/* imports that use globals as is imported in extension code (src/)
 
 export const passthroughExposedApiCommands = ['getNodePath', 'getSpanOfEnclosingComment', 'getNodeAtPosition', 'getFullType'] as const

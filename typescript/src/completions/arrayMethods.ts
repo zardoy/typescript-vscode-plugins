@@ -1,5 +1,6 @@
 import pluralize from 'pluralize'
 import { lowerCaseFirst } from '@zardoy/utils'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from '../types'
 import { findChildContainingPosition, getLineTextBeforePos } from '../utils'
 

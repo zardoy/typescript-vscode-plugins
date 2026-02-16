@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from './types'
 import { getCancellationToken } from './utils'
 

@@ -1,5 +1,6 @@
 import { compact } from '@zardoy/utils'
 import { Except } from 'type-fest'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { findChildContainingExactPosition } from '../utils'
 import { ApplyExtendedCodeActionResult, IpcExtendedCodeAction } from '../ipcTypes'
 import { GetConfig } from '../types'

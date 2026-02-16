@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 export const collectBindings = (node: ts.BindingPattern): ts.BindingElement[] => {
     const bindings: ts.BindingElement[] = []
 

@@ -1,3 +1,4 @@
+import type * as tsServer from 'typescript/lib/tsserverlibrary'
 import { decorateLanguageService, getInitialProxy, thisPluginMarker } from './decorateProxy'
 import { Configuration, PluginCreateArg } from './types'
 
@@ -7,7 +8,7 @@ const _configObj = {
 
 const updateConfigListeners: Array<() => void> = []
 
-const plugin = ({ typescript }: Parameters<ts.server.PluginModuleFactory>[0]) => {
+const plugin = ({ typescript }: Parameters<tsServer.server.PluginModuleFactory>[0]) => {
     // eslint-disable-next-line no-multi-assign
     ts = tsFull = typescript as any
     return {
@@ -52,7 +53,7 @@ const plugin = ({ typescript }: Parameters<ts.server.PluginModuleFactory>[0]) =>
     }
 }
 
-plugin satisfies ts.server.PluginModuleFactory
+plugin satisfies tsServer.server.PluginModuleFactory
 
 // eslint-disable-next-line @typescript-eslint/prefer-ts-expect-error
 //@ts-ignore

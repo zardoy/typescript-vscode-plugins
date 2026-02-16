@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { getChangesTracker, isValidInitializerForDestructure } from '../../../utils'
 import { CodeAction } from '../../getCodeActions'
 import createDestructuredDeclaration from './createDestructuredDeclaration'
@@ -9,7 +10,7 @@ export default {
     kind: 'refactor.rewrite.add-destruct',
     tryToApply(sourceFile, position, _range, node, formatOptions, languageService) {
         if (!node || !position) return
-        const initialDeclaration = ts.findAncestor(node, n => ts.isVariableDeclaration(n)) as ts.VariableDeclaration | undefined
+        const initialDeclaration = ts.findAncestor(node, n => ts.isVariableDeclaration(n))
 
         if (initialDeclaration && !ts.isObjectBindingPattern(initialDeclaration.name)) {
             const { initializer, type, name } = initialDeclaration

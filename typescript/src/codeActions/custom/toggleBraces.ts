@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { findChildContainingPosition, findClosestParent, getIndentFromPos } from '../../utils'
 import { ApplyCodeAction, CodeAction } from '../getCodeActions'
 

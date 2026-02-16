@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
 import constructMethodSnippet from './constructMethodSnippet'
 import { RequestOutputTypes } from './ipcTypes'

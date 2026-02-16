@@ -1,4 +1,5 @@
 import { sortBy } from 'rambda'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { changeSortingOfAutoImport, getIgnoreAutoImportSetting, isAutoImportEntryShouldBeIgnored, shouldChangeSortingOfAutoImport } from '../adjustAutoImports'
 import { sharedCompletionContext } from './sharedContext'
 

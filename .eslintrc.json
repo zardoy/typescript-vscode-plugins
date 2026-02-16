@@ -15,21 +15,6 @@
         "@typescript-eslint/no-explicit-any": "off",
         // better to fix rule
         "unicorn/consistent-destructuring": "off",
-        "@typescript-eslint/no-restricted-imports": [
-            "error",
-            {
-                "patterns": [
-                    {
-                        "group": [
-                            "typescript*",
-                            "!../*"
-                        ],
-                        "message": "Use global ts type and variable instead"
-                        // "allowTypeImports": true
-                    }
-                ]
-            }
-        ],
         "unicorn/switch-case-braces": "off",
         "@typescript-eslint/consistent-type-imports": "off",
         "@typescript-eslint/ban-types": "off",
@@ -60,7 +45,9 @@
                 "@typescript-eslint/prefer-regexp-exec": "off",
                 "no-negated-condition": "off",
                 "@typescript-eslint/prefer-nullish-coalescing": "off",
-                "unicorn/prefer-set-has": "off"
+                "unicorn/prefer-set-has": "off",
+                // Allow typescript imports in plugin code (needed for TS 5.5+ upgrade)
+                "@typescript-eslint/no-restricted-imports": "off"
             }
         }
     ]
