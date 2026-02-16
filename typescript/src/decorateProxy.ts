@@ -1,4 +1,5 @@
 import lodashGet from 'lodash.get'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { getCompletionsAtPosition, PrevCompletionMap, PrevCompletionsAdditionalData } from './completionsAtPosition'
 import { TriggerCharacterCommand } from './ipcTypes'
 import { findChildContainingExactPosition, nodeModules } from './utils'

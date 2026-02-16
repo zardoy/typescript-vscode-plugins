@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 export type CodeFixInterface = {
     codes: number[]
     description?: string

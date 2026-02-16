@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { findClosestParent } from '../utils'
 
 const getTextInner = (position: number, leftNode: ts.Node): false | string => {

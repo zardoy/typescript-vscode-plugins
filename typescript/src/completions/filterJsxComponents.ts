@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from '../types'
 import { getFullTypeChecker } from '../utils'
 
@@ -49,16 +50,17 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
     const typeAtLocLog = {}
     const program = languageService.getProgram()!
     const typeChecker = program.getTypeChecker()!
-    const nowGetter = tsFull.tryGetNativePerformanceHooks()!.performance
-    let mark = nowGetter.now()
+    const performanceHooks = tsFull.tryGetNativePerformanceHooks()
+    const nowGetter = performanceHooks?.performance
+    let mark = nowGetter?.now() ?? 0
     const startMark = () => {
-        mark = nowGetter.now()
+        mark = nowGetter?.now() ?? 0
     }
     const addMark = (name: string) => {
         timings[name] ??= 0
-        timings[name] += nowGetter.now() - mark
+        timings[name]! += (nowGetter?.now() ?? 0) - mark
         timings[`${name}Count`] ??= 0
-        timings[`${name}Count`]++
+        timings[`${name}Count`]!++
     }
     const getIsEntryReactComponent = (entry: ts.CompletionEntry) => {
         // todo add more checks from ref https://github.com/microsoft/TypeScript/blob/e4816ed44cf9bcfe7cebb997b1f44cdb5564dac4/src/compiler/checker.ts#L30030
@@ -94,7 +96,7 @@ export default (entries: ts.CompletionEntry[], node: ts.Node, position: number, 
         }
         startMark()
         const entryType = typeChecker.getTypeOfSymbolAtLocation(symbol, node)
-        typeAtLocLog[entry.name] = nowGetter.now() - mark
+        typeAtLocLog[entry.name] = (nowGetter?.now() ?? 0) - mark
         addMark('getTypeAtLocation')
         // todo setting to allow any?
         if (entryType.flags & ts.TypeFlags.Any) return false

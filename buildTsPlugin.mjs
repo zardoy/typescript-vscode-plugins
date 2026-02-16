@@ -13,7 +13,7 @@ const result = await buildTsPlugin('typescript', undefined, undefined, {
     banner: {
         js: 'let ts, tsFull;',
     },
-    external: ['perf_hooks'],
+    external: ['perf_hooks', 'typescript', 'typescript/lib/tsserverlibrary'],
     plugins: [
         {
             name: 'watch-notifier',

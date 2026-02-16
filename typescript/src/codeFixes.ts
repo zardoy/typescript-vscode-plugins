@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { changeSortingOfAutoImport, getIgnoreAutoImportSetting, isAutoImportEntryShouldBeIgnored } from './adjustAutoImports'
 import { GetConfig } from './types'
 import { findChildContainingPosition, getCancellationToken, getIndentFromPos, isTsPatched, patchMethod } from './utils'

@@ -1,4 +1,5 @@
 import escapeStringRegexp from 'escape-string-regexp'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { CodeAction } from '../getCodeActions'
 import { getChangesTracker } from '../../utils'
 

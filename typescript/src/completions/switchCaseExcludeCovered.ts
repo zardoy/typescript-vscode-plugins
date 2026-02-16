@@ -1,4 +1,5 @@
 import { oneOf } from '@zardoy/utils'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { cleanupEntryName } from '../utils'
 
 // implementation not even ideal, but it just works for string & enums, which are used in 99% cases

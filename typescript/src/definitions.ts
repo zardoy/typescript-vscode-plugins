@@ -1,4 +1,5 @@
 import { join } from 'path-browserify'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'
 import { eventDefinitions } from './eventsReferences'

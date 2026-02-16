@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { Except, SetOptional } from 'type-fest'
 import * as semver from 'semver'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import type { MatchParentsType } from './utilTypes'
 
 export function findChildContainingPosition(typescript: typeof ts, sourceFile: ts.SourceFile, position: number): ts.Node | undefined {
@@ -239,7 +240,7 @@ export const getCancellationToken = (languageServiceHost: ts.LanguageServiceHost
     }
     if (!cancellationToken.throwIfCancellationRequested) {
         cancellationToken.throwIfCancellationRequested = () => {
-            if (cancellationToken!.isCancellationRequested()) {
+            if (cancellationToken.isCancellationRequested()) {
                 // eslint-disable-next-line @typescript-eslint/no-throw-literal
                 throw new ts.OperationCanceledException()
             }

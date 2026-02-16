@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { findChildContainingExactPosition } from '../utils'
 
 export default (languageService: ts.LanguageService, sourceFile: ts.SourceFile, position: number) => {

@@ -1,4 +1,5 @@
 import { oneOf } from '@zardoy/utils'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { matchParents } from '../utils'
 import { sharedCompletionContext } from './sharedContext'
 

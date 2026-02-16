@@ -1,5 +1,6 @@
 import { compact } from '@zardoy/utils'
 import escapeStringRegexp from 'escape-string-regexp'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { Configuration } from '../../../src/configurationType'
 import { collectLocalSymbols } from '../utils'
 import { sharedCompletionContext } from './sharedContext'

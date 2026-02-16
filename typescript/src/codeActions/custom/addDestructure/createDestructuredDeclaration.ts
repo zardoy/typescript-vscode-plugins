@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 export default (initializer: ts.Expression, type: ts.TypeNode | undefined, declarationName: ts.BindingName) => {
     if (!ts.isPropertyAccessExpression(initializer)) return
 

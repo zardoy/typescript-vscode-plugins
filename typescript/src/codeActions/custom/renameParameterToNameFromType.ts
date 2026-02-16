@@ -1,4 +1,5 @@
 import { pipe, groupBy, map, compact } from 'lodash/fp'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { CodeAction } from '../getCodeActions'
 import extractType from '../../utils/extractType'
 

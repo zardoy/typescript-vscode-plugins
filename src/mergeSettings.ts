@@ -32,7 +32,7 @@ const getConfigValueFromAllScopes = <T extends keyof Configuration>(
     workspaceConfiguration: vscode.WorkspaceConfiguration,
     configKey: T,
     type: 'array' | 'object',
-): Configuration[T] => {
+) => {
     const values = { ...workspaceConfiguration.inspect<any[]>(configKey)! }
     const userValueKeys = Object.keys(values).filter(key => key.endsWith('Value') && !key.startsWith('default'))
     for (const key of userValueKeys) {
@@ -43,5 +43,9 @@ const getConfigValueFromAllScopes = <T extends keyof Configuration>(
         values[key] = type === 'array' ? [] : {}
     }
 
-    return type === 'array' ? userValueKeys.flatMap(key => values[key]) : Object.assign({}, ...userValueKeys.map(key => values[key]))
+    const configValue = (
+        type === 'array' ? userValueKeys.flatMap(key => values[key]) : Object.assign({}, ...userValueKeys.map(key => values[key]))
+    ) as Configuration[T]
+
+    return configValue
 }

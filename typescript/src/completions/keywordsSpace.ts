@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { isTypeNode } from '../utils'
 
 export default (entries: ts.CompletionEntry[], scriptSnapshot: ts.IScriptSnapshot, position: number, node: ts.Node | undefined) => {

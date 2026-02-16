@@ -1,4 +1,5 @@
 import { camelCase, pascalCase, snakeCase, constantCase } from 'change-case'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { Configuration } from '../types'
 import { nodeModules } from '../utils'
 import { sharedCompletionContext } from './sharedContext'

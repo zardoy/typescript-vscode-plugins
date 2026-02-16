@@ -1,4 +1,5 @@
 import stringDedent from 'string-dedent'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { sharedCompletionContext } from './sharedContext'
 
 export default (entries: ts.CompletionEntry[]) => {

@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { RequestOutputTypes } from '../ipcTypes'
 import { approveCast, getIndentFromPos } from '../utils'
 

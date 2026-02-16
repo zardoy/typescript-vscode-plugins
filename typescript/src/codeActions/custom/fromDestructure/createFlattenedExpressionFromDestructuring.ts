@@ -1,4 +1,5 @@
 import { isNumber } from 'lodash'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { getPropertyIdentifier } from './utils'
 
 export default (bindingElement: ts.BindingElement, baseExpression: ts.Expression) => {

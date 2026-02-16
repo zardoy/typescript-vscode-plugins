@@ -1,6 +1,5 @@
 /* eslint-disable import/first */
 beforeAll(() => {
-    //@ts-expect-error plugin expect it to set globallly
     globalThis.__WEB__ = false
 })
 

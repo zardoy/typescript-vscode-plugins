@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { cachedResponse } from '../decorateProxy'
 import { boostExistingSuggestions, boostOrAddSuggestions, findChildContainingPosition } from '../utils'
 import { getCannotFindCodes } from '../utils/cannotFindCodes'
@@ -55,7 +56,7 @@ export default (
             if ([start, length].includes(undefined)) return false
             if (filterBlock === false) return true
             const diagnosticEnd = start! + length!
-            const { pos, end } = filterBlock!
+            const { pos, end } = filterBlock
             if (start! < pos) return false
             if (diagnosticEnd > end) return false
             return true

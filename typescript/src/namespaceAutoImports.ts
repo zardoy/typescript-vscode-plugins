@@ -1,4 +1,5 @@
 import { camelCase } from 'change-case'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { parseIgnoreSpec, findIndexOfAutoImportSpec } from './adjustAutoImports'
 import { GetConfig } from './types'
 import { getChangesTracker } from './utils'

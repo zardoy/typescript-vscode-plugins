@@ -1,4 +1,5 @@
 import { ensureArray } from '@zardoy/utils'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { getCancellationToken, isTs5, isTs5And5, nodeModules } from './utils'
 import { createLanguageService } from './dummyLanguageService'
 import { getCannotFindCodes } from './utils/cannotFindCodes'

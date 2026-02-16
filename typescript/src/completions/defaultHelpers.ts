@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { approveCast } from '../utils'
 
 export default (entries: ts.CompletionEntry[], node: ts.Node, languageService: ts.LanguageService): ts.CompletionEntry[] | void => {

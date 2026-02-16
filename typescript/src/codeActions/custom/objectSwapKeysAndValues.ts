@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { approveCast } from '../../utils'
 import { CodeAction } from '../getCodeActions'
 

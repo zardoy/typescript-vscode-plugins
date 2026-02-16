@@ -1,4 +1,5 @@
 // only for basic testing, as vscode is actually using server
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { nodeModules } from './utils'
 
 export const createLanguageService = (files: Record<string, string>, { useLib = true }: { useLib?: boolean } = {}, entrypoint?: string) => {

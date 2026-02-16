@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { buildStringCompletion } from '../utils'
 
 export default (entries: ts.CompletionEntry[], program: ts.Program, node: ts.Node) => {

@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import _ from 'lodash'
 import { getCompletionsAtPosition as getCompletionsAtPositionRaw } from '../src/completionsAtPosition'
 import { Configuration } from '../src/types'

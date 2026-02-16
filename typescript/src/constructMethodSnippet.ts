@@ -1,4 +1,5 @@
 import { compact, oneOf } from '@zardoy/utils'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition, isTypeNode } from './utils'
 import extractType from './utils/extractType'

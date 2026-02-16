@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { EmmetResult } from '../ipcTypes'
 import prepareTextForEmmet from './prepareTextForEmmet'
 

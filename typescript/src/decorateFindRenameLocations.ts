@@ -1,3 +1,4 @@
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { RequestInputTypes } from './ipcTypes'
 import { GetConfig } from './types'
 import { findChildContainingExactPosition } from './utils'

@@ -1,4 +1,5 @@
 import { compact } from '@zardoy/utils'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { getExtendedCodeActions } from '../codeActions/getCodeActions'
 import { NodeAtPositionResponse, RequestInputTypes, RequestOutputTypes, TriggerCharacterCommand, triggerCharacterCommands } from '../ipcTypes'
 import { GetConfig } from '../types'

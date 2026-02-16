@@ -1,5 +1,6 @@
 import { compact } from '@zardoy/utils'
 import { basename } from 'path-browserify'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from '../types'
 
 const isLibCompletion = (symbol: ts.Symbol) => {

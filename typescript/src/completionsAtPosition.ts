@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { compact } from '@zardoy/utils'
 import escapeStringRegexp from 'escape-string-regexp'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import inKeywordCompletions from './completions/inKeywordCompletions'
 import isInBannedPosition from './completions/isInBannedPosition'
 import { GetConfig } from './types'

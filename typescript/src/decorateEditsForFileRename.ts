@@ -1,5 +1,6 @@
 import { camelCase } from 'change-case'
 import _ from 'lodash'
+import * as ts from 'typescript/lib/tsserverlibrary'
 import { GetConfig } from './types'
 import { approveCast, findChildContainingExactPosition } from './utils'
 
