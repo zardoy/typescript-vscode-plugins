@@ -1,8 +1,3 @@
-/* eslint-disable import/first */
-beforeAll(() => {
-    globalThis.__WEB__ = false
-})
-
 import { createLanguageService } from '../src/dummyLanguageService'
 import { Configuration } from '../src/types'
 import { getDefaultConfigFunc } from './defaultSettings'
