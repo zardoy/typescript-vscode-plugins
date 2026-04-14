@@ -66,16 +66,19 @@ export const getCompletionsAtPosition = (pos: number, { fileName = entrypoint, s
     }
 }
 
-// shouldn't be used twice in the same test
+const defaultSettingsState = { ...settingsOverride }
+
+afterEach(() => {
+    for (const key of Object.keys(settingsOverride)) {
+        if (!(key in defaultSettingsState)) {
+            delete settingsOverride[key]
+        }
+    }
+    Object.assign(settingsOverride, defaultSettingsState)
+})
+
 export const overrideSettings = (newOverrides: Partial<Configuration>) => {
-    const oldOverrides = { ...settingsOverride, ...Object.fromEntries(Object.entries(newOverrides).map(([key]) => [key, undefined])) }
     Object.assign(settingsOverride, newOverrides)
-    let cleaned = false
-    afterEach(() => {
-        if (cleaned) return
-        cleaned = true
-        Object.assign(settingsOverride, oldOverrides)
-    })
 }
 
 export const fourslashLikeTester = (contents: string, fileName = entrypoint, { dedent = false }: { dedent? } = {}) => {
@@ -120,7 +123,7 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint, { d
                         }
                         if (all) {
                             for (const entry of result.entries) {
-                                expect(entry, entry.name + message).toContain(all)
+                                expect(entry, entry.name + message).toMatchObject(all)
                             }
                         }
                     }
@@ -141,7 +144,7 @@ export const fourslashLikeTester = (contents: string, fileName = entrypoint, { d
                         }
                         if (all) {
                             for (const entry of result.entries.filter(e => names?.includes(e.name))) {
-                                expect(entry, entry.name + message).toContain(all)
+                                expect(entry, entry.name + message).toMatchObject(all)
                             }
                         }
                     }
