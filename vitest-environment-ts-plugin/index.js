@@ -1,5 +1,9 @@
 //@ts-check
-/** @type {import('vitest').Environment} */
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
+
+/** @type {import('vitest/runtime').Environment} */
 const env = {
     name: 'vitest-environment-ts-plugin',
     setup() {
@@ -9,7 +13,7 @@ const env = {
             teardown() {},
         }
     },
-    transformMode: 'web',
+    viteEnvironment: 'client',
 }
 
-module.exports = env
+export default env

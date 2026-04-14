@@ -724,10 +724,7 @@ test('Object Literal Completions', () => {
     const { entriesSorted: pos3 } = getCompletionsAtPosition(numPositions[3]!)!
     const { entriesSorted: pos4 } = getCompletionsAtPosition(numPositions[4]!)!
     // todo resolve sorting problem + add tests with other keepOriginal (it was tested manually)
-    for (const entry of [...pos1, ...pos2, ...pos3]) {
-        entry.insertText = entry.insertText?.replaceAll('\n', '\\n')
-    }
-    expect(pos1).toMatchInlineSnapshot(/* json */ `
+    expect(pos1).toMatchInlineSnapshot(`
       [
         {
           "insertText": "plugins",
@@ -737,7 +734,9 @@ test('Object Literal Completions', () => {
           "name": "plugins",
         },
         {
-          "insertText": "plugins: [\\\\n	$1\\\\n],",
+          "insertText": "plugins: [
+      	$1
+      ],",
           "isSnippet": true,
           "kind": "property",
           "kindModifiers": "",
@@ -761,7 +760,9 @@ test('Object Literal Completions', () => {
           "name": "additionalOptions",
         },
         {
-          "insertText": "additionalOptions: {\\\\n	$1\\\\n},",
+          "insertText": "additionalOptions: {
+      	$1
+      },",
           "isSnippet": true,
           "kind": "property",
           "kindModifiers": "optional",
@@ -778,7 +779,9 @@ test('Object Literal Completions', () => {
           "name": "callback",
         },
         {
-          "insertText": "callback() {\\\\n$0\\\\n},",
+          "insertText": "callback() {
+      $0
+      },",
           "isSnippet": true,
           "kind": "method",
           "kindModifiers": "optional",
@@ -796,12 +799,12 @@ test('Object Literal Completions', () => {
           "name": "mood",
         },
         {
-          "insertText": "mood: \\"$1\\",",
+          "insertText": "mood: "$1",",
           "isSnippet": true,
           "kind": "property",
           "kindModifiers": "optional",
           "labelDetails": {
-            "detail": ": \\"\\",",
+            "detail": ": "",",
           },
           "name": "mood",
         },
@@ -811,7 +814,7 @@ test('Object Literal Completions', () => {
       [
         "a",
         "b",
-        "b: \\"$1\\",",
+        "b: "$1",",
       ]
     `)
     // I guess vitest hangs forever here
