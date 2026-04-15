@@ -27,5 +27,6 @@ experiment-*
 .DS_Store
 .env.local
 .env.*.local
+.pnpm-store
 
 .vscode-test
